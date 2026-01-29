@@ -1,0 +1,93 @@
+
+{
+    "extName": {
+      "message": "Cross-Site Quick Search - Mooogor"
+    },
+    "extDescription": {
+      "message": "Mooogor allows you to search content within multiple custom websites with just one keyword input."
+    },
+    "login": {
+      "message": "Log In / Sign Up"
+    },
+    "space_name": {
+      "message": "Space"
+    },
+    "class_name": {
+      "message": "Category"
+    },
+    "search_title": {
+      "message": "Quick Search:"
+    },
+    "inject_searchs": {
+      "message": "Inject to address bar"
+    },
+    "not_injected_searchs": {
+      "message": "Not injected into the address bar"
+    },
+    "want_more_engines": {
+      "message": "Can't find what I'm looking for?"
+    },
+    "star_5": {
+      "message": "Go give a good review!"
+    },
+    "invalid_url_add_engine": {
+      "message": "This link cannot be used as a Quick Search!"
+    },
+    "already_added": {
+      "message": "Already added!"
+    },
+    "tag_keywords": {
+      "message": "Please mark the search keywords:"
+    },
+    "why_free": {
+      "message": "Why is it free?"
+    },
+    "login_tip": {
+      "message": "After logging in, you can add more"
+    },
+    "search_shortcut_key_tip": {
+      "message": "Shift + Enter for Quick Search"
+    },
+    "switch_shortcut_key_tip": {
+      "message": "Hold Shift + Left/Right to switch quickly"
+    },
+    "inject_instructions": {
+      "message": "Before each search, press <b>M</b> + <b>Spacebar</b> to activate Quick Search."
+    },
+    "inject_showSearch": {
+      "message": "Inject to page"
+    },
+    "inject_instructions_showSearch": {
+      "message": "Inject Quick Search into web pages.(Need to refresh the page)"
+    },
+    "Enable_tips": {
+      "message": "Enable tips"
+    },
+    "placeholder": {
+      "message": "Name"
+    },
+    "search_placeholder": {
+      "message": "Keywords"
+    },
+    "save": {
+      "message": "Save"
+    },
+    "my_engines": {
+      "message": "Custom"
+    },
+    "official_engines": {
+      "message": "Official"
+    },
+    "saved": {
+      "message": "Saved"
+    },
+    "invalid_Url": {
+      "message": "Invalid URL"
+    },
+    "unauthorized": {
+      "message": "Unauthorized access to Mooogor"
+    },
+    "authorize": {
+      "message": "How to authorize?"
+    }
+  }

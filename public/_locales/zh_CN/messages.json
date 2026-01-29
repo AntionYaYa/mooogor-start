@@ -1,0 +1,93 @@
+
+{
+    "extName": {
+      "message": "Mooogor2-效率启动页"
+    },
+    "extDescription": {
+      "message": "Mooogor 只需输入一次关键词，即可在自定义的多个网站内部搜索内容。(并且还支持跨浏览器书签同步哦～)"
+    },
+    "login": {
+      "message": "登录 / 注册"
+    },
+    "space_name": {
+      "message": "空间"
+    },
+    "class_name": {
+      "message": "分类"
+    },
+    "search_title": {
+      "message": "快捷搜索："
+    },
+    "inject_searchs": {
+      "message": "注入到地址栏"
+    },
+    "not_injected_searchs": {
+      "message": "未注入到地址栏"
+    },
+    "want_more_engines": {
+      "message": "没找到我想要的？"
+    },
+    "star_5": {
+      "message": "去给个好评！"
+    },
+    "invalid_url_add_engine": {
+      "message": "该链接不可作为快捷搜索!"
+    },
+    "already_added": {
+      "message": "已经添加过了!"
+    },
+    "tag_keywords": {
+      "message": "请标记出搜索关键词："
+    },
+    "why_free": {
+      "message": "为什么免费？"
+    },
+    "login_tip": {
+      "message": "登陆后可添加更多"
+    },
+    "search_shortcut_key_tip": {
+      "message": "Shift + Enter 快捷搜索"
+    },
+    "switch_shortcut_key_tip": {
+      "message": "按住Shift + 左/右键快捷切换"
+    },
+    "inject_instructions": {
+      "message": "每次搜索前 <b>M</b> + <b>空格</b> 即可调用快捷搜索。"
+    },
+    "inject_showSearch": {
+      "message": "注入到页面"
+    },
+    "inject_instructions_showSearch": {
+      "message": "将快捷搜索注入到网页。(需要刷新页面)"
+    },
+    "Enable_tips": {
+      "message": "开启小提示"
+    },
+    "placeholder": {
+      "message": "名称"
+    },
+    "search_placeholder": {
+      "message": "关键词"
+    },
+    "save": {
+      "message": "保存"
+    },
+    "my_engines": {
+      "message": "我的"
+    },
+    "official_engines": {
+      "message": "官方"
+    },
+    "saved": {
+      "message": "已保存"
+    },
+    "invalid_Url": {
+      "message": "无效URL"
+    },
+    "unauthorized": {
+      "message": "没有授权访问Mooogor"
+    },
+    "authorize": {
+      "message": "如何授权？"
+    }
+  }

@@ -1,0 +1,61 @@
+:root.dark {
+  --c-main: #704f39;
+
+  --c-bg1: #5a4d43;
+  --c-bg: #463935;
+
+  --c-bg-g: #418077;
+  --c-bg-g-l: #25635F;
+  --c-bg-y: #D0782C;
+  --c-bg-y-l: #BE6110;
+  --c-bg-r: #B95239;
+  --c-bg-r-l: #983227;
+
+  --c-focus: #FF8852;
+  --c-border: rgb(61, 41, 16);
+
+  --c-text-top: rgb(238, 233, 221);
+  --c-text: rgb(238, 233, 221);
+  --c-text-1: rgba(238, 233, 221, 0.6);
+  --c-text-2: rgba(238, 233, 221, 0.2);
+
+  --c-err: rgba(255, 44, 79, 1);
+  --c-success: rgb(1, 163, 98);
+
+  --c-mask2: rgba(255, 255, 255, 0.2);
+  --c-mask1: rgba(255, 255, 255, 0.1);
+  --c-mask: rgba(255, 255, 255, 0.05);
+  --c-mask-1: rgba(0, 0, 0, 0.1);
+}
+
+
+
+:root.light {
+  --c-main: #FCC986;
+
+  --c-bg1: #fff7eb;
+  --c-bg: #FCEFDD;
+
+  --c-bg-g: #7dc2b6;
+  --c-bg-g-l: #60a19e;
+  --c-bg-y: #FFA532;
+  --c-bg-y-l: #FED593;
+  --c-bg-r: #F18167;
+  --c-bg-r-l: #F3BE9F;
+
+  --c-focus: #FF6600;
+  --c-border: rgb(61, 41, 16);
+
+  --c-text-top: rgb(238, 233, 221);
+  --c-text: rgb(61, 41, 16);
+  --c-text-1: rgba(61, 41, 16, 0.6);
+  --c-text-2: rgba(61, 41, 16, 0.2);
+
+  --c-err: rgba(255, 44, 79, 1);
+  --c-success: rgb(0, 191, 114);
+
+  --c-mask2: rgba(0, 0, 0, 0.2);
+  --c-mask1: rgba(0, 0, 0, 0.1);
+  --c-mask: rgba(0, 0, 0, 0.05);
+  --c-mask-1: rgba(255, 255, 255, 0.1);
+}

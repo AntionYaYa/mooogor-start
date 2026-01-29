@@ -1,0 +1,50 @@
+
+:root {
+  --f-size-el: 32px;
+  --f-size-l: 24px;
+  --f-size-m: 16px;
+  --f-size-s: 14px;
+  --f-bold: 600;
+
+  --gap: 5px;
+
+  --shadow: 0px 10px 50px 0px var(--c-mask-1);
+
+  --border-1: 2px solid var(--c-text-2);
+  --border: 2px solid var(--c-border);
+  --border1: 2px solid var(--c-text-1);
+
+  --r: 10px;
+  --r1: 15px;
+  --r-100: 100%;
+
+  --bg-blur: blur(50px)
+}
+
+
+/* Chrome/Safari 支持 */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: unset;
+}
+
+::-webkit-scrollbar-horizontal {
+  height: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--c-text-2);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--c-text-2);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--c-text);
+}
