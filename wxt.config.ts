@@ -17,5 +17,8 @@ export default defineConfig({
       "bookmarks",
       "history"
     ],
+    permissions: [
+      "webNavigation"
+    ],
   },
 });

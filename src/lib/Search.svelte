@@ -1,9 +1,8 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { fly, slide } from "svelte/transition";
-  type BookmarkNode = Browser.bookmarks.BookmarkTreeNode;
+  import type { BookmarkNode, BookmarkSubType } from "../entrypoints/newtab/methods/getBookmarks";
 
-  type BookmarkSubType = "bookmarks-bar" | "other";
   type ItemType = BookmarkSubType | "engine" | "todo";
 
   interface SearchItem {
@@ -41,10 +40,11 @@
   ];
 
   interface Props {
-    allBookmarksTree: BookmarkNode[] | [];
+    allBookmarksOther: BookmarkNode[];
+    allBookmarksBar: BookmarkNode[];
   }
 
-  let { allBookmarksTree }: Props = $props();
+  let { allBookmarksOther, allBookmarksBar }: Props = $props();
 
   let searchItems: SearchItem[] = $state([]);
   let bookmarksresults: SearchItem[] = $state([]);
@@ -64,22 +64,13 @@
   });
 
   function initBookmarks() {
-    const allBookmarksBar = getBookmarks("bookmarks-bar");
-    const allBookmarksOther = getBookmarks("other");
     searchItems.push(
       ...flattenBookmarksToSearchItems(allBookmarksBar, "bookmarks-bar"),
-    ); 
+    );
     searchItems.push(
       ...flattenBookmarksToSearchItems(allBookmarksOther, "other"),
     );
     // bookmarksresults = searchItems;
-  }
-
-  function getBookmarks(subType: BookmarkSubType): BookmarkNode[] {
-    if (!allBookmarksTree) return [];
-    const topLevel = allBookmarksTree[0]?.children ?? [];
-    const folder = topLevel.find((item) => item.folderType === subType);
-    return folder?.children ?? [];
   }
 
   async function getSearchKey() {
@@ -206,8 +197,8 @@
       placeholder="搜索 / 计算器 / 翻译"
       oninput={() => searchInput(inputValue)}
       onkeyup={inputKey}
-      onfocus={()=>initBookmarks()}
-      onblur={()=>searchItems = []}
+      onfocus={() => initBookmarks()}
+      onblur={() => (searchItems = [])}
     />
     <div bind:this={engineEls} class="engines">
       {#each engines as engine}

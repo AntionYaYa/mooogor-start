@@ -3,13 +3,13 @@
 	type alignType =  'c' | 'r';
 	interface Props {
 		children: any;
-		type: syleType;
+		type?: syleType;
 		bold?: boolean;
 		nowrap?: boolean;
 		color?: string;
 		align?:alignType;
 	}
-	let { children,type,bold,nowrap,color,align}: Props = $props();
+	let { children,type='m',bold,nowrap,color,align}: Props = $props();
 </script>
 
 <p  class="{type} { bold?'bold':'' } {nowrap?'nowrap':''} " style="color: {color}; text-align: {align?'center':'left'}">
