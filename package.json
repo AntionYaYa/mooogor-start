@@ -27,7 +27,6 @@
   },
   "dependencies": {
     "@lucide/svelte": "^0.563.1",
-    "dexie": "^4.2.1",
-    "svelte-contextmenu": "^1.0.2"
+    "dexie": "^4.2.1"
   }
 }

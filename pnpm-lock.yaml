@@ -14,9 +14,6 @@ importers:
       dexie:
         specifier: ^4.2.1
         version: 4.2.1
-      svelte-contextmenu:
-        specifier: ^1.0.2
-        version: 1.0.2
     devDependencies:
       '@tsconfig/svelte':
         specifier: ^5.0.6
@@ -1559,9 +1556,6 @@ packages:
     peerDependencies:
       svelte: ^4.0.0 || ^5.0.0-next.0
       typescript: '>=5.0.0'
-
-  svelte-contextmenu@1.0.2:
-    resolution: {integrity: sha512-S4mSFnafXhhrDMvP45W7+8+LH45tGFyigMJav4bpc19rD2L3awMJLHg5PY9EAvF8OU9lIMiaUMxEgFlTK/kqPQ==}
 
   svelte-dnd-action@0.9.69:
     resolution: {integrity: sha512-NAmSOH7htJoYraTQvr+q5whlIuVoq88vEuHr4NcFgscDRUxfWPPxgie2OoxepBCQCikrXZV4pqV86aun60wVyw==}
@@ -3147,8 +3141,6 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - picomatch
-
-  svelte-contextmenu@1.0.2: {}
 
   svelte-dnd-action@0.9.69(svelte@5.48.3):
     dependencies:
