@@ -4,10 +4,10 @@
   import type { BookmarkNode } from "../entrypoints/newtab/methods/getBookmarks";
 
   interface Props {
-    allBookmarksBar: BookmarkNode[] | [];
+    // allBookmarksBar: BookmarkNode[] | [];
   }
 
-  let { allBookmarksBar }: Props = $props();
+  let {  }: Props = $props();
 
 </script>
 

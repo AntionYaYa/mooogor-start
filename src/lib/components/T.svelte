@@ -12,7 +12,7 @@
 	let { children,type='m',bold,nowrap,color,align}: Props = $props();
 </script>
 
-<p  class="{type} { bold?'bold':'' } {nowrap?'nowrap':''} " style="color: {color}; text-align: {align?'center':'left'}">
+<p  class="{type} { bold?'bold':'' } {nowrap?'nowrap':''} " style="color: {color}; text-align: {align==='c'?'center':'left'}">
 	{@render children()}
 </p>
 

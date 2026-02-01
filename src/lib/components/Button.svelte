@@ -1,20 +1,21 @@
 <script lang="ts">
 	import Icon from "./Icon.svelte";
-	import type {name} from "./Icon.svelte";
+	import type { name } from "./Icon.svelte";
 	import T from "./T.svelte";
 
 	interface Props {
 		// children: any;
 		text?: string;
 		iconName?: name;
+		mini?: boolean;
 		onclick?: (event: MouseEvent) => void;
 	}
-	let { text, iconName, onclick }: Props = $props();
+	let { text, iconName, mini, onclick }: Props = $props();
 </script>
 
 <button {onclick}>
 	{#if text}
-		<T type="m" bold>{text}</T>
+		<T type={mini ? "s" : "m"} bold={!mini}>{text}</T>
 	{:else}
 		<Icon name={iconName} color="var(--c-text)" />
 	{/if}

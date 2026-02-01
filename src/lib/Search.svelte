@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { fly, slide } from "svelte/transition";
-  import type { BookmarkNode, BookmarkSubType } from "../entrypoints/newtab/methods/getBookmarks";
+  import type {
+    BookmarkNode,
+    BookmarkSubType,
+  } from "../entrypoints/newtab/methods/getBookmarks";
 
   type ItemType = BookmarkSubType | "engine" | "todo";
 
@@ -40,11 +43,11 @@
   ];
 
   interface Props {
-    allBookmarksOther: BookmarkNode[];
-    allBookmarksBar: BookmarkNode[];
+    allBookmarksOthers: BookmarkNode[] | undefined;
+    allBookmarksBars: BookmarkNode[] | undefined;
   }
 
-  let { allBookmarksOther, allBookmarksBar }: Props = $props();
+  let { allBookmarksOthers, allBookmarksBars }: Props = $props();
 
   let searchItems: SearchItem[] = $state([]);
   let bookmarksresults: SearchItem[] = $state([]);
@@ -64,12 +67,16 @@
   });
 
   function initBookmarks() {
-    searchItems.push(
-      ...flattenBookmarksToSearchItems(allBookmarksBar, "bookmarks-bar"),
-    );
-    searchItems.push(
-      ...flattenBookmarksToSearchItems(allBookmarksOther, "other"),
-    );
+    if (allBookmarksBars) {
+      searchItems.push(
+        ...flattenBookmarksToSearchItems(allBookmarksBars, "bookmarks-bar"),
+      );
+    }
+    if (allBookmarksOthers) {
+      searchItems.push(
+        ...flattenBookmarksToSearchItems(allBookmarksOthers, "other"),
+      );
+    }
     // bookmarksresults = searchItems;
   }
 
@@ -134,36 +141,38 @@
   }
 
   function handleKeyDown(e: KeyboardEvent) {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    if (!searchEl || document.activeElement === searchEl) return;
+
     const key = e.key;
-    // 匹配 0-9、A-Z、a-z
+
     if (/^[0-9a-zA-Z]$/.test(key)) {
-      if (!searchEl || document.activeElement === searchEl) return;
       e.preventDefault();
-      inputValue = inputValue + key;
-      searchEl?.focus();
-      searchInput(inputValue);
-    }
-    if (key === "Backspace") {
-      if (!searchEl || document.activeElement === searchEl) return;
+      inputValue += key;
+    } else if (key === "Backspace") {
       e.preventDefault();
       inputValue = inputValue.slice(0, -1);
-      searchEl?.focus();
-      searchInput(inputValue);
+    } else {
+      return;
     }
 
-    if (key === "ArrowDown") {
-      console.log(key);
-    }
-    if (key === "ArrowUp") {
-      console.log(key);
-    }
-    if (key === "ArrowLeft") {
-      console.log(key);
-    }
-    if (key === "ArrowRight") {
-      console.log(key);
-    }
+    searchEl.focus();
+    searchInput(inputValue);
+
+    // if (key === "ArrowDown") {
+    //   console.log(key);
+    // }
+    // if (key === "ArrowUp") {
+    //   console.log(key);
+    // }
+    // if (key === "ArrowLeft") {
+    //   console.log(key);
+    // }
+    // if (key === "ArrowRight") {
+    //   console.log(key);
+    // }
   }
+
   function inputKey(e: KeyboardEvent) {
     const key = e.key;
     if (key === "Enter") {
@@ -219,7 +228,6 @@
       gap: var(--gap);
       width: 100%;
       box-sizing: border-box;
-      z-index: 1;
     }
 
     .input_group:has(input:focus) {
@@ -331,7 +339,7 @@
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
-    max-height: calc(100vh - 100px);
+    max-height: calc(100vh - 110px);
     overflow-y: auto;
   }
 </style>

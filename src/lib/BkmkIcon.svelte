@@ -1,55 +1,76 @@
 <script lang="ts">
-  import { getFavicon } from "../lib/DB/DB";
-  import type { Favicon } from "../lib/DB/DB";
-
   type Size = "l" | "s";
+  import folder from '../assets/folder.svg'
   interface Props {
-    imgUrl: string;
+    imgUrl?: string;
     alt: string;
     size?: Size;
   }
   let { imgUrl, size = "l", alt }: Props = $props();
 
-  onMount(async () => {
-    const loaclFavicon: Favicon = await getFavicon(new URL(imgUrl).hostname);
-    if (loaclFavicon && loaclFavicon.faviconUrl) {
-      imgUrl = loaclFavicon.faviconUrl;
-      return;
-    }
-    if (loaclFavicon) {
-      imgUrl = `https://icons.duckduckgo.com/ip3/${loaclFavicon.domain}.ico`;
-      return;
-    }
-    imgUrl = `https://www.google.com/s2/favicons?sz=40&domain_url=${imgUrl}`;
-  });
+  // onMount(async () => {
+  //   // const loaclFavicon: Favicon = await getFavicon(new URL(imgUrl).hostname);
+  //   // if (loaclFavicon && loaclFavicon.faviconUrl) {
+  //   //   imgUrl = loaclFavicon.faviconUrl;
+  //   //   return;
+  //   // }
+  //   // if (loaclFavicon) {
+  //   //   imgUrl = `https://icons.duckduckgo.com/ip3/${loaclFavicon.domain}.ico`;
+  //   //   return;
+  //   // }
+  // });
+
+  // const googleIcon = `https://www.google.com/s2/favicons?sz=40&domain_url=${imgUrl}`;
+
+  // function getUrl(): string {
+  //   return `https://www.google.com/s2/favicons?sz=40&domain_url=${imgUrl}`;
+  // }
+
 </script>
 
 <div class={size}>
-  <img src={imgUrl} {alt} draggable="false" />
+  {#if imgUrl}
+    <img  src={`https://www.google.com/s2/favicons?sz=40&domain_url=${imgUrl}`} {alt} draggable="false" />
+  {:else}
+  <img src={folder} {alt} draggable="false" />
+  {/if}
 </div>
 
 <style>
   .l {
     width: 40px;
+    min-width: 40px;
     height: 40px;
+    min-height: 40px;
+    border-radius: var(--r1);
   }
   .s {
     width: 20px;
+    min-width: 20px;
     height: 20px;
+    min-height: 20px;
+    border-radius: var(--r1);
+  }
+  .l img{
+    border-radius: var(--r);
+  }
+  .s img{
+    border-radius: 2px;
   }
   div {
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: row;
-    border-radius: var(--r);
-    /* background-color: var(--c-bg); */
+    background-color: var(--c-bg1);
     overflow: hidden;
+    padding: var(--gap);
   }
   img {
     display: flex;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    
   }
 </style>

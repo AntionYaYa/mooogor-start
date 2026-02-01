@@ -4,12 +4,13 @@
 	interface Props {
 		children: any;
 		vertical?: boolean;
+		full?: boolean;
 		align?: Align
 	}
-	let { children, vertical,align }: Props = $props();
+	let { children, vertical,full,align }: Props = $props();
 </script>
 
-<div class="{vertical?'vertical':''} {align}">
+<div class="{vertical?'vertical':''} {align} {full?'full':''}">
 	{@render children()}
 </div>
 
@@ -34,5 +35,9 @@
 		justify-content: flex-end;
 		align-content: flex-end;
 		align-items: flex-end;
+	}
+	.full{
+		width: 100%;
+		box-sizing: border-box;
 	}
 </style>
