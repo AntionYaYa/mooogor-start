@@ -4,11 +4,13 @@
   import { flip } from "svelte/animate";
   import { dndzone } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
+    import Favicon from "./Favicon.svelte";
 
   export interface PinnedItem {
     id: string;
     order: number;
     title?: string;
+    iconUrl?: string;
     url?: string;
   }
 
@@ -63,7 +65,8 @@
 
 {#snippet tembkmk(pinned: PinnedItem)}
   <span class= "bkmk_v">
-    <BkmkIcon imgUrl={pinned.url?pinned.url:''} alt={pinned.title?pinned.title:''} />
+    <!-- <img src="https://www.google.com/s2/favicons?sz=40&domain_url={pinned.url}" alt={pinned.title}> -->
+    <Favicon imgUrl={pinned.iconUrl}  alt={pinned.title}/>
     <T nowrap align="c" type="s">{pinned.title}</T>
   </span>
 {/snippet}

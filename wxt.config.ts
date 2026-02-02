@@ -18,7 +18,7 @@ export default defineConfig({
       "history"
     ],
     permissions: [
-      "webNavigation",
+      "favicon",
     ],
   },
 });

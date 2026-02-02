@@ -53,9 +53,79 @@
     }
   }
 
+
   function initPinneds() {
     allPinneds = [
-      { id: "1", order: 1, title: "nihao", url: "https://www.baidu.com" },
+      {
+        id: "1",
+        order: 1,
+        title: "谷歌",
+        url: "https://www.google.com",
+        iconUrl: "https://www.google.com/favicon.ico",
+      },
+      {
+        id: "2",
+        order: 2,
+        title: "YouTube",
+        url: "https://www.youtube.com",
+        iconUrl: "https://www.youtube.com/favicon.ico",
+      },
+      {
+        id: "3",
+        order: 3,
+        title: "GitHub",
+        url: "https://github.com",
+        iconUrl: "https://github.com/favicon.ico",
+      },
+      {
+        id: "4",
+        order: 4,
+        title: "ChatGPT",
+        url: "https://chat.openai.com",
+        iconUrl: "https://chat.openai.com/favicon.ico",
+      },
+      {
+        id: "5",
+        order: 5,
+        title: "Bilibili",
+        url: "https://www.bilibili.com",
+        iconUrl: "https://www.bilibili.com/favicon.ico",
+      },
+      {
+        id: "6",
+        order: 6,
+        title: "知乎",
+        url: "https://www.zhihu.com",
+        iconUrl: "https://www.zhihu.com/favicon.ico",
+      },
+      {
+        id: "7",
+        order: 7,
+        title: "Twitter / X",
+        url: "https://x.com",
+        iconUrl: "https://abs.twimg.com/favicons/twitter.ico",
+      },
+      {
+        id: "8",
+        order: 8,
+        title: "掘金",
+        url: "https://juejin.cn",
+        iconUrl: "https://juejin.cn/favicon.ico",
+      },
+      {
+        id: "9",
+        order: 9,
+        title: "StackOverflow",
+        url: "https://stackoverflow.com",
+        iconUrl: "https://stackoverflow.com/favicon.ico",
+      },
+      {
+        id: "10",
+        order: 10,
+        title: "淘宝",
+        url: "https://www.taobao.com",
+        iconUrl: "https://www.taobao.com/favicon.ico",
+      },
     ];
   }
 
@@ -92,7 +162,6 @@
       historyPermission = await requestPermission(permission);
     }
   }
-
 
   function clickTab(tab: TabItem, i: number) {
     if (tab.sel && historyStack.length === 2) {

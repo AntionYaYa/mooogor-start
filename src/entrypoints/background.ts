@@ -1,19 +1,36 @@
-import { addFavicon } from "../lib/DB/DB";
+import { addFavicon, getFavicon, updateFavicon } from "../lib/DB/DB";
 import type { Favicon } from "../lib/DB/DB";
+import { onMessage } from "webext-bridge/background";
 
 export default defineBackground(() => {
-  // browser.webNavigation.onCompleted.addListener(async (activeInfo) => {
-  //   const tab = await browser.tabs.get(activeInfo.tabId);
-  //   console.log(tab)
-  //   if (!tab || !tab.url) return;
-  //   const newFavicon: Favicon = {
-  //     domain: new URL(tab.url).hostname,
-  //     faviconUrl: tab.favIconUrl ?? '',
-  //     lastUpdated: Date.now()
-  //   }
-  //   await addFavicon(newFavicon)
-  // });
+  onMessage("saveFavicon", onFavicon);
 });
+
+
+async function onFavicon({ data }: { data: any }) {
+  const getLoaclFavicon = await getFavicon(data.domain)
+  const blob: Blob = await urlToBlob(data.faviconUrl)
+  const newFavicon: Favicon = {
+    domain: data.domain,
+    faviconUrl: data.faviconUrl,
+    blob: blob,
+    lastUpdated: Date.now()
+  }
+
+  if (getLoaclFavicon) {
+   await updateFavicon(getLoaclFavicon.domain, newFavicon)
+  } else {
+    await addFavicon(newFavicon)
+  }
+}
+
+
+async function urlToBlob(url: string): Promise<Blob> {
+  const response = await fetch(url, { mode: "cors" });
+  if (!response.ok) throw new Error(`Failed to fetch ${url}: ${response.status}`);
+  const blob = await response.blob();
+  return blob;
+}
 
 
 

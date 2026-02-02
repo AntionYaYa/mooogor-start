@@ -1,6 +1,10 @@
 <script lang="ts">
+  import folder from "../assets/folder.svg";
+
+  import { addFavicon, getFavicon, updateFavicon } from "../lib/DB/DB";
+  import type { Favicon } from "../lib/DB/DB";
+
   type Size = "l" | "s";
-  import folder from '../assets/folder.svg'
   interface Props {
     imgUrl?: string;
     alt: string;
@@ -8,31 +12,29 @@
   }
   let { imgUrl, size = "l", alt }: Props = $props();
 
-  // onMount(async () => {
-  //   // const loaclFavicon: Favicon = await getFavicon(new URL(imgUrl).hostname);
-  //   // if (loaclFavicon && loaclFavicon.faviconUrl) {
-  //   //   imgUrl = loaclFavicon.faviconUrl;
-  //   //   return;
-  //   // }
-  //   // if (loaclFavicon) {
-  //   //   imgUrl = `https://icons.duckduckgo.com/ip3/${loaclFavicon.domain}.ico`;
-  //   //   return;
-  //   // }
-  // });
+ 
+  function getChromeFavicon(url: string, size: number = 128): string {
+    return `chrome-extension://${browser.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(url)}&size=${size}`;
+  }
 
-  // const googleIcon = `https://www.google.com/s2/favicons?sz=40&domain_url=${imgUrl}`;
-
-  // function getUrl(): string {
-  //   return `https://www.google.com/s2/favicons?sz=40&domain_url=${imgUrl}`;
-  // }
-
+  async function getLoaclFavicon(): Promise<Blob | undefined> {
+    const domain = imgUrl ? new URL(imgUrl).origin : "";
+    const favicon = await getFavicon(domain);
+    return favicon?favicon.blob:undefined
+  }
 </script>
 
 <div class={size}>
   {#if imgUrl}
-    <img  src={`https://www.google.com/s2/favicons?sz=40&domain_url=${imgUrl}`} {alt} draggable="false" />
+    {#await getLoaclFavicon() then localFavicon}
+      {#if localFavicon}
+        <img src={URL.createObjectURL(localFavicon)} alt={alt} draggable="false" />
+      {:else}
+        <img src={getChromeFavicon(imgUrl)} alt={alt} draggable="false" />
+      {/if}
+    {/await}
   {:else}
-  <img src={folder} {alt} draggable="false" />
+    <img src={folder} alt={alt} draggable="false" />
   {/if}
 </div>
 
@@ -51,10 +53,10 @@
     min-height: 20px;
     border-radius: var(--r1);
   }
-  .l img{
+  .l img {
     border-radius: var(--r);
   }
-  .s img{
+  .s img {
     border-radius: 2px;
   }
   div {
@@ -71,6 +73,5 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    
   }
 </style>
