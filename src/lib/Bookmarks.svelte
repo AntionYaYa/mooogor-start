@@ -42,7 +42,7 @@
         </a>
       {:else}
         <button onclick={(e) => clickFolder(e, bkmk)} class="full-row">
-          <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" />
+          <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" folderIcon/>
           <T nowrap type="m">{bkmk.title}</T>
         </button>
       {/if}
@@ -53,7 +53,7 @@
         </a>
       {:else}
         <button onclick={(e) => clickFolder(e, bkmk)}>
-          <BkmkIcon imgUrl={bkmk.url!} alt={bkmk.title} />
+          <BkmkIcon imgUrl={bkmk.url!} alt={bkmk.title} folderIcon/>
         </button>
       {/if}
       <T nowrap align="c" type="s">{bkmk.title}</T>

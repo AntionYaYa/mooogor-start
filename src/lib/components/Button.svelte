@@ -17,7 +17,7 @@
 	{#if text}
 		<T type={mini ? "s" : "m"} bold={!mini}>{text}</T>
 	{:else}
-		<Icon name={iconName} color="var(--c-text)" />
+		<Icon name={iconName} color="var(--c-text)" size={mini?16:20}/>
 	{/if}
 </button>
 

@@ -4,24 +4,20 @@
   import { flip } from "svelte/animate";
   import { dndzone } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
-    import Favicon from "./Favicon.svelte";
-
-  export interface PinnedItem {
-    id: string;
-    order: number;
-    title?: string;
-    iconUrl?: string;
-    url?: string;
-  }
+  import Favicon from "./Favicon.svelte";
+  import type { WebSite } from "@/lib/DB/DB";
+  import Button from "./components/Button.svelte";
+    import AddPinned from "./AddPinned.svelte";
 
   interface Props {
-    allPinneds: PinnedItem[] | [];
-    ondrag:(items:PinnedItem[] )=>void
-    ondragend:(items:PinnedItem[] )=>void
+    allPinneds: WebSite[] | [];
+    ondrag: (items: WebSite[]) => void;
+    ondragend: (items: WebSite[]) => void;
   }
 
-  let { allPinneds,ondrag,ondragend }: Props = $props();
+  let { allPinneds, ondrag, ondragend }: Props = $props();
   let isdarging = $state(false);
+  let showAdd = $state(false);
 
   function draggedel(el: HTMLElement | undefined) {
     if (!el) return;
@@ -30,16 +26,16 @@
     el.style.borderRadius = "var(--r)";
   }
 
-  function handleConsider(e: CustomEvent<DndEvent<PinnedItem>>) {
+  function handleConsider(e: CustomEvent<DndEvent<WebSite>>) {
     isdarging = true;
     const items = e.detail.items;
-    ondrag(items)
+    ondrag(items);
   }
 
-  function handleFinalize(e: CustomEvent<DndEvent<PinnedItem>>) {
+  function handleFinalize(e: CustomEvent<DndEvent<WebSite>>) {
     isdarging = false;
     const items = e.detail.items;
-    ondragend(items)
+    ondragend(items);
   }
 </script>
 
@@ -54,7 +50,7 @@
   onconsider={handleConsider}
   onfinalize={handleFinalize}
 >
-  {#each allPinneds as pinned (pinned.id)}
+  {#each allPinneds as pinned (pinned.domain)}
     <div class="item" animate:flip={{ duration: 200 }}>
       <a href={pinned.url} target="_self">
         {@render tembkmk(pinned)}
@@ -62,16 +58,22 @@
     </div>
   {/each}
 </div>
+{@render temAddPinned()}
 
-{#snippet tembkmk(pinned: PinnedItem)}
-  <span class= "bkmk_v">
-    <!-- <img src="https://www.google.com/s2/favicons?sz=40&domain_url={pinned.url}" alt={pinned.title}> -->
-    <Favicon imgUrl={pinned.iconUrl}  alt={pinned.title}/>
+{#if showAdd}
+  <AddPinned ondSave={()=>{}}/>
+{/if}
+
+{#snippet temAddPinned()}
+  <Button text="Add" onclick={()=>showAdd=true}/>
+{/snippet}
+
+{#snippet tembkmk(pinned: WebSite)}
+  <span class="bkmk_v">
+    <Favicon imgUrl={pinned.url} alt={pinned.title} />
     <T nowrap align="c" type="s">{pinned.title}</T>
   </span>
 {/snippet}
-
-
 
 <style>
   .item {

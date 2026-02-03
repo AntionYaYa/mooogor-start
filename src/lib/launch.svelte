@@ -9,11 +9,11 @@
   import type { BookmarkNode } from "../entrypoints/newtab/methods/getBookmarks";
   import History from "@/lib/History.svelte";
   import Pinneds from "@/lib/Pinneds.svelte";
-  import type { PinnedItem } from "@/lib/Pinneds.svelte";
+  import type { WebSite } from "@/lib/DB/DB";
   import { fly } from "svelte/transition";
 
   interface Props {
-    allPinneds: PinnedItem[];
+    allPinneds: WebSite[];
     bookmarksPermission: boolean;
     onclickGetPms: (permission: Permission) => void;
     allBookmarksTree: BookmarkNode | undefined;
@@ -97,10 +97,10 @@
     currentNode = historyStack[historyStack.length - 1];
   }
 
-  function dragPinned(items: PinnedItem[]) {
+  function dragPinned(items: WebSite[]) {
     allPinneds = items;
   }
-  function dragPinnedEnd(items: PinnedItem[]) {
+  function dragPinnedEnd(items: WebSite[]) {
     allPinneds = items;
   }
 </script>

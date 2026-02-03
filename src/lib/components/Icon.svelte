@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { SquareDashed, Settings2 } from "@lucide/svelte";
-	export type name = "Loading" | "SquareDashed" | "Settings2";
+	import { SquareDashed, Settings2,X } from "@lucide/svelte";
+	export type name = "Loading" | "SquareDashed" | "Settings2"|'X';
 
 	interface Props {
 		name?: name;
@@ -18,6 +18,9 @@
 	{/if}
 	{#if name === "Settings2"}
 		<Settings2 {size} {strokeWidth} />
+	{/if}
+	{#if name === "X"}
+		<X {size} {strokeWidth} />
 	{/if}
 	{#if name === "Loading"}
 		<svg width="20" height="20" viewBox="0 0 20 20">

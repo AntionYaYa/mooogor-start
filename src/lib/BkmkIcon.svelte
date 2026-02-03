@@ -9,10 +9,10 @@
     imgUrl?: string;
     alt: string;
     size?: Size;
+    folderIcon?: boolean;
   }
-  let { imgUrl, size = "l", alt }: Props = $props();
+  let { imgUrl, size = "l", alt, folderIcon }: Props = $props();
 
- 
   function getChromeFavicon(url: string, size: number = 128): string {
     return `chrome-extension://${browser.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(url)}&size=${size}`;
   }
@@ -20,21 +20,21 @@
   async function getLoaclFavicon(): Promise<Blob | undefined> {
     const domain = imgUrl ? new URL(imgUrl).origin : "";
     const favicon = await getFavicon(domain);
-    return favicon?favicon.blob:undefined
+    return favicon ? favicon.blob : undefined;
   }
 </script>
 
 <div class={size}>
-  {#if imgUrl}
+  {#if folderIcon}
+    <img src={folder} {alt} draggable="false" />
+  {:else if imgUrl}
     {#await getLoaclFavicon() then localFavicon}
       {#if localFavicon}
-        <img src={URL.createObjectURL(localFavicon)} alt={alt} draggable="false" />
+        <img src={URL.createObjectURL(localFavicon)} {alt} draggable="false" />
       {:else}
-        <img src={getChromeFavicon(imgUrl)} alt={alt} draggable="false" />
+        <img src={getChromeFavicon(imgUrl)} {alt} draggable="false" />
       {/if}
     {/await}
-  {:else}
-    <img src={folder} alt={alt} draggable="false" />
   {/if}
 </div>
 
@@ -73,5 +73,6 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    pointer-events: none;
   }
 </style>

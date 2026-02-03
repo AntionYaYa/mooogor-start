@@ -1,52 +1,67 @@
 import Dexie from "dexie";
+import type { EntityTable } from "dexie";
 
 export interface Favicon {
   domain: string;
   faviconUrl: string;
   blob?: Blob;
-  lastUpdated: number;
+  lastUpdated?: number;
 }
 
-export class DB extends Dexie {
-  favicons!: Dexie.Table<Favicon, string>;
-
-  constructor() {
-    super("MooogorDB");
-    this.version(1).stores({
-      favicons: "domain,lastUpdated"
-    });
-  }
+export interface WebSite {
+  domain: string;
+  url: string;
+  title?: string;
+  createAt?: number;
+  updateAt?: number;
 }
 
-export const db = new DB();
+const db = new Dexie('Mooogor') as Dexie & {
+  favicons: EntityTable<Favicon, 'domain'>;
+  webSits: EntityTable<WebSite, 'domain'>;
+};
+
+db.version(1).stores({
+  favicons: 'domain',
+  webSits: 'domain',
+});
 
 
-// 增：插入或覆盖
+export { db };
+
+
+// Favicon
 export async function addFavicon(favicon: Favicon) {
-  return await db.favicons.put(favicon);
+  const newFavicon = { ...favicon, lastUpdated: Date.now() }
+  return await db.favicons.add(newFavicon);
 }
 
-// 删：按 domain 删除
-export async function deleteFavicon(domain: string) {
-  return await db.favicons.delete(domain);
+export async function updateFavicon(favicon: Favicon) {
+  const newFavicon = { ...favicon, lastUpdated: Date.now() }
+  return await db.favicons.update(favicon.domain, newFavicon);
 }
 
-// 改：更新已存在 favicon（仅更新部分字段）
-export async function updateFavicon(domain: string, data: Partial<Favicon>) {
-  return await db.favicons.update(domain, { ...data, lastUpdated: Date.now() });
-}
-
-// 查：按 domain 获取
 export async function getFavicon(domain: string) {
   return await db.favicons.get(domain);
 }
 
-// 查：获取所有 favicon
-export async function getAllFavicons() {
-  return await db.favicons.toArray();
+
+// WebSite
+export async function addWebSite(webSite: WebSite) {
+  const newWebSite = { ...webSite, createAt: Date.now(), updateAt: Date.now() }
+  return await db.webSits.add(newWebSite);
 }
 
-// 查：按更新时间排序获取最近 N 条
-export async function getRecentFavicons(limit = 10) {
-  return await db.favicons.orderBy("lastUpdated").reverse().limit(limit).toArray();
+export async function deleteWebSite(domain: string) {
+  return await db.webSits.delete(domain);
+}
+
+export async function updateWebSite(webSite: WebSite) {
+  const newWebSite = { ...webSite, updateAt: Date.now() }
+  return await db.favicons.update(webSite.domain, newWebSite);
+}
+
+
+export async function getAllWebSite():Promise<WebSite[]|[]> {
+  return await db.webSits.toArray();
 }

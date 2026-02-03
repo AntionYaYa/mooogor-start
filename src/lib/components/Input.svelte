@@ -1,0 +1,38 @@
+<script lang="ts">
+	import Icon from "./Icon.svelte";
+	import type { name } from "./Icon.svelte";
+	import T from "./T.svelte";
+
+	interface Props {
+		// children: any;
+		text?: string;
+		iconName?: name;
+		mini?: boolean;
+		onclick?: (event: MouseEvent) => void;
+	}
+	let { text, iconName, mini, onclick }: Props = $props();
+</script>
+
+<button {onclick}>
+	{#if text}
+		<T type={mini ? "s" : "m"} bold={!mini}>{text}</T>
+	{:else}
+		<Icon name={iconName} color="var(--c-text)" size={mini?16:20}/>
+	{/if}
+</button>
+
+<style>
+	button {
+		display: flex;
+		border: none;
+		background-color: unset;
+		color: var(--c-text);
+		padding: var(--gap);
+		border-radius: var(--r);
+	}
+	button:active {
+		background-color: var(--c-mask);
+		transform: translateY(2px);
+		transition: all 0.1s ease-out;
+	}
+</style>

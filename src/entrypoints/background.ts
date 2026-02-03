@@ -9,23 +9,23 @@ export default defineBackground(() => {
 
 async function onFavicon({ data }: { data: any }) {
   const getLoaclFavicon = await getFavicon(data.domain)
-  const blob: Blob = await urlToBlob(data.faviconUrl)
+  const blob: Blob|undefined = await urlToBlob(data.faviconUrl)
   const newFavicon: Favicon = {
     domain: data.domain,
     faviconUrl: data.faviconUrl,
-    blob: blob,
-    lastUpdated: Date.now()
+    blob: blob
   }
 
   if (getLoaclFavicon) {
-   await updateFavicon(getLoaclFavicon.domain, newFavicon)
+   await updateFavicon(newFavicon)
   } else {
     await addFavicon(newFavicon)
   }
 }
 
 
-async function urlToBlob(url: string): Promise<Blob> {
+async function urlToBlob(url: string): Promise<Blob|undefined> {
+  if (!url) return undefined
   const response = await fetch(url, { mode: "cors" });
   if (!response.ok) throw new Error(`Failed to fetch ${url}: ${response.status}`);
   const blob = await response.blob();

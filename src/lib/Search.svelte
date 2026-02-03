@@ -59,7 +59,7 @@
   $inspect(searchItems);
 
   onMount(async () => {
-    document.addEventListener("click", handleDocumentClick);
+    // document.addEventListener("click", handleDocumentClick);
   });
 
   function handleDocumentClick() {
