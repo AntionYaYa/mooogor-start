@@ -11,15 +11,18 @@
 		onclick?: (event: MouseEvent) => void;
 	}
 	let { text, iconName, mini, onclick }: Props = $props();
+
 </script>
 
-<button {onclick}>
-	{#if text}
-		<T type={mini ? "s" : "m"} bold={!mini}>{text}</T>
-	{:else}
-		<Icon name={iconName} color="var(--c-text)" size={mini?16:20}/>
-	{/if}
-</button>
+<div class="input_g">
+    <input
+      class="input"
+      name="title"
+      bind:value={inputTitleValue}
+      placeholder="名称"
+    />
+    <Button iconName="X" mini />
+  </div>
 
 <style>
 	button {
