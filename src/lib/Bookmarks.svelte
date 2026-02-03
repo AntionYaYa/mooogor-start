@@ -2,77 +2,31 @@
   import BkmkIcon from "./BkmkIcon.svelte";
   import T from "./components/T.svelte";
   import type { BookmarkNode } from "../entrypoints/newtab/methods/getBookmarks";
-  import { moveBookmark } from "../entrypoints/newtab/methods/getBookmarks";
-  import { flip } from "svelte/animate";
-  import { dndzone } from "svelte-dnd-action";
-  import type { DndEvent } from "svelte-dnd-action";
 
   interface Props {
     bookmarkNode: BookmarkNode;
     list?: boolean;
-    dragDisabled: boolean;
     onclickFolder: (bkmk: BookmarkNode) => void;
+    ondragstart?: (bkmk: BookmarkNode) => void;
   }
 
-  let { bookmarkNode, list, dragDisabled,onclickFolder }: Props = $props();
-
-  let bookmarks: BookmarkNode[] = $state([]);
-  let isdarging: boolean = $state(false);
-
-  // 当 bookmarkNode 变化时同步 children
-  $effect(() => {
-    bookmarks = bookmarkNode.children ? [...bookmarkNode.children] : [];
-  });
+  let { bookmarkNode, list,onclickFolder,ondragstart }: Props = $props();
+  
   function clickFolder(e: Event, bkmk: BookmarkNode) {
     e.preventDefault();
     onclickFolder(bkmk);
   }
 
-  function handleConsider(e: CustomEvent<DndEvent<BookmarkNode>>) {
-    isdarging = true;
-    const items = e.detail.items;
-    bookmarks = items;
-  }
-
-  function handleFinalize(e: CustomEvent<DndEvent<BookmarkNode>>) {
-    isdarging = false;
-    bookmarks = e.detail.items;
-    const dragedBkmk = bookmarks.find((item) => item.id === e.detail.info.id);
-    if (!dragedBkmk) return;
-    const parentId = dragedBkmk.parentId;
-    if (!parentId) return;
-    saveMoveToBrowser(parentId);
-  }
-
-  async function saveMoveToBrowser(parentId: string) {
-    for (let i = 0; i < bookmarks.length; i++) {
-      const b = bookmarks[i];
-      await moveBookmark(b.id, parentId, i);
-    }
-  }
-
-  function draggedel(el: HTMLElement | undefined) {
-    if (!el) return;
-    // 1. 获取当前元素的实际渲染尺寸
-    el.style.backgroundColor = "var(--c-bg1)";
-    el.style.borderRadius = "var(--r)";
+  function dragStart(e: Event, bkmk: BookmarkNode) {
+    e.preventDefault();
+    ondragstart?.(bkmk);
   }
 </script>
 
-<div
-  class="content {list ? 'list' : 'grid'} {isdarging ? 'drag' : ''}"
-  use:dndzone={{
-    items: bookmarks,
-    flipDurationMs: 200,
-    dragDisabled: dragDisabled,
-    dropTargetStyle: {},
-    transformDraggedElement: (e) => draggedel(e),
-  }}
-  onconsider={handleConsider}
-  onfinalize={handleFinalize}
->
-  {#each bookmarks as bkmk (bkmk.id)}
-    <div class="item" animate:flip={{ duration: 200 }}>
+<div class="content {list ? 'list' : 'grid'}">
+  {#each bookmarkNode.children ?? [] as bkmk (bkmk.id)}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="item" draggable="true" ondragstart={(e) => dragStart(e, bkmk)}>
       {@render tembkmkWrapper(bkmk)}
     </div>
   {/each}
@@ -148,9 +102,6 @@
     box-sizing: border-box;
     border-radius: var(--r1);
   }
-  .drag {
-    outline: var(--c-mask) 2px dashed;
-  }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -168,7 +119,7 @@
     height: auto;
     padding: 0;
     margin: 0;
-    border-radius: var(--r);
+    border-radius: var(--r1);
   }
 
   button {
@@ -178,7 +129,7 @@
     height: auto;
     padding: 0;
     margin: 0;
-    border-radius: var(--r);
+    border-radius: var(--r1);
   }
 
   a:active,

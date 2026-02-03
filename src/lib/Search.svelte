@@ -5,6 +5,7 @@
     BookmarkNode,
     BookmarkSubType,
   } from "../entrypoints/newtab/methods/getBookmarks";
+    import Button from "./components/Button.svelte";
 
   type ItemType = BookmarkSubType | "engine" | "todo";
 
@@ -43,11 +44,10 @@
   ];
 
   interface Props {
-    allBookmarksOthers: BookmarkNode[] | undefined;
-    allBookmarksBars: BookmarkNode[] | undefined;
+    allBookmarksTree: BookmarkNode | undefined;
   }
 
-  let { allBookmarksOthers, allBookmarksBars }: Props = $props();
+  let { allBookmarksTree }: Props = $props();
 
   let searchItems: SearchItem[] = $state([]);
   let bookmarksresults: SearchItem[] = $state([]);
@@ -59,25 +59,30 @@
   $inspect(searchItems);
 
   onMount(async () => {
-    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("click", handleDocumentClick);
   });
 
+  function handleDocumentClick() {
+    searchEl?.focus();
+  }
+
   onDestroy(() => {
-    window.removeEventListener("keydown", handleKeyDown);
+    window.removeEventListener("click", handleDocumentClick);
   });
 
   function initBookmarks() {
-    if (allBookmarksBars) {
-      searchItems.push(
-        ...flattenBookmarksToSearchItems(allBookmarksBars, "bookmarks-bar"),
-      );
+    searchItems = [];
+    if (!allBookmarksTree?.children) return;
+
+    const rootChildren = allBookmarksTree.children;
+
+    for (const root of rootChildren) {
+      if (root.children && root.folderType) {
+        searchItems.push(
+          ...flattenBookmarksToSearchItems(root.children, root.folderType),
+        );
+      }
     }
-    if (allBookmarksOthers) {
-      searchItems.push(
-        ...flattenBookmarksToSearchItems(allBookmarksOthers, "other"),
-      );
-    }
-    // bookmarksresults = searchItems;
   }
 
   async function getSearchKey() {
@@ -97,13 +102,14 @@
       if (node.url) {
         result.push({
           id: node.id,
-          type,
+          type, // 继承上级 type
           title: node.title,
           url: node.url,
           folderPath: path,
         });
       } else if (node.children) {
         const newPath = path ? `${path}/${node.title}` : node.title;
+        // 递归时 type 不变
         result = result.concat(
           flattenBookmarksToSearchItems(node.children, type, newPath),
         );
@@ -130,51 +136,45 @@
         item.folderPath?.toLowerCase().includes(lowerQuery) ?? false;
       return titleMatch || pathMatch;
     });
-
-    // 可选：按最近访问或类型排序
-    // results.sort((a, b) => {
-    //   if (a.type !== b.type) return a.type.localeCompare(b.type);
-    //   return (b.lastVisited ?? 0) - (a.lastVisited ?? 0);
-    // });
-
     return results;
   }
 
-  function handleKeyDown(e: KeyboardEvent) {
-    if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
-    if (!searchEl || document.activeElement === searchEl) return;
+  // function handleKeyDown(e: KeyboardEvent) {
+  //   if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  //   if (!searchEl || document.activeElement === searchEl) return;
 
-    const key = e.key;
+  //   const key = e.key;
 
-    if (/^[0-9a-zA-Z]$/.test(key)) {
-      e.preventDefault();
-      inputValue += key;
-    } else if (key === "Backspace") {
-      e.preventDefault();
-      inputValue = inputValue.slice(0, -1);
-    } else {
-      return;
-    }
+  //   if (/^[0-9a-zA-Z]$/.test(key)) {
+  //     e.preventDefault();
+  //     inputValue += key;
+  //   } else if (key === "Backspace") {
+  //     e.preventDefault();
+  //     inputValue = inputValue.slice(0, -1);
+  //   } else {
+  //     return;
+  //   }
 
-    searchEl.focus();
-    searchInput(inputValue);
+  //   searchEl.focus();
+  //   searchInput(inputValue);
 
-    // if (key === "ArrowDown") {
-    //   console.log(key);
-    // }
-    // if (key === "ArrowUp") {
-    //   console.log(key);
-    // }
-    // if (key === "ArrowLeft") {
-    //   console.log(key);
-    // }
-    // if (key === "ArrowRight") {
-    //   console.log(key);
-    // }
-  }
+  //   // if (key === "ArrowDown") {
+  //   //   console.log(key);
+  //   // }
+  //   // if (key === "ArrowUp") {
+  //   //   console.log(key);
+  //   // }
+  //   // if (key === "ArrowLeft") {
+  //   //   console.log(key);
+  //   // }
+  //   // if (key === "ArrowRight") {
+  //   //   console.log(key);
+  //   // }
+  // }
 
   function inputKey(e: KeyboardEvent) {
     const key = e.key;
+    console.log(key)
     if (key === "Enter") {
       e.preventDefault();
       console.dir(engineEls);
@@ -182,12 +182,26 @@
       first?.focus();
       first?.click();
     }
+
+    if (key === 'ArrowDown') {
+      if (bookmarksresults.length) {
+        console.log(e)
+      }
+    }
+    if (key === 'ArrowUp') {
+      console.log(e)
+    }
+  }
+
+  function clearInput() {
+    inputValue=''
+    searchInput(inputValue)
   }
 </script>
 
 <div class="search_g">
   {@render temInputGroup()}
-  {#if bookmarksresults.length > 0}
+  {#if bookmarksresults.length}
     <div class="list" transition:slide={{ duration: 200 }}>
       {#each bookmarksresults as bookmark}
         {@render temBkmk(bookmark)}
@@ -206,9 +220,13 @@
       placeholder="搜索 / 计算器 / 翻译"
       oninput={() => searchInput(inputValue)}
       onkeyup={inputKey}
-      onfocus={() => initBookmarks()}
-      onblur={() => (searchItems = [])}
+      onfocus={() => {
+        if (!searchItems.length) initBookmarks();
+      }}
     />
+    {#if inputValue.length}
+      <Button text='x' onclick={clearInput}/>
+    {/if}
     <div bind:this={engineEls} class="engines">
       {#each engines as engine}
         <a class="engine" href={engine.url?.replace("%s", inputValue)}>
@@ -231,7 +249,8 @@
     }
 
     .input_group:has(input:focus) {
-      outline: 2px solid var(--c-text);
+      /* outline: 2px solid var(--c-text); */
+      outline: none;
     }
     .input {
       color: var(--c-text);
