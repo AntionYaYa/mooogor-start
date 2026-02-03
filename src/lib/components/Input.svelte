@@ -1,41 +1,93 @@
 <script lang="ts">
-	import Icon from "./Icon.svelte";
-	import type { name } from "./Icon.svelte";
-	import T from "./T.svelte";
+	import { slide } from "svelte/transition";
+	import Button from "./Button.svelte";
 
 	interface Props {
-		// children: any;
-		text?: string;
-		iconName?: name;
-		mini?: boolean;
-		onclick?: (event: MouseEvent) => void;
+		name: string;
+		type: string;
+		value: string;
+		placeholder: string;
+		disabled?: boolean;
+		clearable?: boolean;
 	}
-	let { text, iconName, mini, onclick }: Props = $props();
 
+	let {
+		name,
+		type,
+		value = $bindable(""),
+		placeholder = "",
+		disabled = false,
+		clearable = true,
+	}: Props = $props();
+
+	function clearValue() {
+		value = "";
+	}
 </script>
 
 <div class="input_g">
-    <input
-      class="input"
-      name="title"
-      bind:value={inputTitleValue}
-      placeholder="名称"
-    />
-    <Button iconName="X" mini />
-  </div>
+	{#if value.length}
+		<h6 transition:slide={{ duration: 200 }}>{placeholder}</h6>
+	{/if}
+	<div class="input_v">
+		<input {type} {name} bind:value {placeholder} {disabled} />
+		{#if clearable && value}
+			<Button iconName="X" mini onclick={clearValue} />
+		{/if}
+	</div>
+</div>
 
 <style>
-	button {
+	.input_g {
 		display: flex;
-		border: none;
-		background-color: unset;
-		color: var(--c-text);
+		background-color: var(--c-bg1);
+		border-radius: var(--r1);
 		padding: var(--gap);
+		flex-direction: column;
+		width: 100%;
+		box-sizing: border-box;
+	}
+	.input_v {
+		display: flex;
+		align-items: center;
+		width: 100%;
+		box-sizing: border-box;
 		border-radius: var(--r);
 	}
-	button:active {
-		background-color: var(--c-mask);
-		transform: translateY(2px);
-		transition: all 0.1s ease-out;
+	.input_v:focus-within {
+		outline: var(--c-text) 1px solid;
+	}
+
+	h6 {
+		margin: 0;
+		padding: calc(var(--gap) / 2) var(--gap);
+		width: 100%;
+		border-radius: var(--r);
+		box-sizing: border-box;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		word-break: break-word;
+		color: var(--c-text-1);
+		font-size: var(--f-size-s);
+		font-weight: normal;
+	}
+
+	input {
+		color: var(--c-text);
+		font-size: var(--f-size-m);
+		background: none;
+		border: none;
+		padding: var(--gap);
+		width: 100%;
+		box-sizing: border-box;
+		height: 46px;
+	}
+
+	input::placeholder {
+		color: var(--c-text-2);
+	}
+
+	input:focus {
+		outline: none;
 	}
 </style>
