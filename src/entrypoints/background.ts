@@ -9,7 +9,7 @@ export default defineBackground(() => {
 
 async function onFavicon({ data }: { data: any }) {
   const domain = getDomainFromUrl(data.url)
-  const getLoaclFavicon = await getFavicon(data.url)
+  const getLoaclFavicon = await getFavicon(domain)
   const blob: Blob|undefined = await urlToBlob(data.faviconUrl)
   const newFavicon: Favicon = {
     domain: domain,

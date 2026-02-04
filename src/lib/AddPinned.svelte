@@ -11,14 +11,25 @@
   import Shake from "./components/Shake.svelte";
 
   interface Props {
-    ondSave: (newWebSite: WebSite) => void;
+    urlValue?:string;
+    titleValue?:string;
+    onSave: (newWebSite: WebSite) => void;
     onclickClose: () => void;
   }
 
-  let { ondSave, onclickClose }: Props = $props();
+  let {urlValue ,titleValue,onSave, onclickClose }: Props = $props();
   let inputUrlValue = $state("");
   let inputTitleValue = $state("");
   let inputUrlValueErr = $state(false);
+
+  onMount(()=>{
+    if (urlValue) {
+      inputUrlValue = urlValue
+    }
+    if (titleValue) {
+      inputTitleValue = titleValue
+    }
+  })
 
   function clickSave() {
     inputUrlValueErr = false;
@@ -28,7 +39,7 @@
         url: inputUrlValue,
         title: inputTitleValue.trim(),
       };
-      ondSave(newWebSite);
+      onSave(newWebSite);
       inputUrlValue = inputTitleValue = "";
       onclickClose();
     } else {
@@ -58,7 +69,7 @@
   </G>
   <G full>
     <G full>
-      <Button text="Save" fill onclick={clickSave} full />
+      <Button text="Save" fill onclick={clickSave} full alignT='c' />
     </G>
   </G>
 </Popup>

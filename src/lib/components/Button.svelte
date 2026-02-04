@@ -4,12 +4,14 @@
 	import type { name } from "./Icon.svelte";
 	import T from "./T.svelte";
 
+	type alignType = "c" | "r";
 	interface Props {
 		text?: string;
 		iconName?: name;
 		mini?: boolean;
 		fill?: boolean;
 		full?: boolean;
+		alignT?: alignType;
 		onclick?: (event: MouseEvent) => void;
 	}
 
@@ -20,6 +22,7 @@
 		fill = false,
 		full = false,
 		onclick,
+		alignT,
 	}: Props = $props();
 </script>
 
@@ -30,7 +33,7 @@
 				type={mini ? "s" : "m"}
 				bold={!mini}
 				color={fill ? "var(--c-bg)" : undefined}
-				align={full ? "c" : undefined}
+				align={alignT}
 			>
 				{text}
 			</T>

@@ -5,11 +5,11 @@
   import { dndzone } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
   import Favicon from "./Favicon.svelte";
-  import { addWebSite } from "@/lib/DB/DB";
+  import { saveWebSite,deleteWebSite } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import Button from "./components/Button.svelte";
   import AddPinned from "./AddPinned.svelte";
-    import ContextMenu from "./components/ContextMenu.svelte";
+  import LinkContextMenu from "./LinkContextMenu.svelte";
 
   interface Props {
     allPinneds: WebSite[] | [];
@@ -18,9 +18,25 @@
     onChange: () => void;
   }
 
-  let { allPinneds, ondrag, ondragend,onChange }: Props = $props();
+  let { allPinneds, ondrag, ondragend, onChange }: Props = $props();
   let isdarging = $state(false);
   let showAdd = $state(false);
+  let currentPinned: WebSite | undefined = $state();
+
+  let menuX = $state(0);
+  let menuY = $state(0);
+
+  let showMenu = $state(false);
+
+  function showContextMenu(e: MouseEvent, pinned: WebSite) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    currentPinned = pinned;
+    menuX = e.clientX;
+    menuY = e.clientY;
+    showMenu = true;
+  }
 
   function draggedel(el: HTMLElement | undefined) {
     if (!el) return;
@@ -42,26 +58,22 @@
   }
 
   async function clickSaveWebSite(newWebSite: WebSite) {
-    await addWebSite(newWebSite);
-    onChange()
+    await saveWebSite(newWebSite);
+    onChange();
   }
-
-  let menuX = $state(0);
-  let menuY = $state(0);
-
-  let showMenu = $state(false);
-  $inspect(menuX)
-  $inspect(menuY)
-
-  function showContextMenu(e: MouseEvent, pinned: WebSite) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    menuX = e.clientX;
-    menuY = e.clientY;
-    showMenu = true;
+  function clickEditWebSite() {
+      showAdd = true
+      showMenu =false
   }
+  async function clickDeleteWebSite() {
+    showMenu =false
+    if (currentPinned) {
+      await deleteWebSite(currentPinned.domain);
+    }
 
+    onChange();
+  }
+  
 </script>
 
 <div
@@ -82,7 +94,8 @@
         target="_self"
         oncontextmenu={(e) => showContextMenu(e, pinned)}
       >
-        {@render tembkmk(pinned)}
+        <BkmkIcon imgUrl={pinned.url} alt={pinned.title ?? ""} size="xl" />
+        <T nowrap align="c" type="s">{pinned.title}</T>
       </a>
     </div>
   {/each}
@@ -91,30 +104,27 @@
 
 {#if showAdd}
   <AddPinned
-    ondSave={clickSaveWebSite}
+    urlValue={currentPinned?.url}
+    titleValue={currentPinned?.title}
+    onSave={clickSaveWebSite}
     onclickClose={() => (showAdd = false)}
   />
 {/if}
 
-{#if showMenu}
-  <ContextMenu x={menuX} y={menuY} onClose={()=>showMenu=false}>
-    <Button text="Add" onclick={() => (showAdd = true,showMenu=false)} />
-    <Button text="Add" onclick={() => (showAdd = true)} />
-    <Button text="Add" onclick={() => (showAdd = true)} />
-    <Button text="Add" onclick={() => (showAdd = true)} />
-  </ContextMenu>
+{#if showMenu && currentPinned}
+  <LinkContextMenu
+    x={menuX}
+    y={menuY}
+    url={currentPinned.url}
+    onClose={() => (showMenu = false)}
+  >
+    <Button full text="编辑" onclick={clickEditWebSite} />
+    <Button full text="删除" onclick={clickDeleteWebSite} />
+  </LinkContextMenu>
 {/if}
 
 {#snippet temAddPinned()}
-  <Button text="Add" onclick={() => (showAdd = true)} />
-{/snippet}
-
-{#snippet tembkmk(pinned: WebSite)}
-  <span class="bkmk_v">
-    <!-- <Favicon imgUrl={pinned.url} alt={pinned.title} /> -->
-    <BkmkIcon imgUrl={pinned.url} alt={pinned.title ?? ""} />
-    <T nowrap align="c" type="s">{pinned.title}</T>
-  </span>
+  <Button iconName="Plus" onclick={() => (showAdd = true)} />
 {/snippet}
 
 <style>
@@ -122,18 +132,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    box-sizing: border-box;
-    border-radius: var(--r);
-  }
-  .bkmk_v {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-items: center;
-    gap: var(--gap);
-    padding: var(--gap);
-    width: 100%;
-    height: 100%;
     box-sizing: border-box;
     border-radius: var(--r);
   }
@@ -157,9 +155,13 @@
     cursor: default;
     width: 100%;
     height: 100%;
-    padding: 0;
     margin: 0;
     border-radius: var(--r);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--gap);
+    padding: var(--gap);
   }
 
   a:active {

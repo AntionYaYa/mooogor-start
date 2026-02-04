@@ -1,10 +1,11 @@
 <script lang="ts">
   import folder from "../assets/folder.svg";
 
-  import { addFavicon, getFavicon, getDomainFromUrl } from "../lib/DB/DB";
-  import type { Favicon } from "../lib/DB/DB";
+  import {  getFavicon, getDomainFromUrl } from "../lib/DB/DB";
 
-  type Size = "l" | "s";
+
+  type Size = "xl" | "l" | "s";
+
   interface Props {
     imgUrl?: string;
     alt: string;
@@ -22,8 +23,6 @@
     const favicon = await getFavicon(domain);
     return favicon ? favicon.blob : undefined;
   }
-
-
 </script>
 
 <div class={size}>
@@ -41,12 +40,20 @@
 </div>
 
 <style>
+  .xl {
+    width: 50px;
+    min-width: 50px;
+    height: 50px;
+    min-height: 50px;
+    border-radius: var(--r1);
+  }
   .l {
     width: 40px;
     min-width: 40px;
     height: 40px;
     min-height: 40px;
     border-radius: var(--r1);
+    padding: var(--gap);
   }
   .s {
     width: 20px;
@@ -54,6 +61,10 @@
     height: 20px;
     min-height: 20px;
     border-radius: var(--r1);
+    padding: var(--gap);
+  }
+  .xl img {
+    border-radius: var(--r);
   }
   .l img {
     border-radius: var(--r);
@@ -61,6 +72,7 @@
   .s img {
     border-radius: 2px;
   }
+
   div {
     display: flex;
     align-items: center;
@@ -68,7 +80,6 @@
     flex-direction: row;
     background-color: var(--c-bg1);
     overflow: hidden;
-    padding: var(--gap);
   }
   img {
     display: flex;

@@ -23,7 +23,7 @@ const db = new Dexie('Mooogor') as Dexie & {
 
 db.version(1).stores({
   favicons: '++id,domain',
-  webSits: '++id,domain',
+  webSits: 'domain',
 });
 
 
@@ -31,11 +31,7 @@ export { db };
 
 //通用的hostname
 export function getDomainFromUrl(url: string): string {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return "";
-  }
+  return new URL(url).hostname;
 }
 
 // Favicon
@@ -54,18 +50,31 @@ export async function getFavicon(domain: string) {
 }
 
 // WebSite
-export async function addWebSite(webSite: WebSite) {
-  const newWebSite = { ...webSite, createAt: Date.now(), updateAt: Date.now() }
-  return await db.webSits.add(newWebSite);
+// 根据 domain 作为主键做 upsert：存在则更新，不存在则新增
+export async function saveWebSite(webSite: WebSite) {
+  const now = Date.now();
+  const existing = await db.webSits.get(webSite.domain);
+
+  if (existing) {
+    const updated: WebSite = {
+      ...existing,
+      ...webSite,
+      createAt: existing.createAt ?? now,
+      updateAt: now,
+    };
+    return await db.webSits.put(updated);
+  } else {
+    const newWebSite: WebSite = {
+      ...webSite,
+      createAt: now,
+      updateAt: now,
+    };
+    return await db.webSits.put(newWebSite);
+  }
 }
 
 export async function deleteWebSite(domain: string) {
   return await db.webSits.delete(domain);
-}
-
-export async function updateWebSite(webSite: WebSite) {
-  const newWebSite = { ...webSite, updateAt: Date.now() }
-  return await db.webSits.update(webSite.domain, newWebSite);
 }
 
 

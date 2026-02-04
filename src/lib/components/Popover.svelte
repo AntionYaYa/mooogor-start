@@ -8,18 +8,53 @@
 		y?: number;
 		onClose: () => void;
 	}
-	let { children, x, y, onClose }: Props = $props();
+	let {
+		children,
+		x: initialX = 0,
+		y: initialY = 0,
+		onClose,
+	}: Props = $props();
 
-	import { onMount, onDestroy } from "svelte";
+	import { onMount, onDestroy, tick } from "svelte";
 
 	let menuEl: HTMLDivElement | null = null;
+	let posX = $state(0);
+	let posY = $state(0);
+
+	async function adjustPosition() {
+		if (!menuEl) return;
+
+		// 等待一帧，确保 DOM 已渲染并有正确尺寸
+		await tick();
+
+		const rect = menuEl.getBoundingClientRect();
+		const padding = 8;
+		const vw = document.documentElement.scrollWidth;
+		const vh = document.documentElement.scrollHeight;
+
+		let newX = posX;
+		let newY = posY;
+
+		if (newX + rect.width + padding > vw) {
+			newX = Math.max(padding, vw - rect.width - padding);
+		}
+		if (newY + rect.height + padding > vh) {
+			newY = Math.max(padding, vh - rect.height - padding);
+		}
+
+		posX = newX;
+		posY = newY;
+	}
 	function handleMouseDown(e: MouseEvent) {
 		if (menuEl && menuEl.contains(e.target as Node)) return;
 		onClose();
 	}
 
 	onMount(() => {
+		posX = initialX;
+		posY = initialY;
 		window.addEventListener("mousedown", handleMouseDown);
+		adjustPosition();
 	});
 
 	onDestroy(() => {
@@ -29,7 +64,7 @@
 
 <div
 	bind:this={menuEl}
-	style="top: {y}px; left:{x}px;"
+	style="top: {posY}px; left:{posX}px;"
 	transition:slide={{ duration: 200 }}
 >
 	<G vertical>
