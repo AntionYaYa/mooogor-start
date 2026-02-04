@@ -1,7 +1,7 @@
 <script lang="ts">
   import folder from "../assets/folder.svg";
 
-  import { addFavicon, getFavicon, updateFavicon } from "../lib/DB/DB";
+  import { addFavicon, getFavicon, getDomainFromUrl } from "../lib/DB/DB";
   import type { Favicon } from "../lib/DB/DB";
 
   type Size = "l" | "s";
@@ -18,10 +18,12 @@
   }
 
   async function getLoaclFavicon(): Promise<Blob | undefined> {
-    const domain = imgUrl ? new URL(imgUrl).origin : "";
+    const domain = getDomainFromUrl(imgUrl!);
     const favicon = await getFavicon(domain);
     return favicon ? favicon.blob : undefined;
   }
+
+
 </script>
 
 <div class={size}>

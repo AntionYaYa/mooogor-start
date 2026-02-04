@@ -1,18 +1,21 @@
 <script lang="ts">
-	type syleType = 'xl' | 'l' | 'm' | 's';
-	type alignType =  'c' | 'r';
+	type syleType = "xl" | "l" | "m" | "s";
+	type alignType = "c" | "r";
 	interface Props {
 		children: any;
 		type?: syleType;
 		bold?: boolean;
 		nowrap?: boolean;
 		color?: string;
-		align?:alignType;
+		align?: alignType;
 	}
-	let { children,type='m',bold,nowrap,color,align}: Props = $props();
+	let { children, type = "m", bold, nowrap, color, align }: Props = $props();
 </script>
 
-<p  class="{type} { bold?'bold':'' } {nowrap?'nowrap':''} " style="color: {color}; text-align: {align==='c'?'center':'left'}">
+<p
+	class="{type} {bold ? 'bold' : ''} {nowrap ? 'nowrap' : ''} "
+	style="color: {color}; text-align: {align === 'c' ? 'center' : 'left'}"
+>
 	{@render children()}
 </p>
 
@@ -27,7 +30,7 @@
 		text-overflow: ellipsis;
 		word-break: break-word;
 	}
-	.nowrap{
+	.nowrap {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;

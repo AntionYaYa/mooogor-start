@@ -54,9 +54,9 @@
 		box-sizing: border-box;
 		border-radius: var(--r);
 	}
-	.input_v:focus-within {
+	/* .input_v:focus-within {
 		outline: var(--c-text) 1px solid;
-	}
+	} */
 
 	h6 {
 		margin: 0;
@@ -80,7 +80,7 @@
 		padding: var(--gap);
 		width: 100%;
 		box-sizing: border-box;
-		height: 46px;
+		height: 36px;
 	}
 
 	input::placeholder {

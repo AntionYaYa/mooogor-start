@@ -20,8 +20,6 @@
 
   let bookmarksPermission = $state(false);
   let allBookmarksTree: BookmarkNode | undefined = $state();
-  let allBookmarksBar: BookmarkNode | undefined = $state();
-  let allBookmarksOther: BookmarkNode | undefined = $state();
 
   let historyPermission = $state(false);
   let AllHistory: BookmarkNode[] = $state([]);
@@ -50,13 +48,6 @@
     const allBookmarks = await getBookmarks();
     allBookmarksTree = allBookmarks[0];
     if (!allBookmarksTree.children) return;
-
-    //为搜索准确
-    allBookmarksBar = getTypeBookmarks(
-      allBookmarksTree.children,
-      "bookmarks-bar",
-    );
-    allBookmarksOther = getTypeBookmarks(allBookmarksTree.children, "other");
   }
 
   function getTypeBookmarks(
@@ -126,6 +117,7 @@
         {historyPermission}
         {AllHistory}
         onclickGetPms={(pms) => clickGetPermission(pms)}
+        onChange={() => initPinneds()}
       />
     {/key}
   {/if}

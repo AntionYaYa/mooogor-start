@@ -1,17 +1,44 @@
 <script lang="ts">
-	type Align = "c" | "r";
+	import G from "./G.svelte";
+	import T from "./T.svelte";
+	import Button from "./Button.svelte";
+	import { fade, fly } from "svelte/transition";
+	import { onMount, onDestroy } from "svelte";
+
 	interface Props {
 		children: any;
-		vertical?: boolean;
-		full?: boolean;
-		align?: Align;
+		title: string;
+		onclickClose: () => void;
+		shake?: boolean;
 	}
-	let { children, vertical, full, align }: Props = $props();
+	let { children, title, onclickClose, shake = false }: Props = $props();
+
+	
+
+	onMount(() => {
+		window.addEventListener("keydown", handleKeyDown);
+	});
+
+	onDestroy(() => {
+		window.removeEventListener("keydown", handleKeyDown);
+	});
+
+	function handleKeyDown(event: KeyboardEvent) {
+		if (event.key === "Escape") {
+			onclickClose();
+		}
+	}
 </script>
 
-<div class="mask">
-	<div class="content">
-		{@render children()}
+<div class="mask" transition:fade>
+	<div class="content"  transition:fly={{ y: 200, duration: 300 }}>
+		<G full align="c">
+			<T>{title}</T>
+			<Button iconName="X" onclick={onclickClose} />
+		</G>
+		<G vertical full>
+			{@render children()}
+		</G>
 	</div>
 </div>
 
@@ -20,12 +47,11 @@
 		width: 100%;
 		max-width: 320px;
 		background-color: var(--c-bg);
-		padding: 40px;
+		padding: calc(var(--gap) * 2);
 		display: flex;
 		flex-direction: column;
-		gap: var(--gap);
 		align-items: center;
-		border-radius: 40px;
+		border-radius: calc(var(--r) * 2);
 	}
 	.mask {
 		position: fixed;
@@ -39,4 +65,5 @@
 		height: 100%;
 		background-color: rgba(0, 0, 0, 0.4);
 	}
+	
 </style>

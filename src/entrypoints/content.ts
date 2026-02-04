@@ -12,7 +12,8 @@ async function init() {
   const faviconUrl = getBestFavicon()
   if (faviconUrl) {
     const newFavicon = {
-      domain: location.origin, faviconUrl: faviconUrl
+      url: location.href,
+      faviconUrl,
     }
     await sendMessage("saveFavicon", newFavicon, "background");
   }

@@ -9,6 +9,7 @@
 		iconName?: name;
 		mini?: boolean;
 		fill?: boolean;
+		full?: boolean;
 		onclick?: (event: MouseEvent) => void;
 	}
 
@@ -17,17 +18,19 @@
 		iconName,
 		mini = false,
 		fill = false,
+		full = false,
 		onclick,
 	}: Props = $props();
 </script>
 
-<button class="btn" class:fill class:unfill={!fill} {onclick}>
-	<G>
+<button class="btn" class:fill class:unfill={!fill} class:full {onclick}>
+	<G full>
 		{#if text}
 			<T
 				type={mini ? "s" : "m"}
 				bold={!mini}
 				color={fill ? "var(--c-bg)" : undefined}
+				align={full ? "c" : undefined}
 			>
 				{text}
 			</T>
@@ -46,9 +49,10 @@
 	.btn {
 		display: flex;
 		border: none;
-		padding: var(--gap);
+
 		border-radius: var(--r);
 		background: none;
+		padding: 0;
 	}
 
 	.btn:active {
@@ -62,5 +66,11 @@
 
 	.fill {
 		background-color: var(--c-text);
+		padding: var(--gap);
+		border-radius: var(--r1);
+	}
+	.full {
+		width: 100%;
+		box-sizing: border-box;
 	}
 </style>

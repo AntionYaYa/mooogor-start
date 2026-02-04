@@ -22,13 +22,21 @@ const db = new Dexie('Mooogor') as Dexie & {
 };
 
 db.version(1).stores({
-  favicons: 'domain',
-  webSits: 'domain',
+  favicons: '++id,domain',
+  webSits: '++id,domain',
 });
 
 
 export { db };
 
+//通用的hostname
+export function getDomainFromUrl(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "";
+  }
+}
 
 // Favicon
 export async function addFavicon(favicon: Favicon) {
@@ -42,9 +50,8 @@ export async function updateFavicon(favicon: Favicon) {
 }
 
 export async function getFavicon(domain: string) {
-  return await db.favicons.get(domain);
+  return await db.favicons.where("domain").equals(domain).first();
 }
-
 
 // WebSite
 export async function addWebSite(webSite: WebSite) {
@@ -58,7 +65,7 @@ export async function deleteWebSite(domain: string) {
 
 export async function updateWebSite(webSite: WebSite) {
   const newWebSite = { ...webSite, updateAt: Date.now() }
-  return await db.favicons.update(webSite.domain, newWebSite);
+  return await db.webSits.update(webSite.domain, newWebSite);
 }
 
 

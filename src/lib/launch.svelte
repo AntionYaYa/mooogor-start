@@ -19,6 +19,7 @@
     allBookmarksTree: BookmarkNode | undefined;
     historyPermission: boolean;
     AllHistory: BookmarkNode[];
+    onChange:()=>void
   }
   let {
     allPinneds,
@@ -26,7 +27,7 @@
     bookmarksPermission,
     allBookmarksTree,
     historyPermission,
-    AllHistory,
+    onChange,
   }: Props = $props();
 
   let tabs: TabItem[] = $state([
@@ -159,6 +160,7 @@
     {allPinneds}
     ondrag={(items) => dragPinned(items)}
     ondragend={(items) => dragPinnedEnd(items)}
+    {onChange}
   />
 {/snippet}
 

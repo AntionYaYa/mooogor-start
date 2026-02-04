@@ -5,17 +5,20 @@
   import { dndzone } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
   import Favicon from "./Favicon.svelte";
+  import { addWebSite } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import Button from "./components/Button.svelte";
-    import AddPinned from "./AddPinned.svelte";
+  import AddPinned from "./AddPinned.svelte";
+    import ContextMenu from "./components/ContextMenu.svelte";
 
   interface Props {
     allPinneds: WebSite[] | [];
     ondrag: (items: WebSite[]) => void;
     ondragend: (items: WebSite[]) => void;
+    onChange: () => void;
   }
 
-  let { allPinneds, ondrag, ondragend }: Props = $props();
+  let { allPinneds, ondrag, ondragend,onChange }: Props = $props();
   let isdarging = $state(false);
   let showAdd = $state(false);
 
@@ -37,6 +40,28 @@
     const items = e.detail.items;
     ondragend(items);
   }
+
+  async function clickSaveWebSite(newWebSite: WebSite) {
+    await addWebSite(newWebSite);
+    onChange()
+  }
+
+  let menuX = $state(0);
+  let menuY = $state(0);
+
+  let showMenu = $state(false);
+  $inspect(menuX)
+  $inspect(menuY)
+
+  function showContextMenu(e: MouseEvent, pinned: WebSite) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    menuX = e.clientX;
+    menuY = e.clientY;
+    showMenu = true;
+  }
+
 </script>
 
 <div
@@ -52,7 +77,11 @@
 >
   {#each allPinneds as pinned (pinned.domain)}
     <div class="item" animate:flip={{ duration: 200 }}>
-      <a href={pinned.url} target="_self">
+      <a
+        href={pinned.url}
+        target="_self"
+        oncontextmenu={(e) => showContextMenu(e, pinned)}
+      >
         {@render tembkmk(pinned)}
       </a>
     </div>
@@ -61,16 +90,29 @@
 {@render temAddPinned()}
 
 {#if showAdd}
-  <AddPinned ondSave={()=>{}}/>
+  <AddPinned
+    ondSave={clickSaveWebSite}
+    onclickClose={() => (showAdd = false)}
+  />
+{/if}
+
+{#if showMenu}
+  <ContextMenu x={menuX} y={menuY} onClose={()=>showMenu=false}>
+    <Button text="Add" onclick={() => (showAdd = true,showMenu=false)} />
+    <Button text="Add" onclick={() => (showAdd = true)} />
+    <Button text="Add" onclick={() => (showAdd = true)} />
+    <Button text="Add" onclick={() => (showAdd = true)} />
+  </ContextMenu>
 {/if}
 
 {#snippet temAddPinned()}
-  <Button text="Add" onclick={()=>showAdd=true}/>
+  <Button text="Add" onclick={() => (showAdd = true)} />
 {/snippet}
 
 {#snippet tembkmk(pinned: WebSite)}
   <span class="bkmk_v">
-    <Favicon imgUrl={pinned.url} alt={pinned.title} />
+    <!-- <Favicon imgUrl={pinned.url} alt={pinned.title} /> -->
+    <BkmkIcon imgUrl={pinned.url} alt={pinned.title ?? ""} />
     <T nowrap align="c" type="s">{pinned.title}</T>
   </span>
 {/snippet}
