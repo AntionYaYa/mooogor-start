@@ -11,40 +11,50 @@
   import Pinneds from "@/lib/Pinneds.svelte";
   import type { WebSite } from "@/lib/DB/DB";
   import { fly } from "svelte/transition";
+  import { tick } from "svelte";
 
   interface Props {
     allPinneds: WebSite[];
+    onUpdate: (items?: WebSite[]) => void;
     bookmarksPermission: boolean;
     onclickGetPms: (permission: Permission) => void;
     allBookmarksTree: BookmarkNode | undefined;
     historyPermission: boolean;
     AllHistory: BookmarkNode[];
-    onChange:()=>void
   }
   let {
     allPinneds,
+    onUpdate,
     onclickGetPms,
     bookmarksPermission,
     allBookmarksTree,
     historyPermission,
-    onChange,
   }: Props = $props();
 
-  let tabs: TabItem[] = $state([
-    { key: "0", name: "常用", sel: false },
-    { key: "1", name: "书签", sel: false },
-    { key: "2", name: "历史记录", sel: false },
+  let tabs: (TabItem & { content?: () => any })[] = $state([
+    { key: "0", name: "常用", sel: false, content: pinneds },
+    { key: "1", name: "书签", sel: false, content: bookmarks },
+    { key: "2", name: "历史记录", sel: false, content: history },
   ]);
 
   let selTab: TabItem | undefined = $state();
   let showNext = $state(false);
+  let firstMount = $state(true);
 
   let currentNode: BookmarkNode | undefined = $state();
   let historyStack: BookmarkNode[] = $state([]);
 
-  onMount(() => {
+  onMount(async () => {
     clickTab(tabs[0], 0);
+    await tick();
+    firstMount = false;
   });
+
+  // $effect(()=>{
+  //   if(bookmarksPermission){
+  //     initBookmarks()
+  //   }
+  // })
 
   function clickTab(tab: TabItem, i: number) {
     if (tab.key === "1") {
@@ -97,13 +107,6 @@
     historyStack.pop()!;
     currentNode = historyStack[historyStack.length - 1];
   }
-
-  function dragPinned(items: WebSite[]) {
-    allPinneds = items;
-  }
-  function dragPinnedEnd(items: WebSite[]) {
-    allPinneds = items;
-  }
 </script>
 
 <div class="content">
@@ -125,43 +128,26 @@
     <!-- <div class="right"></div> -->
   </div>
   <div class="tabs_contents">
-    {#if tabs[0].sel}
-      <div
-        class="tab_content"
-        in:fly={{ x: showNext ? 200 : -200, duration: 250 }}
-        out:fly={{ x: showNext ? -200 : 200, duration: 200 }}
-      >
-        {@render pinneds()}
-      </div>
-    {/if}
-    {#if tabs[1].sel}
-      <div
-        class="tab_content"
-        in:fly={{ x: showNext ? 200 : -200, duration: 250 }}
-        out:fly={{ x: showNext ? -200 : 200, duration: 200 }}
-      >
-        {@render bookmarks()}
-      </div>
-    {/if}
-    {#if tabs[2].sel}
-      <div
-        class="tab_content"
-        in:fly={{ x: showNext ? 200 : -200, duration: 250 }}
-        out:fly={{ x: showNext ? -200 : 200, duration: 200 }}
-      >
-        {@render history()}
-      </div>
-    {/if}
+    {#each tabs as tab (tab.key)}
+      {#if tab.sel}
+        <div
+          class="tab_content"
+          in:fly={firstMount
+            ? undefined
+            : { x: showNext ? 200 : -200, duration: 250 }}
+          out:fly={firstMount
+            ? undefined
+            : { x: showNext ? -200 : 200, duration: 200 }}
+        >
+          {@render tab.content?.()}
+        </div>
+      {/if}
+    {/each}
   </div>
 </div>
 
 {#snippet pinneds()}
-  <Pinneds
-    {allPinneds}
-    ondrag={(items) => dragPinned(items)}
-    ondragend={(items) => dragPinnedEnd(items)}
-    {onChange}
-  />
+  <Pinneds {allPinneds} {onUpdate} />
 {/snippet}
 
 {#snippet bookmarks()}

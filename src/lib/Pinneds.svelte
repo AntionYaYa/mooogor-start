@@ -4,8 +4,7 @@
   import { flip } from "svelte/animate";
   import { dndzone } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
-  import Favicon from "./Favicon.svelte";
-  import { saveWebSite,deleteWebSite } from "@/lib/DB/DB";
+  import { addWebSite, updateWebSite, deleteWebSite, updateWebSitesOrder } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import Button from "./components/Button.svelte";
   import AddPinned from "./AddPinned.svelte";
@@ -13,12 +12,10 @@
 
   interface Props {
     allPinneds: WebSite[] | [];
-    ondrag: (items: WebSite[]) => void;
-    ondragend: (items: WebSite[]) => void;
-    onChange: () => void;
+    onUpdate: (items?: WebSite[]) => void;
   }
 
-  let { allPinneds, ondrag, ondragend, onChange }: Props = $props();
+  let { allPinneds, onUpdate }: Props = $props();
   let isdarging = $state(false);
   let showAdd = $state(false);
   let currentPinned: WebSite | undefined = $state();
@@ -47,19 +44,26 @@
 
   function handleConsider(e: CustomEvent<DndEvent<WebSite>>) {
     isdarging = true;
-    const items = e.detail.items;
-    ondrag(items);
+    onUpdate(e.detail.items);
   }
 
-  function handleFinalize(e: CustomEvent<DndEvent<WebSite>>) {
+  async function handleFinalize(e: CustomEvent<DndEvent<WebSite>>) {
     isdarging = false;
     const items = e.detail.items;
-    ondragend(items);
+    onUpdate(items);
+    const withIds = items.filter((i): i is WebSite & { id: number } => !!i.id);
+    if (withIds.length > 0) {
+      await updateWebSitesOrder(withIds);
+    }
   }
 
   async function clickSaveWebSite(newWebSite: WebSite) {
-    await saveWebSite(newWebSite);
-    onChange();
+    if (currentPinned?.id) {
+      await updateWebSite({ ...newWebSite, id: currentPinned.id });
+    } else {
+      await addWebSite(newWebSite);
+    }
+    onUpdate();
   }
   function clickEditWebSite() {
       showAdd = true
@@ -67,13 +71,12 @@
   }
   async function clickDeleteWebSite() {
     showMenu =false
-    if (currentPinned) {
-      await deleteWebSite(currentPinned.domain);
+    if (currentPinned?.id) {
+      await deleteWebSite(currentPinned.id);
     }
 
-    onChange();
+    onUpdate();
   }
-  
 </script>
 
 <div
@@ -87,7 +90,7 @@
   onconsider={handleConsider}
   onfinalize={handleFinalize}
 >
-  {#each allPinneds as pinned (pinned.domain)}
+  {#each allPinneds as pinned (pinned.id)}
     <div class="item" animate:flip={{ duration: 200 }}>
       <a
         href={pinned.url}
@@ -134,6 +137,7 @@
     align-items: center;
     box-sizing: border-box;
     border-radius: var(--r);
+    outline: none;
   }
   .content {
     gap: var(--gap);
@@ -162,6 +166,7 @@
     align-items: center;
     gap: var(--gap);
     padding: var(--gap);
+    box-sizing: border-box;
   }
 
   a:active {

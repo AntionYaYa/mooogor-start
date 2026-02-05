@@ -50,19 +50,6 @@
     if (!allBookmarksTree.children) return;
   }
 
-  function getTypeBookmarks(
-    allBookmarksTree: BookmarkNode[],
-    subType: BookmarkSubType,
-  ): BookmarkNode | undefined {
-    const allbookmarks = allBookmarksTree[0]?.children;
-    if (allbookmarks && subType === "bookmarks-bar") {
-      return allbookmarks[0];
-    }
-    if (allbookmarks && subType === "other") {
-      return allbookmarks[1];
-    }
-  }
-
   async function clickGetPermission(permission: Permission) {
     if (permission === "bookmarks") {
       bookmarksPermission = await requestPermission(permission);
@@ -75,12 +62,6 @@
     }
   }
 
-  function dragPinned(items: WebSite[]) {
-    allPinneds = items;
-  }
-  function dragPinnedEnd(items: WebSite[]) {
-    allPinneds = items;
-  }
 </script>
 
 <svelte:head>
@@ -109,17 +90,17 @@
     <Search {allBookmarksTree} />
   </div>
   {#if showLaunch}
-    {#key allBookmarksTree}
+    <!-- {#key allBookmarksTree} -->
       <Launch
         {allPinneds}
+        onUpdate={(items) => (items !== undefined ? (allPinneds = items) : initPinneds())}
         {bookmarksPermission}
         {allBookmarksTree}
         {historyPermission}
         {AllHistory}
         onclickGetPms={(pms) => clickGetPermission(pms)}
-        onChange={() => initPinneds()}
       />
-    {/key}
+    <!-- {/key} -->
   {/if}
 </main>
 

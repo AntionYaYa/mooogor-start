@@ -1,4 +1,4 @@
-import { addFavicon, getFavicon, updateFavicon,getDomainFromUrl } from "../lib/DB/DB";
+import { saveFavicon,getDomainFromUrl } from "../lib/DB/DB";
 import type { Favicon } from "../lib/DB/DB";
 import { onMessage } from "webext-bridge/background";
 
@@ -9,19 +9,14 @@ export default defineBackground(() => {
 
 async function onFavicon({ data }: { data: any }) {
   const domain = getDomainFromUrl(data.url)
-  const getLoaclFavicon = await getFavicon(domain)
   const blob: Blob|undefined = await urlToBlob(data.faviconUrl)
   const newFavicon: Favicon = {
     domain: domain,
     faviconUrl: data.faviconUrl,
     blob: blob
   }
+  await saveFavicon(newFavicon)
 
-  if (getLoaclFavicon) {
-   await updateFavicon(newFavicon)
-  } else {
-    await addFavicon(newFavicon)
-  }
 }
 
 
