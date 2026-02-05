@@ -107,6 +107,7 @@
     historyStack.pop()!;
     currentNode = historyStack[historyStack.length - 1];
   }
+
 </script>
 
 <div class="content">

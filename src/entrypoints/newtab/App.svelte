@@ -90,7 +90,7 @@
     <Search {allBookmarksTree} />
   </div>
   {#if showLaunch}
-    <!-- {#key allBookmarksTree} -->
+    {#key allBookmarksTree}
       <Launch
         {allPinneds}
         onUpdate={(items) => (items !== undefined ? (allPinneds = items) : initPinneds())}
@@ -100,7 +100,7 @@
         {AllHistory}
         onclickGetPms={(pms) => clickGetPermission(pms)}
       />
-    <!-- {/key} -->
+    {/key}
   {/if}
 </main>
 
