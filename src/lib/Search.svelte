@@ -225,7 +225,7 @@
       }}
     />
     {#if inputValue.length}
-      <Button text='x' onclick={clearInput}/>
+      <Button iconName='X' onclick={clearInput} mini/>
     {/if}
     <div bind:this={engineEls} class="engines">
       {#each engines as engine}
