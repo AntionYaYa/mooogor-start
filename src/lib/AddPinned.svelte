@@ -3,11 +3,9 @@
   import type { WebSite } from "@/lib/DB/DB";
   import { getDomainFromUrl } from "@/lib/DB/DB";
   import Button from "./components/Button.svelte";
-  import Icon from "./components/Icon.svelte";
   import Input from "./components/Input.svelte";
   import G from "./components/G.svelte";
   import Popup from "./components/Popup.svelte";
-  import T from "./components/T.svelte";
   import Shake from "./components/Shake.svelte";
 
   interface Props {

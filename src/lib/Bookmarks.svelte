@@ -3,6 +3,7 @@
   import T from "./components/T.svelte";
   import type { BookmarkNode } from "../entrypoints/newtab/methods/getBookmarks";
   import { slide } from "svelte/transition";
+  import { addWebSite, getDomainFromUrl } from "@/lib/DB/DB";
 
   interface Props {
     bookmarkNode: BookmarkNode;
@@ -12,8 +13,7 @@
 
   let { bookmarkNode, list, onclickFolder }: Props = $props();
   let currentBkmk: BookmarkNode | undefined = $state();
-  $inspect(currentBkmk);
-  let darging = $state(true);
+  let darging = $state(false);
   let darginBox = $state(false);
 
   function clickFolder(bkmk: BookmarkNode) {
@@ -26,20 +26,31 @@
   }
 
   function ondragend() {
-    currentBkmk = undefined;
     darging = false;
   }
-  function ondragenter(e: DragEvent) {
+  function ondragenter() {
     darginBox = true;
   }
-  function ondragleave(e: DragEvent) {
+  async function ondrop() {
+    if (!currentBkmk) return;
+    if (!currentBkmk.url) return;
+
+    const newWebSite = {
+      domain: getDomainFromUrl(currentBkmk.url),
+      url: currentBkmk.url,
+      title: currentBkmk.title.trim(),
+    };
+    await addWebSite(newWebSite);
+    currentBkmk = undefined;
+  }
+  function ondragleave() {
     darginBox = false;
   }
 </script>
 
 {#if darging}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="darg_g" transition:slide>
+  <div class="darg_g" transition:slide={{ duration: 200 }}>
     <span class="darg_text">
       <T align="c">添加到常用</T>
     </span>
@@ -48,6 +59,8 @@
       class:inbox={darginBox}
       {ondragenter}
       {ondragleave}
+      ondragover={(e) => e.preventDefault()}
+      {ondrop}
     ></div>
   </div>
 {/if}
@@ -62,7 +75,12 @@
 
 {#snippet tembkmkWrapper(bkmk: BookmarkNode)}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <span class={list ? "bkmk_h" : "bkmk_v"} draggable="true" ondragstart={(e) => dragStart(e, bkmk)} {ondragend}>
+  <span
+    class={list ? "bkmk_h" : "bkmk_v"}
+    draggable={!!bkmk.url}
+    ondragstart={(e) => dragStart(e, bkmk)}
+    {ondragend}
+  >
     {#if list}
       {#if bkmk.url}
         <a href={bkmk.url} target="_self" class="full-row" draggable="false">
@@ -182,6 +200,7 @@
     padding: 0;
     margin: 0;
     border-radius: var(--r1);
+    -webkit-user-drag: none;
   }
 
   button {
