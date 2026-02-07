@@ -10,7 +10,7 @@
   import Yahoo from "../assets/Yahoo.jpg";
   import Yandex from "../assets/Yandex.jpg";
 
-  import { onMount, onDestroy } from "svelte";
+  import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { flip } from "svelte/animate";
   import { dndzone } from "svelte-dnd-action";
@@ -86,8 +86,10 @@
 
   let searchEl: HTMLInputElement | undefined = $state();
   let engineEls: HTMLDivElement | undefined = $state();
+  let listEls: HTMLDivElement | undefined = $state();
   let inputValue: string = $state("");
   let showMoreEngines = $state(false);
+  let suppressNextArrow = $state(false);
 
   $inspect(searchItems);
 
@@ -118,9 +120,6 @@
       .map((e) => ({ ...e, enabled: false }));
   });
 
-  // onDestroy(() => {
-  //   window.removeEventListener("click", handleDocumentClick);
-  // });
 
   function handleConsiderEnabled(e: CustomEvent<DndEvent<Engine>>) {
     isDragging = true;
@@ -243,33 +242,62 @@
 
   function inputKey(e: KeyboardEvent) {
     const key = e.key;
-    console.log(key);
+    if (key === "ArrowUp") {
+      return;
+    }
+    if (key === "ArrowDown") {
+      if (!bookmarksresults.length) return;
+      if (suppressNextArrow) {
+        suppressNextArrow = false;
+        return;
+      }
+      e.preventDefault();
+      const first = listEls?.firstElementChild as HTMLElement | null;
+      first?.focus();
+      first?.scrollIntoView({ block: "nearest" });
+      return;
+    }
     if (key === "Enter") {
       e.preventDefault();
+      const active = document.activeElement as HTMLElement | null;
+      if (active && listEls?.contains(active)) {
+        (active as HTMLAnchorElement).click();
+        return;
+      }
       const first = engineEls?.children[0] as HTMLElement | undefined;
       first?.focus();
       first?.click();
     }
+  }
 
-    if (key === "ArrowDown") {
-      if (bookmarksresults.length) {
-        console.log(e);
+  function handleResultKeydown(e: KeyboardEvent) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = (e.currentTarget as HTMLElement)
+        .nextElementSibling as HTMLElement | null;
+      next?.focus();
+      next?.scrollIntoView({ block: "nearest" });
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = (e.currentTarget as HTMLElement)
+        .previousElementSibling as HTMLElement | null;
+      if (prev) {
+        prev.focus();
+        prev.scrollIntoView({ block: "nearest" });
+      } else {
+        suppressNextArrow = true;
+        searchEl?.focus();
       }
     }
-    if (key === "ArrowUp") {
-      console.log(e);
-    }
   }
 
-  function firstEng(): string | undefined {
-    return enabledEngines[0]?.title;
-  }
 </script>
 
 <div class="search_g">
   {@render temInputGroup()}
   {#if bookmarksresults.length}
-    <div class="list" transition:slide={{ duration: 200 }}>
+    <div class="list" bind:this={listEls} transition:slide={{ duration: 200 }}>
       {#each bookmarksresults as bookmark}
         {@render temBkmk(bookmark)}
       {/each}
@@ -379,6 +407,7 @@
   <a
     class="item {bookmark.type === 'other' ? 'other' : ''}"
     href={bookmark.url}
+    onkeydown={handleResultKeydown}
   >
     <BkmkIcon imgUrl={bookmark.url} alt={bookmark.title} size="s" />
     <p class="text">
