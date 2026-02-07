@@ -260,6 +260,10 @@
       console.log(e);
     }
   }
+
+  function firstEng(): string | undefined {
+    return enabledEngines[0]?.title;
+  }
 </script>
 
 <div class="search_g">
@@ -281,7 +285,7 @@
       bind:this={searchEl}
       bind:value={inputValue}
       type="search"
-      placeholder="搜索 / 计算器 / 翻译"
+      placeholder={enabledEngines[0]?.title}
       oninput={() => searchInput(inputValue)}
       onkeyup={inputKey}
       onfocus={() => {
