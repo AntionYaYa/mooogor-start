@@ -1,11 +1,15 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { fly, slide } from "svelte/transition";
+  import type { Engine } from "@/lib/DB/DB";
+  import { ensureDefaultEngines, getAllEngine } from "@/lib/DB/DB";
+
   import type {
     BookmarkNode,
     BookmarkSubType,
   } from "../entrypoints/newtab/methods/getBookmarks";
     import Button from "./components/Button.svelte";
+    import BkmkIcon from "./BkmkIcon.svelte";
 
   type ItemType = BookmarkSubType | "engine" | "todo";
 
@@ -18,28 +22,21 @@
     iconUrl?: string;
   }
 
-  const iconUrlDomain = "https://www.google.com/s2/favicons?sz=32&domain_url=";
-  const engines: SearchItem[] = [
+  const defaultEngines: Omit<Engine, "id">[] = [
     {
-      id: "baidu",
-      type: "engine",
-      title: "Baidu",
-      url: "https://www.baidu.com/s?wd=%s",
-      iconUrl: iconUrlDomain + "https://www.baidu.com",
+      title: "百度",
+      domain: "www.baidu.com",
+      engineUrl: "https://www.baidu.com/s?wd=%s",
     },
     {
-      id: "bing",
-      type: "engine",
-      title: "bing",
-      url: "https://www.bing.com/search?q=%s",
-      iconUrl: iconUrlDomain + "https://www.bing.com",
+      title: "Bing",
+      domain: "www.bing.com",
+      engineUrl: "https://www.bing.com/search?q=%s",
     },
     {
-      id: "google",
-      type: "engine",
       title: "Google",
-      url: "https://www.google.com/search?q=%s",
-      iconUrl: iconUrlDomain + "https://www.google.com",
+      domain: "www.google.com",
+      engineUrl: "https://www.google.com/search?q=%s",
     },
   ];
 
@@ -49,6 +46,7 @@
 
   let { allBookmarksTree }: Props = $props();
 
+  let engines: Engine[] = $state([]);
   let searchItems: SearchItem[] = $state([]);
   let bookmarksresults: SearchItem[] = $state([]);
 
@@ -58,13 +56,24 @@
 
   $inspect(searchItems);
 
-  onMount(async () => {
-    // document.addEventListener("click", handleDocumentClick);
-  });
-
-  function handleDocumentClick() {
+  function handleDocumentClick(e: MouseEvent) {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    if (
+      target.closest(
+        "input, textarea, select, [contenteditable='true'], [data-search-exempt]",
+      )
+    ) {
+      return;
+    }
     searchEl?.focus();
   }
+
+  onMount(async () => {
+    window.addEventListener("click", handleDocumentClick);
+    await ensureDefaultEngines(defaultEngines);
+    engines = await getAllEngine();
+  });
 
   onDestroy(() => {
     window.removeEventListener("click", handleDocumentClick);
@@ -229,8 +238,8 @@
     {/if}
     <div bind:this={engineEls} class="engines">
       {#each engines as engine}
-        <a class="engine" href={engine.url?.replace("%s", inputValue)}>
-          <img class="engine_icon" src={engine.iconUrl} alt="" />
+        <a class="engine" href={engine.engineUrl?.replace("%s", inputValue)}>
+          <BkmkIcon imgUrl={engine.engineUrl} alt={engine.title??''} size='s'/>
         </a>
       {/each}
     </div>
@@ -249,8 +258,8 @@
     }
 
     .input_group:has(input:focus) {
-      /* outline: 2px solid var(--c-text); */
-      outline: none;
+      outline: 2px solid var(--c-text);
+      /* outline: none; */
     }
     .input {
       color: var(--c-text);
@@ -276,6 +285,7 @@
     .engine {
       display: flex;
       border-radius: calc(var(--r) / 2);
+      padding: var(--gap);
     }
     .engine:focus {
       outline: 2px var(--c-text) solid;
@@ -294,7 +304,7 @@
     class="item {bookmark.type === 'other' ? 'other' : ''}"
     href={bookmark.url}
   >
-    <img class="icon" src={iconUrlDomain + bookmark.url} alt={bookmark.title} />
+    <BkmkIcon imgUrl={bookmark.url} alt={bookmark.title} size='s'/>
     <p class="text">
       {bookmark.title}
     </p>

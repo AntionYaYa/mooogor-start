@@ -62,6 +62,9 @@
 		transform: translateY(2px);
 		transition: all 0.1s ease-out;
 	}
+	.btn:focus-visible{
+		outline: 2px solid var(--c-text);
+	}
 
 	.unfill:active {
 		background-color: var(--c-mask);

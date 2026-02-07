@@ -4,6 +4,8 @@
   import type { BookmarkNode } from "../entrypoints/newtab/methods/getBookmarks";
   import { slide } from "svelte/transition";
   import { addWebSite, getDomainFromUrl } from "@/lib/DB/DB";
+  import LinkContextMenu from "./LinkContextMenu.svelte";
+  import Button from "./components/Button.svelte";
 
   interface Props {
     bookmarkNode: BookmarkNode;
@@ -15,6 +17,20 @@
   let currentBkmk: BookmarkNode | undefined = $state();
   let darging = $state(false);
   let darginBox = $state(false);
+  let showMenu = $state(false);
+
+  let menuX = $state(0);
+  let menuY = $state(0);
+
+  function showContextMenu(e: MouseEvent, bkmk: BookmarkNode) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    currentBkmk = bkmk;
+    menuX = e.clientX;
+    menuY = e.clientY;
+    showMenu = true;
+  }
 
   function clickFolder(bkmk: BookmarkNode) {
     onclickFolder(bkmk);
@@ -31,10 +47,15 @@
   function ondragenter() {
     darginBox = true;
   }
-  async function ondrop() {
+
+  function ondragleave() {
+    darginBox = false;
+  }
+
+  async function clickAddtoPinneds() {
+    showMenu = false
     if (!currentBkmk) return;
     if (!currentBkmk.url) return;
-
     const newWebSite = {
       domain: getDomainFromUrl(currentBkmk.url),
       url: currentBkmk.url,
@@ -42,9 +63,6 @@
     };
     await addWebSite(newWebSite);
     currentBkmk = undefined;
-  }
-  function ondragleave() {
-    darginBox = false;
   }
 </script>
 
@@ -60,7 +78,7 @@
       {ondragenter}
       {ondragleave}
       ondragover={(e) => e.preventDefault()}
-      {ondrop}
+      ondrop={clickAddtoPinneds}
     ></div>
   </div>
 {/if}
@@ -83,7 +101,7 @@
   >
     {#if list}
       {#if bkmk.url}
-        <a href={bkmk.url} target="_self" class="full-row" draggable="false">
+        <a href={bkmk.url} target="_self" class="full-row" oncontextmenu={(e) => showContextMenu(e, bkmk)}>
           <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" />
           <T nowrap type="m">{bkmk.title}</T>
         </a>
@@ -95,7 +113,7 @@
       {/if}
     {:else}
       {#if bkmk.url}
-        <a href={bkmk.url} target="_self">
+        <a href={bkmk.url} target="_self" oncontextmenu={(e) => showContextMenu(e, bkmk)}>
           <BkmkIcon imgUrl={bkmk.url!} alt={bkmk.title} />
         </a>
       {:else}
@@ -107,6 +125,17 @@
     {/if}
   </span>
 {/snippet}
+
+{#if showMenu && currentBkmk}
+  <LinkContextMenu
+    x={menuX}
+    y={menuY}
+    url={currentBkmk.url ?? ""}
+    onClose={() => (showMenu = false)}
+  >
+    <Button full text="添加到常用" onclick={clickAddtoPinneds} />
+  </LinkContextMenu>
+{/if}
 
 <style>
   .darg_text {

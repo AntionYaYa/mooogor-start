@@ -46,7 +46,7 @@
   }
 </script>
 
-<Popup title="Add" {onclickClose}>
+<Popup title="添加到常用" {onclickClose}>
   <G full>
     <Shake shake={inputUrlValueErr}>
       <Input
@@ -67,7 +67,7 @@
   </G>
   <G full>
     <G full>
-      <Button text="Save" fill onclick={clickSave} full alignT='c' />
+      <Button text="保存" fill onclick={clickSave} full alignT='c' />
     </G>
   </G>
 </Popup>

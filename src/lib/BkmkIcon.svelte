@@ -1,8 +1,6 @@
 <script lang="ts">
-  import folder from "../assets/folder.svg";
-
-  import {  getFavicon, getDomainFromUrl } from "../lib/DB/DB";
-
+  import { getFavicon, getDomainFromUrl } from "../lib/DB/DB";
+  import Folder from "./components/svg/Folder.svelte";
 
   type Size = "xl" | "l" | "s";
 
@@ -27,7 +25,7 @@
 
 <div class={size}>
   {#if folderIcon}
-    <img src={folder} {alt} draggable="false" />
+    <Folder color="var(--c-text-1)" />
   {:else if imgUrl}
     {#await getLoaclFavicon() then localFavicon}
       {#if localFavicon}
@@ -45,23 +43,21 @@
     min-width: 54px;
     height: 54px;
     min-height: 54px;
-    border-radius: var(--r1);
+    border-radius: var(--r);
   }
   .l {
     width: 40px;
     min-width: 40px;
     height: 40px;
     min-height: 40px;
-    border-radius: var(--r1);
-    padding: var(--gap);
+    border-radius: var(--r);
   }
   .s {
     width: 20px;
     min-width: 20px;
     height: 20px;
     min-height: 20px;
-    border-radius: var(--r1);
-    padding: var(--gap);
+    border-radius: 2px;
   }
   .xl img {
     border-radius: var(--r);
