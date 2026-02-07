@@ -1,13 +1,13 @@
 <script lang="ts">
 	import G from "./G.svelte";
 	import Icon from "./Icon.svelte";
-	import type { name } from "./Icon.svelte";
+	import type { IconName } from "./Icon.svelte";
 	import T from "./T.svelte";
 
 	type alignType = "c" | "r";
 	interface Props {
 		text?: string;
-		iconName?: name;
+		iconName?: IconName;
 		mini?: boolean;
 		fill?: boolean;
 		full?: boolean;

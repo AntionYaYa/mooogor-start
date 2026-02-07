@@ -46,7 +46,7 @@
   }
 </script>
 
-<Popup title="添加到常用" {onclickClose}>
+<Popup title="添加常用网址" {onclickClose}>
   <G full>
     <Shake shake={inputUrlValueErr}>
       <Input

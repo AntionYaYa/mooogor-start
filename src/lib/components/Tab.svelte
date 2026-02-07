@@ -42,6 +42,9 @@
 		padding: var(--gap);
 		border-radius: var(--r);
 	}
+	button:focus-visible{
+    	outline: var(--c-text) 2px solid;
+	}
 	button:active {
 		background-color: var(--c-mask);
 		transform: translateY(2px);

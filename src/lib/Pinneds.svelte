@@ -4,11 +4,17 @@
   import { flip } from "svelte/animate";
   import { dndzone } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
-  import { addWebSite, updateWebSite, deleteWebSite, updateWebSitesOrder } from "@/lib/DB/DB";
+  import {
+    addWebSite,
+    updateWebSite,
+    deleteWebSite,
+    updateWebSitesOrder,
+  } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import Button from "./components/Button.svelte";
   import AddPinned from "./AddPinned.svelte";
   import LinkContextMenu from "./LinkContextMenu.svelte";
+    import NoData from "./NoData.svelte";
 
   interface Props {
     allPinneds: WebSite[] | [];
@@ -65,13 +71,12 @@
     onUpdate();
   }
 
-  
   function clickEditWebSite() {
-      showAdd = true
-      showMenu =false
+    showAdd = true;
+    showMenu = false;
   }
   async function clickDeleteWebSite() {
-    showMenu =false
+    showMenu = false;
     if (currentPinned?.id) {
       await deleteWebSite(currentPinned.id);
     }
@@ -80,33 +85,40 @@
   }
 </script>
 
-<div
-  class="content grid {isdarging ? 'drag' : ''}"
-  use:dndzone={{
-    items: allPinneds,
-    flipDurationMs: 200,
-    type: "pinneds",
-    dropTargetStyle: {},
-    zoneTabIndex: -1,
-    transformDraggedElement: (e) => draggedel(e),
-  }}
-  onconsider={handleConsider}
-  onfinalize={handleFinalize}
->
-  {#each allPinneds as pinned (pinned.id)}
-    <div class="item" animate:flip={{ duration: 200 }}>
-      <a
-        href={pinned.url}
-        target="_self"
-        oncontextmenu={(e) => showContextMenu(e, pinned)}
-      >
-        <BkmkIcon imgUrl={pinned.url} alt={pinned.title ?? ""} size="xl" />
-        <T nowrap align="c" type="s">{pinned.title}</T>
-      </a>
+<div class="page">
+  {#if allPinneds.length}
+    <div
+      class="content grid {isdarging ? 'drag' : ''}"
+      use:dndzone={{
+        items: allPinneds,
+        flipDurationMs: 200,
+        type: "pinneds",
+        dropTargetStyle: {},
+        zoneTabIndex: -1,
+        zoneItemTabIndex: -1,
+        transformDraggedElement: (e) => draggedel(e),
+      }}
+      onconsider={handleConsider}
+      onfinalize={handleFinalize}
+    >
+      {#each allPinneds as pinned (pinned.id)}
+        <div class="item" animate:flip={{ duration: 200 }}>
+          <a
+            href={pinned.url}
+            target="_self"
+            oncontextmenu={(e) => showContextMenu(e, pinned)}
+          >
+            <BkmkIcon imgUrl={pinned.url} alt={pinned.title ?? ""} size="xl" />
+            <T nowrap align="c" type="s">{pinned.title}</T>
+          </a>
+        </div>
+      {/each}
     </div>
-  {/each}
+  {:else}
+  <NoData text='没有常用网址哦～'/>
+  {/if}
+  {@render temAddPinned()}
 </div>
-{@render temAddPinned()}
 
 {#if showAdd}
   <AddPinned
@@ -118,15 +130,17 @@
 {/if}
 
 {#if showMenu && currentPinned}
-  <LinkContextMenu
-    x={menuX}
-    y={menuY}
-    url={currentPinned.url}
-    onClose={() => (showMenu = false)}
-  >
-    <Button full text="编辑" onclick={clickEditWebSite} />
-    <Button full text="删除" onclick={clickDeleteWebSite} />
-  </LinkContextMenu>
+  {#key currentPinned.id}
+    <LinkContextMenu
+      x={menuX}
+      y={menuY}
+      url={currentPinned.url}
+      onClose={() => (showMenu = false)}
+    >
+      <Button full text="编辑" onclick={clickEditWebSite} />
+      <Button full text="删除" onclick={clickDeleteWebSite} />
+    </LinkContextMenu>
+  {/key}
 {/if}
 
 {#snippet temAddPinned()}
@@ -134,18 +148,23 @@
 {/snippet}
 
 <style>
+  .page {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+  }
   .item {
     display: flex;
     flex-direction: column;
     align-items: center;
     box-sizing: border-box;
     border-radius: var(--r);
-    outline: none;
   }
   .content {
     gap: var(--gap);
     padding: var(--gap);
-    width: 80%;
+    width: 100%;
     box-sizing: border-box;
     border-radius: var(--r);
   }
@@ -170,6 +189,9 @@
     gap: var(--gap);
     padding: var(--gap);
     box-sizing: border-box;
+  }
+  a:focus-visible {
+    outline: var(--c-text) 2px solid;
   }
 
   a:active {

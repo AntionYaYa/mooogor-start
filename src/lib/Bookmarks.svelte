@@ -6,6 +6,7 @@
   import { addWebSite, getDomainFromUrl } from "@/lib/DB/DB";
   import LinkContextMenu from "./LinkContextMenu.svelte";
   import Button from "./components/Button.svelte";
+  import NoData from "./NoData.svelte";
 
   interface Props {
     bookmarkNode: BookmarkNode;
@@ -53,7 +54,7 @@
   }
 
   async function clickAddtoPinneds() {
-    showMenu = false
+    showMenu = false;
     if (!currentBkmk) return;
     if (!currentBkmk.url) return;
     const newWebSite = {
@@ -82,13 +83,18 @@
     ></div>
   </div>
 {/if}
-
-<div class="content {list ? 'list' : 'grid'}">
-  {#each bookmarkNode.children ?? [] as bkmk (bkmk.id)}
-    <div class="item">
-      {@render tembkmkWrapper(bkmk)}
+<div class="page">
+  {#if bookmarkNode.children?.length}
+    <div class="content {list ? 'list' : 'grid'}">
+      {#each bookmarkNode.children ?? [] as bkmk (bkmk.id)}
+        <div class="item">
+          {@render tembkmkWrapper(bkmk)}
+        </div>
+      {/each}
     </div>
-  {/each}
+  {:else}
+    <NoData text='没有书签哦～'/>
+  {/if}
 </div>
 
 {#snippet tembkmkWrapper(bkmk: BookmarkNode)}
@@ -101,7 +107,12 @@
   >
     {#if list}
       {#if bkmk.url}
-        <a href={bkmk.url} target="_self" class="full-row" oncontextmenu={(e) => showContextMenu(e, bkmk)}>
+        <a
+          href={bkmk.url}
+          target="_self"
+          class="full-row"
+          oncontextmenu={(e) => showContextMenu(e, bkmk)}
+        >
           <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" />
           <T nowrap type="m">{bkmk.title}</T>
         </a>
@@ -113,7 +124,11 @@
       {/if}
     {:else}
       {#if bkmk.url}
-        <a href={bkmk.url} target="_self" oncontextmenu={(e) => showContextMenu(e, bkmk)}>
+        <a
+          href={bkmk.url}
+          target="_self"
+          oncontextmenu={(e) => showContextMenu(e, bkmk)}
+        >
           <BkmkIcon imgUrl={bkmk.url!} alt={bkmk.title} />
         </a>
       {:else}
@@ -127,17 +142,25 @@
 {/snippet}
 
 {#if showMenu && currentBkmk}
-  <LinkContextMenu
-    x={menuX}
-    y={menuY}
-    url={currentBkmk.url ?? ""}
-    onClose={() => (showMenu = false)}
-  >
-    <Button full text="添加到常用" onclick={clickAddtoPinneds} />
-  </LinkContextMenu>
+  {#key currentBkmk.id}
+    <LinkContextMenu
+      x={menuX}
+      y={menuY}
+      url={currentBkmk.url ?? ""}
+      onClose={() => (showMenu = false)}
+    >
+      <Button full text="添加到常用" onclick={clickAddtoPinneds} />
+    </LinkContextMenu>
+  {/key}
 {/if}
 
 <style>
+  .page {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+  }
   .darg_text {
     position: absolute;
   }
@@ -203,7 +226,6 @@
     box-sizing: border-box;
     border-radius: var(--r);
     cursor: default;
-    
   }
   .content {
     gap: var(--gap);

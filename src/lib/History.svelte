@@ -1,18 +1,18 @@
 <script lang="ts">
-    import BkmkIcon from "./BkmkIcon.svelte";
-  import T from "./components/T.svelte";
-  import type { BookmarkNode } from "../entrypoints/newtab/methods/getBookmarks";
+  import type { HistoryItem } from "../entrypoints/newtab/methods/getHistorys";
 
   interface Props {
-    // allBookmarksBar: BookmarkNode[] | [];
+    AllHistory: HistoryItem[] | [];
   }
 
-  let {  }: Props = $props();
+  let { AllHistory }: Props = $props();
 
 </script>
 
 <div >
-  <p>history</p>
+  {#each AllHistory as History}
+  <p>{History.title}</p>
+  {/each}
 </div>
 
 <style>

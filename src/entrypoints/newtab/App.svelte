@@ -12,12 +12,15 @@
   import { hasPermission, requestPermission } from "./methods/getPermission";
   import type { Permission } from "./methods/getPermission";
   import { getBookmarks } from "./methods/getBookmarks";
-  import type { BookmarkNode, BookmarkSubType } from "./methods/getBookmarks";
+  import type { BookmarkNode } from "./methods/getBookmarks";
+  import type { HistoryItem } from "./methods/getHistorys";
   import { getHistorys } from "./methods/getHistorys";
-  import  { getAllWebSite } from "@/lib/DB/DB";
+  import { getAllWebSite } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import { fly } from "svelte/transition";
   import { onMount, tick } from "svelte";
+  import Icon from "@/lib/components/Icon.svelte";
+  import type { IconName } from "@/lib/components/Icon.svelte";
 
   let showSetting = $state(false);
   let allPinneds: WebSite[] = $state([]);
@@ -26,7 +29,7 @@
   let allBookmarksTree: BookmarkNode | undefined = $state();
 
   let historyPermission = $state(false);
-  let AllHistory: BookmarkNode[] = $state([]);
+  let AllHistory: HistoryItem[] = $state([]);
 
   let tabs: TabItem[] = $state([
     { key: "0", name: "常用", sel: false },
@@ -44,29 +47,31 @@
   init();
 
   async function init() {
-    initPinneds();
     bookmarksPermission = await hasPermission("bookmarks");
     if (bookmarksPermission) {
       await initBookmarks();
     }
     historyPermission = await hasPermission("history");
     if (historyPermission) {
-      const allHistoryTree = await getHistorys();
-      console.log(allHistoryTree);
+       AllHistory = await getHistorys();
     }
   }
-  
+
+  onMount(async () => {
+    clickTab(tabs[0], 0);
+    await tick();
+    firstMount = false;
+  });
 
   async function initPinneds() {
-    allPinneds = await getAllWebSite()
-
+    allPinneds = await getAllWebSite();
   }
   async function initBookmarks() {
     const allBookmarks = await getBookmarks();
     allBookmarksTree = allBookmarks[0];
     if (!allBookmarksTree.children) return;
   }
-  $inspect(allBookmarksTree)
+  $inspect(allBookmarksTree);
 
   async function clickGetPermission(permission: Permission) {
     if (permission === "bookmarks") {
@@ -83,11 +88,7 @@
     }
   }
 
-  onMount(async () => {
-    clickTab(tabs[0], 0);
-    await tick();
-    firstMount = false;
-  });
+
 
   function clickTab(tab: TabItem, i: number) {
     if (tab.key === "0") {
@@ -142,7 +143,6 @@
     historyStack.pop()!;
     currentNode = historyStack[historyStack.length - 1];
   }
-
 </script>
 
 <svelte:head>
@@ -188,27 +188,27 @@
       </div>
     </div>
     <div class="tabs_contents">
-    {#each tabs as tab (tab.key)}
-      {#if tab.sel}
-        <div
-          class="tab_content"
-          in:fly={firstMount
-            ? undefined
-            : { x: showNext ? 200 : -200, duration: 250 }}
-          out:fly={firstMount
-            ? undefined
-            : { x: showNext ? -200 : 200, duration: 200 }}
-        >
-          {#if tab.key === "0"}
-            {@render pinneds()}
-          {:else if tab.key === "1"}
-            {@render bookmarks()}
-          {:else if tab.key === "2"}
-            {@render history()}
-          {/if}
-        </div>
-      {/if}
-    {/each}
+      {#each tabs as tab (tab.key)}
+        {#if tab.sel}
+          <div
+            class="tab_content"
+            in:fly={firstMount
+              ? undefined
+              : { x: showNext ? 200 : -200, duration: 250 }}
+            out:fly={firstMount
+              ? undefined
+              : { x: showNext ? -200 : 200, duration: 200 }}
+          >
+            {#if tab.key === "0"}
+              {@render pinneds()}
+            {:else if tab.key === "1"}
+              {@render bookmarks()}
+            {:else if tab.key === "2"}
+              {@render history()}
+            {/if}
+          </div>
+        {/if}
+      {/each}
     </div>
   </div>
 </main>
@@ -223,12 +223,16 @@
 {/snippet}
 
 {#snippet pinneds()}
-  <Pinneds {allPinneds} onUpdate={(items) => (items !== undefined ? (allPinneds = items) : initPinneds())} />
+  <Pinneds
+    {allPinneds}
+    onUpdate={(items) =>
+      items !== undefined ? (allPinneds = items) : initPinneds()}
+  />
 {/snippet}
 
 {#snippet bookmarks()}
   {#if !bookmarksPermission}
-    {@render temNeedPermission("没有书签权限", "bookmarks")}
+    {@render temNeedPermission("Bookmark", "需要权限", "bookmarks")}
   {:else if currentNode}
     <Bookmarks
       list={historyStack.length >= 3}
@@ -240,20 +244,43 @@
 
 {#snippet history()}
   {#if !historyPermission}
-    {@render temNeedPermission("没有历史记录权限", "history")}
+    {@render temNeedPermission("History", "需要权限", "history")}
   {:else}
-    <History />
+    <History {AllHistory}/>
   {/if}
 {/snippet}
 
-{#snippet temNeedPermission(titl: string, permission: Permission)}
-  <G vertical align="c">
-    <T align="c">{titl}</T>
-    <Button text="授权" onclick={() => clickGetPermission(permission)} />
-  </G>
+{#snippet temNeedPermission(
+  iconName: IconName,
+  titl: string,
+  permission: Permission,
+)}
+  <div class="get_permission">
+    <G vertical align="c">
+      <G vertical align="c">
+        <Icon name={iconName} color="var(--c-text)" size={30} />
+      </G>
+      <G vertical align="c">
+        <T align="c" type="l" bold>{titl}</T>
+        <T align="c" type="s">该插件不联网，不收集数据，请放心授权。</T>
+      </G>
+      <G vertical align="c">
+        <Button text="授权" onclick={() => clickGetPermission(permission)} fill />
+      </G>
+    </G>
+  </div>
 {/snippet}
 
 <style>
+  .get_permission {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: var(--border-1);
+    border-radius: var(--r1);
+    padding: var(--gap);
+    box-sizing: border-box;
+  }
   .top {
     position: fixed;
     top: 0;
