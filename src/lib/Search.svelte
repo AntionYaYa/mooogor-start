@@ -84,6 +84,7 @@
   let searchEl: HTMLInputElement | undefined = $state();
   let engineEls: HTMLDivElement | undefined = $state();
   let inputValue: string = $state("");
+  let showMoreEngines = $state(false);
 
   $inspect(searchItems);
 
@@ -198,7 +199,6 @@
     console.log(key);
     if (key === "Enter") {
       e.preventDefault();
-      console.dir(engineEls);
       const first = engineEls?.children[0] as HTMLElement | undefined;
       first?.focus();
       first?.click();
@@ -213,7 +213,6 @@
       console.log(e);
     }
   }
-
 </script>
 
 <div class="search_g">
@@ -242,34 +241,59 @@
         if (!searchItems.length) initBookmarks();
       }}
     />
-    <div
-      bind:this={engineEls}
-      class="engines {isDragging ? 'drag' : ''}"
-      use:dndzone={{
-        items: engines,
-        flipDurationMs: 200,
-        type: "engines",
-        zoneTabIndex: -1,
-        dropTargetStyle: {},
-      }}
-      onconsider={handleConsider}
-      onfinalize={handleFinalize}
-    >
-      {#each engines as engine (engine.id)}
-        <a
-          class="engine"
-          href={engine.engineUrl?.replace("%s", inputValue)}
-          animate:flip={{ duration: 200 }}
-        >
-          <img
-            class="engine_icon"
-            src={engine.faviconUrl}
-            alt={engine.title ?? ""}
-          />
-          <!-- <BkmkIcon imgUrl={engine.engineUrl} alt={engine.title??''} size='s'/> -->
-        </a>
-      {/each}
-    </div>
+    {@render temEngines()}
+    <Button
+      iconName={showMoreEngines ? "ChevronUp" : "ChevronDown"}
+      onclick={() => (showMoreEngines = !showMoreEngines)}
+      mini
+    />
+  </div>
+  {#if showMoreEngines}
+    {@render temMoreEngines()}
+  {/if}
+{/snippet}
+
+{#snippet temEngines()}
+  <div
+    bind:this={engineEls}
+    class="engines {isDragging ? 'drag' : ''}"
+    use:dndzone={{
+      items: engines,
+      flipDurationMs: 200,
+      type: "engines",
+      zoneTabIndex: -1,
+      dropTargetStyle: {},
+    }}
+    onconsider={handleConsider}
+    onfinalize={handleFinalize}
+  >
+    {#each engines as engine (engine.id)}
+      <a
+        class="engine"
+        href={engine.engineUrl?.replace("%s", inputValue)}
+        animate:flip={{ duration: 200 }}
+      >
+        <img
+          class="engine_icon"
+          src={engine.faviconUrl}
+          alt={engine.title ?? ""}
+        />
+      </a>
+    {/each}
+  </div>
+{/snippet}
+
+{#snippet temMoreEngines()}
+  <div class="more_g">
+    {#each engines as engine (engine.id)}
+      <button class="more_item" class:more_item_sel={engine.enabled}>
+        <img
+          class="engine_icon"
+          src={engine.faviconUrl}
+          alt={engine.title ?? ""}
+        />
+      </button>
+    {/each}
   </div>
 {/snippet}
 
@@ -286,10 +310,25 @@
 {/snippet}
 
 <style>
+  .more_g{
+    display: flex;
+  }
+  .more_item{
+    display: flex;
+    background-color: unset;
+    border: none;
+    padding: var(--gap);
+    border-radius: var(--r);
+    filter: grayscale();
+  }
+  .more_item_sel{
+    background-color: aqua;
+    filter: grayscale(0);
+  }
   .search_g {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-end;
     padding: var(--gap);
     background-color: var(--c-bg1);
     border-radius: calc(var(--r1) + var(--gap));
@@ -316,7 +355,6 @@
     align-items: center;
     border-radius: calc(var(--r) + var(--gap));
     padding: var(--gap);
-    gap: var(--gap);
     width: 100%;
     box-sizing: border-box;
   }
@@ -346,7 +384,6 @@
     gap: var(--gap);
     padding: var(--gap);
     border-radius: var(--r);
-    
   }
   .engines.drag {
     outline: 2px var(--c-text-2) dashed;
@@ -365,6 +402,7 @@
     height: 26px;
     border-radius: var(--r);
     padding: 2px;
+    pointer-events: none;
   }
 
   .text {
