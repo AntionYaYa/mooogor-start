@@ -285,7 +285,7 @@
       bind:this={searchEl}
       bind:value={inputValue}
       type="search"
-      placeholder={enabledEngines[0]?.title}
+      placeholder={enabledEngines[0]?enabledEngines[0].title:'搜索'}
       oninput={() => searchInput(inputValue)}
       onkeyup={inputKey}
       onfocus={() => {

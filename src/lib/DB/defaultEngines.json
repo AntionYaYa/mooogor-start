@@ -21,25 +21,25 @@
     "title": "Yahoo",
     "engineUrl": "https://search.yahoo.com/search?p=%s",
     "faviconKey": "Yahoo",
-    "enabled": true
+    "enabled": false
   },
   {
     "title": "Yandex",
     "engineUrl": "https://yandex.com/search/?text=%s",
     "faviconKey": "Yandex",
-    "enabled": true
+    "enabled": false
   },
   {
     "title": "DuckDuckGo",
     "engineUrl": "https://duckduckgo.com/?q=%s",
     "faviconKey": "DuckDuckGo",
-    "enabled": true
+    "enabled": false
   },
   {
     "title": "搜狗",
     "engineUrl": "https://www.sogou.com/web?query=%s",
     "faviconKey": "Sougou",
-    "enabled": true
+    "enabled": false
   },
   {
     "title": "360",
@@ -51,7 +51,7 @@
     "title": "Naver",
     "engineUrl": "https://search.naver.com/search.naver?query=%s",
     "faviconKey": "Naver",
-    "enabled": true
+    "enabled": false
   },
   {
     "title": "Perplexity",
