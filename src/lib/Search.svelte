@@ -214,12 +214,6 @@
     }
   }
 
-
-  function draggedel(el: HTMLElement | undefined) {
-    if (!el) return;
-    el.style.backgroundColor = "var(--c-bg1)";
-    el.style.boxShadow = "var(--shadow)";
-  }
 </script>
 
 <div class="search_g">
@@ -257,7 +251,6 @@
         type: "engines",
         zoneTabIndex: -1,
         dropTargetStyle: {},
-        transformDraggedElement: (e) => draggedel(e),
       }}
       onconsider={handleConsider}
       onfinalize={handleFinalize}
