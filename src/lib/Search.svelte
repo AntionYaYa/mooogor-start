@@ -307,6 +307,7 @@
       type: "engines",
       zoneTabIndex: -1,
       dropTargetStyle: {},
+      dragDisabled: !showMoreEngines,
     }}
     onconsider={handleConsiderEnabled}
     onfinalize={handleFinalizeEnabled}
@@ -336,7 +337,7 @@
 {#snippet temMoreEngines()}
 <div class="more_engines_M" transition:slide={{duration:300}}>
   <G full>
-    <T >拖拽到下面禁用:</T>
+    <T >拖拽排序或禁用</T>
   </G>
   <div
     class="more_g"
@@ -347,6 +348,7 @@
       type: "engines",
       zoneTabIndex: -1,
       dropTargetStyle: {},
+      dragDisabled: !showMoreEngines,
     }}
     onconsider={handleConsiderDisabled}
     onfinalize={handleFinalizeDisabled}
