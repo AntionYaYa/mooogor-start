@@ -18,8 +18,8 @@
   import type { Engine } from "@/lib/DB/DB";
   import {
     ensureDefaultEngines,
-    getAllEnableEngine,
-    updateEnginesOrder,
+    getAllEngine,
+    updateEnginesState,
   } from "@/lib/DB/DB";
   import defaultEnginesRaw from "@/lib/DB/defaultEngines.json";
 
@@ -29,6 +29,8 @@
   } from "../entrypoints/newtab/methods/getBookmarks";
   import Button from "./components/Button.svelte";
   import BkmkIcon from "./BkmkIcon.svelte";
+    import T from "./components/T.svelte";
+    import G from "./components/G.svelte";
 
   type ItemType = BookmarkSubType | "engine" | "todo";
 
@@ -76,7 +78,8 @@
 
   let { allBookmarksTree }: Props = $props();
 
-  let engines: Engine[] = $state([]);
+  let enabledEngines: Engine[] = $state([]);
+  let disabledEngines: Engine[] = $state([]);
   let isDragging = $state(false);
   let searchItems: SearchItem[] = $state([]);
   let bookmarksresults: SearchItem[] = $state([]);
@@ -104,24 +107,68 @@
   onMount(async () => {
     // window.addEventListener("click", handleDocumentClick); //获取焦点
     await ensureDefaultEngines(defaultEngines); //初始化把数据添加到Engines表里
-    engines = await getAllEnableEngine();
+    const allEngines = await getAllEngine();
+    enabledEngines = allEngines
+      .filter((e) => e.enabled !== false)
+      .sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999))
+      .map((e) => ({ ...e, enabled: true }));
+    disabledEngines = allEngines
+      .filter((e) => e.enabled === false)
+      .sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999))
+      .map((e) => ({ ...e, enabled: false }));
   });
 
   // onDestroy(() => {
   //   window.removeEventListener("click", handleDocumentClick);
   // });
 
-  function handleConsider(e: CustomEvent<DndEvent<Engine>>) {
+  function handleConsiderEnabled(e: CustomEvent<DndEvent<Engine>>) {
     isDragging = true;
-    engines = e.detail.items;
+    enabledEngines = e.detail.items.map((item) => ({
+      ...item,
+      enabled: true,
+    }));
   }
 
-  async function handleFinalize(e: CustomEvent<DndEvent<Engine>>) {
+  function handleConsiderDisabled(e: CustomEvent<DndEvent<Engine>>) {
+    isDragging = true;
+    disabledEngines = e.detail.items.map((item) => ({
+      ...item,
+      enabled: false,
+    }));
+  }
+
+  async function handleFinalizeEnabled(e: CustomEvent<DndEvent<Engine>>) {
     isDragging = false;
-    engines = e.detail.items;
-    const withIds = engines.filter((i): i is Engine & { id: number } => !!i.id);
-    if (withIds.length > 0) {
-      await updateEnginesOrder(withIds);
+    enabledEngines = e.detail.items.map((item) => ({
+      ...item,
+      enabled: true,
+    }));
+    const enabledWithIds = enabledEngines.filter(
+      (i): i is Engine & { id: number } => !!i.id,
+    );
+    const disabledWithIds = disabledEngines.filter(
+      (i): i is Engine & { id: number } => !!i.id,
+    );
+    if (enabledWithIds.length || disabledWithIds.length) {
+      await updateEnginesState(enabledWithIds, disabledWithIds);
+    }
+  }
+
+  async function handleFinalizeDisabled(e: CustomEvent<DndEvent<Engine>>) {
+    isDragging = false;
+    disabledEngines = e.detail.items.map((item) => ({
+      ...item,
+      enabled: false,
+    }));
+    const enabledWithIds = enabledEngines.filter(
+      (i): i is Engine & { id: number } => !!i.id,
+    );
+    const disabledWithIds = disabledEngines.filter(
+      (i): i is Engine & { id: number } => !!i.id,
+    );
+    if (enabledWithIds.length || disabledWithIds.length) {
+      await updateEnginesState(enabledWithIds, disabledWithIds);
     }
   }
 
@@ -242,11 +289,6 @@
       }}
     />
     {@render temEngines()}
-    <Button
-      iconName={showMoreEngines ? "ChevronUp" : "ChevronDown"}
-      onclick={() => (showMoreEngines = !showMoreEngines)}
-      mini
-    />
   </div>
   {#if showMoreEngines}
     {@render temMoreEngines()}
@@ -254,20 +296,22 @@
 {/snippet}
 
 {#snippet temEngines()}
+<div class="engines_M">
   <div
     bind:this={engineEls}
-    class="engines {isDragging ? 'drag' : ''}"
+    class="engines"
+    class:drag={isDragging}
     use:dndzone={{
-      items: engines,
+      items: enabledEngines,
       flipDurationMs: 200,
       type: "engines",
       zoneTabIndex: -1,
       dropTargetStyle: {},
     }}
-    onconsider={handleConsider}
-    onfinalize={handleFinalize}
+    onconsider={handleConsiderEnabled}
+    onfinalize={handleFinalizeEnabled}
   >
-    {#each engines as engine (engine.id)}
+    {#each enabledEngines as engine (engine.id)}
       <a
         class="engine"
         href={engine.engineUrl?.replace("%s", inputValue)}
@@ -281,12 +325,38 @@
       </a>
     {/each}
   </div>
+  <Button
+    iconName={showMoreEngines ? "ChevronUp" : "ChevronDown"}
+    onclick={() => (showMoreEngines = !showMoreEngines)}
+    mini
+  />
+</div>
 {/snippet}
 
 {#snippet temMoreEngines()}
-  <div class="more_g">
-    {#each engines as engine (engine.id)}
-      <button class="more_item" class:more_item_sel={engine.enabled}>
+<div class="more_engines_M" transition:slide={{duration:300}}>
+  <G full>
+    <T >拖拽到下面禁用:</T>
+  </G>
+  <div
+    class="more_g"
+    class:drag={isDragging}
+    use:dndzone={{
+      items: disabledEngines,
+      flipDurationMs: 200,
+      type: "engines",
+      zoneTabIndex: -1,
+      dropTargetStyle: {},
+    }}
+    onconsider={handleConsiderDisabled}
+    onfinalize={handleFinalizeDisabled}
+  >
+    {#each disabledEngines as engine (engine.id)}
+      <button
+        class="more_item"
+        class:more_item_sel={engine.enabled}
+        animate:flip={{ duration: 200 }}
+      >
         <img
           class="engine_icon"
           src={engine.faviconUrl}
@@ -294,6 +364,8 @@
         />
       </button>
     {/each}
+  </div>
+
   </div>
 {/snippet}
 
@@ -310,18 +382,29 @@
 {/snippet}
 
 <style>
-  .more_g{
+  .engines_M{
     display: flex;
+    align-items: center;
+    flex-direction: row;
   }
-  .more_item{
+  .more_engines_M{
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    padding: var(--gap) 42px var(--gap) var(--gap);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .more_item {
     display: flex;
     background-color: unset;
     border: none;
-    padding: var(--gap);
+    padding: 0;
     border-radius: var(--r);
     filter: grayscale();
   }
-  .more_item_sel{
+  .more_item_sel {
     background-color: aqua;
     filter: grayscale(0);
   }
@@ -336,7 +419,6 @@
     min-width: 200px;
     max-width: 600px;
     box-sizing: border-box;
-    gap: var(--gap);
   }
   .list {
     display: flex;
@@ -370,6 +452,7 @@
     border: none;
     padding: var(--gap);
     width: 100%;
+    height: 40px;
   }
   .input::placeholder {
     color: var(--c-text-2);
@@ -377,16 +460,21 @@
   .input:focus {
     outline: none;
   }
+
+  .more_g,
   .engines {
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: flex-end;
     gap: var(--gap);
     padding: var(--gap);
     border-radius: var(--r);
+    min-height: 30px;
   }
-  .engines.drag {
+  .drag {
     outline: 2px var(--c-text-2) dashed;
+    min-width: 335px;
   }
   .engine {
     display: flex;

@@ -45,7 +45,7 @@
     "title": "360",
     "engineUrl": "https://www.so.com/s?q=%s",
     "faviconKey": "Qihu360",
-    "enabled": true
+    "enabled": false
   },
   {
     "title": "Naver",

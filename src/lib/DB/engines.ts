@@ -26,6 +26,10 @@ export async function deleteEngine(id: number) {
   return await db.engines.delete(id);
 }
 
+export async function getAllEngine(): Promise<Engine[]> {
+  return await db.engines.toArray();
+}
+
 export async function getAllEnableEngine(): Promise<Engine[]> {
   const engines = await db.engines.toArray();
   return engines
@@ -42,6 +46,29 @@ export async function updateEnginesOrder(items: (Engine & { id: number })[]) {
   await db.transaction("rw", db.engines, async () => {
     for (let i = 0; i < items.length; i++) {
       await db.engines.update(items[i].id, { order: i, updateAt: now });
+    }
+  });
+}
+
+export async function updateEnginesState(
+  enabledItems: (Engine & { id: number })[],
+  disabledItems: (Engine & { id: number })[],
+) {
+  const now = Date.now();
+  await db.transaction("rw", db.engines, async () => {
+    for (let i = 0; i < enabledItems.length; i++) {
+      await db.engines.update(enabledItems[i].id, {
+        order: i,
+        enabled: true,
+        updateAt: now,
+      });
+    }
+    for (let i = 0; i < disabledItems.length; i++) {
+      await db.engines.update(disabledItems[i].id, {
+        order: i,
+        enabled: false,
+        updateAt: now,
+      });
     }
   });
 }
