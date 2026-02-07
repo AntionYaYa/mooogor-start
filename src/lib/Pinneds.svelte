@@ -37,9 +37,8 @@
 
   function draggedel(el: HTMLElement | undefined) {
     if (!el) return;
-    // 1. 获取当前元素的实际渲染尺寸
     el.style.backgroundColor = "var(--c-bg1)";
-    el.style.borderRadius = "var(--r)";
+    el.style.boxShadow = "var(--shadow)";
   }
 
   function handleConsider(e: CustomEvent<DndEvent<WebSite>>) {
@@ -86,7 +85,9 @@
   use:dndzone={{
     items: allPinneds,
     flipDurationMs: 200,
+    type: "pinneds",
     dropTargetStyle: {},
+    zoneTabIndex: -1,
     transformDraggedElement: (e) => draggedel(e),
   }}
   onconsider={handleConsider}

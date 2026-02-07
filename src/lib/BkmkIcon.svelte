@@ -74,7 +74,6 @@
     align-items: center;
     justify-content: center;
     flex-direction: row;
-    background-color: var(--c-bg1);
     overflow: hidden;
   }
   img {

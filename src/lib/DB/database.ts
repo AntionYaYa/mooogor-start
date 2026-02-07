@@ -20,9 +20,10 @@ export interface WebSite {
 
 export interface Engine {
   id?: number; // 自增主键，新增时不需要提供
-  domain: string;
   title?: string;
   engineUrl: string;
+  faviconUrl: string;
+  enabled?: boolean;
   order?: number; // 排序顺序，越小越靠前
   createAt?: number;
   updateAt?: number;

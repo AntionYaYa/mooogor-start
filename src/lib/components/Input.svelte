@@ -30,7 +30,7 @@
 		<h6 transition:slide={{ duration: 200 }}>{placeholder}</h6>
 	{/if}
 	<div class="input_v">
-		<input {type} {name} bind:value {placeholder} {disabled} data-search-exempt/>
+		<input {type} {name} bind:value {placeholder} {disabled}/>
 		{#if clearable && value}
 			<Button iconName="X" mini onclick={clearValue} />
 		{/if}

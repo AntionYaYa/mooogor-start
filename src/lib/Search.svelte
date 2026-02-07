@@ -1,15 +1,34 @@
 <script lang="ts">
+  import Baidu from "../assets/Baidu.jpg";
+  import Qihu360 from "../assets/360.jpg";
+  import Bing from "../assets/Bing.jpg";
+  import DuckDuckGo from "../assets/DuckDuckGo.jpg";
+  import Google from "../assets/Google.jpg";
+  import Naver from "../assets/Naver.jpg";
+  import Perplexity from "../assets/Perplexity.jpg";
+  import Sougou from "../assets/Sougou.jpg";
+  import Yahoo from "../assets/Yahoo.jpg";
+  import Yandex from "../assets/Yandex.jpg";
+
   import { onMount, onDestroy } from "svelte";
-  import { fly, slide } from "svelte/transition";
+  import { slide } from "svelte/transition";
+  import { flip } from "svelte/animate";
+  import { dndzone } from "svelte-dnd-action";
+  import type { DndEvent } from "svelte-dnd-action";
   import type { Engine } from "@/lib/DB/DB";
-  import { ensureDefaultEngines, getAllEngine } from "@/lib/DB/DB";
+  import {
+    ensureDefaultEngines,
+    getAllEnableEngine,
+    updateEnginesOrder,
+  } from "@/lib/DB/DB";
+  import defaultEnginesRaw from "@/lib/DB/defaultEngines.json";
 
   import type {
     BookmarkNode,
     BookmarkSubType,
   } from "../entrypoints/newtab/methods/getBookmarks";
-    import Button from "./components/Button.svelte";
-    import BkmkIcon from "./BkmkIcon.svelte";
+  import Button from "./components/Button.svelte";
+  import BkmkIcon from "./BkmkIcon.svelte";
 
   type ItemType = BookmarkSubType | "engine" | "todo";
 
@@ -22,23 +41,34 @@
     iconUrl?: string;
   }
 
-  const defaultEngines: Omit<Engine, "id">[] = [
-    {
-      title: "百度",
-      domain: "www.baidu.com",
-      engineUrl: "https://www.baidu.com/s?wd=%s",
-    },
-    {
-      title: "Bing",
-      domain: "www.bing.com",
-      engineUrl: "https://www.bing.com/search?q=%s",
-    },
-    {
-      title: "Google",
-      domain: "www.google.com",
-      engineUrl: "https://www.google.com/search?q=%s",
-    },
-  ];
+  const faviconMap: Record<string, string> = {
+    Baidu,
+    Qihu360,
+    Bing,
+    DuckDuckGo,
+    Google,
+    Naver,
+    Perplexity,
+    Sougou,
+    Yahoo,
+    Yandex,
+  };
+
+  type DefaultEngineRaw = {
+    title?: string;
+    engineUrl: string;
+    faviconKey?: string;
+    enabled?: boolean;
+  };
+
+  const defaultEngines: Omit<Engine, "id">[] = (
+    defaultEnginesRaw as DefaultEngineRaw[]
+  ).map((item) => ({
+    title: item.title,
+    engineUrl: item.engineUrl,
+    faviconUrl: item.faviconKey ? faviconMap[item.faviconKey] : "",
+    enabled: item.enabled,
+  }));
 
   interface Props {
     allBookmarksTree: BookmarkNode | undefined;
@@ -47,6 +77,7 @@
   let { allBookmarksTree }: Props = $props();
 
   let engines: Engine[] = $state([]);
+  let isDragging = $state(false);
   let searchItems: SearchItem[] = $state([]);
   let bookmarksresults: SearchItem[] = $state([]);
 
@@ -56,28 +87,42 @@
 
   $inspect(searchItems);
 
-  function handleDocumentClick(e: MouseEvent) {
-    const target = e.target as HTMLElement | null;
-    if (!target) return;
-    if (
-      target.closest(
-        "input, textarea, select, [contenteditable='true'], [data-search-exempt]",
-      )
-    ) {
-      return;
-    }
-    searchEl?.focus();
-  }
+  // function handleDocumentClick(e: MouseEvent) {
+  //   const target = e.target as HTMLElement | null;
+  //   if (!target) return;
+  //   if (
+  //     target.closest(
+  //       "input, textarea, select, [contenteditable='true'], [data-search-exempt]",
+  //     )
+  //   ) {
+  //     return;
+  //   }
+  //   searchEl?.focus();
+  // }
 
   onMount(async () => {
-    window.addEventListener("click", handleDocumentClick);
-    await ensureDefaultEngines(defaultEngines);
-    engines = await getAllEngine();
+    // window.addEventListener("click", handleDocumentClick); //获取焦点
+    await ensureDefaultEngines(defaultEngines); //初始化把数据添加到Engines表里
+    engines = await getAllEnableEngine();
   });
 
-  onDestroy(() => {
-    window.removeEventListener("click", handleDocumentClick);
-  });
+  // onDestroy(() => {
+  //   window.removeEventListener("click", handleDocumentClick);
+  // });
+
+  function handleConsider(e: CustomEvent<DndEvent<Engine>>) {
+    isDragging = true;
+    engines = e.detail.items;
+  }
+
+  async function handleFinalize(e: CustomEvent<DndEvent<Engine>>) {
+    isDragging = false;
+    engines = e.detail.items;
+    const withIds = engines.filter((i): i is Engine & { id: number } => !!i.id);
+    if (withIds.length > 0) {
+      await updateEnginesOrder(withIds);
+    }
+  }
 
   function initBookmarks() {
     searchItems = [];
@@ -148,42 +193,9 @@
     return results;
   }
 
-  // function handleKeyDown(e: KeyboardEvent) {
-  //   if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
-  //   if (!searchEl || document.activeElement === searchEl) return;
-
-  //   const key = e.key;
-
-  //   if (/^[0-9a-zA-Z]$/.test(key)) {
-  //     e.preventDefault();
-  //     inputValue += key;
-  //   } else if (key === "Backspace") {
-  //     e.preventDefault();
-  //     inputValue = inputValue.slice(0, -1);
-  //   } else {
-  //     return;
-  //   }
-
-  //   searchEl.focus();
-  //   searchInput(inputValue);
-
-  //   // if (key === "ArrowDown") {
-  //   //   console.log(key);
-  //   // }
-  //   // if (key === "ArrowUp") {
-  //   //   console.log(key);
-  //   // }
-  //   // if (key === "ArrowLeft") {
-  //   //   console.log(key);
-  //   // }
-  //   // if (key === "ArrowRight") {
-  //   //   console.log(key);
-  //   // }
-  // }
-
   function inputKey(e: KeyboardEvent) {
     const key = e.key;
-    console.log(key)
+    console.log(key);
     if (key === "Enter") {
       e.preventDefault();
       console.dir(engineEls);
@@ -192,19 +204,21 @@
       first?.click();
     }
 
-    if (key === 'ArrowDown') {
+    if (key === "ArrowDown") {
       if (bookmarksresults.length) {
-        console.log(e)
+        console.log(e);
       }
     }
-    if (key === 'ArrowUp') {
-      console.log(e)
+    if (key === "ArrowUp") {
+      console.log(e);
     }
   }
 
-  function clearInput() {
-    inputValue=''
-    searchInput(inputValue)
+
+  function draggedel(el: HTMLElement | undefined) {
+    if (!el) return;
+    el.style.backgroundColor = "var(--c-bg1)";
+    el.style.boxShadow = "var(--shadow)";
   }
 </script>
 
@@ -222,10 +236,11 @@
 {#snippet temInputGroup()}
   <div class="input_group">
     <input
+      name="Search"
       class="input"
       bind:this={searchEl}
       bind:value={inputValue}
-      type="text"
+      type="search"
       placeholder="搜索 / 计算器 / 翻译"
       oninput={() => searchInput(inputValue)}
       onkeyup={inputKey}
@@ -233,70 +248,36 @@
         if (!searchItems.length) initBookmarks();
       }}
     />
-    {#if inputValue.length}
-      <Button iconName='X' onclick={clearInput} mini/>
-    {/if}
-    <div bind:this={engineEls} class="engines">
-      {#each engines as engine}
-        <a class="engine" href={engine.engineUrl?.replace("%s", inputValue)}>
-          <BkmkIcon imgUrl={engine.engineUrl} alt={engine.title??''} size='s'/>
+    <div
+      bind:this={engineEls}
+      class="engines {isDragging ? 'drag' : ''}"
+      use:dndzone={{
+        items: engines,
+        flipDurationMs: 200,
+        type: "engines",
+        zoneTabIndex: -1,
+        dropTargetStyle: {},
+        transformDraggedElement: (e) => draggedel(e),
+      }}
+      onconsider={handleConsider}
+      onfinalize={handleFinalize}
+    >
+      {#each engines as engine (engine.id)}
+        <a
+          class="engine"
+          href={engine.engineUrl?.replace("%s", inputValue)}
+          animate:flip={{ duration: 200 }}
+        >
+          <img
+            class="engine_icon"
+            src={engine.faviconUrl}
+            alt={engine.title ?? ""}
+          />
+          <!-- <BkmkIcon imgUrl={engine.engineUrl} alt={engine.title??''} size='s'/> -->
         </a>
       {/each}
     </div>
   </div>
-  <style>
-    .input_group {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      border-radius: var(--r);
-      background-color: var(--c-bg1);
-      padding: var(--gap);
-      gap: var(--gap);
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .input_group:has(input:focus) {
-      outline: 2px solid var(--c-text);
-      /* outline: none; */
-    }
-    .input {
-      color: var(--c-text);
-      font-size: var(--f-size-m);
-      background-color: unset;
-      /* background-color: antiquewhite; */
-      border: none;
-      padding: var(--gap);
-      width: 100%;
-    }
-    .input::placeholder {
-      color: var(--c-text-2);
-    }
-    .input:focus {
-      outline: none;
-    }
-    .engines {
-      display: flex;
-      gap: var(--gap);
-      flex-direction: row;
-      align-items: center;
-    }
-    .engine {
-      display: flex;
-      border-radius: calc(var(--r) / 2);
-      padding: var(--gap);
-    }
-    .engine:focus {
-      outline: 2px var(--c-text) solid;
-    }
-    .engine_icon {
-      width: 20px;
-      height: 20px;
-      border-radius: calc(var(--r) / 2);
-      padding: calc(var(--gap) / 2);
-    }
-  </style>
 {/snippet}
 
 {#snippet temBkmk(bookmark: SearchItem)}
@@ -304,47 +285,11 @@
     class="item {bookmark.type === 'other' ? 'other' : ''}"
     href={bookmark.url}
   >
-    <BkmkIcon imgUrl={bookmark.url} alt={bookmark.title} size='s'/>
+    <BkmkIcon imgUrl={bookmark.url} alt={bookmark.title} size="s" />
     <p class="text">
       {bookmark.title}
     </p>
   </a>
-  <style>
-    .text {
-      color: var(--c-text);
-      padding: var(--gap);
-      width: 100%;
-      margin: 0;
-      font-size: var(--f-size-s);
-      display: flex;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      word-break: break-word;
-    }
-    .item {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      width: 100%;
-      box-sizing: border-box;
-      text-decoration: none;
-      gap: var(--gap);
-      border-radius: var(--r);
-    }
-    .item:focus {
-      outline: 2px var(--c-text) solid;
-    }
-    .icon {
-      width: 20px;
-      height: 20px;
-      display: flex;
-      padding: var(--gap);
-    }
-    .other {
-      color: aqua;
-    }
-  </style>
 {/snippet}
 
 <style>
@@ -354,7 +299,7 @@
     align-items: center;
     padding: var(--gap);
     background-color: var(--c-bg1);
-    border-radius: calc(var(--r) + var(--gap));
+    border-radius: calc(var(--r1) + var(--gap));
     width: 100%;
     min-width: 200px;
     max-width: 600px;
@@ -370,5 +315,92 @@
     padding: var(--gap);
     max-height: calc(100vh - 110px);
     overflow-y: auto;
+  }
+
+  .input_group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-radius: calc(var(--r) + var(--gap));
+    padding: var(--gap);
+    gap: var(--gap);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .input_group:has(input:focus) {
+    outline: 2px solid var(--c-text);
+    /* outline: none; */
+  }
+  .input {
+    color: var(--c-text);
+    font-size: var(--f-size-m);
+    background-color: unset;
+    border: none;
+    padding: var(--gap);
+    width: 100%;
+  }
+  .input::placeholder {
+    color: var(--c-text-2);
+  }
+  .input:focus {
+    outline: none;
+  }
+  .engines {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--gap);
+    padding: var(--gap);
+    border-radius: var(--r);
+    
+  }
+  .engines.drag {
+    outline: 2px var(--c-text-2) dashed;
+  }
+  .engine {
+    display: flex;
+    border-radius: var(--r);
+    overflow: hidden;
+    cursor: default !important;
+  }
+  .engine:focus-visible {
+    outline: 2px var(--c-text) solid;
+  }
+  .engine_icon {
+    width: 26px;
+    height: 26px;
+    border-radius: var(--r);
+    padding: 2px;
+  }
+
+  .text {
+    color: var(--c-text);
+    padding: var(--gap);
+    width: 100%;
+    margin: 0;
+    font-size: var(--f-size-s);
+    display: flex;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+  }
+  .item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    text-decoration: none;
+    gap: var(--gap);
+    padding: var(--gap);
+    border-radius: var(--r);
+  }
+  .item:focus {
+    outline: 2px var(--c-text) solid;
+  }
+  .other {
+    color: aqua;
   }
 </style>

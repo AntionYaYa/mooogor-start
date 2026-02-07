@@ -19,7 +19,7 @@ export {
   addEngine,
   updateEngine,
   deleteEngine,
-  getAllEngine,
+  getAllEnableEngine,
   getEngine,
   updateEnginesOrder,
   ensureDefaultEngines,

@@ -203,6 +203,7 @@
     box-sizing: border-box;
     border-radius: var(--r);
     cursor: default;
+    
   }
   .content {
     gap: var(--gap);
@@ -226,7 +227,8 @@
     cursor: default;
     width: auto;
     height: auto;
-    padding: 0;
+    padding: var(--gap);
+    background-color: var(--c-bg1);
     margin: 0;
     border-radius: var(--r1);
     -webkit-user-drag: none;
@@ -237,9 +239,10 @@
     border: unset;
     width: auto;
     height: auto;
-    padding: 0;
+    padding: var(--gap);
     margin: 0;
     border-radius: var(--r1);
+    background-color: var(--c-bg1);
   }
 
   a:active,
