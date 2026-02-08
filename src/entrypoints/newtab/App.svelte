@@ -13,8 +13,7 @@
   import type { Permission } from "./methods/getPermission";
   import { getBookmarks } from "./methods/getBookmarks";
   import type { BookmarkNode } from "./methods/getBookmarks";
-  import type { HistoryItem } from "./methods/getHistorys";
-  import { getHistorys } from "./methods/getHistorys";
+  // history data is loaded inside History component
   import { getAllWebSite } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import { fly } from "svelte/transition";
@@ -31,8 +30,7 @@
   let historyStack: BookmarkNode[] = $state([]);
 
   let historyPermission = $state(false);
-  let AllHistory: HistoryItem[] = $state([]);
-
+  
   let tabs: TabItem[] = $state([
     { key: "0", name: "常用", sel: false },
     { key: "1", name: "书签", sel: false },
@@ -97,7 +95,6 @@
     }
     if (tab.key === "2") {
       historyPermission = await requestPermission("history");
-      AllHistory = await getHistorys();
       return;
     }
   }
@@ -169,7 +166,7 @@
       {/each}
     </div>
     {@render headBar()}
-    <Search {allBookmarksTree} />
+    <Search />
   </div>
   <div class="content">
     <div class="tabs">
@@ -243,7 +240,7 @@
   {#if !historyPermission}
     {@render temNeedPermission("History", "需要权限", "history")}
   {:else}
-    <History {AllHistory} />
+    <History />
   {/if}
 {/snippet}
 

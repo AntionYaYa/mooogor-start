@@ -28,6 +28,7 @@
     BookmarkNode,
     BookmarkSubType,
   } from "../entrypoints/newtab/methods/getBookmarks";
+  import { searchBookmarks } from "../entrypoints/newtab/methods/getBookmarks";
   import Button from "./components/Button.svelte";
   import BkmkIcon from "./BkmkIcon.svelte";
     import T from "./components/T.svelte";
@@ -73,16 +74,9 @@
     enabled: item.enabled,
   }));
 
-  interface Props {
-    allBookmarksTree: BookmarkNode | undefined;
-  }
-
-  let { allBookmarksTree }: Props = $props();
-
   let enabledEngines: Engine[] = $state([]);
   let disabledEngines: Engine[] = $state([]);
   let isDragging = $state(false);
-  let searchItems: SearchItem[] = $state([]);
   let bookmarksresults: SearchItem[] = $state([]);
 
   let searchEl: HTMLInputElement | undefined = $state();
@@ -90,9 +84,8 @@
   let listEls: HTMLDivElement | undefined = $state();
   let inputValue: string = $state("");
   let showMoreEngines = $state(false);
-  let suppressNextArrow = $state(false);
 
-  $inspect(searchItems);
+  let searchSeq = $state(0);
 
   // function handleDocumentClick(e: MouseEvent) {
   //   const target = e.target as HTMLElement | null;
@@ -164,73 +157,27 @@
     }
   }
 
-  function initBookmarks() {
-    searchItems = [];
-    if (!allBookmarksTree?.children) return;
-
-    const rootChildren = allBookmarksTree.children;
-
-    for (const root of rootChildren) {
-      if (root.children && root.folderType) {
-        searchItems.push(
-          ...flattenBookmarksToSearchItems(root.children, root.folderType),
-        );
-      }
+  async function searchInput(value: string) {
+    if (!value) {
+      bookmarksresults = [];
+      return;
     }
-  }
-
-  async function getSearchKey() {
-    browser.history.search({ text: "", maxResults: 1000 }, (items) => {
-      console.log(items); // 包含 title, url, lastVisitTime
-    });
-  }
-
-  function flattenBookmarksToSearchItems(
-    nodes: BookmarkNode[],
-    type: BookmarkSubType,
-    path = "",
-  ): SearchItem[] {
-    let result: SearchItem[] = [];
-
-    for (const node of nodes) {
-      if (node.url) {
-        result.push({
-          id: node.id,
-          type, // 继承上级 type
-          title: node.title,
-          url: node.url,
-          folderPath: path,
-        });
-      } else if (node.children) {
-        const newPath = path ? `${path}/${node.title}` : node.title;
-        // 递归时 type 不变
-        result = result.concat(
-          flattenBookmarksToSearchItems(node.children, type, newPath),
-        );
-      }
+    const seq = ++searchSeq;
+    try {
+      const results = await searchBookmarks(value, 200);
+      if (seq !== searchSeq) return;
+      bookmarksresults = results
+        .filter((item) => !!item.url)
+        .map((item) => ({
+          id: item.id,
+          type: "other" as BookmarkSubType,
+          title: item.title,
+          url: item.url,
+        }));
+    } catch {
+      if (seq !== searchSeq) return;
+      bookmarksresults = [];
     }
-
-    return result;
-  }
-
-  function searchInput(value: string) {
-    bookmarksresults = onsearch(value);
-  }
-
-  function onsearch(query: string): SearchItem[] {
-    if (!query) return [];
-
-    // 简单大小写不敏感匹配
-    const lowerQuery = query.toLowerCase();
-
-    const results = searchItems.filter((item) => {
-      // 匹配标题或路径
-      const titleMatch = item.title.toLowerCase().includes(lowerQuery);
-      const pathMatch =
-        item.folderPath?.toLowerCase().includes(lowerQuery) ?? false;
-      return titleMatch || pathMatch;
-    });
-    return results;
   }
 
   function inputKey(e: KeyboardEvent) {
@@ -240,10 +187,6 @@
     }
     if (key === "ArrowDown") {
       if (!bookmarksresults.length) return;
-      if (suppressNextArrow) {
-        suppressNextArrow = false;
-        return;
-      }
       e.preventDefault();
       const first = listEls?.firstElementChild as HTMLElement | null;
       first?.focus();
@@ -279,7 +222,6 @@
         prev.focus();
         prev.scrollIntoView({ block: "nearest" });
       } else {
-        suppressNextArrow = true;
         searchEl?.focus();
       }
     }
@@ -317,9 +259,6 @@
       placeholder={enabledEngines[0] ? enabledEngines[0].title : "搜索"}
       oninput={() => searchInput(inputValue)}
       onkeyup={inputKey}
-      onfocus={() => {
-        if (!searchItems.length) initBookmarks();
-      }}
     />
     {@render temEngines()}
   </div>
@@ -409,10 +348,13 @@
     href={bookmark.url}
     onkeydown={handleResultKeydown}
   >
+  <G> 
     <BkmkIcon imgUrl={bookmark.url} alt={bookmark.title} size="s" />
-    <p class="text">
-      {bookmark.title}
-    </p>
+  </G>
+    <G vertical> 
+      <T type='m' bold> {bookmark.title}</T>
+      <T type='s'> {bookmark.url}</T>
+    </G>
   </a>
 {/snippet}
 
@@ -528,18 +470,6 @@
     pointer-events: none;
   }
 
-  .text {
-    color: var(--c-text);
-    padding: var(--gap);
-    width: 100%;
-    margin: 0;
-    font-size: var(--f-size-s);
-    display: flex;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    word-break: break-word;
-  }
   .item {
     display: flex;
     flex-direction: row;

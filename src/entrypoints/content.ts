@@ -17,7 +17,6 @@ async function init() {
     "background",
   );
 
-  console.log(shouldStore)
   if (!shouldStore) return;
 
   const faviconUrl = getBestFavicon();
