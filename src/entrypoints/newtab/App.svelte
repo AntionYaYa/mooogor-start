@@ -57,9 +57,8 @@
   async function clickGetPermission(permission: Permission) {
     if (permission === "bookmarks") {
       bookmarksPermission = await requestPermission(permission);
-      if (bookmarksPermission) {
-        clickTab(tabs[1], 1);
-      }
+      if (!bookmarksPermission) return;
+      if (!currentNode) await initBookmarkView();
     }
     if (permission === "history") {
       historyPermission = await requestPermission(permission);

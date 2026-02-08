@@ -9,6 +9,7 @@
   import Button from "./components/Button.svelte";
   import DragToPinneds from "./DragToPinneds.svelte";
   import { addToPinneds } from "@/lib/utils/pinneds";
+  import NoData from "./NoData.svelte";
 
   let tenMinHistory: HistoryItem[] = $state([]);
   let oneHHistory: HistoryItem[] = $state([]);
@@ -22,6 +23,16 @@
   let currentHistory: HistoryItem | undefined = $state();
   let showMenu = $state(false);
   let dragging = $state(false);
+
+  const hasHistory = $derived.by(() => {
+    if (tenMinHistory.length || oneHHistory.length || todayHistory.length) {
+      return true;
+    }
+    return dayGroups.some((group) => group.items.length);
+  });
+  const showEmpty = $derived.by(
+    () => !hasHistory && !loadingMore && !hasMore,
+  );
 
   let menuX = $state(0);
   let menuY = $state(0);
@@ -185,25 +196,30 @@
     dragging = false;
   }
 </script>
-
-<div class="history">
-  <DragToPinneds active={dragging} onDrop={clickAddtoPinneds} />
-  {#if tenMinHistory.length}
-    {@render temHistoryGroup("刚刚", tenMinHistory)}
-  {/if}
-  {#if oneHHistory.length}
-    {@render temHistoryGroup("1 小时内", oneHHistory)}
-  {/if}
-  {#if todayHistory.length}
-    {@render temHistoryGroup("今天", todayHistory)}
-  {/if}
-  {#each dayGroups as group}
-    {@render temHistoryGroup(group.label, group.items)}
-  {/each}
-  {#if hasMore}
-    <div class="more_trigger" use:infiniteScroll>
-      {#if loadingMore}
-        <Icon name="Loading" color="var(--c-text)" />
+<div class="page">
+  {#if showEmpty}
+    <NoData text="暂无历史记录" />
+  {:else}
+    <div class="history">
+      <DragToPinneds active={dragging} onDrop={clickAddtoPinneds} />
+      {#if tenMinHistory.length}
+        {@render temHistoryGroup("刚刚", tenMinHistory)}
+      {/if}
+      {#if oneHHistory.length}
+        {@render temHistoryGroup("1 小时内", oneHHistory)}
+      {/if}
+      {#if todayHistory.length}
+        {@render temHistoryGroup("今天", todayHistory)}
+      {/if}
+      {#each dayGroups as group}
+        {@render temHistoryGroup(group.label, group.items)}
+      {/each}
+      {#if hasMore}
+        <div class="more_trigger" use:infiniteScroll>
+          {#if loadingMore}
+            <Icon name="Loading" color="var(--c-text)" />
+          {/if}
+        </div>
       {/if}
     </div>
   {/if}
@@ -245,12 +261,18 @@
     </G>
     <G align="c">
       <Icon name="Eye" color="var(--c-text)" opacity={0.6} />
-      <T type="s">{history.visitCount}</T>
+      <T type="s" nowrap>{history.visitCount}</T>
     </G>
   </a>
 {/snippet}
 
 <style>
+  .page {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+  }
   .history {
     display: flex;
     flex-direction: column;
