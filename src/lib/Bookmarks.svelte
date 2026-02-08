@@ -2,11 +2,11 @@
   import BkmkIcon from "./BkmkIcon.svelte";
   import T from "./components/T.svelte";
   import type { BookmarkNode } from "../entrypoints/newtab/methods/getBookmarks";
-  import { slide } from "svelte/transition";
-  import { addWebSite, getDomainFromUrl } from "@/lib/DB/DB";
+  import { addToPinneds } from "@/lib/utils/pinneds";
   import LinkContextMenu from "./LinkContextMenu.svelte";
   import Button from "./components/Button.svelte";
   import NoData from "./NoData.svelte";
+  import DragToPinneds from "./DragToPinneds.svelte";
 
   interface Props {
     bookmarkNode: BookmarkNode;
@@ -17,7 +17,6 @@
   let { bookmarkNode, list, onclickFolder }: Props = $props();
   let currentBkmk: BookmarkNode | undefined = $state();
   let darging = $state(false);
-  let darginBox = $state(false);
   let showMenu = $state(false);
 
   let menuX = $state(0);
@@ -39,50 +38,25 @@
 
   function dragStart(e: DragEvent, bkmk: BookmarkNode) {
     currentBkmk = bkmk;
+    e.dataTransfer?.setData("text/plain", bkmk.url ?? "");
     darging = true;
   }
 
   function ondragend() {
     darging = false;
   }
-  function ondragenter() {
-    darginBox = true;
-  }
-
-  function ondragleave() {
-    darginBox = false;
-  }
 
   async function clickAddtoPinneds() {
     showMenu = false;
     if (!currentBkmk) return;
     if (!currentBkmk.url) return;
-    const newWebSite = {
-      domain: getDomainFromUrl(currentBkmk.url),
-      url: currentBkmk.url,
-      title: currentBkmk.title.trim(),
-    };
-    await addWebSite(newWebSite);
+    await addToPinneds(currentBkmk.url, currentBkmk.title);
     currentBkmk = undefined;
+    darging = false;
   }
 </script>
 
-{#if darging}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="darg_g" transition:slide={{ duration: 200 }}>
-    <span class="darg_text">
-      <T align="c">添加到常用</T>
-    </span>
-    <div
-      class="darg_box"
-      class:inbox={darginBox}
-      {ondragenter}
-      {ondragleave}
-      ondragover={(e) => e.preventDefault()}
-      ondrop={clickAddtoPinneds}
-    ></div>
-  </div>
-{/if}
+<DragToPinneds active={darging} onDrop={clickAddtoPinneds} />
 <div class="page">
   {#if bookmarkNode.children?.length}
     <div class="content {list ? 'list' : 'grid'}">
@@ -111,6 +85,7 @@
           href={bkmk.url}
           target="_self"
           class="full-row"
+          class:ctx={showMenu && currentBkmk === bkmk}
           oncontextmenu={(e) => showContextMenu(e, bkmk)}
         >
           <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" />
@@ -127,6 +102,7 @@
         <a
           href={bkmk.url}
           target="_self"
+          class:ctx={showMenu && currentBkmk === bkmk}
           oncontextmenu={(e) => showContextMenu(e, bkmk)}
         >
           <BkmkIcon imgUrl={bkmk.url!} alt={bkmk.title} />
@@ -142,7 +118,6 @@
 {/snippet}
 
 {#if showMenu && currentBkmk}
-  {#key currentBkmk.id}
     <LinkContextMenu
       x={menuX}
       y={menuY}
@@ -151,7 +126,6 @@
     >
       <Button full text="添加到常用" onclick={clickAddtoPinneds} />
     </LinkContextMenu>
-  {/key}
 {/if}
 
 <style>
@@ -160,39 +134,6 @@
     flex-direction: column;
     width: 100%;
     align-items: center;
-  }
-  .darg_text {
-    position: absolute;
-  }
-  .darg_g {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 10;
-    width: 100%;
-    height: 200px;
-    box-sizing: border-box;
-    display: flex;
-    padding: var(--gap);
-    align-items: center;
-    justify-content: center;
-    flex-direction: row;
-  }
-  .darg_box {
-    display: flex;
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-    background-color: var(--c-bg1);
-    padding: var(--gap);
-    border-radius: var(--r);
-    align-items: center;
-    justify-content: center;
-    flex-direction: row;
-    border: var(--c-text-2) dashed 2px;
-  }
-  .inbox {
-    border: var(--c-text) dashed 2px;
   }
   .item {
     display: flex;
@@ -254,6 +195,9 @@
     margin: 0;
     border-radius: var(--r1);
     -webkit-user-drag: none;
+  }
+  a.ctx {
+    outline: 2px var(--c-text) solid;
   }
 
   button {

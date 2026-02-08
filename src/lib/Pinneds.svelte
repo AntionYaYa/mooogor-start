@@ -106,6 +106,7 @@
           <a
             href={pinned.url}
             target="_self"
+            class:ctx={showMenu && currentPinned?.id === pinned.id}
             oncontextmenu={(e) => showContextMenu(e, pinned)}
           >
             <BkmkIcon imgUrl={pinned.url} alt={pinned.title ?? ""} size="xl" />
@@ -130,7 +131,6 @@
 {/if}
 
 {#if showMenu && currentPinned}
-  {#key currentPinned.id}
     <LinkContextMenu
       x={menuX}
       y={menuY}
@@ -140,7 +140,6 @@
       <Button full text="编辑" onclick={clickEditWebSite} />
       <Button full text="删除" onclick={clickDeleteWebSite} />
     </LinkContextMenu>
-  {/key}
 {/if}
 
 {#snippet temAddPinned()}
@@ -190,6 +189,7 @@
     padding: var(--gap);
     box-sizing: border-box;
   }
+
   a:focus-visible {
     outline: var(--c-text) 2px solid;
   }
@@ -198,5 +198,12 @@
     background-color: var(--c-mask);
     transform: translateY(2px);
     transition: all 0.1s ease-out;
+  }
+  
+  a:focus{
+    outline: 2px var(--c-text) solid;
+  }
+  a.ctx {
+    outline: 2px var(--c-text) solid;
   }
 </style>

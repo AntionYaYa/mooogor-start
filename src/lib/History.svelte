@@ -5,6 +5,10 @@
   import G from "./components/G.svelte";
   import BkmkIcon from "./BkmkIcon.svelte";
   import Icon from "./components/Icon.svelte";
+  import LinkContextMenu from "./LinkContextMenu.svelte";
+  import Button from "./components/Button.svelte";
+  import DragToPinneds from "./DragToPinneds.svelte";
+  import { addToPinneds } from "@/lib/utils/pinneds";
 
   let tenMinHistory: HistoryItem[] = $state([]);
   let oneHHistory: HistoryItem[] = $state([]);
@@ -14,6 +18,13 @@
   let nextDayOffset = $state(1); // 1 = 昨天
   let hasMore = $state(true);
   let loadMoreTask: Promise<void> | null = null;
+
+  let currentHistory: HistoryItem | undefined = $state();
+  let showMenu = $state(false);
+  let dragging = $state(false);
+
+  let menuX = $state(0);
+  let menuY = $state(0);
 
   const MINUTE = 60 * 1000;
   const HOUR = 60 * MINUTE;
@@ -144,9 +155,39 @@
   onMount(async () => {
     await loadToday();
   });
+
+  async function clickAddtoPinneds() {
+    showMenu = false;
+    if (!currentHistory) return;
+    if (!currentHistory.url) return;
+    await addToPinneds(currentHistory.url, currentHistory.title);
+    currentHistory = undefined;
+    dragging = false;
+  }
+
+  function showContextMenu(e: MouseEvent, history: HistoryItem) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    currentHistory = history;
+    menuX = e.clientX;
+    menuY = e.clientY;
+    showMenu = true;
+  }
+
+  function dragStart(e: DragEvent, history: HistoryItem) {
+    currentHistory = history;
+    e.dataTransfer?.setData("text/plain", history.url ?? "");
+    dragging = true;
+  }
+
+  function dragEnd() {
+    dragging = false;
+  }
 </script>
 
 <div class="history">
+  <DragToPinneds active={dragging} onDrop={clickAddtoPinneds} />
   {#if tenMinHistory.length}
     {@render temHistoryGroup("刚刚", tenMinHistory)}
   {/if}
@@ -168,8 +209,19 @@
   {/if}
 </div>
 
+{#if showMenu && currentHistory}
+    <LinkContextMenu
+      x={menuX}
+      y={menuY}
+      url={currentHistory.url ?? ""}
+      onClose={() => (showMenu = false)}
+    >
+      <Button full text="添加到常用" onclick={clickAddtoPinneds} />
+    </LinkContextMenu>
+{/if}
+
 {#snippet temHistoryGroup(title: string, items: HistoryItem[])}
-<G full vertical>
+  <G full vertical>
     <T type="s">{title}</T>
     {#each items as history}
       {@render temHistoryItem(history)}
@@ -178,14 +230,22 @@
 {/snippet}
 
 {#snippet temHistoryItem(history: HistoryItem)}
-  <a class="item" href={history.url}>
-      <G full align='c'>
-        <BkmkIcon imgUrl={history.url} alt={history.title ?? ""} size="s" />
-        <T type="m" bold nowrap>{history.title}</T>
-      </G>
-      <G align='c'>
-        <T type="s">{history.visitCount}</T>
-      </G>
+  <a
+    class="item"
+    href={history.url}
+    draggable={!!history.url}
+    ondragstart={(e) => dragStart(e, history)}
+    ondragend={dragEnd}
+    oncontextmenu={(e) => showContextMenu(e, history)}
+    class:ctx={showMenu && currentHistory === history}
+  >
+    <G full align="c">
+      <BkmkIcon imgUrl={history.url} alt={history.title ?? ""} size="s" />
+      <T type="m" bold nowrap>{history.title}</T>
+    </G>
+    <G align="c">
+      <T type="s">{history.visitCount}</T>
+    </G>
   </a>
 {/snippet}
 
@@ -209,7 +269,10 @@
     border-radius: var(--r);
     cursor: default;
   }
-  .item:active{
+  .item.ctx {
+    outline: 2px var(--c-text) solid;
+  }
+  .item:active {
     background-color: var(--c-mask);
     transform: translateY(2px);
     transition: all 0.1s ease-out;
