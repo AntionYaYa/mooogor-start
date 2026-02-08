@@ -90,9 +90,11 @@
   let bookmarksDebounceId: ReturnType<typeof setTimeout> | null = null;
   let historyDebounceId: ReturnType<typeof setTimeout> | null = null;
   let bookmarksLoading = $state(false);
+  let suppressNextEnter = $state(false);
 
   const HISTORY_MAX_RESULTS = 100;
   const SEARCH_DEBOUNCE_MS = 200;
+  let isComposing = $state(false);
 
   // function handleDocumentClick(e: MouseEvent) {
   //   const target = e.target as HTMLElement | null;
@@ -161,6 +163,7 @@
   }
 
   async function searchInput(value: string) {
+    if (isComposing) return;
     if (!value) {
       searchSeq += 1;
       historySeq += 1;
@@ -192,14 +195,17 @@
       try {
         const results = await searchBookmarks(bookmarkQuery, 200);
         if (seq !== searchSeq) return;
-        bookmarksResults = results
-          .filter((item) => !!item.url)
-          .map((item) => ({
-            id: item.id,
-            type: "other" as BookmarkSubType,
-            title: getDisplayTitle(item.title, item.url),
-            url: item.url,
-          }));
+        bookmarksResults = sortResults(
+          results
+            .filter((item) => !!item.url)
+            .map((item) => ({
+              id: item.id,
+              type: "other" as BookmarkSubType,
+              title: getDisplayTitle(item.title, item.url),
+              url: item.url,
+            })),
+          bookmarkQuery,
+        );
       } catch {
         if (seq !== searchSeq) return;
         bookmarksResults = [];
@@ -215,7 +221,7 @@
       try {
         const results = await searchHistory(query);
         if (hSeq !== historySeq) return;
-        historyResults = mapHistoryResults(results);
+        historyResults = sortResults(mapHistoryResults(results), query);
       } catch {
         if (hSeq !== historySeq) return;
         historyResults = [];
@@ -227,6 +233,14 @@
 
   function inputKey(e: KeyboardEvent) {
     const key = e.key;
+    if (isComposing || e.isComposing) return;
+    if (suppressNextEnter && key === "Enter") {
+      suppressNextEnter = false;
+      return;
+    }
+    if (suppressNextEnter && key !== "Enter") {
+      suppressNextEnter = false;
+    }
     if (key === "ArrowUp") {
       return;
     }
@@ -317,6 +331,20 @@
     if (trimmed) return trimmed;
     return url ?? "未命名";
   }
+
+  function sortResults(items: SearchItem[], query: string) {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return items;
+    const score = (item: SearchItem) => {
+      const title = item.title.toLowerCase();
+      const url = item.url?.toLowerCase() ?? "";
+      if (title.startsWith(needle)) return 3;
+      if (title.includes(needle)) return 2;
+      if (url.includes(needle)) return 1;
+      return 0;
+    };
+    return [...items].sort((a, b) => score(b) - score(a));
+  }
 </script>
 
 <div class="search_g">
@@ -363,6 +391,12 @@
       bind:value={inputValue}
       type="search"
       placeholder={enabledEngines[0] ? enabledEngines[0].title : "搜索"}
+      oncompositionstart={() => (isComposing = true)}
+      oncompositionend={(e) => {
+        isComposing = false;
+        suppressNextEnter = true;
+        searchInput((e.currentTarget as HTMLInputElement).value);
+      }}
       oninput={() => searchInput(inputValue)}
       onkeyup={inputKey}
     />
