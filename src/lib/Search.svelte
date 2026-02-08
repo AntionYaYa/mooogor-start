@@ -18,7 +18,8 @@
   import type { Engine } from "@/lib/DB/DB";
   import {
     ensureDefaultEngines,
-    getAllEngine,
+    getEnabledEngines,
+    getDisabledEngines,
     updateEnginesState,
   } from "@/lib/DB/DB";
   import defaultEnginesRaw from "@/lib/DB/defaultEngines.json";
@@ -108,18 +109,10 @@
 
   onMount(async () => {
     // window.addEventListener("click", handleDocumentClick); //获取焦点
-    await ensureDefaultEngines(defaultEngines); //初始化把数据添加到Engines表里
-    const allEngines = await getAllEngine();
-    enabledEngines = allEngines
-      .filter((e) => e.enabled !== false)
-      .sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999))
-      .map((e) => ({ ...e, enabled: true }));
-    disabledEngines = allEngines
-      .filter((e) => e.enabled === false)
-      .sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999))
-      .map((e) => ({ ...e, enabled: false }));
+    await ensureDefaultEngines(defaultEngines); //初始化把数据添加到Engines表里，有就不会添加
+    const enabled = await getEnabledEngines();
+    enabledEngines = enabled.map((e) => ({ ...e, enabled: true }));
   });
-
 
   function handleConsiderEnabled(e: CustomEvent<DndEvent<Engine>>) {
     isDragging = true;
@@ -292,6 +285,14 @@
     }
   }
 
+  async function clickEditeEngines() {
+    showMoreEngines = !showMoreEngines
+    if (!showMoreEngines) return
+    if (disabledEngines.length) return;
+    const disabled = await getDisabledEngines();
+    disabledEngines = disabled.map((e) => ({ ...e, enabled: false }));
+  }
+
 </script>
 
 <div class="search_g">
@@ -313,7 +314,7 @@
       bind:this={searchEl}
       bind:value={inputValue}
       type="search"
-      placeholder={enabledEngines[0]?enabledEngines[0].title:'搜索'}
+      placeholder={enabledEngines[0] ? enabledEngines[0].title : "搜索"}
       oninput={() => searchInput(inputValue)}
       onkeyup={inputKey}
       onfocus={() => {
@@ -328,78 +329,77 @@
 {/snippet}
 
 {#snippet temEngines()}
-<div class="engines_M">
-  <div
-    bind:this={engineEls}
-    class="engines"
-    class:drag={isDragging}
-    use:dndzone={{
-      items: enabledEngines,
-      flipDurationMs: 200,
-      type: "engines",
-      zoneTabIndex: -1,
-      dropTargetStyle: {},
-      dragDisabled: !showMoreEngines,
-    }}
-    onconsider={handleConsiderEnabled}
-    onfinalize={handleFinalizeEnabled}
-  >
-    {#each enabledEngines as engine (engine.id)}
-      <a
-        class="engine"
-        href={engine.engineUrl?.replace("%s", inputValue)}
-        animate:flip={{ duration: 200 }}
-      >
-        <img
-          class="engine_icon"
-          src={engine.faviconUrl}
-          alt={engine.title ?? ""}
-        />
-      </a>
-    {/each}
+  <div class="engines_M">
+    <div
+      bind:this={engineEls}
+      class="engines"
+      class:drag={isDragging}
+      use:dndzone={{
+        items: enabledEngines,
+        flipDurationMs: 200,
+        type: "engines",
+        zoneTabIndex: -1,
+        dropTargetStyle: {},
+        dragDisabled: !showMoreEngines,
+      }}
+      onconsider={handleConsiderEnabled}
+      onfinalize={handleFinalizeEnabled}
+    >
+      {#each enabledEngines as engine (engine.id)}
+        <a
+          class="engine"
+          href={engine.engineUrl?.replace("%s", inputValue)}
+          animate:flip={{ duration: 200 }}
+        >
+          <img
+            class="engine_icon"
+            src={engine.faviconUrl}
+            alt={engine.title ?? ""}
+          />
+        </a>
+      {/each}
+    </div>
+    <Button
+      iconName={showMoreEngines ? "ChevronUp" : "ChevronDown"}
+      onclick={clickEditeEngines}
+      mini
+    />
   </div>
-  <Button
-    iconName={showMoreEngines ? "ChevronUp" : "ChevronDown"}
-    onclick={() => (showMoreEngines = !showMoreEngines)}
-    mini
-  />
-</div>
 {/snippet}
 
 {#snippet temMoreEngines()}
-<div class="more_engines_M" transition:slide={{duration:300}}>
-  <G full>
-    <T >拖拽排序或禁用</T>
-  </G>
-  <div
-    class="more_g"
-    class:drag={isDragging}
-    use:dndzone={{
-      items: disabledEngines,
-      flipDurationMs: 200,
-      type: "engines",
-      zoneTabIndex: -1,
-      dropTargetStyle: {},
-      dragDisabled: !showMoreEngines,
-    }}
-    onconsider={handleConsiderDisabled}
-    onfinalize={handleFinalizeDisabled}
-  >
-    {#each disabledEngines as engine (engine.id)}
-      <button
-        class="more_item"
-        class:more_item_sel={engine.enabled}
-        animate:flip={{ duration: 200 }}
-      >
-        <img
-          class="engine_icon"
-          src={engine.faviconUrl}
-          alt={engine.title ?? ""}
-        />
-      </button>
-    {/each}
-  </div>
-
+  <div class="more_engines_M" transition:slide={{ duration: 300 }}>
+    <G full>
+      <T>拖拽排序或禁用</T>
+    </G>
+    <div
+      class="more_g"
+      class:drag={isDragging}
+      use:dndzone={{
+        items: disabledEngines,
+        flipDurationMs: 200,
+        type: "engines",
+        zoneTabIndex: -1,
+        dropTargetStyle: {},
+        dragDisabled: !showMoreEngines,
+      }}
+      onconsider={handleConsiderDisabled}
+      onfinalize={handleFinalizeDisabled}
+    >
+      {#each disabledEngines as engine (engine.id)}
+        <button
+          class="more_item"
+          class:more_item_sel={engine.enabled}
+          animate:flip={{ duration: 200 }}
+        >
+          <img
+            class="engine_icon"
+            src={engine.faviconUrl}
+            alt={engine.title ?? ""}
+          />
+        </button>
+      {/each}
+    </div>
   </div>
 {/snippet}
 
@@ -417,12 +417,12 @@
 {/snippet}
 
 <style>
-  .engines_M{
+  .engines_M {
     display: flex;
     align-items: center;
     flex-direction: row;
   }
-  .more_engines_M{
+  .more_engines_M {
     display: flex;
     align-items: center;
     flex-direction: row;

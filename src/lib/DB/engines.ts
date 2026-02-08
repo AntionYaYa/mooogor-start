@@ -26,8 +26,20 @@ export async function deleteEngine(id: number) {
   return await db.engines.delete(id);
 }
 
-export async function getAllEngine(): Promise<Engine[]> {
-  return await db.engines.toArray();
+// export async function getAllEngine(): Promise<Engine[]> {
+//   return await db.engines.toArray();
+// }
+
+export async function getEnabledEngines(): Promise<Engine[]> {
+  return await db.engines
+    .filter((e) => e.enabled !== false)
+    .sortBy("order");
+}
+
+export async function getDisabledEngines(): Promise<Engine[]> {
+  return await db.engines
+    .filter((e) => e.enabled === false)
+    .sortBy("order");
 }
 
 export async function getAllEnableEngine(): Promise<Engine[]> {

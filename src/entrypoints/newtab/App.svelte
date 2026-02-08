@@ -27,6 +27,8 @@
 
   let bookmarksPermission = $state(false);
   let allBookmarksTree: BookmarkNode | undefined = $state();
+  let currentNode: BookmarkNode | undefined = $state();
+  let historyStack: BookmarkNode[] = $state([]);
 
   let historyPermission = $state(false);
   let AllHistory: HistoryItem[] = $state([]);
@@ -41,21 +43,6 @@
   let showNext = $state(false);
   let firstMount = $state(true);
 
-  let currentNode: BookmarkNode | undefined = $state();
-  let historyStack: BookmarkNode[] = $state([]);
-
-  init();
-
-  async function init() {
-    bookmarksPermission = await hasPermission("bookmarks");
-    if (bookmarksPermission) {
-      await initBookmarks();
-    }
-    historyPermission = await hasPermission("history");
-    if (historyPermission) {
-       AllHistory = await getHistorys();
-    }
-  }
 
   onMount(async () => {
     clickTab(tabs[0], 0);
@@ -63,50 +50,64 @@
     firstMount = false;
   });
 
-  async function initPinneds() {
-    allPinneds = await getAllWebSite();
-  }
-  async function initBookmarks() {
+  async function getBookmarksTree() {
     const allBookmarks = await getBookmarks();
-    allBookmarksTree = allBookmarks[0];
-    if (!allBookmarksTree.children) return;
+    return allBookmarks[0];
   }
+
   $inspect(allBookmarksTree);
 
   async function clickGetPermission(permission: Permission) {
     if (permission === "bookmarks") {
       bookmarksPermission = await requestPermission(permission);
       if (bookmarksPermission) {
-        await initBookmarks();
-        if (!currentNode) {
-          initBookmarkView();
-        }
+        clickTab(tabs[1], 1);
       }
     }
     if (permission === "history") {
       historyPermission = await requestPermission(permission);
+      if (historyPermission) {
+        clickTab(tabs[2], 2);
+      }
     }
   }
 
-
-
-  function clickTab(tab: TabItem, i: number) {
-    if (tab.key === "0") {
-      initPinneds();
-    }
-    if (tab.key === "1") {
-      if (tab.sel && historyStack.length === 2) {
+  async function clickTab(tab: TabItem, i: number) {
+    //书签选中情况下再点击回到顶层，
+    if (tab.sel) {
+      if (tab.key === "1" && historyStack.length === 2) {
         tabs[1].name = "书签";
         goBack();
       }
+      return;
     }
 
-    if (tab.sel) return;
     updateShowNext(i);
     updateSelTab(tab);
 
-    if (currentNode) return;
-    initBookmarkView();
+    if (tab.key === "0") {
+      allPinneds = await getAllWebSite();
+      return;
+    }
+    if (tab.key === "1") {
+      bookmarksPermission = await requestPermission("bookmarks");
+      allBookmarksTree = await getBookmarksTree();
+      if (!currentNode) initBookmarkView();
+      return;
+    }
+    if (tab.key === "2") {
+      historyPermission = await requestPermission("history");
+      AllHistory = await getHistorys();
+      return;
+    }
+  }
+
+  async function clickUpdatePinneds(items: WebSite[] | undefined) {
+    if (items) {
+      allPinneds = items;
+    } else {
+      allPinneds = await getAllWebSite();
+    }
   }
 
   function updateSelTab(tab: TabItem) {
@@ -223,11 +224,7 @@
 {/snippet}
 
 {#snippet pinneds()}
-  <Pinneds
-    {allPinneds}
-    onUpdate={(items) =>
-      items !== undefined ? (allPinneds = items) : initPinneds()}
-  />
+  <Pinneds {allPinneds} onUpdate={(items) => clickUpdatePinneds(items)} />
 {/snippet}
 
 {#snippet bookmarks()}
@@ -246,7 +243,7 @@
   {#if !historyPermission}
     {@render temNeedPermission("History", "需要权限", "history")}
   {:else}
-    <History {AllHistory}/>
+    <History {AllHistory} />
   {/if}
 {/snippet}
 
@@ -265,7 +262,11 @@
         <T align="c" type="s">该插件不联网，不收集数据，请放心授权。</T>
       </G>
       <G vertical align="c">
-        <Button text="授权" onclick={() => clickGetPermission(permission)} fill />
+        <Button
+          text="授权"
+          onclick={() => clickGetPermission(permission)}
+          fill
+        />
       </G>
     </G>
   </div>
