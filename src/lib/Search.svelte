@@ -24,17 +24,16 @@
   } from "@/lib/DB/DB";
   import defaultEnginesRaw from "@/lib/DB/defaultEngines.json";
 
-  import type {
-    BookmarkNode,
-    BookmarkSubType,
-  } from "../entrypoints/newtab/methods/getBookmarks";
+  import type { BookmarkSubType } from "../entrypoints/newtab/methods/getBookmarks";
   import { searchBookmarks } from "../entrypoints/newtab/methods/getBookmarks";
+  import type { HistoryItem } from "../entrypoints/newtab/methods/getHistorys";
   import Button from "./components/Button.svelte";
   import BkmkIcon from "./BkmkIcon.svelte";
-    import T from "./components/T.svelte";
-    import G from "./components/G.svelte";
+  import Icon from "./components/Icon.svelte";
+  import T from "./components/T.svelte";
+  import G from "./components/G.svelte";
 
-  type ItemType = BookmarkSubType | "engine" | "todo";
+  type ItemType = BookmarkSubType | "engine" | "todo" | "history";
 
   interface SearchItem {
     id: string;
@@ -76,8 +75,9 @@
 
   let enabledEngines: Engine[] = $state([]);
   let disabledEngines: Engine[] = $state([]);
-  let isDragging = $state(false);
-  let bookmarksresults: SearchItem[] = $state([]);
+  let bookmarksResults: SearchItem[] = $state([]);
+  let historyResults: SearchItem[] = $state([]);
+  let historyLoading = $state(false);
 
   let searchEl: HTMLInputElement | undefined = $state();
   let engineEls: HTMLDivElement | undefined = $state();
@@ -86,6 +86,13 @@
   let showMoreEngines = $state(false);
 
   let searchSeq = $state(0);
+  let historySeq = $state(0);
+  let bookmarksDebounceId: ReturnType<typeof setTimeout> | null = null;
+  let historyDebounceId: ReturnType<typeof setTimeout> | null = null;
+  let bookmarksLoading = $state(false);
+
+  const HISTORY_MAX_RESULTS = 100;
+  const SEARCH_DEBOUNCE_MS = 200;
 
   // function handleDocumentClick(e: MouseEvent) {
   //   const target = e.target as HTMLElement | null;
@@ -108,7 +115,6 @@
   });
 
   function handleConsiderEnabled(e: CustomEvent<DndEvent<Engine>>) {
-    isDragging = true;
     enabledEngines = e.detail.items.map((item) => ({
       ...item,
       enabled: true,
@@ -116,7 +122,6 @@
   }
 
   function handleConsiderDisabled(e: CustomEvent<DndEvent<Engine>>) {
-    isDragging = true;
     disabledEngines = e.detail.items.map((item) => ({
       ...item,
       enabled: false,
@@ -124,7 +129,6 @@
   }
 
   async function handleFinalizeEnabled(e: CustomEvent<DndEvent<Engine>>) {
-    isDragging = false;
     enabledEngines = e.detail.items.map((item) => ({
       ...item,
       enabled: true,
@@ -141,7 +145,6 @@
   }
 
   async function handleFinalizeDisabled(e: CustomEvent<DndEvent<Engine>>) {
-    isDragging = false;
     disabledEngines = e.detail.items.map((item) => ({
       ...item,
       enabled: false,
@@ -159,25 +162,67 @@
 
   async function searchInput(value: string) {
     if (!value) {
-      bookmarksresults = [];
+      searchSeq += 1;
+      historySeq += 1;
+      if (bookmarksDebounceId) {
+        clearTimeout(bookmarksDebounceId);
+        bookmarksDebounceId = null;
+      }
+      if (historyDebounceId) {
+        clearTimeout(historyDebounceId);
+        historyDebounceId = null;
+      }
+      bookmarksResults = [];
+      historyResults = [];
+      bookmarksLoading = false;
+      historyLoading = false;
+      listEls?.scrollTo({ top: 0 });
       return;
     }
     const seq = ++searchSeq;
-    try {
-      const results = await searchBookmarks(value, 200);
+    const hSeq = ++historySeq;
+    historyResults = [];
+    historyLoading = false;
+    listEls?.scrollTo({ top: 0 });
+    if (bookmarksDebounceId) clearTimeout(bookmarksDebounceId);
+    bookmarksLoading = true;
+    const bookmarkQuery = value;
+    bookmarksDebounceId = setTimeout(async () => {
       if (seq !== searchSeq) return;
-      bookmarksresults = results
-        .filter((item) => !!item.url)
-        .map((item) => ({
-          id: item.id,
-          type: "other" as BookmarkSubType,
-          title: item.title,
-          url: item.url,
-        }));
-    } catch {
-      if (seq !== searchSeq) return;
-      bookmarksresults = [];
-    }
+      try {
+        const results = await searchBookmarks(bookmarkQuery, 200);
+        if (seq !== searchSeq) return;
+        bookmarksResults = results
+          .filter((item) => !!item.url)
+          .map((item) => ({
+            id: item.id,
+            type: "other" as BookmarkSubType,
+            title: getDisplayTitle(item.title, item.url),
+            url: item.url,
+          }));
+      } catch {
+        if (seq !== searchSeq) return;
+        bookmarksResults = [];
+      } finally {
+        if (seq === searchSeq) bookmarksLoading = false;
+      }
+    }, SEARCH_DEBOUNCE_MS);
+    if (historyDebounceId) clearTimeout(historyDebounceId);
+    const query = value;
+    historyDebounceId = setTimeout(async () => {
+      if (hSeq !== historySeq) return;
+      historyLoading = true;
+      try {
+        const results = await searchHistory(query);
+        if (hSeq !== historySeq) return;
+        historyResults = mapHistoryResults(results);
+      } catch {
+        if (hSeq !== historySeq) return;
+        historyResults = [];
+      } finally {
+        if (hSeq === historySeq) historyLoading = false;
+      }
+    }, SEARCH_DEBOUNCE_MS);
   }
 
   function inputKey(e: KeyboardEvent) {
@@ -186,11 +231,13 @@
       return;
     }
     if (key === "ArrowDown") {
-      if (!bookmarksresults.length) return;
+      if (!bookmarksResults.length && !historyResults.length) return;
       e.preventDefault();
-      const first = listEls?.firstElementChild as HTMLElement | null;
-      first?.focus();
-      first?.scrollIntoView({ block: "nearest" });
+      const [first] = getResultEls();
+      if (first) {
+        first.focus();
+        first.scrollIntoView({ block: "nearest" });
+      }
       return;
     }
     if (key === "Enter") {
@@ -207,17 +254,21 @@
   }
 
   function handleResultKeydown(e: KeyboardEvent) {
+    const items = getResultEls();
+    const current = e.currentTarget as HTMLElement;
+    const index = items.indexOf(current);
+    if (index === -1) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      const next = (e.currentTarget as HTMLElement)
-        .nextElementSibling as HTMLElement | null;
-      next?.focus();
-      next?.scrollIntoView({ block: "nearest" });
+      const next = items[index + 1];
+      if (next) {
+        next.focus();
+        next.scrollIntoView({ block: "nearest" });
+      }
     }
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      const prev = (e.currentTarget as HTMLElement)
-        .previousElementSibling as HTMLElement | null;
+      const prev = items[index - 1];
       if (prev) {
         prev.focus();
         prev.scrollIntoView({ block: "nearest" });
@@ -228,22 +279,77 @@
   }
 
   async function clickEditeEngines() {
-    showMoreEngines = !showMoreEngines
-    if (!showMoreEngines) return
+    showMoreEngines = !showMoreEngines;
+    if (!showMoreEngines) return;
     if (disabledEngines.length) return;
     const disabled = await getDisabledEngines();
     disabledEngines = disabled.map((e) => ({ ...e, enabled: false }));
   }
 
+  function getResultEls() {
+    if (!listEls) return [] as HTMLElement[];
+    return Array.from(
+      listEls.querySelectorAll<HTMLElement>("[data-result='true']"),
+    );
+  }
+
+  async function searchHistory(query: string) {
+    return await browser.history.search({
+      text: query,
+      startTime: 0,
+      maxResults: HISTORY_MAX_RESULTS,
+    });
+  }
+
+  function mapHistoryResults(items: HistoryItem[]): SearchItem[] {
+    return items
+      .filter((item) => !!item.url)
+      .map((item) => ({
+        id: String(item.id ?? item.url ?? item.lastVisitTime ?? ""),
+        type: "history" as const,
+        title: getDisplayTitle(item.title, item.url),
+        url: item.url,
+      }));
+  }
+
+  function getDisplayTitle(title?: string | null, url?: string | null) {
+    const trimmed = title?.trim();
+    if (trimmed) return trimmed;
+    return url ?? "未命名";
+  }
 </script>
 
 <div class="search_g">
   {@render temInputGroup()}
-  {#if bookmarksresults.length}
-    <div class="list" bind:this={listEls} transition:slide={{ duration: 200 }}>
-      {#each bookmarksresults as bookmark}
-        {@render temBkmk(bookmark)}
-      {/each}
+  {#if bookmarksResults.length || historyResults.length}
+    <div
+      class="list"
+      bind:this={listEls}
+      transition:slide={{ duration: 200 }}
+    >
+      {#if bookmarksResults.length}
+      <G>
+        <T type="s">书签</T>
+      </G>
+        {#each bookmarksResults as bookmark}
+          {@render temBkmk(bookmark)}
+        {/each}
+      {/if}
+
+      {#if historyResults.length}
+      <G>
+        <T type="s">历史记录</T>
+      </G>
+        {#each historyResults as history}
+          {@render temBkmk(history)}
+        {/each}
+      {/if}
+
+      {#if historyLoading || bookmarksLoading}
+        <div class="more_trigger">
+          <Icon name="Loading" color="var(--c-text)" />
+        </div>
+      {/if}
     </div>
   {/if}
 </div>
@@ -347,15 +453,13 @@
     class="item"
     href={bookmark.url}
     onkeydown={handleResultKeydown}
+    data-result="true"
   >
-  <G> 
-    <BkmkIcon imgUrl={bookmark.url} alt={bookmark.title} size="s" />
-  </G>
-    <G vertical full> 
-      {#if bookmark.title}
-        <T type='m' bold nowrap> {bookmark.title}</T>
-      {/if}
-      <T type='s' nowrap> {bookmark.url}</T>
+    <G>
+      <BkmkIcon imgUrl={bookmark.url} alt={bookmark.title} size="s" />
+    </G>
+    <G vertical full>
+      <T type="m" bold nowrap>{bookmark.title}</T>
     </G>
   </a>
 {/snippet}
@@ -408,6 +512,11 @@
     max-height: calc(100vh - 110px);
     overflow-y: auto;
   }
+  .more_trigger {
+    display: flex;
+    justify-content: center;
+    padding: var(--gap) 0;
+  }
 
   .input_group {
     display: flex;
@@ -457,7 +566,7 @@
   .engine {
     display: flex;
     border-radius: var(--r);
-    overflow: hidden; 
+    overflow: hidden;
     cursor: default !important;
   }
   .engine:focus-visible {
