@@ -110,8 +110,8 @@
             oncontextmenu={(e) => showContextMenu(e, pinned)}
           >
             <BkmkIcon imgUrl={pinned.url} alt={pinned.title ?? ""} size="xl" />
-            <T nowrap align="c" type="s">{pinned.title}</T>
           </a>
+          <T nowrap align="c" type="s">{pinned.title}</T>
         </div>
       {/each}
     </div>
@@ -159,6 +159,7 @@
     align-items: center;
     box-sizing: border-box;
     border-radius: var(--r);
+    cursor: default !important;
   }
   .content {
     gap: var(--gap);
@@ -178,16 +179,14 @@
   a {
     text-decoration: none;
     cursor: default;
-    width: 100%;
-    height: 100%;
     margin: 0;
-    border-radius: var(--r);
+    border-radius: var(--r1);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--gap);
     padding: var(--gap);
     box-sizing: border-box;
+    background-color: var(--c-bg1);
   }
 
   a:focus-visible {

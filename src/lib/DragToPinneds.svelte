@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { slide } from "svelte/transition";
   import T from "./components/T.svelte";
 
   interface Props {
@@ -25,7 +26,7 @@
 
 {#if active}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="darg_g">
+  <div class="darg_g" transition:slide={{duration:300}}>
     <span class="darg_text">
       <T align="c">添加到常用</T>
     </span>

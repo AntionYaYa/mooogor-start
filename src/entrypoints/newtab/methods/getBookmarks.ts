@@ -6,6 +6,10 @@ export async function getBookmarks(): Promise<BookmarkNode[]> {
   return await browser.bookmarks.getTree();
 }
 
+export async function getBookmarkChildren(id: string): Promise<BookmarkNode[]> {
+  return await browser.bookmarks.getChildren(id);
+}
+
 export async function searchBookmarks(
   query: string,
   maxResults = 100,
@@ -14,10 +18,3 @@ export async function searchBookmarks(
   return results.slice(0, maxResults);
 }
 
-export async function moveBookmark(
-  id: string,
-  parentId: string,
-  index: number
-) {
-  return await browser.bookmarks.move(id, { parentId, index });
-}

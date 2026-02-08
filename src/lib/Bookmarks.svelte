@@ -217,6 +217,10 @@
     transform: translateY(2px);
     transition: all 0.1s ease-out;
   }
+  button:focus-visible,
+  a:focus-visible {
+    outline: var(--c-text) 2px solid;
+  }
 
   .full-row {
     display: flex;

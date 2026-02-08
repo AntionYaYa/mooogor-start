@@ -39,10 +39,10 @@
 
 <style>
   .xl {
-    width: 54px;
-    min-width: 54px;
-    height: 54px;
-    min-height: 54px;
+    width: 50px;
+    min-width: 50px;
+    height: 50px;
+    min-height: 50px;
     border-radius: var(--r);
   }
   .l {

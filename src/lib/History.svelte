@@ -210,14 +210,14 @@
 </div>
 
 {#if showMenu && currentHistory}
-    <LinkContextMenu
-      x={menuX}
-      y={menuY}
-      url={currentHistory.url ?? ""}
-      onClose={() => (showMenu = false)}
-    >
-      <Button full text="添加到常用" onclick={clickAddtoPinneds} />
-    </LinkContextMenu>
+  <LinkContextMenu
+    x={menuX}
+    y={menuY}
+    url={currentHistory.url ?? ""}
+    onClose={() => (showMenu = false)}
+  >
+    <Button full text="添加到常用" onclick={clickAddtoPinneds} />
+  </LinkContextMenu>
 {/if}
 
 {#snippet temHistoryGroup(title: string, items: HistoryItem[])}
@@ -244,6 +244,7 @@
       <T type="m" bold nowrap>{history.title}</T>
     </G>
     <G align="c">
+      <Icon name="Eye" color="var(--c-text)" opacity={0.6} />
       <T type="s">{history.visitCount}</T>
     </G>
   </a>
@@ -264,7 +265,6 @@
     width: 100%;
     box-sizing: border-box;
     text-decoration: none;
-    gap: var(--gap);
     padding: var(--gap);
     border-radius: var(--r);
     cursor: default;
@@ -276,6 +276,9 @@
     background-color: var(--c-mask);
     transform: translateY(2px);
     transition: all 0.1s ease-out;
+  }
+  .item:focus-visible {
+    outline: var(--c-text) 2px solid;
   }
 
   .more_trigger {

@@ -12,7 +12,7 @@
 
 <G vertical>
   <G full align='c'>
-    <Icon name="Sprout" color="var(--c-text)" size={30} />
+    <Icon name="Sprout" color="var(--c-text)" opacity={0.6} size={30} />
   </G>
   <T align="c" type='s'>{text}</T>
 </G>

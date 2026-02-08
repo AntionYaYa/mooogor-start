@@ -11,9 +11,8 @@
   import Pinneds from "@/lib/Pinneds.svelte";
   import { hasPermission, requestPermission } from "./methods/getPermission";
   import type { Permission } from "./methods/getPermission";
-  import { getBookmarks } from "./methods/getBookmarks";
+  import { getBookmarkChildren } from "./methods/getBookmarks";
   import type { BookmarkNode } from "./methods/getBookmarks";
-  // history data is loaded inside History component
   import { getAllWebSite } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import { fly } from "svelte/transition";
@@ -25,12 +24,11 @@
   let allPinneds: WebSite[] = $state([]);
 
   let bookmarksPermission = $state(false);
-  let allBookmarksTree: BookmarkNode | undefined = $state();
   let currentNode: BookmarkNode | undefined = $state();
   let historyStack: BookmarkNode[] = $state([]);
 
   let historyPermission = $state(false);
-  
+
   let tabs: TabItem[] = $state([
     { key: "0", name: "常用", sel: false },
     { key: "1", name: "书签", sel: false },
@@ -41,19 +39,20 @@
   let showNext = $state(false);
   let firstMount = $state(true);
 
-
   onMount(async () => {
     clickTab(tabs[0], 0);
     await tick();
     firstMount = false;
   });
 
-  async function getBookmarksTree() {
-    const allBookmarks = await getBookmarks();
-    return allBookmarks[0];
+  async function getBookmarksRoot() {
+    const children = await getBookmarkChildren("0");
+    return {
+      id: "0",
+      title: "root",
+      children,
+    } as BookmarkNode;
   }
-
-  $inspect(allBookmarksTree);
 
   async function clickGetPermission(permission: Permission) {
     if (permission === "bookmarks") {
@@ -88,13 +87,13 @@
       return;
     }
     if (tab.key === "1") {
-      bookmarksPermission = await requestPermission("bookmarks");
-      allBookmarksTree = await getBookmarksTree();
-      if (!currentNode) initBookmarkView();
+      bookmarksPermission = await hasPermission("bookmarks");
+      if (!bookmarksPermission) return;
+      if (!currentNode) await initBookmarkView();
       return;
     }
     if (tab.key === "2") {
-      historyPermission = await requestPermission("history");
+      historyPermission = await hasPermission("history");
       return;
     }
   }
@@ -122,13 +121,20 @@
   }
 
   async function initBookmarkView() {
-    if (!allBookmarksTree) return;
-    clickFolder(allBookmarksTree);
-    if (!allBookmarksTree.children) return;
-    clickFolder(allBookmarksTree.children[0]);
+    const root = await getBookmarksRoot();
+    await clickFolder(root);
+    if (!root.children?.length) return;
+    await clickFolder(root.children[0]);
   }
 
-  function clickFolder(bkmk: BookmarkNode) {
+  async function clickFolder(bkmk: BookmarkNode) {
+    const node = bkmk.children
+      ? bkmk
+      : {
+          ...bkmk,
+          children: await getBookmarkChildren(bkmk.id),
+        };
+    bkmk = node;
     if (bkmk.folderType) {
       tabs[1].name = bkmk.title;
     }
@@ -192,10 +198,10 @@
             class="tab_content"
             in:fly={firstMount
               ? undefined
-              : { x: showNext ? 200 : -200, duration: 250 }}
+              : { x: showNext ? 180 : -180, duration: 250 }}
             out:fly={firstMount
               ? undefined
-              : { x: showNext ? -200 : 200, duration: 200 }}
+              : { x: showNext ? -180 : 180, duration: 200 }}
           >
             {#if tab.key === "0"}
               {@render pinneds()}
@@ -344,6 +350,9 @@
     box-sizing: border-box;
     position: relative;
     height: 100%;
+    border-radius: var(--r1);
+    padding: var(--gap);
+    /* background-color: var(--c-mask-1); */
   }
   .tab_content {
     position: absolute;

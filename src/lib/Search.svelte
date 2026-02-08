@@ -272,7 +272,7 @@
     <div
       bind:this={engineEls}
       class="engines"
-      class:drag={isDragging}
+      class:drag={showMoreEngines}
       use:dndzone={{
         items: enabledEngines,
         flipDurationMs: 200,
@@ -313,7 +313,7 @@
     </G>
     <div
       class="more_g"
-      class:drag={isDragging}
+      class:drag={showMoreEngines}
       use:dndzone={{
         items: disabledEngines,
         flipDurationMs: 200,
@@ -344,16 +344,18 @@
 
 {#snippet temBkmk(bookmark: SearchItem)}
   <a
-    class="item {bookmark.type === 'other' ? 'other' : ''}"
+    class="item"
     href={bookmark.url}
     onkeydown={handleResultKeydown}
   >
   <G> 
     <BkmkIcon imgUrl={bookmark.url} alt={bookmark.title} size="s" />
   </G>
-    <G vertical> 
-      <T type='m' bold> {bookmark.title}</T>
-      <T type='s'> {bookmark.url}</T>
+    <G vertical full> 
+      {#if bookmark.title}
+        <T type='m' bold nowrap> {bookmark.title}</T>
+      {/if}
+      <T type='s' nowrap> {bookmark.url}</T>
     </G>
   </a>
 {/snippet}
@@ -382,7 +384,6 @@
     filter: grayscale();
   }
   .more_item_sel {
-    background-color: aqua;
     filter: grayscale(0);
   }
   .search_g {
@@ -456,7 +457,7 @@
   .engine {
     display: flex;
     border-radius: var(--r);
-    overflow: hidden;
+    overflow: hidden; 
     cursor: default !important;
   }
   .engine:focus-visible {
@@ -480,11 +481,16 @@
     gap: var(--gap);
     padding: var(--gap);
     border-radius: var(--r);
+    cursor: default;
   }
+  .engine:active,
+  .item:active {
+    background-color: var(--c-mask);
+    transform: translateY(2px);
+    transition: all 0.1s ease-out;
+  }
+  .engine:focus,
   .item:focus {
     outline: 2px var(--c-text) solid;
-  }
-  .other {
-    color: aqua;
   }
 </style>
