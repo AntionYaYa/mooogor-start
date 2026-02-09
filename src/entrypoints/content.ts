@@ -10,13 +10,13 @@ export default defineContentScript({
 
 async function init() {
   let shouldStore = false;
-
+  
+  
   shouldStore = await sendMessage(
     "shouldStoreFavicon",
     { url: location.href },
     "background",
   );
-
   if (!shouldStore) return;
 
   const faviconUrl = getBestFavicon();

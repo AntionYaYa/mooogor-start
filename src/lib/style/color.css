@@ -3,6 +3,7 @@
   :root {
     --c-bg1: #3C3C3C;
     --c-bg: #2D2E31;
+    --c-bg-1: #1b1b1d;
     --c-bg-rgb: 45, 46, 49;
 
     --c-text: rgb(227, 227, 227);
@@ -19,6 +20,7 @@
   :root {
     --c-bg1: #FFFFFF;
     --c-bg: #F4F6FE;
+    --c-bg-1: #dcdfe9;
     --c-bg-rgb: 244, 246, 254;
 
     --c-text: rgb(31, 31, 31);

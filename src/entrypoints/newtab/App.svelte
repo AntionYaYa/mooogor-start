@@ -15,7 +15,7 @@
   import type { BookmarkNode } from "./methods/getBookmarks";
   import { getAllWebSite } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
-  import { fly } from "svelte/transition";
+  import { fly, slide } from "svelte/transition";
   import { onMount, tick } from "svelte";
   import Icon from "@/lib/components/Icon.svelte";
   import type { IconName } from "@/lib/components/Icon.svelte";
@@ -153,75 +153,80 @@
 </svelte:head>
 
 <main>
-  <div class="top">
-    <div class="bulr">
-      {#each Array.from({ length: 10 }, (_, i) => i) as i}
-        <span
-          style="
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: {(i / 10) * 100}%;
-            backdrop-filter: blur({(10 - i) * 1.1}px);
-            opacity: {1 - i / 10};
-            pointer-events: none;
-          "
-        ></span>
-      {/each}
-    </div>
-    {@render headBar()}
-    <Search />
-  </div>
-  <div class="content">
-    <div class="tabs">
-      {#if historyStack.length >= 3}
-        <div class="left" in:fly={{ x: 100, duration: 300 }}>
-          <button onclick={goBack} class="back">
-            <T nowrap>返回</T>
-          </button>
-        </div>
-      {/if}
-      <div class="center">
-        {#if historyStack.length <= 2}
-          <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
-        {:else}
-          <T nowrap align="c">{historyStack[historyStack.length - 1].title}</T>
-        {/if}
+  <div class="layout">
+    <div class="top">
+      <div class="bulr">
+        {#each Array.from({ length: 10 }, (_, i) => i) as i}
+          <span
+            style="
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: {(i / 10) * 100}%;
+              backdrop-filter: blur({(10 - i) * 1.1}px);
+              opacity: {1 - i / 10};
+              pointer-events: none;
+            "
+          ></span>
+        {/each}
       </div>
+      {@render headBar()}
+      <Search />
     </div>
-    <div class="tabs_contents">
-      {#each tabs as tab (tab.key)}
-        {#if tab.sel}
-          <div
-            class="tab_content"
-            in:fly={firstMount
-              ? undefined
-              : { x: showNext ? 180 : -180, duration: 250 }}
-            out:fly={firstMount
-              ? undefined
-              : { x: showNext ? -180 : 180, duration: 200 }}
-          >
-            {#if tab.key === "0"}
-              {@render pinneds()}
-            {:else if tab.key === "1"}
-              {@render bookmarks()}
-            {:else if tab.key === "2"}
-              {@render history()}
-            {/if}
+    <div class="content">
+      <div class="tabs">
+        {#if historyStack.length >= 3}
+          <div class="left" in:fly={{ x: 100, duration: 300 }}>
+            <button onclick={goBack} class="back">
+              <T nowrap>返回</T>
+            </button>
           </div>
         {/if}
-      {/each}
+        <div class="center">
+          {#if historyStack.length <= 2}
+            <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
+          {:else}
+            <T nowrap align="c">{historyStack[historyStack.length - 1].title}</T
+            >
+          {/if}
+        </div>
+      </div>
+      <div class="tabs_contents">
+        {#each tabs as tab (tab.key)}
+          {#if tab.sel}
+            <div
+              class="tab_content"
+              in:fly={firstMount
+                ? undefined
+                : { x: showNext ? 180 : -180, duration: 250 }}
+              out:fly={firstMount
+                ? undefined
+                : { x: showNext ? -180 : 180, duration: 200 }}
+            >
+              {#if tab.key === "0"}
+                {@render pinneds()}
+              {:else if tab.key === "1"}
+                {@render bookmarks()}
+              {:else if tab.key === "2"}
+                {@render history()}
+              {/if}
+            </div>
+          {/if}
+        {/each}
+      </div>
     </div>
   </div>
+  {#if showSetting}
+    <div class="setting" transition:slide={{axis:'x'}}>
+      <Settings />
+    </div>
+  {/if}
 </main>
 
 {#snippet headBar()}
   <G align="r" full>
-    <Button iconName="Settings2" />
-    {#if showSetting}
-      <Settings />
-    {/if}
+    <Button iconName="Settings2" onclick={()=>showSetting=!showSetting}/>
   </G>
 {/snippet}
 
@@ -261,7 +266,7 @@
       </G>
       <G vertical align="c">
         <T align="c" type="l" bold>{titl}</T>
-        <T align="c" type="s">该插件不联网，不收集数据，请放心授权。</T>
+        <T align="c" type="s">该插件不收集任何个人数据，请放心授权。</T>
       </G>
       <G vertical align="c">
         <Button
@@ -275,6 +280,11 @@
 {/snippet}
 
 <style>
+  .setting{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
   .get_permission {
     display: flex;
     flex-direction: column;
@@ -285,7 +295,7 @@
     box-sizing: border-box;
   }
   .top {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -313,13 +323,23 @@
   }
   main {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    /* background: url(../../assets/bg3.jpg); */
+    flex-direction: row;
     height: 100vh;
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
+    align-items: flex-start;
+    background-color: var(--c-bg-1);
+  }
+  .layout {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    position: relative;
+    /* background: url(../../assets/bg3.jpg); */
+    background-color: var(--c-bg);
   }
   .content {
     display: flex;
