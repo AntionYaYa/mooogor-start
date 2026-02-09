@@ -39,6 +39,8 @@
   let showNext = $state(false);
   let firstMount = $state(true);
 
+  let newTabOpen = $state(false)
+
   onMount(async () => {
     clickTab(tabs[0], 0);
     await tick();
@@ -152,76 +154,71 @@
   <title>新标签页</title>
 </svelte:head>
 
-<main>
-  <div class="layout">
-    <div class="top">
-      <div class="bulr">
-        {#each Array.from({ length: 10 }, (_, i) => i) as i}
-          <span
-            style="
-              position: absolute;
-              top: 0;
-              left: 0;
-              width: 100%;
-              height: {(i / 10) * 100}%;
-              backdrop-filter: blur({(10 - i) * 1.1}px);
-              opacity: {1 - i / 10};
-              pointer-events: none;
-            "
-          ></span>
-        {/each}
-      </div>
-      {@render headBar()}
-      <Search />
+<main >
+<Settings {showSetting} {newTabOpen}>
+  <div class="top">
+    <div class="bulr">
+      {#each Array.from({ length: 10 }, (_, i) => i) as i}
+        <span
+          style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: {(i / 10) * 100}%;
+            backdrop-filter: blur({(10 - i) * 1.1}px);
+            opacity: {1 - i / 10};
+            pointer-events: none;
+          "
+        ></span>
+      {/each}
     </div>
-    <div class="content">
-      <div class="tabs">
-        {#if historyStack.length >= 3}
-          <div class="left" in:fly={{ x: 100, duration: 300 }}>
-            <button onclick={goBack} class="back">
-              <T nowrap>返回</T>
-            </button>
+    {@render headBar()}
+    <Search />
+  </div>
+  <div class="content">
+    <div class="tabs">
+      {#if historyStack.length >= 3}
+        <div class="left" in:fly={{ x: 100, duration: 300 }}>
+          <button onclick={goBack} class="back">
+            <T nowrap>返回</T>
+          </button>
+        </div>
+      {/if}
+      <div class="center">
+        {#if historyStack.length <= 2}
+          <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
+        {:else}
+          <T nowrap align="c">{historyStack[historyStack.length - 1].title}</T
+          >
+        {/if}
+      </div>
+    </div>
+    <div class="tabs_contents">
+      {#each tabs as tab (tab.key)}
+        {#if tab.sel}
+          <div
+            class="tab_content"
+            in:fly={firstMount
+              ? undefined
+              : { x: showNext ? 180 : -180, duration: 250 }}
+            out:fly={firstMount
+              ? undefined
+              : { x: showNext ? -180 : 180, duration: 200 }}
+          >
+            {#if tab.key === "0"}
+              {@render pinneds()}
+            {:else if tab.key === "1"}
+              {@render bookmarks()}
+            {:else if tab.key === "2"}
+              {@render history()}
+            {/if}
           </div>
         {/if}
-        <div class="center">
-          {#if historyStack.length <= 2}
-            <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
-          {:else}
-            <T nowrap align="c">{historyStack[historyStack.length - 1].title}</T
-            >
-          {/if}
-        </div>
-      </div>
-      <div class="tabs_contents">
-        {#each tabs as tab (tab.key)}
-          {#if tab.sel}
-            <div
-              class="tab_content"
-              in:fly={firstMount
-                ? undefined
-                : { x: showNext ? 180 : -180, duration: 250 }}
-              out:fly={firstMount
-                ? undefined
-                : { x: showNext ? -180 : 180, duration: 200 }}
-            >
-              {#if tab.key === "0"}
-                {@render pinneds()}
-              {:else if tab.key === "1"}
-                {@render bookmarks()}
-              {:else if tab.key === "2"}
-                {@render history()}
-              {/if}
-            </div>
-          {/if}
-        {/each}
-      </div>
+      {/each}
     </div>
   </div>
-  {#if showSetting}
-    <div class="setting" transition:slide={{axis:'x'}}>
-      <Settings />
-    </div>
-  {/if}
+</Settings>
 </main>
 
 {#snippet headBar()}
@@ -280,11 +277,6 @@
 {/snippet}
 
 <style>
-  .setting{
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
   .get_permission {
     display: flex;
     flex-direction: column;
@@ -320,6 +312,7 @@
       rgba(var(--c-bg-rgb), 1),
       rgba(var(--c-bg-rgb), 0)
     );
+    border-radius: var(--r1);
   }
   main {
     display: flex;
@@ -331,16 +324,7 @@
     align-items: flex-start;
     background-color: var(--c-bg-1);
   }
-  .layout {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-    position: relative;
-    /* background: url(../../assets/bg3.jpg); */
-    background-color: var(--c-bg);
-  }
+
   .content {
     display: flex;
     flex-direction: column;

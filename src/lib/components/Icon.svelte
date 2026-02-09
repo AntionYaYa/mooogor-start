@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { SquareDashed, Settings2,X,Plus,ChevronDown,ChevronUp,History,Bookmark,Sprout,Eye} from "@lucide/svelte";
-	export type IconName = "Loading" | "SquareDashed" | "Settings2"|'X'|"Plus"|'ChevronDown'|'ChevronUp'|'History'|'Bookmark'|'Sprout'|'Eye';
+	import { SquareDashed, Settings2,X,Plus,ChevronDown,ChevronUp,History,Bookmark,Sprout,Eye,Check} from "@lucide/svelte";
+	export type IconName = "Loading" | "SquareDashed" | "Settings2"|'X'|"Plus"|'ChevronDown'|'ChevronUp'|'History'|'Bookmark'|'Sprout'|'Eye'|'Check';
 
 	interface Props {
 		name?: IconName;
@@ -42,6 +42,9 @@
 	{/if}
 	{#if name === "Eye"}
 		<Eye {size} {strokeWidth} />
+	{/if}
+	{#if name === "Check"}
+		<Check {size} {strokeWidth} />
 	{/if}
 	{#if name === "Loading"}
 		<svg width="20" height="20" viewBox="0 0 20 20">
