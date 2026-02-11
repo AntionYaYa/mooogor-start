@@ -1,13 +1,11 @@
 import { db } from "@/lib/DB/DB";
 
 export type UserSettings = {
-  language: "zh-CN" | "en-US";
   defaultOpen: "common" | "bookmark" | "history";
   newTabOpen: boolean;
 };
 
 export const DEFAULT_SETTINGS: UserSettings = {
-  language: "zh-CN",
   defaultOpen: "common",
   newTabOpen: false,
 };
@@ -18,8 +16,8 @@ export async function loadSettings(): Promise<UserSettings> {
   const row = await db.settings.get(SETTINGS_KEY);
   const stored = row?.value as Partial<UserSettings> | undefined;
   return {
-    ...DEFAULT_SETTINGS,
-    ...(stored ?? {}),
+    defaultOpen: stored?.defaultOpen ?? DEFAULT_SETTINGS.defaultOpen,
+    newTabOpen: stored?.newTabOpen ?? DEFAULT_SETTINGS.newTabOpen,
   };
 }
 

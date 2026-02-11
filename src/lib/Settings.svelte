@@ -15,21 +15,6 @@
   let { children, showSetting, userSettings, onchangeUserSettings }: Props =
     $props();
 
-  const languageBase = [
-    { label: t("nt_lang_zh_cn"), value: "zh-CN" },
-    { label: t("nt_lang_en"), value: "en-US" },
-  ] as const;
-
-  let languageOptions = $derived(
-    languageBase.map((o) => ({ ...o, sel: o.value === userSettings.language }))
-  );
-  function setLanguage(value: string) {
-    onchangeUserSettings({
-      ...userSettings,
-      language: value as UserSettings["language"],
-    });
-  }
-
   const openPosBase = [
     { label: t("nt_default_common"), value: "common" },
     { label: t("nt_default_bookmark"), value: "bookmark" },
@@ -70,7 +55,6 @@
 {#snippet temSettiong()}
   <div class="setting_con">
     {@render temsettingItem()}
-    {@render temselectItem(t("nt_settings_language"), languageOptions, setLanguage)}
     {@render temselectItem(t("nt_settings_default_open"), openPosOptions, setOpenPos)}
     <G vertical>
       <T>{t("nt_settings_feedback")}</T>
