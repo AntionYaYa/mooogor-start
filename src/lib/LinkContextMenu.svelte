@@ -1,7 +1,8 @@
 <script lang="ts">
   import ContextMenu from "./components/Popover.svelte";
   import Button from "./components/Button.svelte";
-    import Divider from "./components/Divider.svelte";
+  import Divider from "./components/Divider.svelte";
+  import { t } from "@/lib/utils/i18n";
 
   interface Props {
     children?: any;
@@ -42,13 +43,12 @@
 </script>
 
 <ContextMenu {x} {y} {onClose}>
-  <Button full text="新标签页打开" onclick={openNewTab} />
-  <Button full text="在新窗口中打开" onclick={openNewWindow} />
-  <Button full text="在隐身窗口中打开" onclick={openIncognitoWindow} />
-  <Button full text="复制链接" onclick={copyLink} />
+  <Button full text={t("nt_open_new_tab")} onclick={openNewTab} />
+  <Button full text={t("nt_open_new_window")} onclick={openNewWindow} />
+  <Button full text={t("nt_open_incognito")} onclick={openIncognitoWindow} />
+  <Button full text={t("nt_copy_link")} onclick={copyLink} />
   {#if children}
     <Divider/>
     {@render children()}
   {/if}
 </ContextMenu>
-

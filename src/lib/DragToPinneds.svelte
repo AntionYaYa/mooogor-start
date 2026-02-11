@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { slide } from "svelte/transition";
+  import { slide } from "svelte/transition";
   import T from "./components/T.svelte";
+  import { t } from "@/lib/utils/i18n";
 
   interface Props {
     active: boolean;
@@ -28,7 +29,7 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="darg_g" transition:slide={{duration:300}}>
     <span class="darg_text">
-      <T align="c">添加到常用</T>
+      <T align="c">{t("nt_add_to_pinned")}</T>
     </span>
     <div
       class="darg_box"

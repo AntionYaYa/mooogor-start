@@ -14,14 +14,16 @@
   import Button from "./components/Button.svelte";
   import AddPinned from "./AddPinned.svelte";
   import LinkContextMenu from "./LinkContextMenu.svelte";
-    import NoData from "./NoData.svelte";
+  import NoData from "./NoData.svelte";
+  import { t } from "@/lib/utils/i18n";
 
   interface Props {
     allPinneds: WebSite[] | [];
+    newTabOpen?: boolean;
     onUpdate: (items?: WebSite[]) => void;
   }
 
-  let { allPinneds, onUpdate }: Props = $props();
+  let { allPinneds, newTabOpen = false, onUpdate }: Props = $props();
   let isdarging = $state(false);
   let showAdd = $state(false);
   let currentPinned: WebSite | undefined = $state();
@@ -105,7 +107,8 @@
         <div class="item" animate:flip={{ duration: 200 }}>
           <a
             href={pinned.url}
-            target="_self"
+            target={newTabOpen ? "_blank" : "_self"}
+            rel={newTabOpen ? "noreferrer" : undefined}
             class:ctx={showMenu && currentPinned?.id === pinned.id}
             oncontextmenu={(e) => showContextMenu(e, pinned)}
           >
@@ -116,7 +119,7 @@
       {/each}
     </div>
   {:else}
-  <NoData text='没有常用网址哦～'/>
+  <NoData text={t("nt_no_pinned")} />
   {/if}
   {@render temAddPinned()}
 </div>
@@ -137,8 +140,8 @@
       url={currentPinned.url}
       onClose={() => (showMenu = false)}
     >
-      <Button full text="编辑" onclick={clickEditWebSite} />
-      <Button full text="删除" onclick={clickDeleteWebSite} />
+      <Button full text={t("nt_edit")} onclick={clickEditWebSite} />
+      <Button full text={t("nt_delete")} onclick={clickDeleteWebSite} />
     </LinkContextMenu>
 {/if}
 

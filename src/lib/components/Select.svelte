@@ -2,6 +2,7 @@
 	import Icon from "./Icon.svelte";
 	import { onMount, onDestroy } from "svelte";
 	import T from "./T.svelte";
+	import { t } from "@/lib/utils/i18n";
 
 	export type SelectOption = {
 		label: string;
@@ -58,7 +59,7 @@
 
 <div class="select" bind:this={rootEl}>
 	<button class="trigger" onclick={handleToggle}>
-		<T>{selected ? selected.label : "请选择"}</T>
+		<T>{selected ? selected.label : t("nt_select_placeholder")}</T>
 		<Icon
 			name={open ? "ChevronUp" : "ChevronDown"}
 			opacity={0.6}

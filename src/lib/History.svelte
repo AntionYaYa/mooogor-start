@@ -10,6 +10,13 @@
   import DragToPinneds from "./DragToPinneds.svelte";
   import { addToPinneds } from "@/lib/utils/pinneds";
   import NoData from "./NoData.svelte";
+  import { t } from "@/lib/utils/i18n";
+
+  interface Props {
+    newTabOpen?: boolean;
+  }
+
+  let { newTabOpen = false }: Props = $props();
 
   let tenMinHistory: HistoryItem[] = $state([]);
   let oneHHistory: HistoryItem[] = $state([]);
@@ -100,7 +107,7 @@
   }
 
   function formatDayLabel(dayStartTs: number, offset: number) {
-    if (offset === 1) return "昨天";
+    if (offset === 1) return t("nt_history_yesterday");
     const d = new Date(dayStartTs);
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -198,18 +205,18 @@
 </script>
 <div class="page">
   {#if showEmpty}
-    <NoData text="暂无历史记录" />
+  <NoData text={t("nt_history_empty")} />
   {:else}
     <div class="history">
       <DragToPinneds active={dragging} onDrop={clickAddtoPinneds} />
       {#if tenMinHistory.length}
-        {@render temHistoryGroup("刚刚", tenMinHistory)}
+        {@render temHistoryGroup(t("nt_history_recent"), tenMinHistory)}
       {/if}
       {#if oneHHistory.length}
-        {@render temHistoryGroup("1 小时内", oneHHistory)}
+        {@render temHistoryGroup(t("nt_history_1h"), oneHHistory)}
       {/if}
       {#if todayHistory.length}
-        {@render temHistoryGroup("今天", todayHistory)}
+        {@render temHistoryGroup(t("nt_history_today"), todayHistory)}
       {/if}
       {#each dayGroups as group}
         {@render temHistoryGroup(group.label, group.items)}
@@ -232,7 +239,7 @@
     url={currentHistory.url ?? ""}
     onClose={() => (showMenu = false)}
   >
-    <Button full text="添加到常用" onclick={clickAddtoPinneds} />
+    <Button full text={t("nt_add_to_pinned")} onclick={clickAddtoPinneds} />
   </LinkContextMenu>
 {/if}
 
@@ -249,6 +256,8 @@
   <a
     class="item"
     href={history.url}
+    target={newTabOpen ? "_blank" : "_self"}
+    rel={newTabOpen ? "noreferrer" : undefined}
     draggable={!!history.url}
     ondragstart={(e) => dragStart(e, history)}
     ondragend={dragEnd}

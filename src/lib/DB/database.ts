@@ -29,14 +29,21 @@ export interface Engine {
   updateAt?: number;
 }
 
+export interface SettingRow {
+  key: string;
+  value: unknown;
+}
+
 export const db = new Dexie("Mooogor") as Dexie & {
   favicons: EntityTable<Favicon, "domain">;
   webSites: EntityTable<WebSite, "id">;
   engines: EntityTable<Engine, "id">;
+  settings: EntityTable<SettingRow, "key">;
 };
 
 db.version(1).stores({
   favicons: "domain",
   webSites: "++id,domain",
   engines: "++id,domain",
+  settings: "key",
 });

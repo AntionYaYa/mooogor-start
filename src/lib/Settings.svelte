@@ -4,40 +4,53 @@
   import T from "./components/T.svelte";
   import Switch from "./components/Switch.svelte";
   import Select, { type SelectOption } from "./components/Select.svelte";
+  import type { UserSettings } from "@/lib/utils/settings";
+  import { t } from "@/lib/utils/i18n";
   interface Props {
     children: any;
     showSetting: boolean;
-    newTabOpen: boolean;
+    userSettings: UserSettings;
+    onchangeUserSettings: (userSettings: UserSettings) => void;
   }
-  let { children, showSetting, newTabOpen }: Props = $props();
+  let { children, showSetting, userSettings, onchangeUserSettings }: Props =
+    $props();
 
-  let languageOptions = $state<SelectOption[]>([
-    { label: "简体中文", value: "zh-CN", sel: true },
-    { label: "English", value: "en-US", sel: false },
-  ]);
-  let language = $state("zh-CN");
+  const languageBase = [
+    { label: t("nt_lang_zh_cn"), value: "zh-CN" },
+    { label: t("nt_lang_en"), value: "en-US" },
+  ] as const;
 
+  let languageOptions = $derived(
+    languageBase.map((o) => ({ ...o, sel: o.value === userSettings.language }))
+  );
   function setLanguage(value: string) {
-    language = value;
-    languageOptions = languageOptions.map((o) => ({
-      ...o,
-      sel: o.value === value,
-    }));
+    onchangeUserSettings({
+      ...userSettings,
+      language: value as UserSettings["language"],
+    });
   }
 
-  let openPosOptions = $state<SelectOption[]>([
-    { label: "常用", value: "common", sel: true },
-    { label: "书签", value: "bookmark", sel: false },
-    { label: "历史记录", value: "history", sel: false },
-  ]);
-  let openPos = $state("common");
-
-  function setOpenPos(value: string) {
-    openPos = value;
-    openPosOptions = openPosOptions.map((o) => ({
+  const openPosBase = [
+    { label: t("nt_default_common"), value: "common" },
+    { label: t("nt_default_bookmark"), value: "bookmark" },
+    { label: t("nt_default_history"), value: "history" },
+  ] as const;
+  
+  let openPosOptions = $derived(
+    openPosBase.map((o) => ({
       ...o,
-      sel: o.value === value,
-    }));
+      sel: o.value === userSettings.defaultOpen,
+    }))
+  );
+  function setOpenPos(value: string) {
+    onchangeUserSettings({
+      ...userSettings,
+      defaultOpen: value as UserSettings["defaultOpen"],
+    });
+  }
+
+  function setNewTabOpen(value: boolean) {
+    onchangeUserSettings({ ...userSettings, newTabOpen: value });
   }
 </script>
 
@@ -57,19 +70,19 @@
 {#snippet temSettiong()}
   <div class="setting_con">
     {@render temsettingItem()}
-    {@render temselectItem("语言设置", languageOptions, setLanguage)}
-    {@render temselectItem("默认打开位置", openPosOptions, setOpenPos)}
+    {@render temselectItem(t("nt_settings_language"), languageOptions, setLanguage)}
+    {@render temselectItem(t("nt_settings_default_open"), openPosOptions, setOpenPos)}
     <G vertical>
-      <T>建议反馈</T>
+      <T>{t("nt_settings_feedback")}</T>
     </G>
     <G vertical>
-      <T>关于</T>
+      <T>{t("nt_settings_about")}</T>
     </G>
     <G vertical>
-      <T>版本</T>
+      <T>{t("nt_settings_version")}</T>
     </G>
     <G vertical>
-      <T>打赏</T>
+      <T>{t("nt_settings_support")}</T>
     </G>
   </div>
 {/snippet}
@@ -77,14 +90,14 @@
 {#snippet temsettingItem()}
   <G align="c" full>
     <G vertical full>
-      <T>新标签页打开链接</T>
-      <T type="s">如果固定到Tab栏将自动开启</T>
+      <T>{t("nt_settings_new_tab_open")}</T>
+      <T type="s">{t("nt_settings_new_tab_tip")}</T>
     </G>
     <G>
       <Switch
-        turnOn={newTabOpen}
+        turnOn={userSettings.newTabOpen}
         onSwitch={(swith) => {
-          newTabOpen = swith;
+          setNewTabOpen(swith);
         }}
       ></Switch>
     </G>

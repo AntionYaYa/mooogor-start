@@ -4,90 +4,144 @@
       "message": "Cross-Site Quick Search - Mooogor"
     },
     "extDescription": {
-      "message": "Mooogor allows you to search content within multiple custom websites with just one keyword input."
+      "message": ""
     },
-    "login": {
-      "message": "Log In / Sign Up"
+    "nt_title": {
+      "message": "New Tab"
     },
-    "space_name": {
-      "message": "Space"
+    "nt_tab_common": {
+      "message": "Pinned"
     },
-    "class_name": {
-      "message": "Category"
+    "nt_tab_bookmarks": {
+      "message": "Bookmarks"
     },
-    "search_title": {
-      "message": "Quick Search:"
+    "nt_tab_history": {
+      "message": "History"
     },
-    "inject_searchs": {
-      "message": "Inject to address bar"
+    "nt_back": {
+      "message": "Back"
     },
-    "not_injected_searchs": {
-      "message": "Not injected into the address bar"
+    "nt_need_permission": {
+      "message": "Permission required"
     },
-    "want_more_engines": {
-      "message": "Can't find what I'm looking for?"
+    "nt_permission_desc": {
+      "message": "This extension does not collect personal data. Feel free to grant permission."
     },
-    "star_5": {
-      "message": "Go give a good review!"
+    "nt_authorize": {
+      "message": "Authorize"
     },
-    "invalid_url_add_engine": {
-      "message": "This link cannot be used as a Quick Search!"
+    "nt_settings_language": {
+      "message": "Language"
     },
-    "already_added": {
-      "message": "Already added!"
+    "nt_settings_default_open": {
+      "message": "Default tab"
     },
-    "tag_keywords": {
-      "message": "Please mark the search keywords:"
+    "nt_settings_feedback": {
+      "message": "Feedback"
     },
-    "why_free": {
-      "message": "Why is it free?"
+    "nt_settings_about": {
+      "message": "About"
     },
-    "login_tip": {
-      "message": "After logging in, you can add more"
+    "nt_settings_version": {
+      "message": "Version"
     },
-    "search_shortcut_key_tip": {
-      "message": "Shift + Enter for Quick Search"
+    "nt_settings_support": {
+      "message": "Support"
     },
-    "switch_shortcut_key_tip": {
-      "message": "Hold Shift + Left/Right to switch quickly"
+    "nt_settings_new_tab_open": {
+      "message": "Open links in new tab"
     },
-    "inject_instructions": {
-      "message": "Before each search, press <b>M</b> + <b>Spacebar</b> to activate Quick Search."
+    "nt_settings_new_tab_tip": {
+      "message": "Automatically enabled when pinned to the tab bar"
     },
-    "inject_showSearch": {
-      "message": "Inject to page"
+    "nt_lang_zh_cn": {
+      "message": "Simplified Chinese"
     },
-    "inject_instructions_showSearch": {
-      "message": "Inject Quick Search into web pages.(Need to refresh the page)"
+    "nt_lang_en": {
+      "message": "English"
     },
-    "Enable_tips": {
-      "message": "Enable tips"
+    "nt_default_common": {
+      "message": "Pinned"
     },
-    "placeholder": {
+    "nt_default_bookmark": {
+      "message": "Bookmarks"
+    },
+    "nt_default_history": {
+      "message": "History"
+    },
+    "nt_history_yesterday": {
+      "message": "Yesterday"
+    },
+    "nt_history_empty": {
+      "message": "No history yet"
+    },
+    "nt_history_recent": {
+      "message": "Just now"
+    },
+    "nt_history_1h": {
+      "message": "Within 1 hour"
+    },
+    "nt_history_today": {
+      "message": "Today"
+    },
+    "nt_add_to_pinned": {
+      "message": "Add to pinned"
+    },
+    "nt_no_pinned": {
+      "message": "No pinned sites yet"
+    },
+    "nt_no_bookmarks": {
+      "message": "No bookmarks yet"
+    },
+    "nt_edit": {
+      "message": "Edit"
+    },
+    "nt_delete": {
+      "message": "Delete"
+    },
+    "nt_add_pinned_title": {
+      "message": "Add pinned site"
+    },
+    "nt_input_url": {
+      "message": "*URL"
+    },
+    "nt_input_name": {
       "message": "Name"
     },
-    "search_placeholder": {
-      "message": "Keywords"
-    },
-    "save": {
+    "nt_save": {
       "message": "Save"
     },
-    "my_engines": {
-      "message": "Custom"
+    "nt_select_placeholder": {
+      "message": "Select"
     },
-    "official_engines": {
-      "message": "Official"
+    "nt_open_new_tab": {
+      "message": "Open in new tab"
     },
-    "saved": {
-      "message": "Saved"
+    "nt_open_new_window": {
+      "message": "Open in new window"
     },
-    "invalid_Url": {
-      "message": "Invalid URL"
+    "nt_open_incognito": {
+      "message": "Open in incognito window"
     },
-    "unauthorized": {
-      "message": "Unauthorized access to Mooogor"
+    "nt_copy_link": {
+      "message": "Copy link"
     },
-    "authorize": {
-      "message": "How to authorize?"
+    "nt_unnamed": {
+      "message": "Untitled"
+    },
+    "nt_label_bookmarks": {
+      "message": "Bookmarks"
+    },
+    "nt_label_history": {
+      "message": "History"
+    },
+    "nt_search_placeholder": {
+      "message": "Search"
+    },
+    "nt_drag_sort_or_disable": {
+      "message": "Drag to reorder or disable"
+    },
+    "nt_switch": {
+      "message": "Toggle"
     }
   }

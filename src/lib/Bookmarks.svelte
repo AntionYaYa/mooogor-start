@@ -7,14 +7,16 @@
   import Button from "./components/Button.svelte";
   import NoData from "./NoData.svelte";
   import DragToPinneds from "./DragToPinneds.svelte";
+  import { t } from "@/lib/utils/i18n";
 
   interface Props {
     bookmarkNode: BookmarkNode;
     list?: boolean;
+    newTabOpen?: boolean;
     onclickFolder: (bkmk: BookmarkNode) => void;
   }
 
-  let { bookmarkNode, list, onclickFolder }: Props = $props();
+  let { bookmarkNode, list, newTabOpen = false, onclickFolder }: Props = $props();
   let currentBkmk: BookmarkNode | undefined = $state();
   let darging = $state(false);
   let showMenu = $state(false);
@@ -67,7 +69,7 @@
       {/each}
     </div>
   {:else}
-    <NoData text='没有书签哦～'/>
+    <NoData text={t("nt_no_bookmarks")} />
   {/if}
 </div>
 
@@ -83,7 +85,8 @@
       {#if bkmk.url}
         <a
           href={bkmk.url}
-          target="_self"
+          target={newTabOpen ? "_blank" : "_self"}
+          rel={newTabOpen ? "noreferrer" : undefined}
           class="full-row"
           class:ctx={showMenu && currentBkmk === bkmk}
           oncontextmenu={(e) => showContextMenu(e, bkmk)}
@@ -101,7 +104,8 @@
       {#if bkmk.url}
         <a
           href={bkmk.url}
-          target="_self"
+          target={newTabOpen ? "_blank" : "_self"}
+          rel={newTabOpen ? "noreferrer" : undefined}
           class:ctx={showMenu && currentBkmk === bkmk}
           oncontextmenu={(e) => showContextMenu(e, bkmk)}
         >
@@ -124,7 +128,7 @@
       url={currentBkmk.url ?? ""}
       onClose={() => (showMenu = false)}
     >
-      <Button full text="添加到常用" onclick={clickAddtoPinneds} />
+      <Button full text={t("nt_add_to_pinned")} onclick={clickAddtoPinneds} />
     </LinkContextMenu>
 {/if}
 

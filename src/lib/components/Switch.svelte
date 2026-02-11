@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from "@/lib/utils/i18n";
 	interface Props {
 		turnOn: boolean;
 		onSwitch: (swith: boolean) => void;
@@ -6,7 +7,7 @@
 	let { turnOn, onSwitch }: Props = $props();
 </script>
 
-<button title="switch" class="outside" onclick={() => onSwitch(!turnOn)}>
+<button title={t("nt_switch")} class="outside" onclick={() => onSwitch(!turnOn)}>
 	<div class="ball {turnOn ? 'ball_on' : 'ball_off'}"></div>
 </button>
 

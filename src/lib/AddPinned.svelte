@@ -7,6 +7,7 @@
   import G from "./components/G.svelte";
   import Popup from "./components/Popup.svelte";
   import Shake from "./components/Shake.svelte";
+  import { t } from "@/lib/utils/i18n";
 
   interface Props {
     urlValue?:string;
@@ -46,13 +47,13 @@
   }
 </script>
 
-<Popup title="添加常用网址" {onclickClose}>
+<Popup title={t("nt_add_pinned_title")} {onclickClose}>
   <G full>
     <Shake shake={inputUrlValueErr}>
       <Input
         name="url"
         type="url"
-        placeholder="*网址"
+        placeholder={t("nt_input_url")}
         bind:value={inputUrlValue}
       />
     </Shake>
@@ -61,13 +62,13 @@
     <Input
       name="title"
       type="text"
-      placeholder="名称"
+      placeholder={t("nt_input_name")}
       bind:value={inputTitleValue}
     />
   </G>
   <G full>
     <G full>
-      <Button text="保存" fill onclick={clickSave} full alignT='c' />
+      <Button text={t("nt_save")} fill onclick={clickSave} full alignT='c' />
     </G>
   </G>
 </Popup>

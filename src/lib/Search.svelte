@@ -32,8 +32,15 @@
   import Icon from "./components/Icon.svelte";
   import T from "./components/T.svelte";
   import G from "./components/G.svelte";
+  import { t } from "@/lib/utils/i18n";
 
   type ItemType = BookmarkSubType | "engine" | "todo" | "history";
+
+  interface Props {
+    newTabOpen?: boolean;
+  }
+
+  let { newTabOpen = false }: Props = $props();
 
   interface SearchItem {
     id: string;
@@ -329,7 +336,7 @@
   function getDisplayTitle(title?: string | null, url?: string | null) {
     const trimmed = title?.trim();
     if (trimmed) return trimmed;
-    return url ?? "未命名";
+    return url ?? t("nt_unnamed");
   }
 
   function sortResults(items: SearchItem[], query: string) {
@@ -357,7 +364,7 @@
     >
       {#if bookmarksResults.length}
       <G>
-        <T type="s">书签</T>
+        <T type="s">{t("nt_label_bookmarks")}</T>
       </G>
         {#each bookmarksResults as bookmark}
           {@render temBkmk(bookmark)}
@@ -366,7 +373,7 @@
 
       {#if historyResults.length}
       <G>
-        <T type="s">历史记录</T>
+        <T type="s">{t("nt_label_history")}</T>
       </G>
         {#each historyResults as history}
           {@render temBkmk(history)}
@@ -390,7 +397,7 @@
       bind:this={searchEl}
       bind:value={inputValue}
       type="search"
-      placeholder={enabledEngines[0] ? enabledEngines[0].title : "搜索"}
+      placeholder={enabledEngines[0] ? enabledEngines[0].title : t("nt_search_placeholder")}
       oncompositionstart={() => (isComposing = true)}
       oncompositionend={(e) => {
         isComposing = false;
@@ -428,6 +435,8 @@
         <a
           class="engine"
           href={engine.engineUrl?.replace("%s", inputValue)}
+          target={newTabOpen ? "_blank" : "_self"}
+          rel={newTabOpen ? "noreferrer" : undefined}
           animate:flip={{ duration: 200 }}
         >
           <img
@@ -449,7 +458,7 @@
 {#snippet temMoreEngines()}
   <div class="more_engines_M" transition:slide={{ duration: 300 }}>
     <G full>
-      <T>拖拽排序或禁用</T>
+      <T>{t("nt_drag_sort_or_disable")}</T>
     </G>
     <div
       class="more_g"
@@ -486,6 +495,8 @@
   <a
     class="item"
     href={bookmark.url}
+    target={newTabOpen ? "_blank" : "_self"}
+    rel={newTabOpen ? "noreferrer" : undefined}
     onkeydown={handleResultKeydown}
     data-result="true"
   >

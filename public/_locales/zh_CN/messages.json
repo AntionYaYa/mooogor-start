@@ -1,93 +1,147 @@
 
 {
     "extName": {
-      "message": "Mooogor2-效率启动页"
+      "message": "Mooogor2-高效启动新标签页"
     },
     "extDescription": {
-      "message": "Mooogor 只需输入一次关键词，即可在自定义的多个网站内部搜索内容。(并且还支持跨浏览器书签同步哦～)"
+      "message": ""
     },
-    "login": {
-      "message": "登录 / 注册"
+    "nt_title": {
+      "message": "新标签页"
     },
-    "space_name": {
-      "message": "空间"
+    "nt_tab_common": {
+      "message": "常用"
     },
-    "class_name": {
-      "message": "分类"
+    "nt_tab_bookmarks": {
+      "message": "书签"
     },
-    "search_title": {
-      "message": "快捷搜索："
+    "nt_tab_history": {
+      "message": "历史记录"
     },
-    "inject_searchs": {
-      "message": "注入到地址栏"
+    "nt_back": {
+      "message": "返回"
     },
-    "not_injected_searchs": {
-      "message": "未注入到地址栏"
+    "nt_need_permission": {
+      "message": "需要权限"
     },
-    "want_more_engines": {
-      "message": "没找到我想要的？"
+    "nt_permission_desc": {
+      "message": "该插件不收集任何个人数据，请放心授权。"
     },
-    "star_5": {
-      "message": "去给个好评！"
+    "nt_authorize": {
+      "message": "授权"
     },
-    "invalid_url_add_engine": {
-      "message": "该链接不可作为快捷搜索!"
+    "nt_settings_language": {
+      "message": "语言设置"
     },
-    "already_added": {
-      "message": "已经添加过了!"
+    "nt_settings_default_open": {
+      "message": "默认打开位置"
     },
-    "tag_keywords": {
-      "message": "请标记出搜索关键词："
+    "nt_settings_feedback": {
+      "message": "建议反馈"
     },
-    "why_free": {
-      "message": "为什么免费？"
+    "nt_settings_about": {
+      "message": "关于"
     },
-    "login_tip": {
-      "message": "登陆后可添加更多"
+    "nt_settings_version": {
+      "message": "版本"
     },
-    "search_shortcut_key_tip": {
-      "message": "Shift + Enter 快捷搜索"
+    "nt_settings_support": {
+      "message": "打赏"
     },
-    "switch_shortcut_key_tip": {
-      "message": "按住Shift + 左/右键快捷切换"
+    "nt_settings_new_tab_open": {
+      "message": "新标签页打开链接"
     },
-    "inject_instructions": {
-      "message": "每次搜索前 <b>M</b> + <b>空格</b> 即可调用快捷搜索。"
+    "nt_settings_new_tab_tip": {
+      "message": "如果固定到Tab栏将自动开启"
     },
-    "inject_showSearch": {
-      "message": "注入到页面"
+    "nt_lang_zh_cn": {
+      "message": "简体中文"
     },
-    "inject_instructions_showSearch": {
-      "message": "将快捷搜索注入到网页。(需要刷新页面)"
+    "nt_lang_en": {
+      "message": "英语"
     },
-    "Enable_tips": {
-      "message": "开启小提示"
+    "nt_default_common": {
+      "message": "常用"
     },
-    "placeholder": {
+    "nt_default_bookmark": {
+      "message": "书签"
+    },
+    "nt_default_history": {
+      "message": "历史记录"
+    },
+    "nt_history_yesterday": {
+      "message": "昨天"
+    },
+    "nt_history_empty": {
+      "message": "暂无历史记录"
+    },
+    "nt_history_recent": {
+      "message": "刚刚"
+    },
+    "nt_history_1h": {
+      "message": "1 小时内"
+    },
+    "nt_history_today": {
+      "message": "今天"
+    },
+    "nt_add_to_pinned": {
+      "message": "添加到常用"
+    },
+    "nt_no_pinned": {
+      "message": "没有常用网址哦～"
+    },
+    "nt_no_bookmarks": {
+      "message": "没有书签哦～"
+    },
+    "nt_edit": {
+      "message": "编辑"
+    },
+    "nt_delete": {
+      "message": "删除"
+    },
+    "nt_add_pinned_title": {
+      "message": "添加常用网址"
+    },
+    "nt_input_url": {
+      "message": "*网址"
+    },
+    "nt_input_name": {
       "message": "名称"
     },
-    "search_placeholder": {
-      "message": "关键词"
-    },
-    "save": {
+    "nt_save": {
       "message": "保存"
     },
-    "my_engines": {
-      "message": "我的"
+    "nt_select_placeholder": {
+      "message": "请选择"
     },
-    "official_engines": {
-      "message": "官方"
+    "nt_open_new_tab": {
+      "message": "新标签页打开"
     },
-    "saved": {
-      "message": "已保存"
+    "nt_open_new_window": {
+      "message": "在新窗口中打开"
     },
-    "invalid_Url": {
-      "message": "无效URL"
+    "nt_open_incognito": {
+      "message": "在隐身窗口中打开"
     },
-    "unauthorized": {
-      "message": "没有授权访问Mooogor"
+    "nt_copy_link": {
+      "message": "复制链接"
     },
-    "authorize": {
-      "message": "如何授权？"
+    "nt_unnamed": {
+      "message": "未命名"
+    },
+    "nt_label_bookmarks": {
+      "message": "书签"
+    },
+    "nt_label_history": {
+      "message": "历史记录"
+    },
+    "nt_search_placeholder": {
+      "message": "搜索"
+    },
+    "nt_drag_sort_or_disable": {
+      "message": "拖拽排序或禁用"
+    },
+    "nt_switch": {
+      "message": "开关"
     }
   }

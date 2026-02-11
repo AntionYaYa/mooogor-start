@@ -19,6 +19,9 @@
   import { onMount, tick } from "svelte";
   import Icon from "@/lib/components/Icon.svelte";
   import type { IconName } from "@/lib/components/Icon.svelte";
+  import { loadSettings, saveSettings, DEFAULT_SETTINGS } from "@/lib/utils/settings";
+  import type { UserSettings } from "@/lib/utils/settings";
+  import { t } from "@/lib/utils/i18n";
 
   let showSetting = $state(false);
   let allPinneds: WebSite[] = $state([]);
@@ -29,23 +32,37 @@
 
   let historyPermission = $state(false);
 
+
+  
   let tabs: TabItem[] = $state([
-    { key: "0", name: "常用", sel: false },
-    { key: "1", name: "书签", sel: false },
-    { key: "2", name: "历史记录", sel: false },
+    { key: "0", name: t("nt_tab_common"), sel: false },
+    { key: "1", name: t("nt_tab_bookmarks"), sel: false },
+    { key: "2", name: t("nt_tab_history"), sel: false },
   ]);
 
   let selTab: TabItem | undefined = $state();
   let showNext = $state(false);
   let firstMount = $state(true);
 
-  let newTabOpen = $state(false)
+  let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
 
   onMount(async () => {
-    clickTab(tabs[0], 0);
+    userSettings = await loadSettings();
+    const defaultIndex =
+      userSettings.defaultOpen === "bookmark"
+        ? 1
+        : userSettings.defaultOpen === "history"
+          ? 2
+          : 0;
+    clickTab(tabs[defaultIndex], defaultIndex);
     await tick();
     firstMount = false;
   });
+
+  function handleUserSettingsChange(next: UserSettings) {
+    userSettings = next;
+    void saveSettings(next);
+  }
 
   async function getBookmarksRoot() {
     const children = await getBookmarkChildren("0");
@@ -74,7 +91,7 @@
     //书签选中情况下再点击回到顶层，
     if (tab.sel) {
       if (tab.key === "1" && historyStack.length === 2) {
-        tabs[1].name = "书签";
+        tabs[1].name = t("nt_tab_bookmarks");
         goBack();
       }
       return;
@@ -151,16 +168,20 @@
 </script>
 
 <svelte:head>
-  <title>新标签页</title>
+  <title>{t("nt_title")}</title>
 </svelte:head>
 
-<main >
-<Settings {showSetting} {newTabOpen}>
-  <div class="top">
-    <div class="bulr">
-      {#each Array.from({ length: 10 }, (_, i) => i) as i}
-        <span
-          style="
+<main>
+  <Settings
+    {showSetting}
+    {userSettings}
+    onchangeUserSettings={handleUserSettingsChange}
+  >
+    <div class="top">
+      <div class="bulr">
+        {#each Array.from({ length: 10 }, (_, i) => i) as i}
+          <span
+            style="
             position: absolute;
             top: 0;
             left: 0;
@@ -170,74 +191,79 @@
             opacity: {1 - i / 10};
             pointer-events: none;
           "
-        ></span>
-      {/each}
-    </div>
-    {@render headBar()}
-    <Search />
-  </div>
-  <div class="content">
-    <div class="tabs">
-      {#if historyStack.length >= 3}
-        <div class="left" in:fly={{ x: 100, duration: 300 }}>
-          <button onclick={goBack} class="back">
-            <T nowrap>返回</T>
-          </button>
-        </div>
-      {/if}
-      <div class="center">
-        {#if historyStack.length <= 2}
-          <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
-        {:else}
-          <T nowrap align="c">{historyStack[historyStack.length - 1].title}</T
-          >
-        {/if}
+          ></span>
+        {/each}
       </div>
+      {@render headBar()}
+      <Search newTabOpen={userSettings.newTabOpen} />
     </div>
-    <div class="tabs_contents">
-      {#each tabs as tab (tab.key)}
-        {#if tab.sel}
-          <div
-            class="tab_content"
-            in:fly={firstMount
-              ? undefined
-              : { x: showNext ? 180 : -180, duration: 250 }}
-            out:fly={firstMount
-              ? undefined
-              : { x: showNext ? -180 : 180, duration: 200 }}
-          >
-            {#if tab.key === "0"}
-              {@render pinneds()}
-            {:else if tab.key === "1"}
-              {@render bookmarks()}
-            {:else if tab.key === "2"}
-              {@render history()}
-            {/if}
+    <div class="content">
+      <div class="tabs">
+        {#if historyStack.length >= 3}
+          <div class="left" in:fly={{ x: 100, duration: 300 }}>
+            <button onclick={goBack} class="back">
+              <T nowrap>{t("nt_back")}</T>
+            </button>
           </div>
         {/if}
-      {/each}
+        <div class="center">
+          {#if historyStack.length <= 2}
+            <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
+          {:else}
+            <T nowrap align="c">{historyStack[historyStack.length - 1].title}</T
+            >
+          {/if}
+        </div>
+      </div>
+      <div class="tabs_contents">
+        {#each tabs as tab (tab.key)}
+          {#if tab.sel}
+            <div
+              class="tab_content"
+              in:fly={firstMount
+                ? undefined
+                : { x: showNext ? 180 : -180, duration: 250 }}
+              out:fly={firstMount
+                ? undefined
+                : { x: showNext ? -180 : 180, duration: 200 }}
+            >
+              {#if tab.key === "0"}
+                {@render pinneds()}
+              {:else if tab.key === "1"}
+                {@render bookmarks()}
+              {:else if tab.key === "2"}
+                {@render history()}
+              {/if}
+            </div>
+          {/if}
+        {/each}
+      </div>
     </div>
-  </div>
-</Settings>
+  </Settings>
 </main>
 
 {#snippet headBar()}
   <G align="r" full>
-    <Button iconName="Settings2" onclick={()=>showSetting=!showSetting}/>
+    <Button iconName="Settings2" onclick={() => (showSetting = !showSetting)} />
   </G>
 {/snippet}
 
 {#snippet pinneds()}
-  <Pinneds {allPinneds} onUpdate={(items) => clickUpdatePinneds(items)} />
+  <Pinneds
+    {allPinneds}
+    newTabOpen={userSettings.newTabOpen}
+    onUpdate={(items) => clickUpdatePinneds(items)}
+  />
 {/snippet}
 
 {#snippet bookmarks()}
   {#if !bookmarksPermission}
-    {@render temNeedPermission("Bookmark", "需要权限", "bookmarks")}
+    {@render temNeedPermission("Bookmark", t("nt_need_permission"), "bookmarks")}
   {:else if currentNode}
     <Bookmarks
       list={historyStack.length >= 3}
       bookmarkNode={currentNode}
+      newTabOpen={userSettings.newTabOpen}
       onclickFolder={(bkmk) => clickFolder(bkmk)}
     />
   {/if}
@@ -245,9 +271,9 @@
 
 {#snippet history()}
   {#if !historyPermission}
-    {@render temNeedPermission("History", "需要权限", "history")}
+    {@render temNeedPermission("History", t("nt_need_permission"), "history")}
   {:else}
-    <History />
+    <History newTabOpen={userSettings.newTabOpen} />
   {/if}
 {/snippet}
 
@@ -263,11 +289,11 @@
       </G>
       <G vertical align="c">
         <T align="c" type="l" bold>{titl}</T>
-        <T align="c" type="s">该插件不收集任何个人数据，请放心授权。</T>
+        <T align="c" type="s">{t("nt_permission_desc")}</T>
       </G>
       <G vertical align="c">
         <Button
-          text="授权"
+          text={t("nt_authorize")}
           onclick={() => clickGetPermission(permission)}
           fill
         />
