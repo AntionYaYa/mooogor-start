@@ -34,7 +34,7 @@
       "message": "语言设置"
     },
     "nt_settings_default_open": {
-      "message": "默认打开位置"
+      "message": "默认打开："
     },
     "nt_settings_feedback": {
       "message": "建议反馈"
@@ -54,11 +54,14 @@
     "nt_settings_new_tab_tip": {
       "message": "如果固定到Tab栏将自动开启"
     },
+    "nt_lang_auto": {
+      "message": "跟随系统"
+    },
     "nt_lang_zh_cn": {
       "message": "简体中文"
     },
     "nt_lang_en": {
-      "message": "英语"
+       "message": "English"
     },
     "nt_default_common": {
       "message": "常用"

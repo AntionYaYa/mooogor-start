@@ -10,7 +10,7 @@
       "message": "New Tab"
     },
     "nt_tab_common": {
-      "message": "Pinned"
+      "message": "Favourites"
     },
     "nt_tab_bookmarks": {
       "message": "Bookmarks"
@@ -34,7 +34,7 @@
       "message": "Language"
     },
     "nt_settings_default_open": {
-      "message": "Default tab"
+      "message": "Open by default:"
     },
     "nt_settings_feedback": {
       "message": "Feedback"
@@ -49,19 +49,22 @@
       "message": "Support"
     },
     "nt_settings_new_tab_open": {
-      "message": "Open links in new tab"
+      "message": "Open links in a new tab"
     },
     "nt_settings_new_tab_tip": {
-      "message": "Automatically enabled when pinned to the tab bar"
+      "message": "Automatically enabled when pinned to the tab bar."
+    },
+    "nt_lang_auto": {
+      "message": "Follow system"
     },
     "nt_lang_zh_cn": {
-      "message": "Simplified Chinese"
+      "message": "简体中文"
     },
     "nt_lang_en": {
       "message": "English"
     },
     "nt_default_common": {
-      "message": "Pinned"
+      "message": "Favourites"
     },
     "nt_default_bookmark": {
       "message": "Bookmarks"
@@ -85,10 +88,10 @@
       "message": "Today"
     },
     "nt_add_to_pinned": {
-      "message": "Add to pinned"
+      "message": "Add to Favourites"
     },
     "nt_no_pinned": {
-      "message": "No pinned sites yet"
+      "message": "No Favourites sites yet"
     },
     "nt_no_bookmarks": {
       "message": "No bookmarks yet"
@@ -100,7 +103,7 @@
       "message": "Delete"
     },
     "nt_add_pinned_title": {
-      "message": "Add pinned site"
+      "message": "Add Favourites site"
     },
     "nt_input_url": {
       "message": "*URL"

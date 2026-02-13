@@ -20,17 +20,38 @@
     { label: t("nt_default_bookmark"), value: "bookmark" },
     { label: t("nt_default_history"), value: "history" },
   ] as const;
-  
+
+  const languageBase = [
+    { label: t("nt_lang_auto"), value: "auto" },
+    { label: t("nt_lang_zh_cn"), value: "zh_CN" },
+    { label: t("nt_lang_en"), value: "en" },
+  ] as const;
+
   let openPosOptions = $derived(
     openPosBase.map((o) => ({
       ...o,
       sel: o.value === userSettings.defaultOpen,
     }))
   );
+
+  let languageOptions = $derived(
+    languageBase.map((o) => ({
+      ...o,
+      sel: o.value === userSettings.language,
+    }))
+  );
+
   function setOpenPos(value: string) {
     onchangeUserSettings({
       ...userSettings,
       defaultOpen: value as UserSettings["defaultOpen"],
+    });
+  }
+
+  function setLanguage(value: string) {
+    onchangeUserSettings({
+      ...userSettings,
+      language: value as UserSettings["language"],
     });
   }
 
@@ -55,7 +76,9 @@
 {#snippet temSettiong()}
   <div class="setting_con">
     {@render temsettingItem()}
+    {@render temselectItem(t("nt_settings_language"), languageOptions, setLanguage)}
     {@render temselectItem(t("nt_settings_default_open"), openPosOptions, setOpenPos)}
+
     <G vertical>
       <T>{t("nt_settings_feedback")}</T>
     </G>

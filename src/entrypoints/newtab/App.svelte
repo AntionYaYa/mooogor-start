@@ -21,7 +21,7 @@
   import type { IconName } from "@/lib/components/Icon.svelte";
   import { loadSettings, saveSettings, DEFAULT_SETTINGS } from "@/lib/utils/settings";
   import type { UserSettings } from "@/lib/utils/settings";
-  import { t } from "@/lib/utils/i18n";
+  import { setLanguage, t } from "@/lib/utils/i18n";
 
   let showSetting = $state(false);
   let allPinneds: WebSite[] = $state([]);
@@ -43,11 +43,14 @@
   let selTab: TabItem | undefined = $state();
   let showNext = $state(false);
   let firstMount = $state(true);
+  let i18nRenderKey = $state(0);
 
   let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
 
   onMount(async () => {
     userSettings = await loadSettings();
+    await setLanguage(userSettings.language);
+    updateTabLabels();
     const defaultIndex =
       userSettings.defaultOpen === "bookmark"
         ? 1
@@ -59,9 +62,24 @@
     firstMount = false;
   });
 
-  function handleUserSettingsChange(next: UserSettings) {
+  async function handleUserSettingsChange(next: UserSettings) {
+    const languageChanged = userSettings.language !== next.language;
     userSettings = next;
-    void saveSettings(next);
+    if (languageChanged) {
+      await Promise.all([saveSettings(next), setLanguage(next.language)]);
+      updateTabLabels();
+      i18nRenderKey += 1;
+      return;
+    }
+    await saveSettings(next);
+  }
+
+  function updateTabLabels() {
+    tabs[0].name = t("nt_tab_common");
+    if (historyStack.length <= 2) {
+      tabs[1].name = t("nt_tab_bookmarks");
+    }
+    tabs[2].name = t("nt_tab_history");
   }
 
   async function getBookmarksRoot() {
@@ -172,11 +190,12 @@
 </svelte:head>
 
 <main>
-  <Settings
-    {showSetting}
-    {userSettings}
-    onchangeUserSettings={handleUserSettingsChange}
-  >
+  {#key i18nRenderKey}
+    <Settings
+      {showSetting}
+      {userSettings}
+      onchangeUserSettings={handleUserSettingsChange}
+    >
     <div class="top">
       <div class="bulr">
         {#each Array.from({ length: 10 }, (_, i) => i) as i}
@@ -239,7 +258,8 @@
         {/each}
       </div>
     </div>
-  </Settings>
+    </Settings>
+  {/key}
 </main>
 
 {#snippet headBar()}
