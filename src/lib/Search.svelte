@@ -1,14 +1,14 @@
 <script lang="ts">
-  import Baidu from "../assets/Baidu.jpg";
-  import Qihu360 from "../assets/360.jpg";
-  import Bing from "../assets/Bing.jpg";
-  import DuckDuckGo from "../assets/DuckDuckGo.jpg";
-  import Google from "../assets/Google.jpg";
-  import Naver from "../assets/Naver.jpg";
-  import Perplexity from "../assets/Perplexity.jpg";
-  import Sougou from "../assets/Sougou.jpg";
-  import Yahoo from "../assets/Yahoo.jpg";
-  import Yandex from "../assets/Yandex.jpg";
+  import Baidu from "../assets/engines/Baidu.jpg";
+  import Qihu360 from "../assets/engines/360.jpg";
+  import Bing from "../assets/engines/Bing.jpg";
+  import DuckDuckGo from "../assets/engines/DuckDuckGo.jpg";
+  import Google from "../assets/engines/Google.jpg";
+  import Naver from "../assets/engines/Naver.jpg";
+  import Perplexity from "../assets/engines/Perplexity.jpg";
+  import Sougou from "../assets/engines/Sougou.jpg";
+  import Yahoo from "../assets/engines/Yahoo.jpg";
+  import Yandex from "../assets/engines/Yandex.jpg";
 
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";

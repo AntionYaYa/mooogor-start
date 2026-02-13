@@ -19,7 +19,11 @@
   import { onMount, tick } from "svelte";
   import Icon from "@/lib/components/Icon.svelte";
   import type { IconName } from "@/lib/components/Icon.svelte";
-  import { loadSettings, saveSettings, DEFAULT_SETTINGS } from "@/lib/utils/settings";
+  import {
+    loadSettings,
+    saveSettings,
+    DEFAULT_SETTINGS,
+  } from "@/lib/utils/settings";
   import type { UserSettings } from "@/lib/utils/settings";
   import { setLanguage, t } from "@/lib/utils/i18n";
 
@@ -32,8 +36,6 @@
 
   let historyPermission = $state(false);
 
-
-  
   let tabs: TabItem[] = $state([
     { key: "0", name: t("nt_tab_common"), sel: false },
     { key: "1", name: t("nt_tab_bookmarks"), sel: false },
@@ -196,11 +198,11 @@
       {userSettings}
       onchangeUserSettings={handleUserSettingsChange}
     >
-    <div class="top">
-      <div class="bulr">
-        {#each Array.from({ length: 10 }, (_, i) => i) as i}
-          <span
-            style="
+      <div class="top">
+        <div class="bulr">
+          {#each Array.from({ length: 10 }, (_, i) => i) as i}
+            <span
+              style="
             position: absolute;
             top: 0;
             left: 0;
@@ -210,61 +212,73 @@
             opacity: {1 - i / 10};
             pointer-events: none;
           "
-          ></span>
-        {/each}
-      </div>
-      {@render headBar()}
-      <Search newTabOpen={userSettings.newTabOpen} />
-    </div>
-    <div class="content">
-      <div class="tabs">
-        {#if historyStack.length >= 3}
-          <div class="left" in:fly={{ x: 100, duration: 300 }}>
-            <button onclick={goBack} class="back">
-              <T nowrap>{t("nt_back")}</T>
-            </button>
-          </div>
-        {/if}
-        <div class="center">
-          {#if historyStack.length <= 2}
-            <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
-          {:else}
-            <T nowrap align="c">{historyStack[historyStack.length - 1].title}</T
-            >
-          {/if}
+            ></span>
+          {/each}
         </div>
+        {@render headBar()}
+        <Search newTabOpen={userSettings.newTabOpen} />
       </div>
-      <div class="tabs_contents">
-        {#each tabs as tab (tab.key)}
-          {#if tab.sel}
-            <div
-              class="tab_content"
-              in:fly={firstMount
-                ? undefined
-                : { x: showNext ? 180 : -180, duration: 250 }}
-              out:fly={firstMount
-                ? undefined
-                : { x: showNext ? -180 : 180, duration: 200 }}
-            >
-              {#if tab.key === "0"}
-                {@render pinneds()}
-              {:else if tab.key === "1"}
-                {@render bookmarks()}
-              {:else if tab.key === "2"}
-                {@render history()}
-              {/if}
+      <div class="content">
+        <div class="tabs">
+          {#if historyStack.length >= 3}
+            <div class="left" in:fly={{ x: 100, duration: 300 }}>
+              <button onclick={goBack} class="back">
+                <T nowrap>{t("nt_back")}</T>
+              </button>
             </div>
           {/if}
-        {/each}
+          <div class="center">
+            {#if historyStack.length <= 2}
+              <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
+            {:else}
+              <T nowrap align="c"
+                >{historyStack[historyStack.length - 1].title}</T
+              >
+            {/if}
+          </div>
+        </div>
+        <div class="tabs_contents">
+          {#each tabs as tab (tab.key)}
+            {#if tab.sel}
+              <div
+                class="tab_content"
+                in:fly={firstMount
+                  ? undefined
+                  : { x: showNext ? 180 : -180, duration: 250 }}
+                out:fly={firstMount
+                  ? undefined
+                  : { x: showNext ? -180 : 180, duration: 200 }}
+              >
+                {#if tab.key === "0"}
+                  {@render pinneds()}
+                {:else if tab.key === "1"}
+                  {@render bookmarks()}
+                {:else if tab.key === "2"}
+                  {@render history()}
+                {/if}
+              </div>
+            {/if}
+          {/each}
+        </div>
       </div>
-    </div>
     </Settings>
   {/key}
 </main>
 
 {#snippet headBar()}
-  <G align="r" full>
-    <Button iconName="Settings2" onclick={() => (showSetting = !showSetting)} />
+  <G full align="c">
+    <G full align="c">
+      <G>
+        <img class="logo" src="/Mooogor.svg" alt="Mooogor2" />
+      </G>
+      <T>Mooogor2</T>
+    </G>
+    <G>
+      <Button
+        iconName="Settings2"
+        onclick={() => (showSetting = !showSetting)}
+      />
+    </G>
   </G>
 {/snippet}
 
@@ -278,7 +292,11 @@
 
 {#snippet bookmarks()}
   {#if !bookmarksPermission}
-    {@render temNeedPermission("Bookmark", t("nt_need_permission"), "bookmarks")}
+    {@render temNeedPermission(
+      "Bookmark",
+      t("nt_need_permission"),
+      "bookmarks",
+    )}
   {:else if currentNode}
     <Bookmarks
       list={historyStack.length >= 3}
@@ -323,6 +341,9 @@
 {/snippet}
 
 <style>
+  .logo {
+    width: 24px;
+  }
   .get_permission {
     display: flex;
     flex-direction: column;
