@@ -1,8 +1,8 @@
 <script lang="ts">
-	import G from "./G.svelte";
-	import Icon from "./Icon.svelte";
-	import type { IconName } from "./Icon.svelte";
-	import T from "./T.svelte";
+	import G from "@/lib/components/G.svelte";
+	import Icon from "@/lib/components/Icon.svelte";
+	import type { IconName } from "@/lib/components/Icon.svelte";
+	import T from "@/lib/components/T.svelte";
 
 	type alignType = "c" | "r";
 	interface Props {
@@ -11,6 +11,7 @@
 		mini?: boolean;
 		fill?: boolean;
 		full?: boolean;
+		skipTabFocus?: boolean;
 		alignT?: alignType;
 		onclick?: (event: MouseEvent) => void;
 	}
@@ -23,10 +24,11 @@
 		full = false,
 		onclick,
 		alignT,
+		skipTabFocus
 	}: Props = $props();
 </script>
 
-<button class="btn" class:fill class:unfill={!fill} class:full {onclick}>
+<button class="btn" class:fill class:unfill={!fill} class:full {onclick} tabindex={skipTabFocus?-1:undefined}>
 	<G full>
 		{#if text}
 			<T

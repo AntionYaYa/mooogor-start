@@ -6,6 +6,7 @@
   import Select, { type SelectOption } from "./components/Select.svelte";
   import type { UserSettings } from "@/lib/utils/settings";
   import { t } from "@/lib/utils/i18n";
+    import Button from "./components/Button.svelte";
   interface Props {
     children: any;
     showSetting: boolean;
@@ -79,14 +80,8 @@
     {@render temselectItem(t("nt_settings_language"), languageOptions, setLanguage)}
     {@render temselectItem(t("nt_settings_default_open"), openPosOptions, setOpenPos)}
 
-    <G vertical>
-      <T>{t("nt_settings_feedback")}</T>
-    </G>
-    <G vertical>
-      <T>{t("nt_settings_about")}</T>
-    </G>
-    <G vertical>
-      <T>{t("nt_settings_version")}</T>
+    <G vertical full>
+      <Button text={t("nt_settings_about")} full/>
     </G>
     <G vertical>
       <T>{t("nt_settings_support")}</T>
@@ -143,7 +138,7 @@
     box-sizing: border-box;
 
     /* background: url(../../assets/bg3.jpg); */
-    background-color: var(--c-bg);
+    background-color: var(--c-bg1);
 
     position: relative;
     overflow: hidden;
@@ -162,7 +157,7 @@
     box-sizing: border-box;
     position: relative;
     align-items: center;
-    background-color: var(--c-bg-1);
+    background-color: var(--c-bg);
     transition: padding 0.3s ease-out;
   }
   .setting {

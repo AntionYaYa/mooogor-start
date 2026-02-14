@@ -31,7 +31,7 @@
 </script>
 
 <div class="mask" transition:fade>
-	<div class="content"  transition:fly={{ y: 200, duration: 300 }}>
+	<div class="content"  transition:fly={{ y: -100, duration: 300 }}>
 		<G full align="c">
 			<T>{title}</T>
 			<Button iconName="X" onclick={onclickClose} />
@@ -46,7 +46,7 @@
 	.content {
 		width: 100%;
 		max-width: 320px;
-		background-color: var(--c-bg);
+		background-color: var(--c-bg1);
 		padding: calc(var(--gap) * 2);
 		display: flex;
 		flex-direction: column;

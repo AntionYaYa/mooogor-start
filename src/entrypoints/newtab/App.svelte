@@ -271,7 +271,7 @@
       <G>
         <img class="logo" src="/Mooogor.svg" alt="Mooogor2" />
       </G>
-      <T>Mooogor2</T>
+      <T>Mooogor 2</T>
     </G>
     <G>
       <Button
@@ -389,7 +389,7 @@
     background-size: cover;
     background-repeat: no-repeat;
     align-items: flex-start;
-    background-color: var(--c-bg-1);
+    background-color: var(--c-bg);
   }
 
   .content {

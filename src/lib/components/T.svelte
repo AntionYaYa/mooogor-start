@@ -30,6 +30,10 @@
 		text-overflow: ellipsis;
 		word-break: break-word;
 	}
+	::selection{
+      background-color: var(--c-green);
+      color: var(--c-bg);
+    }
 	.nowrap {
 		overflow: hidden;
 		text-overflow: ellipsis;

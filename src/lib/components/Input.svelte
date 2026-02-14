@@ -32,7 +32,7 @@
 	<div class="input_v">
 		<input {type} {name} bind:value {placeholder} {disabled}/>
 		{#if clearable && value}
-			<Button iconName="X" mini onclick={clearValue} />
+			<Button iconName="X" mini onclick={clearValue} skipTabFocus/>
 		{/if}
 	</div>
 </div>
@@ -40,7 +40,7 @@
 <style>
 	.input_g {
 		display: flex;
-		background-color: var(--c-bg1);
+		background-color: var(--c-bg);
 		border-radius: var(--r1);
 		padding: var(--gap);
 		flex-direction: column;
@@ -81,8 +81,13 @@
 		width: 100%;
 		box-sizing: border-box;
 		height: 36px;
+		caret-color:var(--c-green);
 	}
 
+	input::selection{
+      background-color: var(--c-green);
+      color: var(--c-bg);
+    }
 	input::placeholder {
 		color: var(--c-text-2);
 	}

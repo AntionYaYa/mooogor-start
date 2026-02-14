@@ -450,7 +450,6 @@
     <Button
       iconName={showMoreEngines ? "ChevronUp" : "ChevronDown"}
       onclick={clickEditeEngines}
-      mini
     />
   </div>
 {/snippet}
@@ -540,7 +539,7 @@
     flex-direction: column;
     align-items: flex-end;
     padding: var(--gap);
-    background-color: var(--c-bg1);
+    background-color: var(--c-bg);
     border-radius: calc(var(--r1) + var(--gap));
     width: 100%;
     min-width: 200px;
@@ -585,7 +584,12 @@
     padding: var(--gap);
     width: 100%;
     height: 40px;
+    caret-color:var(--c-green);
   }
+  .input::selection{
+      background-color: var(--c-green);
+      color: var(--c-bg);
+    }
   .input::placeholder {
     color: var(--c-text-2);
   }

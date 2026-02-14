@@ -1,38 +1,86 @@
 <script lang="ts">
- async function requestSitePermission() {
-  const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-  const siteUrl = tabs[0]?.url;
-  if (!siteUrl) {
-    console.log('无法获取当前标签页的URL');
-    return;
-  }
+ import {
+    addWebSite,
+  } from "@/lib/DB/DB";
 
-  const granted = await browser.permissions.request({
-    origins: [siteUrl] // 可以是 "https://www.github.com/*"
-  });
-  
-  if (granted) {
-    console.log(`已获得 ${siteUrl} 权限`);
-    // 使用 WXT API 动态注入 content script
-    // if (tabs[0]?.id && typeof injectContentScript === "function") {
-    //   await injectContentScript({
-    //     tabId: tabs[0].id,
-    //     // 可根据需要指定 entrypoint，默认即可
-    //     // entrypoint: "content",
-    //   });
-    // } else if (typeof injectContentScript !== "function") {
-    //   console.warn("injectContentScript 未定义，请确保已正确引入 WXT API。");
-    // }
-  } else {
-    console.log(`用户拒绝 ${siteUrl} 权限`);
-  }
+ async function getActiveTab() {
+  const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+  return tabs[0];
 }
+import validator from "validator";
+  import { getDomainFromUrl } from "@/lib/DB/DB";
+  import Button from "@/lib/components/Button.svelte";
+  import Input from "@/lib/components/Input.svelte";
+  import G from "@/lib/components/G.svelte";
+  import T from "@/lib/components/T.svelte";
+  import Shake from "@/lib/components/Shake.svelte";
+  import { t } from "@/lib/utils/i18n";
+
+  let inputUrlValue = $state("");
+  let inputTitleValue = $state("");
+  let inputUrlValueErr = $state(false);
+
+  onMount(async()=>{
+    const tab =  await getActiveTab()
+    if (tab) {
+      inputUrlValue = tab.url??''
+      inputTitleValue = tab.title??''
+    }
+  })
+
+  async function clickSave() {
+    inputUrlValueErr = false;
+    if (validator.isURL(inputUrlValue)) {
+      const newWebSite = {
+        domain: getDomainFromUrl(inputUrlValue),
+        url: inputUrlValue,
+        title: inputTitleValue.trim(),
+      };
+      await addWebSite(newWebSite);
+      window.close()
+    } else {
+      inputUrlValueErr = true;
+    }
+  }
 </script>
 
 
 <main>
-  <p class="read-the-docs">
-    Click on the WXT and Svelte logos to learn more
-  </p>
-  <button onclick={()=>requestSitePermission()}>quanx </button>
+  <G full align="c">
+    <T>{t("nt_add_pinned_title")}</T>
+  </G>
+  <G vertical full>
+    <G full>
+      <Shake shake={inputUrlValueErr}>
+        <Input
+          name="url"
+          type="url"
+          placeholder={t("nt_input_url")}
+          bind:value={inputUrlValue}
+        />
+      </Shake>
+    </G>
+    <G full>
+      <Input
+        name="title"
+        type="text"
+        placeholder={t("nt_input_name")}
+        bind:value={inputTitleValue}
+      />
+    </G>
+    <G full>
+      <G full>
+        <Button text={t("nt_save")} fill onclick={clickSave} full alignT='c' />
+      </G>
+    </G>
+  </G>
 </main>
+<style>
+  main{
+    width: 260px;
+    background-color: var(--c-bg1);
+    padding: var(--gap);
+    display: flex;
+    flex-direction: column;
+  }
+</style>

@@ -3,6 +3,7 @@
 	import { onMount, onDestroy } from "svelte";
 	import T from "./T.svelte";
 	import { t } from "@/lib/utils/i18n";
+    import { slide } from "svelte/transition";
 
 	export type SelectOption = {
 		label: string;
@@ -67,13 +68,13 @@
 		/>
 	</button>
 	{#if open}
-		<div class="menu">
+		<div class="menu" transition:slide={{duration:200}}>
 			<div class="menu_items">
 				{#each options as option}
 					<button class="option" onclick={() => handleSelect(option)}>
 						<T bold={option.sel}>{option.label}</T>
 						{#if option.sel}
-							<Icon name="Check" color="var(--c-text)" opacity={0.6} />
+							<Icon name="Check" color="var(--c-green)" opacity={0.6} />
 						{/if}
 					</button>
 				{/each}
@@ -129,13 +130,13 @@
 	}
 	.menu {
 		position: absolute;
-		left: 0;
-		right: 0;
-		top: 0;
+		left: var(--gap);
+		top: var(--gap);
+		right: var(--gap);
 		display: flex;
 		flex-direction: column;
 		box-shadow: var(--shadow);
-		padding: var(--gap);
+		border-radius: var(--r1);
 		z-index: 10;
 		max-height: 260px;
 		overflow-y: auto;
