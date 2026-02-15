@@ -538,7 +538,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    padding: var(--gap);
+    /* padding: var(--gap); */
     background-color: var(--c-bg);
     border-radius: calc(var(--r1) + var(--gap));
     width: 100%;

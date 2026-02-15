@@ -7,6 +7,7 @@
   import type { UserSettings } from "@/lib/utils/settings";
   import { t } from "@/lib/utils/i18n";
     import Button from "./components/Button.svelte";
+    import About from "./About.svelte";
   interface Props {
     children: any;
     showSetting: boolean;
@@ -15,6 +16,8 @@
   }
   let { children, showSetting, userSettings, onchangeUserSettings }: Props =
     $props();
+
+    let showAbout = $state(false)
 
   const openPosBase = [
     { label: t("nt_default_common"), value: "common" },
@@ -59,6 +62,8 @@
   function setNewTabOpen(value: boolean) {
     onchangeUserSettings({ ...userSettings, newTabOpen: value });
   }
+
+
 </script>
 
 <div class="layout">
@@ -81,7 +86,7 @@
     {@render temselectItem(t("nt_settings_default_open"), openPosOptions, setOpenPos)}
 
     <G vertical full>
-      <Button text={t("nt_settings_about")} full/>
+      <Button text={t("nt_settings_about")} full onclick={()=>showAbout=true}/>
     </G>
     <G vertical>
       <T>{t("nt_settings_support")}</T>
@@ -114,6 +119,10 @@
     <Select {options} {onChange} />
   </div>
 {/snippet}
+
+{#if showAbout}
+<About onclickClose={()=>showAbout=false}/>
+{/if}
 
 <style>
   .select_item {

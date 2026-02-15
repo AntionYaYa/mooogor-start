@@ -14,7 +14,7 @@
 
 <p
 	class="{type} {bold ? 'bold' : ''} {nowrap ? 'nowrap' : ''} "
-	style="color: {color}; text-align: {align === 'c' ? 'center' : 'left'}"
+	style="color: {color}; text-align: {align === 'c' ? 'center' : align === 'r' ?'right': 'left'}"
 >
 	{@render children()}
 </p>

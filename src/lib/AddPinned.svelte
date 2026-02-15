@@ -47,7 +47,7 @@
   }
 </script>
 
-<Popup title={t("nt_add_pinned_title")} {onclickClose}>
+<Popup type='s' title={t("nt_add_pinned_title")} {onclickClose}>
   <G full>
     <Shake shake={inputUrlValueErr}>
       <Input

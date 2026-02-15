@@ -48,9 +48,39 @@
   let i18nRenderKey = $state(0);
 
   let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
+  let currentTabId: number | undefined = $state();
+  let currentTabPinned = $state(false);
+  let effectiveNewTabOpen = $derived(userSettings.newTabOpen || currentTabPinned);
+
+  async function refreshCurrentTabPinnedState() {
+    try {
+      const tab = await browser.tabs.getCurrent();
+      currentTabId = tab?.id;
+      currentTabPinned = !!tab?.pinned;
+    } catch {
+      currentTabId = undefined;
+      currentTabPinned = false;
+    }
+  }
+
+  function handleCurrentTabUpdated(
+    tabId: number,
+    changeInfo: { pinned?: boolean },
+    tab: { pinned?: boolean },
+  ) {
+    if (!currentTabId || tabId !== currentTabId) return;
+    if (typeof changeInfo.pinned === "boolean") {
+      currentTabPinned = changeInfo.pinned;
+      return;
+    }
+    if (typeof tab.pinned === "boolean") {
+      currentTabPinned = tab.pinned;
+    }
+  }
 
   onMount(async () => {
     userSettings = await loadSettings();
+    await refreshCurrentTabPinnedState();
     await setLanguage(userSettings.language);
     updateTabLabels();
     const defaultIndex =
@@ -62,6 +92,26 @@
     clickTab(tabs[defaultIndex], defaultIndex);
     await tick();
     firstMount = false;
+  });
+
+  onMount(() => {
+    browser.tabs.onUpdated.addListener(handleCurrentTabUpdated);
+
+    const refreshPinnedOnFocus = () => {
+      void refreshCurrentTabPinnedState();
+    };
+    window.addEventListener("focus", refreshPinnedOnFocus);
+
+    // Fallback for browsers where pin/unpin events may not fire reliably.
+    const pollId = window.setInterval(() => {
+      void refreshCurrentTabPinnedState();
+    }, 1500);
+
+    return () => {
+      browser.tabs.onUpdated.removeListener(handleCurrentTabUpdated);
+      window.removeEventListener("focus", refreshPinnedOnFocus);
+      window.clearInterval(pollId);
+    };
   });
 
   async function handleUserSettingsChange(next: UserSettings) {
@@ -216,7 +266,7 @@
           {/each}
         </div>
         {@render headBar()}
-        <Search newTabOpen={userSettings.newTabOpen} />
+        <Search newTabOpen={effectiveNewTabOpen} />
       </div>
       <div class="content">
         <div class="tabs">
@@ -285,7 +335,7 @@
 {#snippet pinneds()}
   <Pinneds
     {allPinneds}
-    newTabOpen={userSettings.newTabOpen}
+    newTabOpen={effectiveNewTabOpen}
     onUpdate={(items) => clickUpdatePinneds(items)}
   />
 {/snippet}
@@ -301,7 +351,7 @@
     <Bookmarks
       list={historyStack.length >= 3}
       bookmarkNode={currentNode}
-      newTabOpen={userSettings.newTabOpen}
+      newTabOpen={effectiveNewTabOpen}
       onclickFolder={(bkmk) => clickFolder(bkmk)}
     />
   {/if}
@@ -311,7 +361,7 @@
   {#if !historyPermission}
     {@render temNeedPermission("History", t("nt_need_permission"), "history")}
   {:else}
-    <History newTabOpen={userSettings.newTabOpen} />
+    <History newTabOpen={effectiveNewTabOpen} />
   {/if}
 {/snippet}
 

@@ -1,10 +1,10 @@
 
 {
     "extName": {
-      "message": "Mooogor2-高效启动新标签页"
+      "message": "Mooogor 2 - 高效启动新标签页"
     },
     "extDescription": {
-      "message": ""
+      "message": "Mooogor是一个浏览器新标签页，它的核心设计逻辑是能够让您更快速高效的进入下一个工作流，例如打开常用网址，或者跨站搜索，又或者恢复刚刚关闭的标签页。"
     },
     "nt_title": {
       "message": "新标签页"

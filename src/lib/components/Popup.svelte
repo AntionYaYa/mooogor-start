@@ -5,13 +5,15 @@
 	import { fade, fly } from "svelte/transition";
 	import { onMount, onDestroy } from "svelte";
 
+	type Type = 's'|'m'
 	interface Props {
 		children: any;
 		title: string;
 		onclickClose: () => void;
 		shake?: boolean;
+		type:Type
 	}
-	let { children, title, onclickClose, shake = false }: Props = $props();
+	let { children, title, onclickClose, type }: Props = $props();
 
 	
 
@@ -31,21 +33,34 @@
 </script>
 
 <div class="mask" transition:fade>
-	<div class="content"  transition:fly={{ y: -100, duration: 300 }}>
+	<div class="pannel {type}"  transition:fly={{ y: -100, duration: 300 }}>
 		<G full align="c">
 			<T>{title}</T>
 			<Button iconName="X" onclick={onclickClose} />
 		</G>
-		<G vertical full>
+		<div class="content">
 			{@render children()}
-		</G>
+		</div>
 	</div>
 </div>
 
 <style>
-	.content {
-		width: 100%;
+	.content{
+		display: flex;
+		flex-direction: row;
+		height: 100%;
+		box-sizing: border-box;
+		overflow-y: auto;
+	}
+	.s{
 		max-width: 320px;
+	}
+	.m{
+		max-width: 600px;
+	}
+	.pannel {
+		width: 100%;
+		max-height: 100vh;
 		background-color: var(--c-bg1);
 		padding: calc(var(--gap) * 2);
 		display: flex;
