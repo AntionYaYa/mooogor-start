@@ -269,7 +269,7 @@
       <T type="m" bold nowrap>{history.title}</T>
     </G>
     <G align="c">
-      <Icon name="Eye" color="var(--c-text)" opacity={0.6} />
+      <Icon name="Eye" color="var(--c-text)" opacity={0.6} size={16}/>
       <T type="s" nowrap>{history.visitCount}</T>
     </G>
   </a>

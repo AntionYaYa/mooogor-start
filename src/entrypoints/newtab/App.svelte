@@ -449,7 +449,7 @@
     padding: 128px var(--gap) var(--gap) var(--gap);
     gap: var(--gap);
     width: 100%;
-    max-width: 80%;
+    max-width: 1024px;
     box-sizing: border-box;
     height: 100%;
     overflow-y: auto;
