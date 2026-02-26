@@ -447,10 +447,12 @@
         </a>
       {/each}
     </div>
-    <Button
-      iconName={showMoreEngines ? "ChevronUp" : "ChevronDown"}
-      onclick={clickEditeEngines}
-    />
+    <Button onclick={clickEditeEngines}>
+      <Icon
+        name={showMoreEngines ? "ChevronUp" : "ChevronDown"}
+        color="var(--c-text)"
+      />
+    </Button>
   </div>
 {/snippet}
 
@@ -644,7 +646,6 @@
   .engine:active,
   .item:active {
     background-color: var(--c-mask);
-    transform: translateY(2px);
     transition: all 0.1s ease-out;
   }
   .engine:focus,

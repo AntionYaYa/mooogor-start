@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { slide } from "svelte/transition";
 	import Button from "./Button.svelte";
+	import Icon from "./Icon.svelte";
 
 	interface Props {
 		name: string;
@@ -30,12 +31,14 @@
 		<h6 transition:slide={{ duration: 200 }}>{placeholder}</h6>
 	{/if}
 	<div class="input_v">
-		<input {type} {name} bind:value {placeholder} {disabled}/>
-		{#if clearable && value}
-			<Button iconName="X" mini onclick={clearValue} skipTabFocus/>
-		{/if}
+			<input {type} {name} bind:value {placeholder} {disabled}/>
+			{#if clearable && value}
+				<Button onclick={clearValue} skipTabFocus>
+					<Icon name="X" size={16} opacity={0.6} color="var(--c-text)" />
+				</Button>
+			{/if}
+		</div>
 	</div>
-</div>
 
 <style>
 	.input_g {

@@ -5,6 +5,7 @@
   import Button from "./components/Button.svelte";
   import Input from "./components/Input.svelte";
   import G from "./components/G.svelte";
+  import T from "./components/T.svelte";
   import Popup from "./components/Popup.svelte";
   import Shake from "./components/Shake.svelte";
   import { t } from "@/lib/utils/i18n";
@@ -68,7 +69,9 @@
   </G>
   <G full>
     <G full>
-      <Button text={t("nt_save")} fill onclick={clickSave} full alignT='c' />
+      <Button fill onclick={clickSave} full>
+        <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
+      </Button>
     </G>
   </G>
 </Popup>

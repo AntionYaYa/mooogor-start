@@ -47,12 +47,11 @@
 	}
 	button:active {
 		background-color: var(--c-mask);
-		transform: translateY(2px);
 		transition: all 0.1s ease-out;
 	}
 	.sel {
 		background-color: var(--c-mask);
-		font-weight: bold;
+		/* font-weight: bold; */
 	}
 	.unsel {
 		background-color: unset;

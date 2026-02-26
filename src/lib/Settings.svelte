@@ -6,8 +6,9 @@
   import Select, { type SelectOption } from "./components/Select.svelte";
   import type { UserSettings } from "@/lib/utils/settings";
   import { t } from "@/lib/utils/i18n";
-    import Button from "./components/Button.svelte";
-    import About from "./About.svelte";
+  import Button from "./components/Button.svelte";
+  import About from "./About.svelte";
+  import Icon from "./components/Icon.svelte";
   interface Props {
     children: any;
     showSetting: boolean;
@@ -17,7 +18,7 @@
   let { children, showSetting, userSettings, onchangeUserSettings }: Props =
     $props();
 
-    let showAbout = $state(false)
+  let showAbout = $state(false);
 
   const openPosBase = [
     { label: t("nt_default_common"), value: "common" },
@@ -35,14 +36,14 @@
     openPosBase.map((o) => ({
       ...o,
       sel: o.value === userSettings.defaultOpen,
-    }))
+    })),
   );
 
   let languageOptions = $derived(
     languageBase.map((o) => ({
       ...o,
       sel: o.value === userSettings.language,
-    }))
+    })),
   );
 
   function setOpenPos(value: string) {
@@ -63,7 +64,13 @@
     onchangeUserSettings({ ...userSettings, newTabOpen: value });
   }
 
+  function onswitchNewTabOpen(swith: boolean) {
+    setNewTabOpen(swith);
+  }
 
+  function clickShowAbout() {
+    showAbout = true;
+  }
 </script>
 
 <div class="layout">
@@ -81,50 +88,125 @@
 
 {#snippet temSettiong()}
   <div class="setting_con">
-    {@render temsettingItem()}
-    {@render temselectItem(t("nt_settings_language"), languageOptions, setLanguage)}
-    {@render temselectItem(t("nt_settings_default_open"), openPosOptions, setOpenPos)}
+    {@render temselectItem(
+      t("nt_settings_language"),
+      languageOptions,
+      setLanguage,
+    )}
+    {@render temswithcItem(
+      "链接打开方式",
+      t("nt_settings_new_tab_open"),
+      t("nt_settings_new_tab_tip"),
+      userSettings.newTabOpen,
+      onswitchNewTabOpen,
+    )}
+    {@render temselectItem(
+      t("nt_settings_default_open"),
+      openPosOptions,
+      setOpenPos,
+    )}
+      {@render tembuttonItem(t("nt_settings_about"),clickShowAbout,'其他')}
+      {@render tembuttonItem(t("nt_settings_support"),()=>{},'',true)}
+    </div>
+{/snippet}
 
-    <G vertical full>
-      <Button text={t("nt_settings_about")} full onclick={()=>showAbout=true}/>
+{#snippet tembuttonItem(
+  text: string,
+  onChange: () => void,
+  title?: string,
+  externalLink?:boolean
+)}
+<div class="select_item">
+  {#if title}
+    <G>
+      <T type="s">{title}</T>
     </G>
-    <G vertical>
-      <T>{t("nt_settings_support")}</T>
+  {/if}
+      <button class="trigger" onclick={onChange}>
+        <G vertical full>
+          <T>{text}</T>
+        </G>
+        <G>
+          <span class="icon_box">
+          {#if externalLink}
+            <Icon name="ArrowUpRight" color="var(--c-text)" opacity={0.6} />
+          {/if}
+          </span>
+        </G>
+      </button>
+    </div>
+{/snippet}
+{#snippet temswithcItem(
+  title: string,
+  swcText: string,
+  des: string,
+  turnOn: boolean,
+  onChange: (value: boolean) => void,
+)}
+  <div class="select_item">
+    <G>
+      <T type="s">{title}</T>
+    </G>
+    <div class="trigger">
+      <G vertical full>
+        <T>{swcText}</T>
+      </G>
+      <G>
+        <Switch {turnOn} onSwitch={onChange}></Switch>
+      </G>
+    </div>
+    <G>
+      <T type="s">{des}</T>
     </G>
   </div>
 {/snippet}
 
-{#snippet temsettingItem()}
-  <G align="c" full>
-    <G vertical full>
-      <T>{t("nt_settings_new_tab_open")}</T>
-      <T type="s">{t("nt_settings_new_tab_tip")}</T>
-    </G>
-    <G>
-      <Switch
-        turnOn={userSettings.newTabOpen}
-        onSwitch={(swith) => {
-          setNewTabOpen(swith);
-        }}
-      ></Switch>
-    </G>
-  </G>
-{/snippet}
-
-{#snippet temselectItem(title: string, options: SelectOption[], onChange: (value: string) => void)}
+{#snippet temselectItem(
+  title: string,
+  options: SelectOption[],
+  onChange: (value: string) => void,
+)}
   <div class="select_item">
     <G vertical full>
-      <T>{title}</T>
+      <T type="s">{title}</T>
     </G>
     <Select {options} {onChange} />
   </div>
 {/snippet}
 
 {#if showAbout}
-<About onclickClose={()=>showAbout=false}/>
+  <About onclickClose={() => (showAbout = false)} />
 {/if}
 
 <style>
+  .icon_box {
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--gap) / 2);
+  }
+  .trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: var(--c-bg1);
+    border: none;
+    border-radius: var(--r1);
+    padding: var(--gap);
+  }
+  .trigger:active {
+    background-color: var(--c-mask);
+    transition: all 0.1s ease-out;
+  }
+  .trigger:focus-visible {
+    outline: 2px solid var(--c-text);
+  }
   .select_item {
     display: flex;
     flex-direction: column;

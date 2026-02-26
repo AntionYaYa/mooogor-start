@@ -2,6 +2,7 @@
 	import G from "./G.svelte";
 	import T from "./T.svelte";
 	import Button from "./Button.svelte";
+	import Icon from "./Icon.svelte";
 	import { fade, fly } from "svelte/transition";
 	import { onMount, onDestroy } from "svelte";
 
@@ -32,12 +33,14 @@
 	}
 </script>
 
-<div class="mask" transition:fade>
-	<div class="pannel {type}"  transition:fly={{ y: -100, duration: 300 }}>
-		<G full align="c">
-			<T>{title}</T>
-			<Button iconName="X" onclick={onclickClose} />
-		</G>
+<div class="mask" transition:fade={{duration: 200}}>
+	<div class="pannel {type}"  transition:fly={{ y: -50, duration: 200 }}>
+			<G full align="c">
+				<T>{title}</T>
+				<Button onclick={onclickClose}>
+					<Icon name="X" color="var(--c-text)" />
+				</Button>
+			</G>
 		<div class="content">
 			{@render children()}
 		</div>
@@ -47,10 +50,11 @@
 <style>
 	.content{
 		display: flex;
-		flex-direction: row;
+		flex-direction: column;
 		height: 100%;
 		box-sizing: border-box;
 		overflow-y: auto;
+		width: 100%;
 	}
 	.s{
 		max-width: 320px;

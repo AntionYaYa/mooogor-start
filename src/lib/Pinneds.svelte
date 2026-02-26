@@ -12,6 +12,7 @@
   } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import Button from "./components/Button.svelte";
+  import Icon from "./components/Icon.svelte";
   import AddPinned from "./AddPinned.svelte";
   import LinkContextMenu from "./LinkContextMenu.svelte";
   import NoData from "./NoData.svelte";
@@ -140,13 +141,19 @@
       url={currentPinned.url}
       onClose={() => (showMenu = false)}
     >
-      <Button full text={t("nt_edit")} onclick={clickEditWebSite} />
-      <Button full text={t("nt_delete")} onclick={clickDeleteWebSite} />
+      <Button full onclick={clickEditWebSite}>
+        <T>{t("nt_edit")}</T>
+      </Button>
+      <Button full onclick={clickDeleteWebSite}>
+        <T>{t("nt_delete")}</T>
+      </Button>
     </LinkContextMenu>
 {/if}
 
 {#snippet temAddPinned()}
-  <Button iconName="Plus" onclick={() => (showAdd = true)} />
+  <Button onclick={() => (showAdd = true)}>
+    <Icon name="Plus" color="var(--c-text)" />
+  </Button>
 {/snippet}
 
 <style>
@@ -198,7 +205,6 @@
 
   a:active {
     background-color: var(--c-mask);
-    transform: translateY(2px);
     transition: all 0.1s ease-out;
   }
   

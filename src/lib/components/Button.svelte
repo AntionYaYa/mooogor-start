@@ -1,52 +1,26 @@
 <script lang="ts">
 	import G from "@/lib/components/G.svelte";
-	import Icon from "@/lib/components/Icon.svelte";
-	import type { IconName } from "@/lib/components/Icon.svelte";
-	import T from "@/lib/components/T.svelte";
 
-	type alignType = "c" | "r";
 	interface Props {
-		text?: string;
-		iconName?: IconName;
-		mini?: boolean;
+		children: any;
 		fill?: boolean;
 		full?: boolean;
 		skipTabFocus?: boolean;
-		alignT?: alignType;
 		onclick?: (event: MouseEvent) => void;
 	}
 
 	let {
-		text,
-		iconName,
-		mini = false,
+		children,
 		fill = false,
 		full = false,
 		onclick,
-		alignT,
 		skipTabFocus
 	}: Props = $props();
 </script>
 
 <button class="btn" class:fill class:unfill={!fill} class:full {onclick} tabindex={skipTabFocus?-1:undefined}>
 	<G full>
-		{#if text}
-			<T
-				type={mini ? "s" : "m"}
-				bold={!mini}
-				color={fill ? "var(--c-bg)" : undefined}
-				align={alignT}
-			>
-				{text}
-			</T>
-		{:else if iconName}
-			<Icon
-				name={iconName}
-				size={mini ? 16 : 20}
-				opacity={mini ? 0.6 : 1}
-				color={fill ? "var(--c-bg)" : "var(--c-text)"}
-			/>
-		{/if}
+		{@render children()}
 	</G>
 </button>
 
@@ -61,7 +35,6 @@
 	}
 
 	.btn:active {
-		transform: translateY(2px);
 		transition: all 0.1s ease-out;
 	}
 	.btn:focus-visible{

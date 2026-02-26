@@ -324,10 +324,9 @@
       <T>Mooogor 2</T>
     </G>
     <G>
-      <Button
-        iconName="Settings2"
-        onclick={() => (showSetting = !showSetting)}
-      />
+      <Button onclick={() => (showSetting = !showSetting)}>
+        <Icon name="Settings2" color="var(--c-text)" />
+      </Button>
     </G>
   </G>
 {/snippet}
@@ -380,11 +379,9 @@
         <T align="c" type="s">{t("nt_permission_desc")}</T>
       </G>
       <G vertical align="c">
-        <Button
-          text={t("nt_authorize")}
-          onclick={() => clickGetPermission(permission)}
-          fill
-        />
+        <Button onclick={() => clickGetPermission(permission)} fill>
+          <T color="var(--c-bg)">{t("nt_authorize")}</T>
+        </Button>
       </G>
     </G>
   </div>
@@ -508,7 +505,6 @@
   }
   .back:active {
     background-color: var(--c-mask);
-    transform: translateY(2px);
     transition: all 0.1s ease-out;
   }
 </style>

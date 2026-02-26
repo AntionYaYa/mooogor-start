@@ -2,6 +2,7 @@
   import ContextMenu from "./components/Popover.svelte";
   import Button from "./components/Button.svelte";
   import Divider from "./components/Divider.svelte";
+  import T from "./components/T.svelte";
   import { t } from "@/lib/utils/i18n";
 
   interface Props {
@@ -43,10 +44,18 @@
 </script>
 
 <ContextMenu {x} {y} {onClose}>
-  <Button full text={t("nt_open_new_tab")} onclick={openNewTab} />
-  <Button full text={t("nt_open_new_window")} onclick={openNewWindow} />
-  <Button full text={t("nt_open_incognito")} onclick={openIncognitoWindow} />
-  <Button full text={t("nt_copy_link")} onclick={copyLink} />
+  <Button full onclick={openNewTab}>
+    <T>{t("nt_open_new_tab")}</T>
+  </Button>
+  <Button full onclick={openNewWindow}>
+    <T>{t("nt_open_new_window")}</T>
+  </Button>
+  <Button full onclick={openIncognitoWindow}>
+    <T>{t("nt_open_incognito")}</T>
+  </Button>
+  <Button full onclick={copyLink}>
+    <T>{t("nt_copy_link")}</T>
+  </Button>
   {#if children}
     <Divider/>
     {@render children()}

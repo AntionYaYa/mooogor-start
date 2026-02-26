@@ -128,7 +128,9 @@
       url={currentBkmk.url ?? ""}
       onClose={() => (showMenu = false)}
     >
-      <Button full text={t("nt_add_to_pinned")} onclick={clickAddtoPinneds} />
+      <Button full onclick={clickAddtoPinneds}>
+        <T>{t("nt_add_to_pinned")}</T>
+      </Button>
     </LinkContextMenu>
 {/if}
 
@@ -218,7 +220,6 @@
   a:active,
   button:active {
     background-color: var(--c-mask);
-    transform: translateY(2px);
     transition: all 0.1s ease-out;
   }
   button:focus-visible,

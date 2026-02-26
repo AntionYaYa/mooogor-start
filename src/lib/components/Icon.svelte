@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { SquareDashed, Settings2,X,Plus,ChevronDown,ChevronUp,History,Bookmark,Sprout,Eye,Check} from "@lucide/svelte";
-	export type IconName = "Loading" | "SquareDashed" | "Settings2"|'X'|"Plus"|'ChevronDown'|'ChevronUp'|'History'|'Bookmark'|'Sprout'|'Eye'|'Check';
+	import { SquareDashed, Settings2,X,Plus,ChevronDown,ChevronUp,History,Bookmark,Sprout,Eye,Check,ArrowUpRight} from "@lucide/svelte";
+	export type IconName = "Loading" | "SquareDashed" | "Settings2"|'X'|"Plus"|'ChevronDown'|'ChevronUp'|'History'|'Bookmark'|'Sprout'|'Eye'|'Check'|'ArrowUpRight';
 
 	interface Props {
 		name?: IconName;
@@ -46,6 +46,9 @@
 	{#if name === "Check"}
 		<Check {size} {strokeWidth} />
 	{/if}
+	{#if name === "ArrowUpRight"}
+		<ArrowUpRight {size} {strokeWidth} />
+	{/if}
 	{#if name === "Loading"}
 		<svg width="20" height="20" viewBox="0 0 20 20">
 			<circle
@@ -75,7 +78,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: var(--gap);
+		padding:calc(var(--gap) / 2) ;
 		border-radius: var(--r-100);
 	}
 </style>
