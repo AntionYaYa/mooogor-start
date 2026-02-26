@@ -38,7 +38,9 @@
 			<G full align="c">
 				<T>{title}</T>
 				<Button onclick={onclickClose}>
+					<G>
 					<Icon name="X" color="var(--c-text)" />
+					</G>
 				</Button>
 			</G>
 		<div class="content">

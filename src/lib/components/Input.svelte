@@ -2,6 +2,7 @@
 	import { slide } from "svelte/transition";
 	import Button from "./Button.svelte";
 	import Icon from "./Icon.svelte";
+	import G from "./G.svelte";
 
 	interface Props {
 		name: string;
@@ -34,7 +35,9 @@
 			<input {type} {name} bind:value {placeholder} {disabled}/>
 			{#if clearable && value}
 				<Button onclick={clearValue} skipTabFocus>
-					<Icon name="X" size={16} opacity={0.6} color="var(--c-text)" />
+					<G>
+						<Icon name="X" size={16} opacity={0.6} color="var(--c-text)" />
+					</G>
 				</Button>
 			{/if}
 		</div>

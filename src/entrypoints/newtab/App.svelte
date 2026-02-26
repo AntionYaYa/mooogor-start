@@ -318,15 +318,19 @@
 
 {#snippet headBar()}
   <G full align="c">
-    <G full align="c">
+    <G full>
+    <Button align="c" onclick={()=>{}}>
       <G>
         <img class="logo" src="/Mooogor.svg" alt="Mooogor2" />
       </G>
       <T>Mooogor 2</T>
+    </Button>
     </G>
     <G>
       <Button onclick={() => (showSetting = !showSetting)}>
+        <G>
         <Icon name="Settings2" color="var(--c-text)" />
+      </G>
       </Button>
     </G>
   </G>

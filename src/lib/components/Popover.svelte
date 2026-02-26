@@ -50,8 +50,8 @@
 		align-items: flex-start;
 		padding: var(--gap);
 		border-radius: var(--r1);
-		background-color: var(--c-text-2);
-		backdrop-filter: 50px;
+		background-color: var(--c-mask);
+		backdrop-filter:  blur(50px);
 		box-shadow: var(--shadow);
 		position: fixed;
 		z-index: 10;

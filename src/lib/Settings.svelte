@@ -131,7 +131,7 @@
 <div class="select_item">
   {#if title}
     <G>
-      <T type="s">{title}</T>
+      <T type="s" color='var(--c-text)'>{title}</T>
     </G>
   {/if}
       <button class="trigger" onclick={onChange}>
@@ -158,7 +158,7 @@
 )}
   <div class="select_item">
     <G>
-      <T type="s">{title}</T>
+      <T type="s" color='var(--c-text)'>{title}</T>
     </G>
     <div class="trigger">
       <G vertical full>
@@ -181,7 +181,7 @@
 )}
   <div class="select_item">
     <G vertical full>
-      <T type="s">{title}</T>
+      <T type="s" color='var(--c-text)'>{title}</T>
     </G>
     <Select {options} {onChange} />
   </div>

@@ -1,10 +1,12 @@
 <script lang="ts">
 	import G from "@/lib/components/G.svelte";
+	type Align = "c" | "r";
 
 	interface Props {
 		children: any;
 		fill?: boolean;
 		full?: boolean;
+		align?: Align
 		skipTabFocus?: boolean;
 		onclick?: (event: MouseEvent) => void;
 	}
@@ -14,11 +16,12 @@
 		fill = false,
 		full = false,
 		onclick,
-		skipTabFocus
+		skipTabFocus,
+		align,
 	}: Props = $props();
 </script>
 
-<button class="btn" class:fill class:unfill={!fill} class:full {onclick} tabindex={skipTabFocus?-1:undefined}>
+<button class="btn {align}" class:fill class:unfill={!fill} class:full {onclick} tabindex={skipTabFocus?-1:undefined}>
 		{@render children()}
 </button>
 
@@ -51,5 +54,15 @@
 	.full {
 		width: 100%;
 		box-sizing: border-box;
+	}
+	.c {
+		justify-content: center;
+		align-content: center;
+		align-items: center;
+	}
+	.r {
+		justify-content: flex-end;
+		align-content: flex-end;
+		align-items: flex-end;
 	}
 </style>

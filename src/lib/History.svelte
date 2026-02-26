@@ -240,7 +240,9 @@
     onClose={() => (showMenu = false)}
   >
     <Button full onclick={clickAddtoPinneds}>
-      <T>{t("nt_add_to_pinned")}</T>
+      <G>
+        <T>{t("nt_add_to_pinned")}</T>
+      </G>
     </Button>
   </LinkContextMenu>
 {/if}

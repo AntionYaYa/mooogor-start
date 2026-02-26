@@ -3,6 +3,7 @@
   import Button from "./components/Button.svelte";
   import Divider from "./components/Divider.svelte";
   import T from "./components/T.svelte";
+  import G from "./components/G.svelte";
   import { t } from "@/lib/utils/i18n";
 
   interface Props {
@@ -13,7 +14,7 @@
     onClose: () => void;
   }
 
-  let {children, x, y, url, onClose }: Props = $props();
+  let { children, x, y, url, onClose }: Props = $props();
 
   function openNewTab() {
     if (!url) return;
@@ -45,19 +46,27 @@
 
 <ContextMenu {x} {y} {onClose}>
   <Button full onclick={openNewTab}>
-    <T>{t("nt_open_new_tab")}</T>
+    <G>
+      <T>{t("nt_open_new_tab")}</T>
+    </G>
   </Button>
   <Button full onclick={openNewWindow}>
-    <T>{t("nt_open_new_window")}</T>
+    <G>
+      <T>{t("nt_open_new_window")}</T>
+    </G>
   </Button>
   <Button full onclick={openIncognitoWindow}>
-    <T>{t("nt_open_incognito")}</T>
+    <G>
+      <T>{t("nt_open_incognito")}</T>
+    </G>
   </Button>
   <Button full onclick={copyLink}>
-    <T>{t("nt_copy_link")}</T>
+    <G>
+      <T>{t("nt_copy_link")}</T>
+    </G>
   </Button>
   {#if children}
-    <Divider/>
+    <Divider />
     {@render children()}
   {/if}
 </ContextMenu>

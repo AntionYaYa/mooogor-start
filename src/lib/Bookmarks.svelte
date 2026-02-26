@@ -8,6 +8,7 @@
   import NoData from "./NoData.svelte";
   import DragToPinneds from "./DragToPinneds.svelte";
   import { t } from "@/lib/utils/i18n";
+    import G from "./components/G.svelte";
 
   interface Props {
     bookmarkNode: BookmarkNode;
@@ -129,7 +130,9 @@
       onClose={() => (showMenu = false)}
     >
       <Button full onclick={clickAddtoPinneds}>
+      <G>
         <T>{t("nt_add_to_pinned")}</T>
+      </G>
       </Button>
     </LinkContextMenu>
 {/if}

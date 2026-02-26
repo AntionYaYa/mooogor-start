@@ -1,6 +1,7 @@
 <script lang="ts">
   import BkmkIcon from "./BkmkIcon.svelte";
   import T from "./components/T.svelte";
+  import G from "./components/G.svelte";
   import { flip } from "svelte/animate";
   import { dndzone } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
@@ -142,17 +143,23 @@
       onClose={() => (showMenu = false)}
     >
       <Button full onclick={clickEditWebSite}>
+      <G>
         <T>{t("nt_edit")}</T>
+      </G>
       </Button>
       <Button full onclick={clickDeleteWebSite}>
+      <G>
         <T>{t("nt_delete")}</T>
+      </G>
       </Button>
     </LinkContextMenu>
 {/if}
 
 {#snippet temAddPinned()}
   <Button onclick={() => (showAdd = true)}>
+    <G>
     <Icon name="Plus" color="var(--c-text)" />
+    </G>
   </Button>
 {/snippet}
 

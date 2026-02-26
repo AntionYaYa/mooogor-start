@@ -91,7 +91,6 @@
   let listEls: HTMLDivElement | undefined = $state();
   let inputValue: string = $state("");
   let showMoreEngines = $state(false);
-
   let searchSeq = $state(0);
   let historySeq = $state(0);
   let bookmarksDebounceId: ReturnType<typeof setTimeout> | null = null;
@@ -121,7 +120,13 @@
     await ensureDefaultEngines(defaultEngines); //初始化把数据添加到Engines表里，有就不会添加
     const enabled = await getEnabledEngines();
     enabledEngines = enabled.map((e) => ({ ...e, enabled: true }));
+    inputValue = backPageInitInputValue();
   });
+
+  function backPageInitInputValue(): string {
+    if (!searchEl) return "";
+    return searchEl.value;
+  }
 
   function handleConsiderEnabled(e: CustomEvent<DndEvent<Engine>>) {
     enabledEngines = e.detail.items.map((item) => ({
@@ -420,37 +425,37 @@
 
 {#snippet temEngines()}
   <div class="engines_M">
-      <div
-        bind:this={engineEls}
-        class="engines"
-        class:drag={showMoreEngines}
-        use:dndzone={{
-          items: enabledEngines,
-          flipDurationMs: 200,
-          type: "engines",
-          zoneTabIndex: -1,
-          dropTargetStyle: {},
-          dragDisabled: !showMoreEngines,
-        }}
-        onconsider={handleConsiderEnabled}
-        onfinalize={handleFinalizeEnabled}
-      >
-        {#each enabledEngines as engine (engine.id)}
-          <a
-            class="engine"
-            href={engine.engineUrl?.replace("%s", inputValue)}
-            target={newTabOpen ? "_blank" : "_self"}
-            rel={newTabOpen ? "noreferrer" : undefined}
-            animate:flip={{ duration: 200 }}
-          >
-            <img
-              class="engine_icon"
-              src={engine.faviconUrl}
-              alt={engine.title ?? ""}
-            />
-          </a>
-        {/each}
-      </div>
+    <div
+      bind:this={engineEls}
+      class="engines"
+      class:drag={showMoreEngines}
+      use:dndzone={{
+        items: enabledEngines,
+        flipDurationMs: 200,
+        type: "engines",
+        zoneTabIndex: -1,
+        dropTargetStyle: {},
+        dragDisabled: !showMoreEngines,
+      }}
+      onconsider={handleConsiderEnabled}
+      onfinalize={handleFinalizeEnabled}
+    >
+      {#each enabledEngines as engine (engine.id)}
+        <a
+          class="engine"
+          href={engine.engineUrl?.replace("%s", inputValue)}
+          target={newTabOpen ? "_blank" : "_self"}
+          rel={newTabOpen ? "noreferrer" : undefined}
+          animate:flip={{ duration: 200 }}
+        >
+          <img
+            class="engine_icon"
+            src={engine.faviconUrl}
+            alt={engine.title ?? ""}
+          />
+        </a>
+      {/each}
+    </div>
     <Button onclick={clickEditeEngines}>
       <G>
         <Icon
