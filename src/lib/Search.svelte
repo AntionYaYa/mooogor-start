@@ -354,40 +354,42 @@
   }
 </script>
 
-<div class="search_g">
-  {@render temInputGroup()}
-  {#if bookmarksResults.length || historyResults.length}
-    <div
-      class="list"
-      bind:this={listEls}
-      transition:slide={{ duration: 200 }}
-    >
-      {#if bookmarksResults.length}
-      <G>
-        <T type="s">{t("nt_label_bookmarks")}</T>
-      </G>
-        {#each bookmarksResults as bookmark}
-          {@render temBkmk(bookmark)}
-        {/each}
-      {/if}
+<G full align="c">
+  <div class="search_g">
+    {@render temInputGroup()}
+    {#if bookmarksResults.length || historyResults.length}
+      <div
+        class="list"
+        bind:this={listEls}
+        transition:slide={{ duration: 200 }}
+      >
+        {#if bookmarksResults.length}
+          <G>
+            <T type="s">{t("nt_label_bookmarks")}</T>
+          </G>
+          {#each bookmarksResults as bookmark}
+            {@render temBkmk(bookmark)}
+          {/each}
+        {/if}
 
-      {#if historyResults.length}
-      <G>
-        <T type="s">{t("nt_label_history")}</T>
-      </G>
-        {#each historyResults as history}
-          {@render temBkmk(history)}
-        {/each}
-      {/if}
+        {#if historyResults.length}
+          <G>
+            <T type="s">{t("nt_label_history")}</T>
+          </G>
+          {#each historyResults as history}
+            {@render temBkmk(history)}
+          {/each}
+        {/if}
 
-      {#if historyLoading || bookmarksLoading}
-        <div class="more_trigger">
-          <Icon name="Loading" color="var(--c-text)" />
-        </div>
-      {/if}
-    </div>
-  {/if}
-</div>
+        {#if historyLoading || bookmarksLoading}
+          <div class="more_trigger">
+            <Icon name="Loading" color="var(--c-text)" />
+          </div>
+        {/if}
+      </div>
+    {/if}
+  </div>
+</G>
 
 {#snippet temInputGroup()}
   <div class="input_group">
@@ -397,7 +399,9 @@
       bind:this={searchEl}
       bind:value={inputValue}
       type="search"
-      placeholder={enabledEngines[0] ? enabledEngines[0].title : t("nt_search_placeholder")}
+      placeholder={enabledEngines[0]
+        ? enabledEngines[0].title
+        : t("nt_search_placeholder")}
       oncompositionstart={() => (isComposing = true)}
       oncompositionend={(e) => {
         isComposing = false;
@@ -416,51 +420,51 @@
 
 {#snippet temEngines()}
   <div class="engines_M">
-    <div
-      bind:this={engineEls}
-      class="engines"
-      class:drag={showMoreEngines}
-      use:dndzone={{
-        items: enabledEngines,
-        flipDurationMs: 200,
-        type: "engines",
-        zoneTabIndex: -1,
-        dropTargetStyle: {},
-        dragDisabled: !showMoreEngines,
-      }}
-      onconsider={handleConsiderEnabled}
-      onfinalize={handleFinalizeEnabled}
-    >
-      {#each enabledEngines as engine (engine.id)}
-        <a
-          class="engine"
-          href={engine.engineUrl?.replace("%s", inputValue)}
-          target={newTabOpen ? "_blank" : "_self"}
-          rel={newTabOpen ? "noreferrer" : undefined}
-          animate:flip={{ duration: 200 }}
-        >
-          <img
-            class="engine_icon"
-            src={engine.faviconUrl}
-            alt={engine.title ?? ""}
-          />
-        </a>
-      {/each}
-    </div>
+      <div
+        bind:this={engineEls}
+        class="engines"
+        class:drag={showMoreEngines}
+        use:dndzone={{
+          items: enabledEngines,
+          flipDurationMs: 200,
+          type: "engines",
+          zoneTabIndex: -1,
+          dropTargetStyle: {},
+          dragDisabled: !showMoreEngines,
+        }}
+        onconsider={handleConsiderEnabled}
+        onfinalize={handleFinalizeEnabled}
+      >
+        {#each enabledEngines as engine (engine.id)}
+          <a
+            class="engine"
+            href={engine.engineUrl?.replace("%s", inputValue)}
+            target={newTabOpen ? "_blank" : "_self"}
+            rel={newTabOpen ? "noreferrer" : undefined}
+            animate:flip={{ duration: 200 }}
+          >
+            <img
+              class="engine_icon"
+              src={engine.faviconUrl}
+              alt={engine.title ?? ""}
+            />
+          </a>
+        {/each}
+      </div>
     <Button onclick={clickEditeEngines}>
-      <Icon
-        name={showMoreEngines ? "ChevronUp" : "ChevronDown"}
-        color="var(--c-text)"
-      />
+      <G>
+        <Icon
+          name={showMoreEngines ? "ChevronUp" : "ChevronDown"}
+          color="var(--c-text)"
+          opacity={0.6}
+        />
+      </G>
     </Button>
   </div>
 {/snippet}
 
 {#snippet temMoreEngines()}
   <div class="more_engines_M" transition:slide={{ duration: 300 }}>
-    <G full>
-      <T>{t("nt_drag_sort_or_disable")}</T>
-    </G>
     <div
       class="more_g"
       class:drag={showMoreEngines}
@@ -489,6 +493,9 @@
         </button>
       {/each}
     </div>
+    <G full>
+      <T type="s" align="r">{t("nt_drag_sort_or_disable")}</T>
+    </G>
   </div>
 {/snippet}
 
@@ -515,12 +522,13 @@
     display: flex;
     align-items: center;
     flex-direction: row;
+    gap: var(--gap);
   }
   .more_engines_M {
     display: flex;
-    align-items: center;
-    flex-direction: row;
-    padding: var(--gap) 42px var(--gap) var(--gap);
+    flex-direction: column;
+    align-items: flex-end;
+    padding: var(--gap) 45px var(--gap) var(--gap);
     width: 100%;
     box-sizing: border-box;
   }
@@ -542,7 +550,7 @@
     align-items: flex-end;
     /* padding: var(--gap); */
     background-color: var(--c-bg);
-    border-radius: calc(var(--r1) + var(--gap));
+    border-radius: var(--r1);
     width: 100%;
     min-width: 200px;
     max-width: 600px;
@@ -586,12 +594,12 @@
     padding: var(--gap);
     width: 100%;
     height: 40px;
-    caret-color:var(--c-green);
+    caret-color: var(--c-green);
   }
-  .input::selection{
-      background-color: var(--c-green);
-      color: var(--c-bg);
-    }
+  .input::selection {
+    background-color: var(--c-green);
+    color: var(--c-bg);
+  }
   .input::placeholder {
     color: var(--c-text-2);
   }
@@ -612,7 +620,7 @@
   }
   .drag {
     outline: 2px var(--c-text-2) dashed;
-    min-width: 335px;
+    min-width: 205px;
   }
   .engine {
     display: flex;

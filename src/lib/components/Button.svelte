@@ -19,9 +19,7 @@
 </script>
 
 <button class="btn" class:fill class:unfill={!fill} class:full {onclick} tabindex={skipTabFocus?-1:undefined}>
-	<G full>
 		{@render children()}
-	</G>
 </button>
 
 <style>
@@ -48,7 +46,7 @@
 	.fill {
 		background-color: var(--c-text);
 		padding: var(--gap);
-		border-radius: var(--r1);
+		border-radius: var(--r);
 	}
 	.full {
 		width: 100%;

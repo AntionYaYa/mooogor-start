@@ -3,14 +3,22 @@
 	interface Props {
 		turnOn: boolean;
 		onSwitch: (swith: boolean) => void;
+		disabled?: boolean;
 	}
-	let { turnOn, onSwitch }: Props = $props();
+	let { turnOn, onSwitch, disabled = false }: Props = $props();
+
+	function handleClick() {
+		if (disabled) return;
+		onSwitch(!turnOn);
+	}
 </script>
 
 <button
+	type="button"
 	title={t("nt_switch")}
 	class="outside"
-	onclick={() => onSwitch(!turnOn)}
+	{disabled}
+	onclick={handleClick}
 >
 	<div class="ball {turnOn ? 'ball_on' : 'ball_off'}"></div>
 </button>
@@ -28,6 +36,10 @@
 		padding: 0;
 		margin: 0;
 		background-color: unset;
+	}
+	.outside:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 	.outside:active {
 		background-color: var(--c-mask);

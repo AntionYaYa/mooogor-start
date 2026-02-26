@@ -246,6 +246,7 @@
     <Settings
       {showSetting}
       {userSettings}
+      {currentTabPinned}
       onchangeUserSettings={handleUserSettingsChange}
     >
       <div class="top">

@@ -6,7 +6,6 @@
   import Select, { type SelectOption } from "./components/Select.svelte";
   import type { UserSettings } from "@/lib/utils/settings";
   import { t } from "@/lib/utils/i18n";
-  import Button from "./components/Button.svelte";
   import About from "./About.svelte";
   import Icon from "./components/Icon.svelte";
   interface Props {
@@ -14,9 +13,15 @@
     showSetting: boolean;
     userSettings: UserSettings;
     onchangeUserSettings: (userSettings: UserSettings) => void;
+    currentTabPinned?: boolean;
   }
-  let { children, showSetting, userSettings, onchangeUserSettings }: Props =
-    $props();
+  let {
+    children,
+    showSetting,
+    userSettings,
+    onchangeUserSettings,
+    currentTabPinned = false,
+  }: Props = $props();
 
   let showAbout = $state(false);
 
@@ -46,6 +51,11 @@
     })),
   );
 
+  let effectiveNewTabOpenSwitch = $derived(
+    userSettings.newTabOpen || currentTabPinned,
+  );
+  let lockNewTabOpenSwitch = $derived(currentTabPinned);
+
   function setOpenPos(value: string) {
     onchangeUserSettings({
       ...userSettings,
@@ -65,6 +75,7 @@
   }
 
   function onswitchNewTabOpen(swith: boolean) {
+    if (lockNewTabOpenSwitch) return;
     setNewTabOpen(swith);
   }
 
@@ -97,8 +108,9 @@
       "链接打开方式",
       t("nt_settings_new_tab_open"),
       t("nt_settings_new_tab_tip"),
-      userSettings.newTabOpen,
+      effectiveNewTabOpenSwitch,
       onswitchNewTabOpen,
+      lockNewTabOpenSwitch,
     )}
     {@render temselectItem(
       t("nt_settings_default_open"),
@@ -142,6 +154,7 @@
   des: string,
   turnOn: boolean,
   onChange: (value: boolean) => void,
+  switchDisabled: boolean = false,
 )}
   <div class="select_item">
     <G>
@@ -152,7 +165,7 @@
         <T>{swcText}</T>
       </G>
       <G>
-        <Switch {turnOn} onSwitch={onChange}></Switch>
+        <Switch {turnOn} onSwitch={onChange} disabled={switchDisabled} />
       </G>
     </div>
     <G>
