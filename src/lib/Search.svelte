@@ -575,7 +575,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    padding: var(--gap) 45px var(--gap) var(--gap);
+    padding: var(--gap) 40px var(--gap) var(--gap);
     width: 100%;
     box-sizing: border-box;
   }
