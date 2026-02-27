@@ -320,21 +320,20 @@
       </div>
       <div class="content">
         <div class="tabs">
-          {#if selTab?.key === "0"}
-          <div class="left" in:fly={{ x: -50, duration: 300 }}>
-            <G align="c">
-              <Button onclick={()=>showAdd=true}>
-                <G>
-                  <Icon name="Plus" color="var(--c-text)" opacity={0.7} />
+          <div class="side side-left">
+            {#if selTab?.key === "0"}
+              <div in:fly={{ x: -50, duration: 300 }}>
+                <G align="c">
+                  <Button onclick={() => (showAdd = true)}>
+                    <G>
+                      <Icon name="Plus" color="var(--c-text)" opacity={0.7} />
+                    </G>
+                  </Button>
                 </G>
-              </Button>
-            </G>
-          </div>
-          {/if}
-          {#if selTab?.key === "1"}
-            <div class="left" in:fly={{ x: 50, duration: 300 }}>
-              <G align="c">
-                {#if historyStack.length > 1}
+              </div>
+            {:else if selTab?.key === "1" && historyStack.length > 1}
+              <div in:fly={{ x: 50, duration: 300 }}>
+                <G align="c">
                   <Button onclick={goBack}>
                     <G align="c">
                       <Icon
@@ -345,10 +344,10 @@
                       <!-- <T nowrap>{t("nt_back")}</T> -->
                     </G>
                   </Button>
-                {/if}
-              </G>
-            </div>
-          {/if}
+                </G>
+              </div>
+            {/if}
+          </div>
           <div class="center">
             {#if historyStack.length <= 2}
               <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
@@ -358,19 +357,23 @@
               >
             {/if}
           </div>
-          {#if selTab?.key === "1" }
-            <div class="left" in:fly={{ x: -50, duration: 300 }}>
-              {#if historyStack.length > 0}
-              <G align="c">
-                <Button onclick={() => (gridView = !gridView)}>
-                  <G>
-                    <Icon name={gridView?'Grid2x2':'Rows3'} color="var(--c-text)" opacity={0.7} />
-                  </G>
-                </Button>
-              </G>
-              {/if}
-            </div>
-          {/if}
+          <div class="side side-right">
+            {#if selTab?.key === "1" && historyStack.length > 0}
+              <div in:fly={{ x: -50, duration: 300 }}>
+                <G align="c">
+                  <Button onclick={() => (gridView = !gridView)}>
+                    <G>
+                      <Icon
+                        name={gridView ? "Grid2x2" : "Rows3"}
+                        color="var(--c-text)"
+                        opacity={0.7}
+                      />
+                    </G>
+                  </Button>
+                </G>
+              </div>
+            {/if}
+          </div>
         </div>
         <div class="tabs_contents">
           {#each tabs as tab (tab.key)}
@@ -576,20 +579,31 @@
     padding: var(--gap);
   }
   .tabs {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 48px;
     align-items: center;
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
     height: 60px;
   }
+  .tabs .side {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+  }
+  .tabs .side-left {
+    justify-content: flex-start;
+  }
+  .tabs .side-right {
+    justify-content: flex-end;
+  }
   .tabs .center {
     display: flex;
     flex-direction: row;
     align-items: center;
     width: 100%;
+    min-width: 0;
     box-sizing: border-box;
   }
 </style>
