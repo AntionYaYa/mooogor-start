@@ -16,6 +16,3 @@
   </G>
   <T align="c" type='s'>{text}</T>
 </G>
-
-<style>
-</style>

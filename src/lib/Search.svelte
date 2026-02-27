@@ -502,7 +502,7 @@
     <Button onclick={clickEditeEngines}>
       <G>
         <Icon
-          name={showMoreEngines ? "ChevronUp" : "ChevronDown"}
+          name="Plus"
           color="var(--c-text)"
           opacity={0.7}
         />
@@ -570,7 +570,6 @@
     display: flex;
     align-items: center;
     flex-direction: row;
-    gap: var(--gap);
   }
   .more_engines_M {
     display: flex;
@@ -667,7 +666,7 @@
     min-height: 30px;
   }
   .drag {
-    outline: 2px var(--c-text-2) dashed;
+    outline: 2px var(--c-mask) dashed;
     min-width: 205px;
   }
   .engine {

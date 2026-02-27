@@ -9,6 +9,7 @@
   import Bookmarks from "@/lib/Bookmarks.svelte";
   import History from "@/lib/History.svelte";
   import Pinneds from "@/lib/Pinneds.svelte";
+  import About from "@/lib/About.svelte";
   import { hasPermission, requestPermission } from "./methods/getPermission";
   import type { Permission } from "./methods/getPermission";
   import { getBookmarkChildren } from "./methods/getBookmarks";
@@ -52,6 +53,7 @@
   let currentTabId: number | undefined = $state();
   let currentTabPinned = $state(false);
   let showAdd = $state(false);
+  let showAbout = $state(false);
   let effectiveNewTabOpen = $derived(
     userSettings.newTabOpen || currentTabPinned,
   );
@@ -398,10 +400,14 @@
   {/key}
 </main>
 
+{#if showAbout}
+  <About onclickClose={() => (showAbout = false)} />
+{/if}
+
 {#snippet headBar()}
   <G full align="c">
     <G full>
-      <Button align="c" onclick={() => {}}>
+      <Button align="c" onclick={() => (showAbout = true)}>
         <G>
           <img class="logo" src="/Mooogor.svg" alt="Mooogor2" />
         </G>

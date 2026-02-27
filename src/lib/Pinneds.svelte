@@ -49,7 +49,6 @@
   function draggedel(el: HTMLElement | undefined) {
     if (!el) return;
     el.style.backgroundColor = "var(--c-bg1)";
-    el.style.boxShadow = "var(--shadow)";
   }
 
   function handleConsider(e: CustomEvent<DndEvent<WebSite>>) {
@@ -169,6 +168,8 @@
     box-sizing: border-box;
     border-radius: var(--r);
     cursor: default !important;
+    gap: var(--gap);
+    padding: var(--gap);
   }
   .content {
     gap: var(--gap);
@@ -195,7 +196,7 @@
     align-items: center;
     padding: var(--gap);
     box-sizing: border-box;
-    background-color: var(--c-bg1);
+    background-color: var(--c-mask);
   }
 
   a:focus-visible {

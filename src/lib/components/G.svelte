@@ -5,12 +5,13 @@
 		children: any;
 		vertical?: boolean;
 		full?: boolean;
+		gap?: boolean;
 		align?: Align
 	}
-	let { children, vertical,full,align }: Props = $props();
+	let { children, vertical,full,align,gap }: Props = $props();
 </script>
 
-<div class="{vertical?'vertical':''} {align} {full?'full':''}">
+<div class="{vertical?'vertical':''} {align} {full?'full':''}" class:gap={gap}>
 	{@render children()}
 </div>
 
@@ -22,6 +23,9 @@
 		align-items: flex-start;
 		padding: var(--gap);
 		border-radius: var(--r);
+	}
+	.gap{
+		gap: var(--gap);
 	}
 	.vertical {
 		flex-direction: column;

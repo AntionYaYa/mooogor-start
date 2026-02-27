@@ -248,7 +248,7 @@
 {/if}
 
 {#snippet temHistoryGroup(title: string, items: HistoryItem[])}
-  <G full vertical>
+  <G full vertical gap>
     <T type="s">{title}</T>
     {#each items as history}
       {@render temHistoryItem(history)}
@@ -257,7 +257,7 @@
 {/snippet}
 
 {#snippet temHistoryItem(history: HistoryItem)}
-<G full>
+
   <a
     class="item"
     href={history.url}
@@ -269,7 +269,7 @@
     oncontextmenu={(e) => showContextMenu(e, history)}
     class:ctx={showMenu && currentHistory === history}
   >
-    <G full align="c">
+    <G full align="c" gap>
       <BkmkIcon imgUrl={history.url} alt={history.title ?? ""} size="s" />
       <T type="m" bold nowrap>{history.title}</T>
     </G>
@@ -278,7 +278,7 @@
       <T type="s" nowrap>{history.visitCount}</T>
     </G>
   </a>
-</G>
+
 {/snippet}
 
 <style>
@@ -305,12 +305,13 @@
     padding: var(--gap);
     border-radius: var(--r);
     cursor: default;
+    background-color: var(--c-mask);
   }
   .item.ctx {
     outline: 2px var(--c-text) solid;
   }
   .item:active {
-    background-color: var(--c-mask);
+    background-color: var(--c-mask1);
     transition: all 0.1s ease-out;
   }
   .item:focus-visible {

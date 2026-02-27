@@ -79,6 +79,21 @@
   {/if}
 </div>
 
+{#snippet temText(list: boolean, text: string)}
+  {@const hasText = !!text}
+  {@const value = hasText ? text : "--"}
+  {@const color = hasText ? undefined : "var(--c-text-2)"}
+
+  {#if list}
+    <G full align="c">
+      <T nowrap type="m" color={color}>{value}</T>
+    </G>
+  {:else}
+    <T nowrap align="c" type="s" color={color}>{value}</T>
+  {/if}
+{/snippet}
+
+
 {#snippet tembkmkWrapper(bkmk: BookmarkNode)}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <span
@@ -100,9 +115,7 @@
           <G align="c">
             <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" />
           </G>
-          <G full align="c">
-            <T nowrap type="m">{bkmk.title}</T>
-          </G>
+          {@render temText(list, bkmk.title)}
         </a>
       {:else}
         <button onclick={() => clickFolder(bkmk)} class="full-row">
@@ -123,16 +136,16 @@
           class:ctx={showMenu && currentBkmk === bkmk}
           oncontextmenu={(e) => showContextMenu(e, bkmk)}
         >
-        <G align="c">
-          <BkmkIcon imgUrl={bkmk.url!} alt={bkmk.title} />
-        </G>
+          <G align="c">
+            <BkmkIcon imgUrl={bkmk.url!} alt={bkmk.title} />
+          </G>
         </a>
       {:else}
         <button onclick={() => clickFolder(bkmk)}>
           <BkmkIcon imgUrl={bkmk.url!} alt={bkmk.title} folderIcon />
         </button>
       {/if}
-      <T nowrap align="c" type="s">{bkmk.title}</T>
+      {@render temText(false, bkmk.title)}
     {/if}
   </span>
 {/snippet}
@@ -172,6 +185,7 @@
     align-items: center;
     justify-items: center;
     padding: var(--gap);
+    gap: var(--gap);
     width: 100%;
     height: 100%;
     box-sizing: border-box;
@@ -214,6 +228,7 @@
     margin: 0;
     border-radius: var(--r1);
     -webkit-user-drag: none;
+    background-color: var(--c-mask);
   }
   a.ctx {
     outline: 2px var(--c-text) solid;
@@ -227,11 +242,12 @@
     padding: var(--gap);
     margin: 0;
     border-radius: var(--r1);
+    background-color: var(--c-mask);
   }
 
   a:active,
   button:active {
-    background-color: var(--c-mask);
+    background-color: var(--c-mask1);
     transition: all 0.1s ease-out;
   }
   button:focus-visible,

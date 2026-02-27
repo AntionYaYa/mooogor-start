@@ -6,7 +6,6 @@
   import Select, { type SelectOption } from "./components/Select.svelte";
   import type { UserSettings } from "@/lib/utils/settings";
   import { t } from "@/lib/utils/i18n";
-  import About from "./About.svelte";
   import Icon from "./components/Icon.svelte";
   interface Props {
     children: any;
@@ -23,7 +22,6 @@
     currentTabPinned = false,
   }: Props = $props();
 
-  let showAbout = $state(false);
 
   const openPosBase = [
     { label: t("nt_default_common"), value: "common" },
@@ -84,9 +82,6 @@
     setNewTabOpen(swith);
   }
 
-  function clickShowAbout() {
-    showAbout = true;
-  }
 </script>
 
 <div class="layout">
@@ -96,7 +91,7 @@
     </div>
   </div>
   {#if showSetting}
-    <div class="setting" transition:slide={{ duration: 300, axis: "x" }}>
+    <div class="setting" transition:slide={{ duration: 200, axis: "x" }}>
       {@render temSettiong()}
     </div>
   {/if}
@@ -122,12 +117,7 @@
       openPosOptions,
       setOpenPos,
     )}
-    {@render tembuttonItem(
-      t("nt_settings_about"),
-      clickShowAbout,
-      t("nt_settings_other_title"),
-    )}
-    {@render tembuttonItem(t("nt_settings_support"), () => {}, "", true)}
+    <!-- {@render tembuttonItem(t("nt_settings_support"), () => {}, t("nt_settings_other_title"), true)} -->
   </div>
 {/snippet}
 
@@ -157,6 +147,7 @@
     </button>
   </div>
 {/snippet}
+
 {#snippet temswithcItem(
   title: string,
   swcText: string,
@@ -195,10 +186,6 @@
     <Select {options} {onChange} />
   </div>
 {/snippet}
-
-{#if showAbout}
-  <About onclickClose={() => (showAbout = false)} />
-{/if}
 
 <style>
   .trigger {

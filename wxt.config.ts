@@ -1,4 +1,9 @@
 import { defineConfig } from 'wxt';
+import { readFileSync } from 'node:fs';
+
+const { version } = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf-8'),
+) as { version: string };
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -8,8 +13,8 @@ export default defineConfig({
     name: '__MSG_extName__',
     description: '__MSG_extDescription__',
     default_locale: 'zh_CN',
-    version: '0.0.0',
-    version_name: 'V0.0.0',
+    version,
+    version_name: `V${version}`,
     chrome_url_overrides: {
       page_to_override: 'entrypoints/newtab/index.html',
     },
@@ -19,7 +24,6 @@ export default defineConfig({
     ],
     permissions: [
       "favicon",
-      "contextMenus",
     ],
   },
 });
