@@ -47,7 +47,7 @@
 	.input_g {
 		display: flex;
 		background-color: var(--c-bg);
-		border-radius: var(--r1);
+		border-radius: var(--r);
 		padding: var(--gap);
 		flex-direction: column;
 		width: 100%;

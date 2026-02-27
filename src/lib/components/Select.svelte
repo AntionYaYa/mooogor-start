@@ -20,7 +20,6 @@
 	}
 
 	let { options, onChange }: Props = $props();
-	$inspect(options)
 	let open = $state(false);
 	let rootEl: HTMLDivElement | null = null;
 	let selected = $derived(options.find((o) => o.sel));

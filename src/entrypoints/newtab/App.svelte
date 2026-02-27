@@ -51,6 +51,7 @@
   let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
   let currentTabId: number | undefined = $state();
   let currentTabPinned = $state(false);
+  let showAdd = $state(false);
   let effectiveNewTabOpen = $derived(
     userSettings.newTabOpen || currentTabPinned,
   );
@@ -238,6 +239,8 @@
     }
   }
 
+
+
   function updateSelTab(tab: TabItem) {
     tabs.forEach((item) => {
       item.sel = item.key === tab.key;
@@ -315,6 +318,17 @@
       </div>
       <div class="content">
         <div class="tabs">
+          {#if selTab?.key === "0"}
+          <div class="left" in:fly={{ x: -50, duration: 300 }}>
+            <G align="c">
+              <Button onclick={()=>showAdd=true}>
+                <G>
+                  <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
+                </G>
+              </Button>
+            </G>
+          </div>
+          {/if}
           {#if selTab?.key === "1"}
             <div class="left" in:fly={{ x: 50, duration: 300 }}>
               <G align="c">
@@ -406,6 +420,8 @@
   <Pinneds
     {allPinneds}
     newTabOpen={effectiveNewTabOpen}
+    {showAdd}
+    oncloseAdd={()=>showAdd=false}
     onUpdate={(items) => clickUpdatePinneds(items)}
   />
 {/snippet}
@@ -515,7 +531,6 @@
     flex-direction: column;
     align-items: center;
     padding: 128px var(--gap) var(--gap) var(--gap);
-    gap: var(--gap);
     width: 100%;
     max-width: 1280px;
     box-sizing: border-box;
@@ -541,6 +556,7 @@
     border-radius: var(--r1);
     padding: var(--gap);
     /* background-color: var(--c-mask-1); */
+    /* border:var(--border-1) */
   }
   .tab_content {
     position: absolute;

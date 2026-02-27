@@ -204,7 +204,6 @@
   .list {
     display: flex;
     flex-direction: column;
-    background-color: var(--c-bg1);
   }
 
   a {
@@ -212,7 +211,6 @@
     cursor: default;
     width: auto;
     height: auto;
-    background-color: var(--c-bg1);
     margin: 0;
     border-radius: var(--r1);
     -webkit-user-drag: none;
@@ -229,7 +227,6 @@
     padding: var(--gap);
     margin: 0;
     border-radius: var(--r1);
-    background-color: var(--c-bg1);
   }
 
   a:active,

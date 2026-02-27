@@ -69,11 +69,11 @@ import validator from "validator";
       />
     </G>
     <G full>
-      <G full>
         <Button fill onclick={clickSave} full>
+          <G full>
           <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
+        </G>
         </Button>
-      </G>
     </G>
   </G>
 </main>

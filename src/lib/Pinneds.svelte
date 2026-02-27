@@ -13,7 +13,6 @@
   } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import Button from "./components/Button.svelte";
-  import Icon from "./components/Icon.svelte";
   import AddPinned from "./AddPinned.svelte";
   import LinkContextMenu from "./LinkContextMenu.svelte";
   import NoData from "./NoData.svelte";
@@ -22,12 +21,14 @@
   interface Props {
     allPinneds: WebSite[] | [];
     newTabOpen?: boolean;
+    showAdd: boolean;
+    oncloseAdd: () => void;
     onUpdate: (items?: WebSite[]) => void;
   }
 
-  let { allPinneds, newTabOpen = false, onUpdate }: Props = $props();
+  let { allPinneds, newTabOpen = false, showAdd,oncloseAdd, onUpdate }: Props =
+    $props();
   let isdarging = $state(false);
-  let showAdd = $state(false);
   let currentPinned: WebSite | undefined = $state();
 
   let menuX = $state(0);
@@ -76,7 +77,7 @@
   }
 
   function clickEditWebSite() {
-    showAdd = true;
+    oncloseAdd()
     showMenu = false;
   }
   async function clickDeleteWebSite() {
@@ -123,7 +124,6 @@
   {:else}
   <NoData text={t("nt_no_pinned")} />
   {/if}
-  {@render temAddPinned()}
 </div>
 
 {#if showAdd}
@@ -131,7 +131,7 @@
     urlValue={currentPinned?.url}
     titleValue={currentPinned?.title}
     onSave={clickSaveWebSite}
-    onclickClose={() => (showAdd = false)}
+    onclickClose={oncloseAdd}
   />
 {/if}
 
@@ -154,14 +154,6 @@
       </Button>
     </LinkContextMenu>
 {/if}
-
-{#snippet temAddPinned()}
-  <Button onclick={() => (showAdd = true)}>
-    <G>
-    <Icon name="Plus" color="var(--c-text)" />
-    </G>
-  </Button>
-{/snippet}
 
 <style>
   .page {
