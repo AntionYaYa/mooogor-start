@@ -97,6 +97,7 @@
   let historyDebounceId: ReturnType<typeof setTimeout> | null = null;
   let bookmarksLoading = $state(false);
   let suppressNextEnter = $state(false);
+  let searchAreaFocused = $state(false);
 
   const HISTORY_MAX_RESULTS = 100;
   const SEARCH_DEBOUNCE_MS = 200;
@@ -319,6 +320,23 @@
     );
   }
 
+  function handleInputFocus() {
+    searchAreaFocused = true;
+  }
+
+  function handleInputBlur(e: FocusEvent) {
+    const next = e.relatedTarget as Node | null;
+    if (next && listEls?.contains(next)) return;
+    searchAreaFocused = false;
+  }
+
+  function handleListFocusOut(e: FocusEvent) {
+    const next = e.relatedTarget as Node | null;
+    if (next === searchEl) return;
+    if (next && listEls?.contains(next)) return;
+    searchAreaFocused = false;
+  }
+
   async function searchHistory(query: string) {
     return await browser.history.search({
       text: query,
@@ -362,10 +380,11 @@
 <G full align="c">
   <div class="search_g">
     {@render temInputGroup()}
-    {#if bookmarksResults.length || historyResults.length}
+    {#if searchAreaFocused && (bookmarksResults.length || historyResults.length)}
       <div
         class="list"
         bind:this={listEls}
+        onfocusout={handleListFocusOut}
         transition:slide={{ duration: 200 }}
       >
         {#if bookmarksResults.length}
@@ -413,6 +432,8 @@
         suppressNextEnter = true;
         searchInput((e.currentTarget as HTMLInputElement).value);
       }}
+      onfocus={handleInputFocus}
+      onblur={handleInputBlur}
       oninput={() => searchInput(inputValue)}
       onkeyup={inputKey}
     />
@@ -596,7 +617,7 @@
     font-size: var(--f-size-m);
     background-color: unset;
     border: none;
-    padding: var(--gap);
+    padding: var(--gap) calc(var(--gap) + var(--gap));
     width: 100%;
     height: 40px;
     caret-color: var(--c-green);

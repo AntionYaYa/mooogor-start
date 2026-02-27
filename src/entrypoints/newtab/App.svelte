@@ -33,8 +33,9 @@
   let bookmarksPermission = $state(false);
   let currentNode: BookmarkNode | undefined = $state();
   let historyStack: BookmarkNode[] = $state([]);
-
+  $inspect(historyStack);
   let historyPermission = $state(false);
+  let gridView = $state(false);
 
   let tabs: TabItem[] = $state([
     { key: "0", name: t("nt_tab_common"), sel: false },
@@ -50,7 +51,9 @@
   let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
   let currentTabId: number | undefined = $state();
   let currentTabPinned = $state(false);
-  let effectiveNewTabOpen = $derived(userSettings.newTabOpen || currentTabPinned);
+  let effectiveNewTabOpen = $derived(
+    userSettings.newTabOpen || currentTabPinned,
+  );
 
   async function refreshCurrentTabPinnedState() {
     try {
@@ -271,11 +274,22 @@
       </div>
       <div class="content">
         <div class="tabs">
-          {#if historyStack.length >= 3}
-            <div class="left" in:fly={{ x: 100, duration: 300 }}>
-              <button onclick={goBack} class="back">
-                <T nowrap>{t("nt_back")}</T>
-              </button>
+          {#if selTab?.key === "1"}
+            <div class="left" in:fly={{ x: 50, duration: 300 }}>
+              <G align="c">
+                {#if historyStack.length > 1}
+                  <Button onclick={goBack}>
+                    <G align="c">
+                      <Icon
+                        name="ChevronLeft"
+                        color="var(--c-text)"
+                        opacity={0.6}
+                      />
+                      <!-- <T nowrap>{t("nt_back")}</T> -->
+                    </G>
+                  </Button>
+                {/if}
+              </G>
             </div>
           {/if}
           <div class="center">
@@ -287,6 +301,17 @@
               >
             {/if}
           </div>
+          {#if selTab?.key === "1"}
+            <div class="left" in:fly={{ x: -50, duration: 300 }}>
+              <G align="c">
+                <Button onclick={() => (gridView = !gridView)}>
+                  <G>
+                    <Icon name={gridView?'Grid2x2':'Rows3'} color="var(--c-text)" opacity={0.6} />
+                  </G>
+                </Button>
+              </G>
+            </div>
+          {/if}
         </div>
         <div class="tabs_contents">
           {#each tabs as tab (tab.key)}
@@ -319,18 +344,18 @@
 {#snippet headBar()}
   <G full align="c">
     <G full>
-    <Button align="c" onclick={()=>{}}>
-      <G>
-        <img class="logo" src="/Mooogor.svg" alt="Mooogor2" />
-      </G>
-      <T>Mooogor 2</T>
-    </Button>
+      <Button align="c" onclick={() => {}}>
+        <G>
+          <img class="logo" src="/Mooogor.svg" alt="Mooogor2" />
+        </G>
+        <T>Mooogor 2</T>
+      </Button>
     </G>
     <G>
       <Button onclick={() => (showSetting = !showSetting)}>
         <G>
-        <Icon name="Settings2" color="var(--c-text)" />
-      </G>
+          <Icon name="Settings2" color="var(--c-text)" />
+        </G>
       </Button>
     </G>
   </G>
@@ -353,7 +378,7 @@
     )}
   {:else if currentNode}
     <Bookmarks
-      list={historyStack.length >= 3}
+      list={gridView}
       bookmarkNode={currentNode}
       newTabOpen={effectiveNewTabOpen}
       onclickFolder={(bkmk) => clickFolder(bkmk)}
@@ -451,7 +476,7 @@
     padding: 128px var(--gap) var(--gap) var(--gap);
     gap: var(--gap);
     width: 100%;
-    max-width: 1024px;
+    max-width: 1280px;
     box-sizing: border-box;
     height: 100%;
     overflow-y: auto;
@@ -492,7 +517,8 @@
     align-items: center;
     width: 100%;
     box-sizing: border-box;
-    height: 80px;
+    padding: var(--gap);
+    height: 60px;
   }
   .tabs .center {
     display: flex;
@@ -500,16 +526,5 @@
     align-items: center;
     width: 100%;
     box-sizing: border-box;
-  }
-  .back {
-    display: flex;
-    background-color: unset;
-    border: unset;
-    border-radius: var(--r);
-    padding: var(--gap);
-  }
-  .back:active {
-    background-color: var(--c-mask);
-    transition: all 0.1s ease-out;
   }
 </style>

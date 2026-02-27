@@ -1,5 +1,4 @@
 <script lang="ts">
-	import G from "@/lib/components/G.svelte";
 	type Align = "c" | "r";
 
 	interface Props {

@@ -8,7 +8,7 @@
   import NoData from "./NoData.svelte";
   import DragToPinneds from "./DragToPinneds.svelte";
   import { t } from "@/lib/utils/i18n";
-    import G from "./components/G.svelte";
+  import G from "./components/G.svelte";
 
   interface Props {
     bookmarkNode: BookmarkNode;
@@ -17,7 +17,12 @@
     onclickFolder: (bkmk: BookmarkNode) => void;
   }
 
-  let { bookmarkNode, list, newTabOpen = false, onclickFolder }: Props = $props();
+  let {
+    bookmarkNode,
+    list,
+    newTabOpen = false,
+    onclickFolder,
+  }: Props = $props();
   let currentBkmk: BookmarkNode | undefined = $state();
   let darging = $state(false);
   let showMenu = $state(false);
@@ -92,13 +97,21 @@
           class:ctx={showMenu && currentBkmk === bkmk}
           oncontextmenu={(e) => showContextMenu(e, bkmk)}
         >
-          <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" />
-          <T nowrap type="m">{bkmk.title}</T>
+          <G align="c">
+            <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" />
+          </G>
+          <G full align="c">
+            <T nowrap type="m">{bkmk.title}</T>
+          </G>
         </a>
       {:else}
-        <button onclick={(e) => clickFolder(bkmk)} class="full-row">
-          <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" folderIcon />
-          <T nowrap type="m">{bkmk.title}</T>
+        <button onclick={() => clickFolder(bkmk)} class="full-row">
+          <G align="c">
+            <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" folderIcon />
+          </G>
+          <G full align="c">
+            <T nowrap type="m">{bkmk.title}</T>
+          </G>
         </button>
       {/if}
     {:else}
@@ -110,7 +123,9 @@
           class:ctx={showMenu && currentBkmk === bkmk}
           oncontextmenu={(e) => showContextMenu(e, bkmk)}
         >
+        <G align="c">
           <BkmkIcon imgUrl={bkmk.url!} alt={bkmk.title} />
+        </G>
         </a>
       {:else}
         <button onclick={() => clickFolder(bkmk)}>
@@ -123,18 +138,18 @@
 {/snippet}
 
 {#if showMenu && currentBkmk}
-    <LinkContextMenu
-      x={menuX}
-      y={menuY}
-      url={currentBkmk.url ?? ""}
-      onClose={() => (showMenu = false)}
-    >
-      <Button full onclick={clickAddtoPinneds}>
+  <LinkContextMenu
+    x={menuX}
+    y={menuY}
+    url={currentBkmk.url ?? ""}
+    onClose={() => (showMenu = false)}
+  >
+    <Button full onclick={clickAddtoPinneds}>
       <G>
         <T>{t("nt_add_to_pinned")}</T>
       </G>
-      </Button>
-    </LinkContextMenu>
+    </Button>
+  </LinkContextMenu>
 {/if}
 
 <style>
@@ -156,7 +171,6 @@
     flex-direction: column;
     align-items: center;
     justify-items: center;
-    gap: var(--gap);
     padding: var(--gap);
     width: 100%;
     height: 100%;
@@ -170,7 +184,6 @@
     align-items: center;
     justify-items: center;
     gap: var(--gap);
-    padding: var(--gap);
     width: 100%;
     height: 100%;
     box-sizing: border-box;
@@ -199,7 +212,6 @@
     cursor: default;
     width: auto;
     height: auto;
-    padding: var(--gap);
     background-color: var(--c-bg1);
     margin: 0;
     border-radius: var(--r1);
@@ -236,7 +248,6 @@
     align-items: center;
     width: 100%;
     height: 100%;
-    gap: var(--gap);
     padding: var(--gap);
     border-radius: var(--r);
     box-sizing: border-box;

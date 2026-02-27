@@ -257,6 +257,7 @@
 {/snippet}
 
 {#snippet temHistoryItem(history: HistoryItem)}
+<G full>
   <a
     class="item"
     href={history.url}
@@ -277,6 +278,7 @@
       <T type="s" nowrap>{history.visitCount}</T>
     </G>
   </a>
+</G>
 {/snippet}
 
 <style>
