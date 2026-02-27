@@ -17,7 +17,7 @@
     "enabled": true,
     "enabledByLanguage": {
       "default": true,
-      "zh_CN": false,
+      "zh_CN": true,
       "zh_TW": true,
       "ko": false,
       "ru": false

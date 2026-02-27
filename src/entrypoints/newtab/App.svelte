@@ -323,7 +323,7 @@
             <G align="c">
               <Button onclick={()=>showAdd=true}>
                 <G>
-                  <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
+                  <Icon name="Plus" color="var(--c-text)" opacity={0.7} />
                 </G>
               </Button>
             </G>
@@ -338,7 +338,7 @@
                       <Icon
                         name="ChevronLeft"
                         color="var(--c-text)"
-                        opacity={0.6}
+                        opacity={0.7}
                       />
                       <!-- <T nowrap>{t("nt_back")}</T> -->
                     </G>
@@ -362,7 +362,7 @@
               <G align="c">
                 <Button onclick={() => (gridView = !gridView)}>
                   <G>
-                    <Icon name={gridView?'Grid2x2':'Rows3'} color="var(--c-text)" opacity={0.6} />
+                    <Icon name={gridView?'Grid2x2':'Rows3'} color="var(--c-text)" opacity={0.7} />
                   </G>
                 </Button>
               </G>

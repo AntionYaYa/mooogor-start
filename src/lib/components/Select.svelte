@@ -65,7 +65,7 @@
 		<G>
 			<Icon
 				name={open ? "ChevronUp" : "ChevronDown"}
-				opacity={0.6}
+				opacity={0.7}
 				color="var(--c-text)"
 			/>
 		</G>
@@ -78,20 +78,12 @@
 						<Divider />
 					{/if}
 					<button class="option" onclick={() => handleSelect(option)}>
-						<T
-							color={option.sel
-								? "var(--c-green)"
-								: "var(--c-text)"}>{option.label}</T
-						>
-						<span class="icon_box">
-							{#if option.sel}
-								<Icon
-									name="Check"
-									color="var(--c-green)"
-									opacity={0.6}
-								/>
-							{/if}
-						</span>
+						<T color="var(--c-text)">{option.label}</T>
+						<Icon
+							name="Check"
+							color="var(--c-green)"
+							opacity={option.sel ? 0.7 : 0}
+						/>
 					</button>
 				{/each}
 			</div>
@@ -100,16 +92,6 @@
 </div>
 
 <style>
-	.icon_box {
-		width: 20px;
-		min-width: 20px;
-		height: 20px;
-		min-height: 20px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: calc(var(--gap) / 2);
-	}
 	.option {
 		display: flex;
 		flex-direction: row;
@@ -159,7 +141,6 @@
 		box-shadow: var(--shadow);
 		border-radius: var(--r1);
 		z-index: 10;
-		max-height: 260px;
 		overflow-y: auto;
 		box-sizing: border-box;
 	}

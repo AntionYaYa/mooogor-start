@@ -31,7 +31,9 @@
       <T type="m"
         >{t("nt_about_design_goal_desc")}</T
       >
-      <T type="m">antion1212@gmail.com</T>
+      <a href="mailto:antion1212@gmail.com" type="Email">
+        <T type="m">antion1212@gmail.com</T>
+      </a>
     </G>
     <G  vertical>
       <T type="l" bold>{t("nt_about_free_title")}</T>
@@ -48,5 +50,8 @@
 <style>
   .logo {
     width: 40px;
+  }
+  a{
+    text-decoration-color:var(--c-text-2);
   }
 </style>

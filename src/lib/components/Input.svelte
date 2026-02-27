@@ -36,7 +36,7 @@
 			{#if clearable && value}
 				<Button onclick={clearValue} skipTabFocus>
 					<G>
-						<Icon name="X" size={16} opacity={0.6} color="var(--c-text)" />
+						<Icon name="X" size={16} opacity={0.7} color="var(--c-text)" />
 					</G>
 				</Button>
 			{/if}

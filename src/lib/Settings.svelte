@@ -127,35 +127,35 @@
       clickShowAbout,
       t("nt_settings_other_title"),
     )}
-    {@render tembuttonItem(t("nt_settings_support"),()=>{},'',true)}
-    </div>
+    {@render tembuttonItem(t("nt_settings_support"), () => {}, "", true)}
+  </div>
 {/snippet}
 
 {#snippet tembuttonItem(
   text: string,
   onChange: () => void,
   title?: string,
-  externalLink?:boolean
+  externalLink?: boolean,
 )}
-<div class="select_item">
-  {#if title}
-    <G>
-      <T type="s" color='var(--c-text)'>{title}</T>
-    </G>
-  {/if}
-      <button class="trigger" onclick={onChange}>
-        <G vertical full>
-          <T>{text}</T>
-        </G>
-        <G>
-          <span class="icon_box">
-          {#if externalLink}
-            <Icon name="ArrowUpRight" color="var(--c-text)" opacity={0.6} />
-          {/if}
-          </span>
-        </G>
-      </button>
-    </div>
+  <div class="select_item">
+    {#if title}
+      <G>
+        <T type="s" color="var(--c-text)">{title}</T>
+      </G>
+    {/if}
+    <button class="trigger" onclick={onChange}>
+      <G vertical full>
+        <T>{text}</T>
+      </G>
+      <G>
+        <Icon
+          name="ArrowUpRight"
+          color="var(--c-text)"
+          opacity={externalLink ? 0.7 : 0}
+        />
+      </G>
+    </button>
+  </div>
 {/snippet}
 {#snippet temswithcItem(
   title: string,
@@ -167,7 +167,7 @@
 )}
   <div class="select_item">
     <G>
-      <T type="s" color='var(--c-text)'>{title}</T>
+      <T type="s" color="var(--c-text)">{title}</T>
     </G>
     <div class="trigger">
       <G vertical full>
@@ -190,7 +190,7 @@
 )}
   <div class="select_item">
     <G vertical full>
-      <T type="s" color='var(--c-text)'>{title}</T>
+      <T type="s" color="var(--c-text)">{title}</T>
     </G>
     <Select {options} {onChange} />
   </div>
@@ -201,16 +201,6 @@
 {/if}
 
 <style>
-  .icon_box {
-    width: 20px;
-    min-width: 20px;
-    height: 20px;
-    min-height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: calc(var(--gap) / 2);
-  }
   .trigger {
     display: flex;
     align-items: center;

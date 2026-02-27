@@ -504,7 +504,7 @@
         <Icon
           name={showMoreEngines ? "ChevronUp" : "ChevronDown"}
           color="var(--c-text)"
-          opacity={0.6}
+          opacity={0.7}
         />
       </G>
     </Button>

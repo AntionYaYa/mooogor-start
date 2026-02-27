@@ -75,6 +75,3 @@
       </Button>
   </G>
 </Popup>
-
-<style>
-</style>
