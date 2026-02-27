@@ -6,7 +6,8 @@
     "enabled": true,
     "enabledByLanguage": {
       "default": true,
-      "zh_CN": false
+      "zh_CN": false,
+      "zh_TW": true
     }
   },
   {
@@ -17,6 +18,7 @@
     "enabledByLanguage": {
       "default": true,
       "zh_CN": false,
+      "zh_TW": true,
       "ko": false,
       "ru": false
     }
@@ -28,7 +30,8 @@
     "enabled": true,
     "enabledByLanguage": {
       "default": false,
-      "zh_CN": true
+      "zh_CN": true,
+      "zh_TW": false
     }
   },
   {
@@ -38,7 +41,8 @@
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
-      "ja": true
+      "ja": true,
+      "zh_TW": true
     }
   },
   {
@@ -48,7 +52,8 @@
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
-      "ru": true
+      "ru": true,
+      "zh_TW": false
     }
   },
   {
@@ -57,7 +62,8 @@
     "faviconKey": "DuckDuckGo",
     "enabled": false,
     "enabledByLanguage": {
-      "default": false
+      "default": false,
+      "zh_TW": false
     }
   },
   {
@@ -67,7 +73,8 @@
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
-      "zh_CN": true
+      "zh_CN": true,
+      "zh_TW": false
     }
   },
   {
@@ -77,7 +84,8 @@
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
-      "zh_CN": true
+      "zh_CN": true,
+      "zh_TW": false
     }
   },
   {
@@ -87,7 +95,8 @@
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
-      "ko": true
+      "ko": true,
+      "zh_TW": false
     }
   },
   {
@@ -97,7 +106,8 @@
     "enabled": true,
     "enabledByLanguage": {
       "default": true,
-      "zh_CN": false
+      "zh_CN": false,
+      "zh_TW": true
     }
   }
 ]
