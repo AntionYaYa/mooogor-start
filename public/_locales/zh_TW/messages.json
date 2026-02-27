@@ -1,0 +1,188 @@
+{
+  "extName": {
+    "message": "Mooogor 2 - 高效啟動新分頁"
+  },
+  "extDescription": {
+    "message": "Mooogor是一個瀏覽器新分頁，它的核心設計邏輯是能讓您更快速高效地進入下一個工作流程，例如開啟常用網站，或跨站搜尋，或恢復剛剛關閉的分頁。"
+  },
+  "nt_title": {
+    "message": "新分頁"
+  },
+  "nt_tab_common": {
+    "message": "常用"
+  },
+  "nt_tab_bookmarks": {
+    "message": "書籤"
+  },
+  "nt_tab_history": {
+    "message": "歷史記錄"
+  },
+  "nt_back": {
+    "message": "返回"
+  },
+  "nt_need_permission": {
+    "message": "需要權限"
+  },
+  "nt_permission_desc": {
+    "message": "該外掛不收集任何個人資料，請放心授權。"
+  },
+  "nt_authorize": {
+    "message": "授權"
+  },
+  "nt_settings_language": {
+    "message": "語言設定"
+  },
+  "nt_settings_default_open": {
+    "message": "預設開啟："
+  },
+  "nt_settings_feedback": {
+    "message": "建議回饋"
+  },
+  "nt_settings_about": {
+    "message": "關於 Mooogor 2"
+  },
+  "nt_settings_version": {
+    "message": "版本"
+  },
+  "nt_settings_support": {
+    "message": "贊助"
+  },
+  "nt_settings_link_open_title": {
+    "message": "連結開啟方式"
+  },
+  "nt_settings_other_title": {
+    "message": "其他"
+  },
+  "nt_settings_new_tab_open": {
+    "message": "在新分頁開啟連結"
+  },
+  "nt_settings_new_tab_tip": {
+    "message": "如果固定到 Tab 列將自動開啟"
+  },
+  "nt_lang_auto": {
+    "message": "跟隨系統"
+  },
+  "nt_lang_zh_cn": {
+    "message": "簡體中文"
+  },
+  "nt_lang_zh_tw": {
+    "message": "繁體中文"
+  },
+  "nt_lang_en": {
+    "message": "English"
+  },
+  "nt_lang_ja": {
+    "message": "日文"
+  },
+  "nt_lang_ko": {
+    "message": "韓文"
+  },
+  "nt_lang_ru": {
+    "message": "俄文"
+  },
+  "nt_default_common": {
+    "message": "常用"
+  },
+  "nt_default_bookmark": {
+    "message": "書籤"
+  },
+  "nt_default_history": {
+    "message": "歷史記錄"
+  },
+  "nt_default_last": {
+    "message": "記住上次開啟"
+  },
+  "nt_history_yesterday": {
+    "message": "昨天"
+  },
+  "nt_history_empty": {
+    "message": "暫無歷史記錄"
+  },
+  "nt_history_recent": {
+    "message": "剛剛"
+  },
+  "nt_history_1h": {
+    "message": "1 小時內"
+  },
+  "nt_history_today": {
+    "message": "今天"
+  },
+  "nt_add_to_pinned": {
+    "message": "添加到常用"
+  },
+  "nt_no_pinned": {
+    "message": "還沒有常用網站哦～"
+  },
+  "nt_no_bookmarks": {
+    "message": "還沒有書籤哦～"
+  },
+  "nt_edit": {
+    "message": "編輯"
+  },
+  "nt_delete": {
+    "message": "刪除"
+  },
+  "nt_add_pinned_title": {
+    "message": "添加常用網站"
+  },
+  "nt_input_url": {
+    "message": "*網址"
+  },
+  "nt_input_name": {
+    "message": "名稱"
+  },
+  "nt_save": {
+    "message": "儲存"
+  },
+  "nt_select_placeholder": {
+    "message": "請選擇"
+  },
+  "nt_open_new_tab": {
+    "message": "在新分頁開啟"
+  },
+  "nt_open_new_window": {
+    "message": "在新視窗中開啟"
+  },
+  "nt_open_incognito": {
+    "message": "在無痕視窗中開啟"
+  },
+  "nt_copy_link": {
+    "message": "複製連結"
+  },
+  "nt_unnamed": {
+    "message": "未命名"
+  },
+  "nt_label_bookmarks": {
+    "message": "書籤"
+  },
+  "nt_label_history": {
+    "message": "歷史記錄"
+  },
+  "nt_search_placeholder": {
+    "message": "搜尋"
+  },
+  "nt_drag_sort_or_disable": {
+    "message": "拖曳排序或停用"
+  },
+  "nt_switch": {
+    "message": "開關"
+  },
+  "nt_about_name_origin_title": {
+    "message": "名稱由來"
+  },
+  "nt_about_name_origin_desc": {
+    "message": "Mooogor是四川話「摸哥兒」的諧音，摸哥兒是扒手的意思；我在開發時也使用了免費開源的框架和函式庫，我相信你在平時工作中也會直接或間接用到不少其他開發者的勞動成果，我們都是摸哥兒。"
+  },
+  "nt_about_design_goal_title": {
+    "message": "設計初衷"
+  },
+  "nt_about_design_goal_desc": {
+    "message": "我參考了不少新分頁，大多都像系統桌面一樣，很多實用功能，日曆、任務、時鐘等等…… 但是在Mooogor的設計邏輯裡，可能花俏的卡片會打斷新開分頁的初衷，因此未來對這類功能的支援優先級會比較低，反而能夠減少在新分頁停留的功能優先級會非常高，也歡迎你提供相關建議。"
+  },
+  "nt_about_free_title": {
+    "message": "免費嗎？"
+  },
+  "nt_about_free_desc": {
+    "message": "Mooogor是免費的！如果有非得需要雲端功能才會考慮收費（因為雲服務提供商會收費），考慮到安全和隱私問題，當然我會優先採用離線功能來實現。如果您覺得Mooogor能夠滿足你對新分頁的預期，也可以支持一下我，讓我有更大的動力更新改進它。"
+  }
+}

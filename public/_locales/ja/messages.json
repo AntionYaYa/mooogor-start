@@ -1,0 +1,188 @@
+{
+  "extName": {
+    "message": "Mooogor 2 - 効率的な新しいタブランチャー"
+  },
+  "extDescription": {
+    "message": "Mooogor は、次の作業フローにより速く効率的に入るために設計されたブラウザーの新しいタブページです。よく使うサイトを開く、サイト横断検索、最近閉じたタブの復元などを行えます。"
+  },
+  "nt_title": {
+    "message": "新しいタブ"
+  },
+  "nt_tab_common": {
+    "message": "よく使う"
+  },
+  "nt_tab_bookmarks": {
+    "message": "ブックマーク"
+  },
+  "nt_tab_history": {
+    "message": "履歴"
+  },
+  "nt_back": {
+    "message": "戻る"
+  },
+  "nt_need_permission": {
+    "message": "権限が必要"
+  },
+  "nt_permission_desc": {
+    "message": "この拡張機能は個人データを収集しません。安心して権限を許可してください。"
+  },
+  "nt_authorize": {
+    "message": "許可"
+  },
+  "nt_settings_language": {
+    "message": "言語"
+  },
+  "nt_settings_default_open": {
+    "message": "既定で開く:"
+  },
+  "nt_settings_feedback": {
+    "message": "フィードバック"
+  },
+  "nt_settings_about": {
+    "message": "Mooogor 2 について"
+  },
+  "nt_settings_version": {
+    "message": "バージョン"
+  },
+  "nt_settings_support": {
+    "message": "サポート"
+  },
+  "nt_settings_link_open_title": {
+    "message": "リンクの開き方"
+  },
+  "nt_settings_other_title": {
+    "message": "その他"
+  },
+  "nt_settings_new_tab_open": {
+    "message": "リンクを新しいタブで開く"
+  },
+  "nt_settings_new_tab_tip": {
+    "message": "タブバーに固定すると自動的に有効になります。"
+  },
+  "nt_lang_auto": {
+    "message": "システムに従う"
+  },
+  "nt_lang_zh_cn": {
+    "message": "簡体字中国語"
+  },
+  "nt_lang_zh_tw": {
+    "message": "繁体字中国語"
+  },
+  "nt_lang_en": {
+    "message": "英語"
+  },
+  "nt_lang_ja": {
+    "message": "日本語"
+  },
+  "nt_lang_ko": {
+    "message": "韓国語"
+  },
+  "nt_lang_ru": {
+    "message": "ロシア語"
+  },
+  "nt_default_common": {
+    "message": "よく使う"
+  },
+  "nt_default_bookmark": {
+    "message": "ブックマーク"
+  },
+  "nt_default_history": {
+    "message": "履歴"
+  },
+  "nt_default_last": {
+    "message": "前回開いたタブを記憶"
+  },
+  "nt_history_yesterday": {
+    "message": "昨日"
+  },
+  "nt_history_empty": {
+    "message": "履歴はまだありません"
+  },
+  "nt_history_recent": {
+    "message": "たった今"
+  },
+  "nt_history_1h": {
+    "message": "1時間以内"
+  },
+  "nt_history_today": {
+    "message": "今日"
+  },
+  "nt_add_to_pinned": {
+    "message": "よく使うに追加"
+  },
+  "nt_no_pinned": {
+    "message": "まだよく使うサイトがありません"
+  },
+  "nt_no_bookmarks": {
+    "message": "まだブックマークがありません"
+  },
+  "nt_edit": {
+    "message": "編集"
+  },
+  "nt_delete": {
+    "message": "削除"
+  },
+  "nt_add_pinned_title": {
+    "message": "よく使うサイトを追加"
+  },
+  "nt_input_url": {
+    "message": "*URL"
+  },
+  "nt_input_name": {
+    "message": "名前"
+  },
+  "nt_save": {
+    "message": "保存"
+  },
+  "nt_select_placeholder": {
+    "message": "選択"
+  },
+  "nt_open_new_tab": {
+    "message": "新しいタブで開く"
+  },
+  "nt_open_new_window": {
+    "message": "新しいウィンドウで開く"
+  },
+  "nt_open_incognito": {
+    "message": "シークレット ウィンドウで開く"
+  },
+  "nt_copy_link": {
+    "message": "リンクをコピー"
+  },
+  "nt_unnamed": {
+    "message": "名称なし"
+  },
+  "nt_label_bookmarks": {
+    "message": "ブックマーク"
+  },
+  "nt_label_history": {
+    "message": "履歴"
+  },
+  "nt_search_placeholder": {
+    "message": "検索"
+  },
+  "nt_drag_sort_or_disable": {
+    "message": "ドラッグして並べ替えまたは無効化"
+  },
+  "nt_switch": {
+    "message": "切替"
+  },
+  "nt_about_name_origin_title": {
+    "message": "名前の由来"
+  },
+  "nt_about_name_origin_desc": {
+    "message": "Mooogor は四川方言の「Moge'er」に由来し、スリを意味します。開発では多くの無料・オープンソースのフレームワークやライブラリを利用しました。日々の仕事でも、私たちは他の開発者の成果の恩恵を受けています。そういう意味で、私たちはみんな「Moge'er」です。"
+  },
+  "nt_about_design_goal_title": {
+    "message": "設計の意図"
+  },
+  "nt_about_design_goal_desc": {
+    "message": "多くの新しいタブページは、カレンダーやタスク、時計など多機能なデスクトップ風です。Mooogor では、派手なカードが新しいタブ本来の目的を妨げる可能性があると考えています。そのためこの種の機能の優先度は低めで、新しいタブでの滞在時間を減らせる機能を優先します。ご提案も歓迎します。"
+  },
+  "nt_about_free_title": {
+    "message": "無料ですか？"
+  },
+  "nt_about_free_desc": {
+    "message": "Mooogor は無料です。クラウド機能が本当に必要な場合のみ有料化を検討します（クラウド提供にはコストがかかるため）。セキュリティとプライバシーを考慮し、可能な限りオフライン実装を優先します。Mooogor が期待に合っていれば、継続的な改善のためにサポートしていただけると嬉しいです。"
+  }
+}

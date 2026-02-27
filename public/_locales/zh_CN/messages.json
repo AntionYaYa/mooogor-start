@@ -66,8 +66,20 @@
     "nt_lang_zh_cn": {
       "message": "简体中文"
     },
+    "nt_lang_zh_tw": {
+      "message": "繁体中文"
+    },
     "nt_lang_en": {
        "message": "English"
+    },
+    "nt_lang_ja": {
+      "message": "日语"
+    },
+    "nt_lang_ko": {
+      "message": "韩语"
+    },
+    "nt_lang_ru": {
+      "message": "俄语"
     },
     "nt_default_common": {
       "message": "常用"

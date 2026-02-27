@@ -1,0 +1,188 @@
+{
+  "extName": {
+    "message": "Mooogor 2 — Эффективная новая вкладка"
+  },
+  "extDescription": {
+    "message": "Mooogor — это страница новой вкладки браузера, созданная для более быстрого и эффективного перехода к следующему рабочему процессу: открытие часто используемых сайтов, поиск по разным сайтам и восстановление недавно закрытых вкладок."
+  },
+  "nt_title": {
+    "message": "Новая вкладка"
+  },
+  "nt_tab_common": {
+    "message": "Избранное"
+  },
+  "nt_tab_bookmarks": {
+    "message": "Закладки"
+  },
+  "nt_tab_history": {
+    "message": "История"
+  },
+  "nt_back": {
+    "message": "Назад"
+  },
+  "nt_need_permission": {
+    "message": "Требуется разрешение"
+  },
+  "nt_permission_desc": {
+    "message": "Это расширение не собирает персональные данные. Вы можете безопасно предоставить разрешение."
+  },
+  "nt_authorize": {
+    "message": "Разрешить"
+  },
+  "nt_settings_language": {
+    "message": "Язык"
+  },
+  "nt_settings_default_open": {
+    "message": "Открывать по умолчанию:"
+  },
+  "nt_settings_feedback": {
+    "message": "Обратная связь"
+  },
+  "nt_settings_about": {
+    "message": "О Mooogor 2"
+  },
+  "nt_settings_version": {
+    "message": "Версия"
+  },
+  "nt_settings_support": {
+    "message": "Поддержать"
+  },
+  "nt_settings_link_open_title": {
+    "message": "Открытие ссылок"
+  },
+  "nt_settings_other_title": {
+    "message": "Другое"
+  },
+  "nt_settings_new_tab_open": {
+    "message": "Открывать ссылки в новой вкладке"
+  },
+  "nt_settings_new_tab_tip": {
+    "message": "Автоматически включается при закреплении вкладки на панели."
+  },
+  "nt_lang_auto": {
+    "message": "Следовать языку системы"
+  },
+  "nt_lang_zh_cn": {
+    "message": "Китайский (упрощённый)"
+  },
+  "nt_lang_zh_tw": {
+    "message": "Китайский (традиционный)"
+  },
+  "nt_lang_en": {
+    "message": "Английский"
+  },
+  "nt_lang_ja": {
+    "message": "Японский"
+  },
+  "nt_lang_ko": {
+    "message": "Корейский"
+  },
+  "nt_lang_ru": {
+    "message": "Русский"
+  },
+  "nt_default_common": {
+    "message": "Избранное"
+  },
+  "nt_default_bookmark": {
+    "message": "Закладки"
+  },
+  "nt_default_history": {
+    "message": "История"
+  },
+  "nt_default_last": {
+    "message": "Запоминать последнюю открытую вкладку"
+  },
+  "nt_history_yesterday": {
+    "message": "Вчера"
+  },
+  "nt_history_empty": {
+    "message": "История пуста"
+  },
+  "nt_history_recent": {
+    "message": "Только что"
+  },
+  "nt_history_1h": {
+    "message": "За 1 час"
+  },
+  "nt_history_today": {
+    "message": "Сегодня"
+  },
+  "nt_add_to_pinned": {
+    "message": "Добавить в избранное"
+  },
+  "nt_no_pinned": {
+    "message": "Пока нет избранных сайтов"
+  },
+  "nt_no_bookmarks": {
+    "message": "Пока нет закладок"
+  },
+  "nt_edit": {
+    "message": "Редактировать"
+  },
+  "nt_delete": {
+    "message": "Удалить"
+  },
+  "nt_add_pinned_title": {
+    "message": "Добавить избранный сайт"
+  },
+  "nt_input_url": {
+    "message": "*URL"
+  },
+  "nt_input_name": {
+    "message": "Название"
+  },
+  "nt_save": {
+    "message": "Сохранить"
+  },
+  "nt_select_placeholder": {
+    "message": "Выберите"
+  },
+  "nt_open_new_tab": {
+    "message": "Открыть в новой вкладке"
+  },
+  "nt_open_new_window": {
+    "message": "Открыть в новом окне"
+  },
+  "nt_open_incognito": {
+    "message": "Открыть в режиме инкогнито"
+  },
+  "nt_copy_link": {
+    "message": "Копировать ссылку"
+  },
+  "nt_unnamed": {
+    "message": "Без названия"
+  },
+  "nt_label_bookmarks": {
+    "message": "Закладки"
+  },
+  "nt_label_history": {
+    "message": "История"
+  },
+  "nt_search_placeholder": {
+    "message": "Поиск"
+  },
+  "nt_drag_sort_or_disable": {
+    "message": "Перетащите, чтобы изменить порядок или отключить"
+  },
+  "nt_switch": {
+    "message": "Переключатель"
+  },
+  "nt_about_name_origin_title": {
+    "message": "Происхождение названия"
+  },
+  "nt_about_name_origin_desc": {
+    "message": "Название Mooogor созвучно сычуаньскому выражению \"Moge'er\", которое означает карманник. При разработке я также использовал множество бесплатных и open-source фреймворков и библиотек. В повседневной работе мы все прямо или косвенно пользуемся результатами труда других разработчиков, поэтому в этом смысле мы все \"Moge'er\"."
+  },
+  "nt_about_design_goal_title": {
+    "message": "Идея дизайна"
+  },
+  "nt_about_design_goal_desc": {
+    "message": "Многие страницы новой вкладки выглядят как рабочий стол с множеством виджетов: календарём, задачами, часами и т.д. В логике Mooogor яркие карточки могут отвлекать от основной цели новой вкладки. Поэтому приоритет таких функций ниже, а функций, которые сокращают время пребывания на новой вкладке, — выше. Буду рад предложениям."
+  },
+  "nt_about_free_title": {
+    "message": "Это бесплатно?"
+  },
+  "nt_about_free_desc": {
+    "message": "Mooogor бесплатен. Платные функции будут рассматриваться только там, где действительно необходимы облачные сервисы (поскольку они стоят денег). С учётом безопасности и приватности я по возможности отдаю приоритет офлайн-функциям. Если Mooogor соответствует вашим ожиданиям, вы можете поддержать проект для дальнейшего развития."
+  }
+}

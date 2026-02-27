@@ -1,6 +1,13 @@
 import { db } from "@/lib/DB/DB";
 
-export type AppLanguage = "auto" | "zh_CN" | "en";
+export type AppLanguage =
+  | "auto"
+  | "zh_CN"
+  | "zh_TW"
+  | "en"
+  | "ja"
+  | "ko"
+  | "ru";
 export type OpenTab = "common" | "bookmark" | "history";
 export type DefaultOpen = OpenTab | "last";
 
@@ -21,7 +28,15 @@ export const DEFAULT_SETTINGS: UserSettings = {
 const SETTINGS_KEY = "settings";
 const DEFAULT_OPEN_VALUES = ["common", "bookmark", "history", "last"] as const;
 const OPEN_TAB_VALUES = ["common", "bookmark", "history"] as const;
-const LANGUAGE_VALUES = ["auto", "zh_CN", "en"] as const;
+const LANGUAGE_VALUES = [
+  "auto",
+  "zh_CN",
+  "zh_TW",
+  "en",
+  "ja",
+  "ko",
+  "ru",
+] as const;
 
 function isDefaultOpen(
   value: unknown,

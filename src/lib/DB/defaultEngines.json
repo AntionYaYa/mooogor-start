@@ -3,60 +3,101 @@
     "title": "Google",
     "engineUrl": "https://www.google.com/search?q=%s",
     "faviconKey": "Google",
-    "enabled": true
+    "enabled": true,
+    "enabledByLanguage": {
+      "default": true,
+      "zh_CN": false
+    }
   },
   {
     "title": "Bing",
     "engineUrl": "https://www.bing.com/search?q=%s",
     "faviconKey": "Bing",
-    "enabled": true
+    "enabled": true,
+    "enabledByLanguage": {
+      "default": true,
+      "zh_CN": false,
+      "ko": false,
+      "ru": false
+    }
   },
   {
     "title": "百度",
     "engineUrl": "https://www.baidu.com/s?wd=%s",
     "faviconKey": "Baidu",
-    "enabled": true
+    "enabled": true,
+    "enabledByLanguage": {
+      "default": false,
+      "zh_CN": true
+    }
   },
   {
     "title": "Yahoo",
     "engineUrl": "https://search.yahoo.com/search?p=%s",
     "faviconKey": "Yahoo",
-    "enabled": false
+    "enabled": false,
+    "enabledByLanguage": {
+      "default": false,
+      "ja": true
+    }
   },
   {
     "title": "Yandex",
     "engineUrl": "https://yandex.com/search/?text=%s",
     "faviconKey": "Yandex",
-    "enabled": false
+    "enabled": false,
+    "enabledByLanguage": {
+      "default": false,
+      "ru": true
+    }
   },
   {
     "title": "DuckDuckGo",
     "engineUrl": "https://duckduckgo.com/?q=%s",
     "faviconKey": "DuckDuckGo",
-    "enabled": false
+    "enabled": false,
+    "enabledByLanguage": {
+      "default": false
+    }
   },
   {
     "title": "搜狗",
     "engineUrl": "https://www.sogou.com/web?query=%s",
     "faviconKey": "Sougou",
-    "enabled": false
+    "enabled": false,
+    "enabledByLanguage": {
+      "default": false,
+      "zh_CN": true
+    }
   },
   {
     "title": "360",
     "engineUrl": "https://www.so.com/s?q=%s",
     "faviconKey": "Qihu360",
-    "enabled": false
+    "enabled": false,
+    "enabledByLanguage": {
+      "default": false,
+      "zh_CN": true
+    }
   },
   {
     "title": "Naver",
     "engineUrl": "https://search.naver.com/search.naver?query=%s",
     "faviconKey": "Naver",
-    "enabled": false
+    "enabled": false,
+    "enabledByLanguage": {
+      "default": false,
+      "ko": true
+    }
   },
   {
     "title": "Perplexity",
     "engineUrl": "https://www.perplexity.ai/search?q=%s",
     "faviconKey": "Perplexity",
-    "enabled": true
+    "enabled": true,
+    "enabledByLanguage": {
+      "default": true,
+      "zh_CN": false
+    }
   }
 ]

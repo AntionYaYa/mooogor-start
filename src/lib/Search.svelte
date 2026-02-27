@@ -32,7 +32,8 @@
   import Icon from "./components/Icon.svelte";
   import T from "./components/T.svelte";
   import G from "./components/G.svelte";
-  import { t } from "@/lib/utils/i18n";
+  import { getEffectiveLanguage, t } from "@/lib/utils/i18n";
+  import type { AppLanguage } from "@/lib/utils/settings";
 
   type ItemType = BookmarkSubType | "engine" | "todo" | "history";
 
@@ -69,16 +70,37 @@
     engineUrl: string;
     faviconKey?: string;
     enabled?: boolean;
+    enabledByLanguage?: Partial<
+      Record<Exclude<AppLanguage, "auto"> | "default", boolean>
+    >;
   };
 
-  const defaultEngines: Omit<Engine, "id">[] = (
-    defaultEnginesRaw as DefaultEngineRaw[]
-  ).map((item) => ({
-    title: item.title,
-    engineUrl: item.engineUrl,
-    faviconUrl: item.faviconKey ? faviconMap[item.faviconKey] : "",
-    enabled: item.enabled,
-  }));
+  function resolveEngineEnabled(
+    item: DefaultEngineRaw,
+    language: Exclude<AppLanguage, "auto">,
+  ) {
+    const byLanguage = item.enabledByLanguage;
+    if (typeof byLanguage?.[language] === "boolean") {
+      return byLanguage[language];
+    }
+    if (typeof byLanguage?.default === "boolean") {
+      return byLanguage.default;
+    }
+    return item.enabled ?? true;
+  }
+
+  function buildDefaultEngines(
+    language: Exclude<AppLanguage, "auto">,
+  ): Omit<Engine, "id">[] {
+    return (defaultEnginesRaw as DefaultEngineRaw[]).map((item) => ({
+      title: item.title,
+      engineUrl: item.engineUrl,
+      faviconUrl: item.faviconKey ? faviconMap[item.faviconKey] : "",
+      enabled: resolveEngineEnabled(item, language),
+    }));
+  }
+
+  const defaultEngines = buildDefaultEngines(getEffectiveLanguage());
 
   let enabledEngines: Engine[] = $state([]);
   let disabledEngines: Engine[] = $state([]);

@@ -13,7 +13,15 @@ type MessageMap = Record<string, MessageValue>;
 
 const LANGUAGE_KEY = "nt_language";
 const MESSAGES_CACHE_PREFIX = "nt_messages_";
-const LANGUAGE_VALUES = ["auto", "zh_CN", "en"] as const;
+const LANGUAGE_VALUES = [
+  "auto",
+  "zh_CN",
+  "zh_TW",
+  "en",
+  "ja",
+  "ko",
+  "ru",
+] as const;
 
 let currentLanguage: AppLanguage = readLanguagePreference();
 let currentMessages: MessageMap | null = readInitialMessages();
@@ -70,8 +78,25 @@ function resolveAutoLanguage(): Exclude<AppLanguage, "auto"> {
     api?.i18n?.getUILanguage?.() ??
     (typeof navigator !== "undefined" ? navigator.language : "en");
   const normalized = uiLanguage.toLowerCase().replace("-", "_");
+  if (
+    normalized.startsWith("zh_tw") ||
+    normalized.startsWith("zh_hk") ||
+    normalized.startsWith("zh_mo") ||
+    normalized.startsWith("zh_hant")
+  ) {
+    return "zh_TW";
+  }
   if (normalized.startsWith("zh")) return "zh_CN";
+  if (normalized.startsWith("ja")) return "ja";
+  if (normalized.startsWith("ko")) return "ko";
+  if (normalized.startsWith("ru")) return "ru";
   return "en";
+}
+
+export function getEffectiveLanguage(
+  language: AppLanguage = currentLanguage,
+): Exclude<AppLanguage, "auto"> {
+  return language === "auto" ? resolveAutoLanguage() : language;
 }
 
 function readInitialMessages(): MessageMap | null {

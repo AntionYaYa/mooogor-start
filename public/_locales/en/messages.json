@@ -66,8 +66,20 @@
     "nt_lang_zh_cn": {
       "message": "Simplified Chinese"
     },
+    "nt_lang_zh_tw": {
+      "message": "Traditional Chinese"
+    },
     "nt_lang_en": {
       "message": "English"
+    },
+    "nt_lang_ja": {
+      "message": "Japanese"
+    },
+    "nt_lang_ko": {
+      "message": "Korean"
+    },
+    "nt_lang_ru": {
+      "message": "Russian"
     },
     "nt_default_common": {
       "message": "Favourites"
