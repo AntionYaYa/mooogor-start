@@ -48,6 +48,12 @@
     "nt_settings_support": {
       "message": "打赏"
     },
+    "nt_settings_link_open_title": {
+      "message": "链接打开方式"
+    },
+    "nt_settings_other_title": {
+      "message": "其他"
+    },
     "nt_settings_new_tab_open": {
       "message": "新标签页打开链接"
     },
@@ -149,5 +155,23 @@
     },
     "nt_switch": {
       "message": "开关"
+    },
+    "nt_about_name_origin_title": {
+      "message": "名称由来"
+    },
+    "nt_about_name_origin_desc": {
+      "message": "Mooogor是四川话的摸哥儿的谐音，摸哥儿是扒手的意思；我在开发的时候也使用了免费开源的框架和库，我相信你在平时工作中也会直接间接用到不少其他开发者的劳动成果，我们都是摸哥儿。"
+    },
+    "nt_about_design_goal_title": {
+      "message": "设计初衷"
+    },
+    "nt_about_design_goal_desc": {
+      "message": "我参考了不少新标签页，大多都像系统桌面一样，很多实用功能，日历、任务、时钟等等…… 但是在Mooogor的设计逻辑里，可能花哨的卡片会打断新开标签页的初衷，因此未来对这类功能的支持优先级会比较低，反而能够减少在新标签页停留的功能优先级会非常高，也欢迎你提供相关建议。"
+    },
+    "nt_about_free_title": {
+      "message": "免费吗？"
+    },
+    "nt_about_free_desc": {
+      "message": "Mooogor是免费的！如果有非得需要云端功能才会考虑收费（因为云服务提供商会收费），考虑到安全和隐私问题，当然我会优先采用离线功能来实现。如果您觉得Mooogor能够满足你对新标签页的预期，也可以支持一下我，让我有更大的动力更新改进它。"
     }
   }

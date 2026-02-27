@@ -106,7 +106,7 @@
       setLanguage,
     )}
     {@render temswithcItem(
-      "链接打开方式",
+      t("nt_settings_link_open_title"),
       t("nt_settings_new_tab_open"),
       t("nt_settings_new_tab_tip"),
       effectiveNewTabOpenSwitch,
@@ -118,7 +118,11 @@
       openPosOptions,
       setOpenPos,
     )}
-    {@render tembuttonItem(t("nt_settings_about"),clickShowAbout,'其他')}
+    {@render tembuttonItem(
+      t("nt_settings_about"),
+      clickShowAbout,
+      t("nt_settings_other_title"),
+    )}
     {@render tembuttonItem(t("nt_settings_support"),()=>{},'',true)}
     </div>
 {/snippet}
