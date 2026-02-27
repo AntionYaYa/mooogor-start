@@ -43,7 +43,6 @@
 	}
 	.outside:active {
 		background-color: var(--c-mask);
-		transition: all 0.1s ease-out;
 	}
 	.ball {
 		width: 20px;

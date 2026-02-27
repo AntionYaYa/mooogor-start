@@ -248,7 +248,6 @@
   a:active,
   button:active {
     background-color: var(--c-mask1);
-    transition: all 0.1s ease-out;
   }
   button:focus-visible,
   a:focus-visible {

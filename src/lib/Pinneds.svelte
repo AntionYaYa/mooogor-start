@@ -204,8 +204,7 @@
   }
 
   a:active {
-    background-color: var(--c-mask);
-    transition: all 0.1s ease-out;
+    background-color: var(--c-mask1);
   }
   
   a:focus{

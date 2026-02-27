@@ -701,7 +701,6 @@
   .engine:active,
   .item:active {
     background-color: var(--c-mask);
-    transition: all 0.1s ease-out;
   }
   .engine:focus,
   .item:focus {

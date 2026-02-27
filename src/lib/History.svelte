@@ -312,7 +312,6 @@
   }
   .item:active {
     background-color: var(--c-mask1);
-    transition: all 0.1s ease-out;
   }
   .item:focus-visible {
     outline: var(--c-text) 2px solid;

@@ -47,7 +47,6 @@
 	}
 	button:active {
 		background-color: var(--c-mask);
-		transition: all 0.1s ease-out;
 	}
 	.sel {
 		background-color: var(--c-mask);
