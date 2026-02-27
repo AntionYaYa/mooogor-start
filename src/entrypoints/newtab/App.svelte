@@ -356,8 +356,9 @@
               >
             {/if}
           </div>
-          {#if selTab?.key === "1"}
+          {#if selTab?.key === "1" }
             <div class="left" in:fly={{ x: -50, duration: 300 }}>
+              {#if historyStack.length > 0}
               <G align="c">
                 <Button onclick={() => (gridView = !gridView)}>
                   <G>
@@ -365,6 +366,7 @@
                   </G>
                 </Button>
               </G>
+              {/if}
             </div>
           {/if}
         </div>
