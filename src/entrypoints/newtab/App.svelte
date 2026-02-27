@@ -24,7 +24,7 @@
     saveSettings,
     DEFAULT_SETTINGS,
   } from "@/lib/utils/settings";
-  import type { UserSettings } from "@/lib/utils/settings";
+  import type { OpenTab, UserSettings } from "@/lib/utils/settings";
   import { setLanguage, t } from "@/lib/utils/i18n";
 
   let showSetting = $state(false);
@@ -54,6 +54,38 @@
   let effectiveNewTabOpen = $derived(
     userSettings.newTabOpen || currentTabPinned,
   );
+
+  function isSameSettings(a: UserSettings, b: UserSettings) {
+    return (
+      a.defaultOpen === b.defaultOpen &&
+      a.lastOpenTab === b.lastOpenTab &&
+      a.newTabOpen === b.newTabOpen &&
+      a.language === b.language
+    );
+  }
+
+  function openTabToIndex(tab: OpenTab): number {
+    return tab === "bookmark" ? 1 : tab === "history" ? 2 : 0;
+  }
+
+  function tabKeyToOpenTab(tabKey: string): OpenTab | undefined {
+    if (tabKey === "0") return "common";
+    if (tabKey === "1") return "bookmark";
+    if (tabKey === "2") return "history";
+    return undefined;
+  }
+
+  async function rememberLastOpenTab(tab: TabItem) {
+    const nextLastOpenTab = tabKeyToOpenTab(tab.key);
+    if (!nextLastOpenTab) return;
+    if (userSettings.lastOpenTab === nextLastOpenTab) return;
+    const nextSettings: UserSettings = {
+      ...userSettings,
+      lastOpenTab: nextLastOpenTab,
+    };
+    userSettings = nextSettings;
+    await saveSettings(nextSettings);
+  }
 
   async function refreshCurrentTabPinnedState() {
     try {
@@ -86,13 +118,12 @@
     await refreshCurrentTabPinnedState();
     await setLanguage(userSettings.language);
     updateTabLabels();
-    const defaultIndex =
-      userSettings.defaultOpen === "bookmark"
-        ? 1
-        : userSettings.defaultOpen === "history"
-          ? 2
-          : 0;
-    clickTab(tabs[defaultIndex], defaultIndex);
+    const startOpenTab: OpenTab =
+      userSettings.defaultOpen === "last"
+        ? userSettings.lastOpenTab
+        : userSettings.defaultOpen;
+    const defaultIndex = openTabToIndex(startOpenTab);
+    clickTab(tabs[defaultIndex], defaultIndex, { rememberLast: false });
     await tick();
     firstMount = false;
   });
@@ -118,6 +149,8 @@
   });
 
   async function handleUserSettingsChange(next: UserSettings) {
+    if (isSameSettings(userSettings, next)) return;
+
     const languageChanged = userSettings.language !== next.language;
     userSettings = next;
     if (languageChanged) {
@@ -160,7 +193,12 @@
     }
   }
 
-  async function clickTab(tab: TabItem, i: number) {
+  async function clickTab(
+    tab: TabItem,
+    i: number,
+    options: { rememberLast?: boolean } = {},
+  ) {
+    const { rememberLast = true } = options;
     //书签选中情况下再点击回到顶层，
     if (tab.sel) {
       if (tab.key === "1" && historyStack.length === 2) {
@@ -172,6 +210,9 @@
 
     updateShowNext(i);
     updateSelTab(tab);
+    if (rememberLast) {
+      await rememberLastOpenTab(tab);
+    }
 
     if (tab.key === "0") {
       allPinneds = await getAllWebSite();

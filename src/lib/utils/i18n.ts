@@ -2,6 +2,7 @@ import type { AppLanguage } from "@/lib/utils/settings";
 
 type I18nLike = {
   getMessage?: (key: string, substitutions?: string | string[]) => string;
+  getUILanguage?: () => string;
 };
 
 type MessageValue = {
@@ -15,7 +16,8 @@ const MESSAGES_CACHE_PREFIX = "nt_messages_";
 const LANGUAGE_VALUES = ["auto", "zh_CN", "en"] as const;
 
 let currentLanguage: AppLanguage = readLanguagePreference();
-let currentMessages: MessageMap | null = readCachedMessages(currentLanguage);
+let currentMessages: MessageMap | null = readInitialMessages();
+let languageRequestSeq = 0;
 
 function isLanguage(value: unknown): value is AppLanguage {
   return LANGUAGE_VALUES.includes(value as AppLanguage);
@@ -62,6 +64,23 @@ function getI18nApi() {
   );
 }
 
+function resolveAutoLanguage(): Exclude<AppLanguage, "auto"> {
+  const api = getI18nApi();
+  const uiLanguage =
+    api?.i18n?.getUILanguage?.() ??
+    (typeof navigator !== "undefined" ? navigator.language : "en");
+  const normalized = uiLanguage.toLowerCase().replace("-", "_");
+  if (normalized.startsWith("zh")) return "zh_CN";
+  return "en";
+}
+
+function readInitialMessages(): MessageMap | null {
+  if (currentLanguage === "auto") {
+    return readCachedMessages(resolveAutoLanguage());
+  }
+  return readCachedMessages(currentLanguage);
+}
+
 function getRuntimeApi() {
   return (
     (globalThis as unknown as { browser?: { runtime?: { getURL?: (path: string) => string } } }).browser ??
@@ -98,24 +117,40 @@ async function fetchMessages(
 }
 
 export async function setLanguage(language: AppLanguage): Promise<void> {
+  const requestSeq = ++languageRequestSeq;
   const nextLanguage = isLanguage(language) ? language : "auto";
   currentLanguage = nextLanguage;
   if (typeof localStorage !== "undefined") {
     localStorage.setItem(LANGUAGE_KEY, nextLanguage);
   }
   if (nextLanguage === "auto") {
-    currentMessages = null;
+    const autoLanguage = resolveAutoLanguage();
+    const cached = readCachedMessages(autoLanguage);
+    if (requestSeq !== languageRequestSeq) return;
+    currentMessages = cached ?? null;
+    try {
+      const messages = await fetchMessages(autoLanguage);
+      if (requestSeq !== languageRequestSeq) return;
+      currentMessages = messages;
+      saveCachedMessages(autoLanguage, messages);
+    } catch {
+      if (requestSeq !== languageRequestSeq) return;
+      if (!currentMessages) currentMessages = cached ?? null;
+    }
     return;
   }
   const cached = readCachedMessages(nextLanguage);
+  if (requestSeq !== languageRequestSeq) return;
   if (cached) {
     currentMessages = cached;
   }
   try {
     const messages = await fetchMessages(nextLanguage);
+    if (requestSeq !== languageRequestSeq) return;
     currentMessages = messages;
     saveCachedMessages(nextLanguage, messages);
   } catch {
+    if (requestSeq !== languageRequestSeq) return;
     if (!currentMessages) currentMessages = cached;
   }
 }
@@ -130,5 +165,6 @@ export function t(key: string, substitutions?: string | string[]): string {
 
   const api = getI18nApi();
   const msg = api?.i18n?.getMessage?.(key, substitutions);
-  return msg || key;
+  if (msg && msg !== key) return msg;
+  return key;
 }

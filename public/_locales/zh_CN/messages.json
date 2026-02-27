@@ -72,6 +72,9 @@
     "nt_default_history": {
       "message": "历史记录"
     },
+    "nt_default_last": {
+      "message": "记忆上次的打开"
+    },
     "nt_history_yesterday": {
       "message": "昨天"
     },

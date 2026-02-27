@@ -29,6 +29,7 @@
     { label: t("nt_default_common"), value: "common" },
     { label: t("nt_default_bookmark"), value: "bookmark" },
     { label: t("nt_default_history"), value: "history" },
+    { label: t("nt_default_last"), value: "last", dividerTop: true },
   ] as const;
 
   const languageBase = [
@@ -117,8 +118,8 @@
       openPosOptions,
       setOpenPos,
     )}
-      {@render tembuttonItem(t("nt_settings_about"),clickShowAbout,'其他')}
-      {@render tembuttonItem(t("nt_settings_support"),()=>{},'',true)}
+    {@render tembuttonItem(t("nt_settings_about"),clickShowAbout,'其他')}
+    {@render tembuttonItem(t("nt_settings_support"),()=>{},'',true)}
     </div>
 {/snippet}
 

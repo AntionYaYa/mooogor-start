@@ -72,6 +72,9 @@
     "nt_default_history": {
       "message": "History"
     },
+    "nt_default_last": {
+      "message": "Remember last opened"
+    },
     "nt_history_yesterday": {
       "message": "Yesterday"
     },

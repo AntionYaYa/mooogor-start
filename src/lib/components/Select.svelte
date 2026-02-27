@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from "./Icon.svelte";
+	import Divider from "./Divider.svelte";
 	import { onMount, onDestroy } from "svelte";
 	import T from "./T.svelte";
 	import { t } from "@/lib/utils/i18n";
@@ -10,6 +11,7 @@
 		label: string;
 		value: string;
 		sel: boolean;
+		dividerTop?: boolean;
 	};
 
 	interface Props {
@@ -18,7 +20,7 @@
 	}
 
 	let { options, onChange }: Props = $props();
-
+	$inspect(options)
 	let open = $state(false);
 	let rootEl: HTMLDivElement | null = null;
 	let selected = $derived(options.find((o) => o.sel));
@@ -73,11 +75,14 @@
 		<div class="menu" transition:slide={{ duration: 200 }}>
 			<div class="menu_items">
 				{#each options as option}
+					{#if option.dividerTop}
+						<Divider />
+					{/if}
 					<button class="option" onclick={() => handleSelect(option)}>
 						<T
 							color={option.sel
-								? "var(--c-text)"
-								: "var(--c-text-1)"}>{option.label}</T
+								? "var(--c-green)"
+								: "var(--c-text)"}>{option.label}</T
 						>
 						<span class="icon_box">
 							{#if option.sel}
