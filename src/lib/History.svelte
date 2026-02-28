@@ -205,7 +205,7 @@
 </script>
 <div class="page">
   {#if showEmpty}
-  <NoData text={t("nt_history_empty")} />
+  <NoData iconName='History' title={t("nt_history_empty")} />
   {:else}
     <div class="history">
       <DragToPinneds active={dragging} onDrop={clickAddtoPinneds} />

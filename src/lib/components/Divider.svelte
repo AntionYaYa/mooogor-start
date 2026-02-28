@@ -11,7 +11,7 @@
 <style>
 	hr {
 		border: none;
-		border-top: 1px solid var(--c-text-2);
+		border-top: 1px solid var(--c-border);
 		margin: 0;
 		width: 100%;
 		box-sizing: border-box;

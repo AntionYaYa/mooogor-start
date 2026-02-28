@@ -84,7 +84,6 @@
     if (currentPinned?.id) {
       await deleteWebSite(currentPinned.id);
     }
-
     onUpdate();
   }
 </script>
@@ -114,14 +113,14 @@
             class:ctx={showMenu && currentPinned?.id === pinned.id}
             oncontextmenu={(e) => showContextMenu(e, pinned)}
           >
-            <BkmkIcon imgUrl={pinned.url} alt={pinned.title ?? ""} size="xl" />
+            <BkmkIcon imgUrl={pinned.url} alt={pinned.title ?? ""} size="l" />
           </a>
-          <T nowrap align="c" type="s">{pinned.title}</T>
+          <!-- <T nowrap align="c" type="s">{pinned.title}</T> -->
         </div>
       {/each}
     </div>
   {:else}
-  <NoData text={t("nt_no_pinned")} />
+  <NoData iconName='Sprout' title={t("nt_no_pinned")} text={t("nt_no_pinned_desc")} />
   {/if}
 </div>
 
@@ -160,6 +159,8 @@
     flex-direction: column;
     width: 100%;
     align-items: center;
+    border-radius: var(--r1);
+    background-color: var(--c-mask);
   }
   .item {
     display: flex;

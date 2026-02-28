@@ -65,6 +65,15 @@
   "nt_settings_new_tab_tip": {
     "message": "如果固定到 Tab 列將自動開啟"
   },
+  "nt_settings_search_scope": {
+    "message": "搜尋範圍"
+  },
+  "nt_settings_search_bookmarks": {
+    "message": "搜尋書籤"
+  },
+  "nt_settings_search_history": {
+    "message": "搜尋歷史記錄"
+  },
   "nt_lang_auto": {
     "message": "跟隨系統"
   },
@@ -109,6 +118,9 @@
   },
   "nt_no_pinned": {
     "message": "還沒有常用網站哦～"
+  },
+  "nt_no_pinned_desc": {
+    "message": "點擊左上角的+可以新增常用網站，或在書籤/歷史記錄裡右鍵新增。"
   },
   "nt_no_bookmarks": {
     "message": "還沒有書籤哦～"

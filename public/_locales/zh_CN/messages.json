@@ -66,6 +66,15 @@
     "nt_settings_new_tab_tip": {
       "message": "如果固定到Tab栏将自动开启"
     },
+    "nt_settings_search_scope": {
+      "message": "搜索范围"
+    },
+    "nt_settings_search_bookmarks": {
+      "message": "搜索书签"
+    },
+    "nt_settings_search_history": {
+      "message": "搜索历史记录"
+    },
     "nt_lang_auto": {
       "message": "跟随系统"
     },
@@ -110,6 +119,9 @@
     },
     "nt_no_pinned": {
       "message": "没有常用网址哦～"
+    },
+    "nt_no_pinned_desc": {
+      "message": "点击左上角的+可以添加常用网址，又或者在书签/历史记录里右键添加。"
     },
     "nt_no_bookmarks": {
       "message": "没有书签哦～"

@@ -12,6 +12,8 @@ export type UserSettings = {
   defaultOpen: DefaultOpen;
   lastOpenTab: OpenTab;
   newTabOpen: boolean;
+  searchBookmarks: boolean;
+  searchHistory: boolean;
   language: AppLanguage;
 };
 
@@ -19,6 +21,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   defaultOpen: "common",
   lastOpenTab: "common",
   newTabOpen: false,
+  searchBookmarks: true,
+  searchHistory: true,
   language: "auto",
 };
 
@@ -59,6 +63,9 @@ export async function loadSettings(): Promise<UserSettings> {
       ? stored.lastOpenTab
       : DEFAULT_SETTINGS.lastOpenTab,
     newTabOpen: stored?.newTabOpen ?? DEFAULT_SETTINGS.newTabOpen,
+    searchBookmarks:
+      stored?.searchBookmarks ?? DEFAULT_SETTINGS.searchBookmarks,
+    searchHistory: stored?.searchHistory ?? DEFAULT_SETTINGS.searchHistory,
     language: isLanguage(stored?.language)
       ? stored.language
       : DEFAULT_SETTINGS.language,

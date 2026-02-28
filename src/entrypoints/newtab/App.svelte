@@ -63,6 +63,8 @@
       a.defaultOpen === b.defaultOpen &&
       a.lastOpenTab === b.lastOpenTab &&
       a.newTabOpen === b.newTabOpen &&
+      a.searchBookmarks === b.searchBookmarks &&
+      a.searchHistory === b.searchHistory &&
       a.language === b.language
     );
   }
@@ -316,7 +318,11 @@
           {/each}
         </div>
         {@render headBar()}
-        <Search newTabOpen={effectiveNewTabOpen} />
+        <Search
+          newTabOpen={effectiveNewTabOpen}
+          searchBookmarks={userSettings.searchBookmarks}
+          searchHistory={userSettings.searchHistory}
+        />
       </div>
       <div class="content">
         <div class="tabs">
@@ -418,11 +424,17 @@
       </Button>
     </G>
     <G>
+    {#if showSetting}
+    <Button onclick={() => (showSetting = !showSetting)} fill>
+        <Icon name="Settings2" color="var(--c-bg)" />
+    </Button>
+      {:else}
       <Button onclick={() => (showSetting = !showSetting)}>
         <G>
           <Icon name="Settings2" color="var(--c-text)" />
         </G>
       </Button>
+    {/if}
     </G>
   </G>
 {/snippet}

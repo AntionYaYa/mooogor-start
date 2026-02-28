@@ -66,6 +66,15 @@
     "nt_settings_new_tab_tip": {
       "message": "Automatically enabled when pinned to the tab bar."
     },
+    "nt_settings_search_scope": {
+      "message": "Search Scope"
+    },
+    "nt_settings_search_bookmarks": {
+      "message": "Search Bookmarks"
+    },
+    "nt_settings_search_history": {
+      "message": "Search History"
+    },
     "nt_lang_auto": {
       "message": "Follow system"
     },
@@ -110,6 +119,9 @@
     },
     "nt_no_pinned": {
       "message": "No Favourites sites yet"
+    },
+    "nt_no_pinned_desc": {
+      "message": "Click + in the top-left to add favourites, or right-click in Bookmarks/History to add."
     },
     "nt_no_bookmarks": {
       "message": "No bookmarks yet"

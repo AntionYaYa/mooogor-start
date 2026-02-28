@@ -75,7 +75,7 @@
       {/each}
     </div>
   {:else}
-    <NoData text={t("nt_no_bookmarks")} />
+    <NoData iconName='Bookmark' title={t("nt_no_bookmarks")} />
   {/if}
 </div>
 

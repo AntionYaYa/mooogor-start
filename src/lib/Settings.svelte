@@ -74,6 +74,14 @@
     onchangeUserSettings({ ...userSettings, newTabOpen: value });
   }
 
+  function setSearchBookmarks(value: boolean) {
+    onchangeUserSettings({ ...userSettings, searchBookmarks: value });
+  }
+
+  function setSearchHistory(value: boolean) {
+    onchangeUserSettings({ ...userSettings, searchHistory: value });
+  }
+
   function onswitchNewTabOpen(swith: boolean) {
     if (lockNewTabOpenSwitch) return;
     setNewTabOpen(swith);
@@ -108,6 +116,20 @@
       effectiveNewTabOpenSwitch,
       onswitchNewTabOpen,
       lockNewTabOpenSwitch,
+    )}
+    {@render temswithcItem(
+      t("nt_settings_search_scope"),
+      t("nt_settings_search_bookmarks"),
+      undefined,
+      userSettings.searchBookmarks,
+      setSearchBookmarks,
+    )}
+    {@render temswithcItem(
+      undefined,
+      t("nt_settings_search_history"),
+      undefined,
+      userSettings.searchHistory,
+      setSearchHistory,
     )}
     {@render temselectItem(
       t("nt_settings_default_open"),
@@ -146,17 +168,19 @@
 {/snippet}
 
 {#snippet temswithcItem(
-  title: string,
+  title: string | undefined,
   swcText: string,
-  des: string,
+  des: string | undefined,
   turnOn: boolean,
   onChange: (value: boolean) => void,
   switchDisabled: boolean = false,
 )}
   <div class="select_item">
-    <G>
-      <T type="s" color="var(--c-text)">{title}</T>
-    </G>
+    {#if title}
+      <G>
+        <T type="s" color="var(--c-text)">{title}</T>
+      </G>
+    {/if}
     <div class="trigger">
       <G vertical full>
         <T>{swcText}</T>
@@ -165,9 +189,11 @@
         <Switch {turnOn} onSwitch={onChange} disabled={switchDisabled} />
       </G>
     </div>
-    <G>
-      <T type="s">{des}</T>
-    </G>
+    {#if des}
+      <G>
+        <T type="s">{des}</T>
+      </G>
+    {/if}
   </div>
 {/snippet}
 
@@ -195,9 +221,6 @@
     border: none;
     border-radius: var(--r1);
     padding: var(--gap);
-  }
-  .trigger:active {
-    background-color: var(--c-mask);
   }
   .trigger:focus-visible {
     outline: 2px solid var(--c-text);

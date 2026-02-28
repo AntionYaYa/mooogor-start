@@ -39,9 +39,15 @@
 
   interface Props {
     newTabOpen?: boolean;
+    searchBookmarks?: boolean;
+    searchHistory?: boolean;
   }
 
-  let { newTabOpen = false }: Props = $props();
+  let {
+    newTabOpen = false,
+    searchBookmarks: searchBookmarksEnabled = true,
+    searchHistory: searchHistoryEnabled = true,
+  }: Props = $props();
 
   interface SearchItem {
     id: string;
@@ -120,6 +126,7 @@
   let bookmarksLoading = $state(false);
   let suppressNextEnter = $state(false);
   let searchAreaFocused = $state(false);
+  let lastSearchScope = $state<string | null>(null);
 
   const HISTORY_MAX_RESULTS = 100;
   const SEARCH_DEBOUNCE_MS = 200;
@@ -144,6 +151,26 @@
     const enabled = await getEnabledEngines();
     enabledEngines = enabled.map((e) => ({ ...e, enabled: true }));
     inputValue = backPageInitInputValue();
+  });
+
+  $effect(() => {
+    const scope = `${searchBookmarksEnabled}-${searchHistoryEnabled}`;
+    if (lastSearchScope === null) {
+      lastSearchScope = scope;
+      return;
+    }
+    if (lastSearchScope === scope) return;
+    lastSearchScope = scope;
+
+    const currentInput = searchEl?.value ?? inputValue;
+    if (!currentInput) {
+      bookmarksResults = [];
+      historyResults = [];
+      bookmarksLoading = false;
+      historyLoading = false;
+      return;
+    }
+    void searchInput(currentInput);
   });
 
   function backPageInitInputValue(): string {
@@ -219,51 +246,66 @@
     }
     const seq = ++searchSeq;
     const hSeq = ++historySeq;
-    historyResults = [];
-    historyLoading = false;
     listEls?.scrollTo({ top: 0 });
-    if (bookmarksDebounceId) clearTimeout(bookmarksDebounceId);
-    bookmarksLoading = true;
-    const bookmarkQuery = value;
-    bookmarksDebounceId = setTimeout(async () => {
-      if (seq !== searchSeq) return;
-      try {
-        const results = await searchBookmarks(bookmarkQuery, 200);
+    if (bookmarksDebounceId) {
+      clearTimeout(bookmarksDebounceId);
+      bookmarksDebounceId = null;
+    }
+    if (searchBookmarksEnabled) {
+      bookmarksLoading = true;
+      const bookmarkQuery = value;
+      bookmarksDebounceId = setTimeout(async () => {
         if (seq !== searchSeq) return;
-        bookmarksResults = sortResults(
-          results
-            .filter((item) => !!item.url)
-            .map((item) => ({
-              id: item.id,
-              type: "other" as BookmarkSubType,
-              title: getDisplayTitle(item.title, item.url),
-              url: item.url,
-            })),
-          bookmarkQuery,
-        );
-      } catch {
-        if (seq !== searchSeq) return;
-        bookmarksResults = [];
-      } finally {
-        if (seq === searchSeq) bookmarksLoading = false;
-      }
-    }, SEARCH_DEBOUNCE_MS);
-    if (historyDebounceId) clearTimeout(historyDebounceId);
-    const query = value;
-    historyDebounceId = setTimeout(async () => {
-      if (hSeq !== historySeq) return;
+        try {
+          const results = await searchBookmarks(bookmarkQuery, 200);
+          if (seq !== searchSeq) return;
+          bookmarksResults = sortResults(
+            results
+              .filter((item) => !!item.url)
+              .map((item) => ({
+                id: item.id,
+                type: "other" as BookmarkSubType,
+                title: getDisplayTitle(item.title, item.url),
+                url: item.url,
+              })),
+            bookmarkQuery,
+          );
+        } catch {
+          if (seq !== searchSeq) return;
+          bookmarksResults = [];
+        } finally {
+          if (seq === searchSeq) bookmarksLoading = false;
+        }
+      }, SEARCH_DEBOUNCE_MS);
+    } else {
+      bookmarksResults = [];
+      bookmarksLoading = false;
+    }
+
+    if (historyDebounceId) {
+      clearTimeout(historyDebounceId);
+      historyDebounceId = null;
+    }
+    if (searchHistoryEnabled) {
       historyLoading = true;
-      try {
-        const results = await searchHistory(query);
+      const query = value;
+      historyDebounceId = setTimeout(async () => {
         if (hSeq !== historySeq) return;
-        historyResults = sortResults(mapHistoryResults(results), query);
-      } catch {
-        if (hSeq !== historySeq) return;
-        historyResults = [];
-      } finally {
-        if (hSeq === historySeq) historyLoading = false;
-      }
-    }, SEARCH_DEBOUNCE_MS);
+        try {
+          const results = await searchHistory(query);
+          if (hSeq !== historySeq) return;
+          historyResults = sortResults(mapHistoryResults(results), query);
+        } catch {
+          if (hSeq !== historySeq) return;
+          historyResults = [];
+        } finally {
+          if (hSeq === historySeq) historyLoading = false;
+        }
+      }, SEARCH_DEBOUNCE_MS);
+    } else {
+      historyResults = [];
+      historyLoading = false;
+    }
   }
 
   function inputKey(e: KeyboardEvent) {
@@ -402,14 +444,17 @@
 <G full align="c">
   <div class="search_g">
     {@render temInputGroup()}
-    {#if searchAreaFocused && (bookmarksResults.length || historyResults.length)}
+    {#if searchAreaFocused &&
+      ((searchBookmarksEnabled &&
+        (bookmarksResults.length || bookmarksLoading)) ||
+        (searchHistoryEnabled && (historyResults.length || historyLoading)))}
       <div
         class="list"
         bind:this={listEls}
         onfocusout={handleListFocusOut}
         transition:slide={{ duration: 200 }}
       >
-        {#if bookmarksResults.length}
+        {#if searchBookmarksEnabled && bookmarksResults.length}
           <G>
             <T type="s">{t("nt_label_bookmarks")}</T>
           </G>
@@ -418,7 +463,7 @@
           {/each}
         {/if}
 
-        {#if historyResults.length}
+        {#if searchHistoryEnabled && historyResults.length}
           <G>
             <T type="s">{t("nt_label_history")}</T>
           </G>
@@ -427,7 +472,8 @@
           {/each}
         {/if}
 
-        {#if historyLoading || bookmarksLoading}
+        {#if (searchHistoryEnabled && historyLoading) ||
+          (searchBookmarksEnabled && bookmarksLoading)}
           <div class="more_trigger">
             <Icon name="Loading" color="var(--c-text)" />
           </div>
@@ -469,7 +515,7 @@
 {/snippet}
 
 {#snippet temEngines()}
-  <div class="engines_M">
+  <div class="engines_M" class:w100={showMoreEngines}>
     <div
       bind:this={engineEls}
       class="engines"
@@ -481,7 +527,6 @@
         type: "engines",
         zoneTabIndex: -1,
         dropTargetStyle: {},
-        dragDisabled: !showMoreEngines,
       }}
       onconsider={handleConsiderEnabled}
       onfinalize={handleFinalizeEnabled}
@@ -572,6 +617,8 @@
     display: flex;
     align-items: center;
     flex-direction: row;
+  }
+  .w100{
     width: 100%;
     box-sizing: border-box;
     justify-content: flex-end;
