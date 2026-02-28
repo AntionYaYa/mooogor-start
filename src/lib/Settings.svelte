@@ -35,9 +35,6 @@
     { label: "简体中文", value: "zh_CN" },
     { label: "繁體中文", value: "zh_TW" },
     { label: "English", value: "en" },
-    { label: "日本語", value: "ja" },
-    { label: "한국어", value: "ko" },
-    { label: "Русский", value: "ru" },
   ] as const;
 
   let openPosOptions = $derived(

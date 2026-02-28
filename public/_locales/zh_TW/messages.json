@@ -20,11 +20,17 @@
   "nt_back": {
     "message": "返回"
   },
-  "nt_need_permission": {
-    "message": "需要權限"
+  "nt_need_permission_bookmarks": {
+    "message": "授權存取書籤"
   },
-  "nt_permission_desc": {
-    "message": "該外掛不收集任何個人資料，請放心授權。"
+  "nt_permission_desc_bookmarks": {
+    "message": "授權後可以瀏覽或搜尋自己收藏的書籤。"
+  },
+  "nt_need_permission_history": {
+    "message": "授權存取歷史記錄"
+  },
+  "nt_permission_desc_history": {
+    "message": "授權後可以瀏覽或搜尋歷史記錄。"
   },
   "nt_authorize": {
     "message": "授權"
@@ -70,15 +76,6 @@
   },
   "nt_lang_en": {
     "message": "English"
-  },
-  "nt_lang_ja": {
-    "message": "日文"
-  },
-  "nt_lang_ko": {
-    "message": "韓文"
-  },
-  "nt_lang_ru": {
-    "message": "俄文"
   },
   "nt_default_common": {
     "message": "常用"
@@ -159,10 +156,16 @@
     "message": "歷史記錄"
   },
   "nt_search_placeholder": {
+    "message": "透過$1搜尋"
+  },
+  "nt_search_placeholder_fallback": {
     "message": "搜尋"
   },
-  "nt_drag_sort_or_disable": {
-    "message": "拖曳排序或停用"
+  "nt_drag_to_disable": {
+    "message": "拖曳到這裡停用"
+  },
+  "nt_drag_to_enable_sortable": {
+    "message": "拖曳到這裡啟用（可排序）"
   },
   "nt_switch": {
     "message": "開關"

@@ -439,26 +439,28 @@
 
 {#snippet temInputGroup()}
   <div class="input_group">
-    <input
-      name="Search"
-      class="input"
-      bind:this={searchEl}
-      bind:value={inputValue}
-      type="search"
-      placeholder={enabledEngines[0]
-        ? enabledEngines[0].title
-        : t("nt_search_placeholder")}
-      oncompositionstart={() => (isComposing = true)}
-      oncompositionend={(e) => {
-        isComposing = false;
-        suppressNextEnter = true;
-        searchInput((e.currentTarget as HTMLInputElement).value);
-      }}
-      onfocus={handleInputFocus}
-      onblur={handleInputBlur}
-      oninput={() => searchInput(inputValue)}
-      onkeyup={inputKey}
-    />
+    {#if !showMoreEngines}
+      <input
+        name="Search"
+        class="input"
+        bind:this={searchEl}
+        bind:value={inputValue}
+        type="search"
+        placeholder={enabledEngines[0]?.title
+          ? t("nt_search_placeholder", enabledEngines[0].title)
+          : t("nt_search_placeholder_fallback")}
+        oncompositionstart={() => (isComposing = true)}
+        oncompositionend={(e) => {
+          isComposing = false;
+          suppressNextEnter = true;
+          searchInput((e.currentTarget as HTMLInputElement).value);
+        }}
+        onfocus={handleInputFocus}
+        onblur={handleInputBlur}
+        oninput={() => searchInput(inputValue)}
+        onkeyup={inputKey}
+      />
+    {/if}
     {@render temEngines()}
   </div>
   {#if showMoreEngines}
@@ -472,6 +474,7 @@
       bind:this={engineEls}
       class="engines"
       class:drag={showMoreEngines}
+      data-dnd-hint={t("nt_drag_to_enable_sortable")}
       use:dndzone={{
         items: enabledEngines,
         flipDurationMs: 200,
@@ -502,7 +505,7 @@
     <Button onclick={clickEditeEngines}>
       <G>
         <Icon
-          name="Plus"
+          name={showMoreEngines ? "X" : "Plus"}
           color="var(--c-text)"
           opacity={0.7}
         />
@@ -512,10 +515,11 @@
 {/snippet}
 
 {#snippet temMoreEngines()}
-  <div class="more_engines_M" transition:slide={{ duration: 300 }}>
+  <div class="more_engines_M" transition:slide={{ duration: 200 }}>
     <div
       class="more_g"
       class:drag={showMoreEngines}
+      data-dnd-hint={t("nt_drag_to_disable")}
       use:dndzone={{
         items: disabledEngines,
         flipDurationMs: 200,
@@ -538,12 +542,10 @@
             src={engine.faviconUrl}
             alt={engine.title ?? ""}
           />
+          <T type="s">{engine.title}</T>
         </button>
       {/each}
     </div>
-    <G full>
-      <T type="s" align="r">{t("nt_drag_sort_or_disable")}</T>
-    </G>
   </div>
 {/snippet}
 
@@ -570,6 +572,9 @@
     display: flex;
     align-items: center;
     flex-direction: row;
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: flex-end;
   }
   .more_engines_M {
     display: flex;
@@ -587,6 +592,9 @@
     padding: 0;
     border-radius: var(--r);
     filter: grayscale();
+    align-items: center;
+    overflow: hidden;
+    background-color: var(--c-bg1);
   }
   .more_item_sel {
     filter: grayscale(0);
@@ -627,6 +635,7 @@
     padding: var(--gap);
     width: 100%;
     box-sizing: border-box;
+    justify-content: flex-end;
   }
 
   .input_group:has(input:focus) {
@@ -654,7 +663,31 @@
     outline: none;
   }
 
-  .more_g,
+  .more_g{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--gap);
+    padding: var(--gap);
+    border-radius: var(--r);
+    min-height: 40px;
+    width: 100%;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    position: relative;
+  }
+  .more_g.drag::after {
+    content: attr(data-dnd-hint);
+    position: absolute;
+    top: 0;
+    left: 0;
+    line-height: 30px;
+    padding: var(--gap) calc(var(--gap) * 2);
+    color: var(--c-text-2);
+    font-size: var(--f-size-s);
+    pointer-events: none;
+  }
+
   .engines {
     display: flex;
     flex-direction: row;
@@ -663,11 +696,24 @@
     gap: var(--gap);
     padding: var(--gap);
     border-radius: var(--r);
-    min-height: 30px;
+    min-height: 40px;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+  }
+  .engines.drag::after {
+    content: attr(data-dnd-hint);
+    position: absolute;
+    top: 0;
+    left: 0;
+    line-height: 30px;
+    padding: var(--gap) calc(var(--gap) * 2);
+    color: var(--c-text-2);
+    font-size: var(--f-size-s);
+    pointer-events: none;
   }
   .drag {
     outline: 2px var(--c-mask) dashed;
-    min-width: 205px;
   }
   .engine {
     display: flex;

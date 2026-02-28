@@ -441,7 +441,8 @@
   {#if !bookmarksPermission}
     {@render temNeedPermission(
       "Bookmark",
-      t("nt_need_permission"),
+      t("nt_need_permission_bookmarks"),
+      t("nt_permission_desc_bookmarks"),
       "bookmarks",
     )}
   {:else if currentNode}
@@ -456,7 +457,12 @@
 
 {#snippet history()}
   {#if !historyPermission}
-    {@render temNeedPermission("History", t("nt_need_permission"), "history")}
+    {@render temNeedPermission(
+      "History",
+      t("nt_need_permission_history"),
+      t("nt_permission_desc_history"),
+      "history",
+    )}
   {:else}
     <History newTabOpen={effectiveNewTabOpen} />
   {/if}
@@ -465,6 +471,7 @@
 {#snippet temNeedPermission(
   iconName: IconName,
   titl: string,
+  desc: string,
   permission: Permission,
 )}
   <div class="get_permission">
@@ -474,7 +481,7 @@
       </G>
       <G vertical align="c">
         <T align="c" type="l" bold>{titl}</T>
-        <T align="c" type="s">{t("nt_permission_desc")}</T>
+        <T align="c" type="s">{desc}</T>
       </G>
       <G vertical align="c">
         <Button onclick={() => clickGetPermission(permission)} fill>

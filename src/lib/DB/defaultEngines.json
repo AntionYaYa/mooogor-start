@@ -18,9 +18,7 @@
     "enabledByLanguage": {
       "default": true,
       "zh_CN": true,
-      "zh_TW": true,
-      "ko": false,
-      "ru": false
+      "zh_TW": true
     }
   },
   {
@@ -41,7 +39,6 @@
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
-      "ja": true,
       "zh_TW": true
     }
   },
@@ -52,7 +49,6 @@
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
-      "ru": true,
       "zh_TW": false
     }
   },
@@ -95,7 +91,6 @@
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
-      "ko": true,
       "zh_TW": false
     }
   },

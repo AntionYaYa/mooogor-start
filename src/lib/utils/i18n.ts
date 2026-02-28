@@ -18,9 +18,6 @@ const LANGUAGE_VALUES = [
   "zh_CN",
   "zh_TW",
   "en",
-  "ja",
-  "ko",
-  "ru",
 ] as const;
 
 let currentLanguage: AppLanguage = readLanguagePreference();
@@ -87,9 +84,6 @@ function resolveAutoLanguage(): Exclude<AppLanguage, "auto"> {
     return "zh_TW";
   }
   if (normalized.startsWith("zh")) return "zh_CN";
-  if (normalized.startsWith("ja")) return "ja";
-  if (normalized.startsWith("ko")) return "ko";
-  if (normalized.startsWith("ru")) return "ru";
   return "en";
 }
 

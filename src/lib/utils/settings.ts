@@ -4,10 +4,7 @@ export type AppLanguage =
   | "auto"
   | "zh_CN"
   | "zh_TW"
-  | "en"
-  | "ja"
-  | "ko"
-  | "ru";
+  | "en";
 export type OpenTab = "common" | "bookmark" | "history";
 export type DefaultOpen = OpenTab | "last";
 
@@ -33,9 +30,6 @@ const LANGUAGE_VALUES = [
   "zh_CN",
   "zh_TW",
   "en",
-  "ja",
-  "ko",
-  "ru",
 ] as const;
 
 function isDefaultOpen(

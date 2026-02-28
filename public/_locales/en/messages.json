@@ -21,11 +21,17 @@
     "nt_back": {
       "message": "Back"
     },
-    "nt_need_permission": {
-      "message": "Permission required"
+    "nt_need_permission_bookmarks": {
+      "message": "Authorize bookmarks access"
     },
-    "nt_permission_desc": {
-      "message": "This extension does not collect personal data. Feel free to grant permission."
+    "nt_permission_desc_bookmarks": {
+      "message": "After authorizing, you can browse or search your saved bookmarks."
+    },
+    "nt_need_permission_history": {
+      "message": "Authorize history access"
+    },
+    "nt_permission_desc_history": {
+      "message": "After authorizing, you can browse or search your history."
     },
     "nt_authorize": {
       "message": "Authorize"
@@ -71,15 +77,6 @@
     },
     "nt_lang_en": {
       "message": "English"
-    },
-    "nt_lang_ja": {
-      "message": "Japanese"
-    },
-    "nt_lang_ko": {
-      "message": "Korean"
-    },
-    "nt_lang_ru": {
-      "message": "Russian"
     },
     "nt_default_common": {
       "message": "Favourites"
@@ -160,10 +157,16 @@
       "message": "History"
     },
     "nt_search_placeholder": {
+      "message": "Search with $1"
+    },
+    "nt_search_placeholder_fallback": {
       "message": "Search"
     },
-    "nt_drag_sort_or_disable": {
-      "message": "Drag to reorder or disable"
+    "nt_drag_to_disable": {
+      "message": "Drag here to disable"
+    },
+    "nt_drag_to_enable_sortable": {
+      "message": "Drag here to enable (sortable)"
     },
     "nt_switch": {
       "message": "Toggle"

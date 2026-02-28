@@ -21,11 +21,17 @@
     "nt_back": {
       "message": "返回"
     },
-    "nt_need_permission": {
-      "message": "需要权限"
+    "nt_need_permission_bookmarks": {
+      "message": "授权访问书签"
     },
-    "nt_permission_desc": {
-      "message": "该插件不收集任何个人数据，请放心授权。"
+    "nt_permission_desc_bookmarks": {
+      "message": "权限后可以浏览或者搜索自己收藏的书签。"
+    },
+    "nt_need_permission_history": {
+      "message": "授权访问历史记录"
+    },
+    "nt_permission_desc_history": {
+      "message": "权限后可以浏览或者搜索历史记录。"
     },
     "nt_authorize": {
       "message": "授权"
@@ -71,15 +77,6 @@
     },
     "nt_lang_en": {
        "message": "English"
-    },
-    "nt_lang_ja": {
-      "message": "日语"
-    },
-    "nt_lang_ko": {
-      "message": "韩语"
-    },
-    "nt_lang_ru": {
-      "message": "俄语"
     },
     "nt_default_common": {
       "message": "常用"
@@ -160,10 +157,16 @@
       "message": "历史记录"
     },
     "nt_search_placeholder": {
+      "message": "通过$1搜索"
+    },
+    "nt_search_placeholder_fallback": {
       "message": "搜索"
     },
-    "nt_drag_sort_or_disable": {
-      "message": "拖拽排序或禁用"
+    "nt_drag_to_disable": {
+      "message": "拖拽到这里禁用"
+    },
+    "nt_drag_to_enable_sortable": {
+      "message": "拖拽到这里激活（可排序）"
     },
     "nt_switch": {
       "message": "开关"
