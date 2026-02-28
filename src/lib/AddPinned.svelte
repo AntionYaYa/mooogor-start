@@ -11,13 +11,14 @@
   import { t } from "@/lib/utils/i18n";
 
   interface Props {
+    isEdit?: boolean;
     urlValue?:string;
     titleValue?:string;
     onSave: (newWebSite: WebSite) => void;
     onclickClose: () => void;
   }
 
-  let {urlValue ,titleValue,onSave, onclickClose }: Props = $props();
+  let { isEdit = false, urlValue ,titleValue,onSave, onclickClose }: Props = $props();
   let inputUrlValue = $state("");
   let inputTitleValue = $state("");
   let inputUrlValueErr = $state(false);
@@ -48,7 +49,7 @@
   }
 </script>
 
-<Popup type='s' title={t("nt_add_pinned_title")} {onclickClose}>
+<Popup type='s' title={isEdit ? t("nt_edit_pinned_title") : t("nt_add_pinned_title")} {onclickClose}>
   <G full>
     <Shake shake={inputUrlValueErr}>
       <Input

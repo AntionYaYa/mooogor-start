@@ -178,6 +178,7 @@
     align-items: center;
     box-sizing: border-box;
     border-radius: var(--r);
+    padding: var(--gap);
   }
   .bkmk_v {
     display: flex;

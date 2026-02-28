@@ -135,6 +135,9 @@
     "nt_add_pinned_title": {
       "message": "添加常用网址"
     },
+    "nt_edit_pinned_title": {
+      "message": "编辑常用网址"
+    },
     "nt_input_url": {
       "message": "*网址"
     },

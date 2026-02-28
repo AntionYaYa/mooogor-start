@@ -22,14 +22,22 @@
     allPinneds: WebSite[] | [];
     newTabOpen?: boolean;
     showAdd: boolean;
+    onopenAdd: () => void;
     oncloseAdd: () => void;
     onUpdate: (items?: WebSite[]) => void;
   }
 
-  let { allPinneds, newTabOpen = false, showAdd,oncloseAdd, onUpdate }: Props =
-    $props();
+  let {
+    allPinneds,
+    newTabOpen = false,
+    showAdd,
+    onopenAdd,
+    oncloseAdd,
+    onUpdate,
+  }: Props = $props();
   let isdarging = $state(false);
   let currentPinned: WebSite | undefined = $state();
+  let openByEdit = $state(false);
 
   let menuX = $state(0);
   let menuY = $state(0);
@@ -67,7 +75,7 @@
   }
 
   async function clickSaveWebSite(newWebSite: WebSite) {
-    if (currentPinned?.id) {
+    if (openByEdit && currentPinned?.id) {
       await updateWebSite({ ...newWebSite, id: currentPinned.id });
     } else {
       await addWebSite(newWebSite);
@@ -76,8 +84,15 @@
   }
 
   function clickEditWebSite() {
-    oncloseAdd()
+    openByEdit = true;
     showMenu = false;
+    onopenAdd();
+  }
+
+  function clickCloseAdd() {
+    openByEdit = false;
+    currentPinned = undefined;
+    oncloseAdd();
   }
   async function clickDeleteWebSite() {
     showMenu = false;
@@ -115,42 +130,47 @@
           >
             <BkmkIcon imgUrl={pinned.url} alt={pinned.title ?? ""} size="l" />
           </a>
-          <!-- <T nowrap align="c" type="s">{pinned.title}</T> -->
+          <T nowrap align="c" type="s">{pinned.title}</T>
         </div>
       {/each}
     </div>
   {:else}
-  <NoData iconName='Sprout' title={t("nt_no_pinned")} text={t("nt_no_pinned_desc")} />
+    <NoData
+      iconName="Sprout"
+      title={t("nt_no_pinned")}
+      text={t("nt_no_pinned_desc")}
+    />
   {/if}
 </div>
 
 {#if showAdd}
   <AddPinned
-    urlValue={currentPinned?.url}
-    titleValue={currentPinned?.title}
+    isEdit={openByEdit}
+    urlValue={openByEdit ? currentPinned?.url : undefined}
+    titleValue={openByEdit ? currentPinned?.title : undefined}
     onSave={clickSaveWebSite}
-    onclickClose={oncloseAdd}
+    onclickClose={clickCloseAdd}
   />
 {/if}
 
 {#if showMenu && currentPinned}
-    <LinkContextMenu
-      x={menuX}
-      y={menuY}
-      url={currentPinned.url}
-      onClose={() => (showMenu = false)}
-    >
-      <Button full onclick={clickEditWebSite}>
+  <LinkContextMenu
+    x={menuX}
+    y={menuY}
+    url={currentPinned.url}
+    onClose={() => (showMenu = false)}
+  >
+    <Button full onclick={clickEditWebSite}>
       <G>
         <T>{t("nt_edit")}</T>
       </G>
-      </Button>
-      <Button full onclick={clickDeleteWebSite}>
+    </Button>
+    <Button full onclick={clickDeleteWebSite}>
       <G>
         <T>{t("nt_delete")}</T>
       </G>
-      </Button>
-    </LinkContextMenu>
+    </Button>
+  </LinkContextMenu>
 {/if}
 
 <style>
@@ -159,8 +179,6 @@
     flex-direction: column;
     width: 100%;
     align-items: center;
-    border-radius: var(--r1);
-    background-color: var(--c-mask);
   }
   .item {
     display: flex;
@@ -207,8 +225,8 @@
   a:active {
     background-color: var(--c-mask1);
   }
-  
-  a:focus{
+
+  a:focus {
     outline: 2px var(--c-text) solid;
   }
   a.ctx {

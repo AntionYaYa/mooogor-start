@@ -135,6 +135,9 @@
     "nt_add_pinned_title": {
       "message": "Add Favourites site"
     },
+    "nt_edit_pinned_title": {
+      "message": "Edit Favourites site"
+    },
     "nt_input_url": {
       "message": "*URL"
     },

@@ -444,6 +444,7 @@
     {allPinneds}
     newTabOpen={effectiveNewTabOpen}
     {showAdd}
+    onopenAdd={() => (showAdd = true)}
     oncloseAdd={()=>showAdd=false}
     onUpdate={(items) => clickUpdatePinneds(items)}
   />

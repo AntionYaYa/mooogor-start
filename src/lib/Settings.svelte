@@ -136,7 +136,7 @@
       openPosOptions,
       setOpenPos,
     )}
-    <!-- {@render tembuttonItem(t("nt_settings_support"), () => {}, t("nt_settings_other_title"), true)} -->
+    {@render tembuttonItem(t("nt_settings_support"), () => {}, t("nt_settings_other_title"))}
   </div>
 {/snippet}
 
