@@ -301,6 +301,7 @@
       {userSettings}
       {currentTabPinned}
       onchangeUserSettings={handleUserSettingsChange}
+      onclickAbout={() => (showAbout = true)}
       onclickSupport={() => (showSupport = true)}
     >
       <div class="top">
@@ -413,7 +414,13 @@
 </main>
 
 {#if showAbout}
-  <About onclickClose={() => (showAbout = false)} />
+  <About
+    onclickClose={() => (showAbout = false)}
+    onclickSupport={() => {
+      showAbout = false;
+      showSupport = true;
+    }}
+  />
 {/if}
 
 {#if showSupport}

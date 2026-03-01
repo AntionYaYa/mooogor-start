@@ -51,9 +51,6 @@
     "nt_settings_version": {
       "message": "Version"
     },
-    "nt_settings_support": {
-      "message": "Support"
-    },
     "nt_support_scan_tip": {
       "message": "scan to support"
     },
@@ -193,18 +190,21 @@
       "message": "Name origin"
     },
     "nt_about_name_origin_desc": {
-      "message": "Mooogor sounds like the Sichuan dialect phrase \"Moge'er\", which means pickpocket. I also used many free and open-source frameworks and libraries while building this project. In daily work, we all benefit directly or indirectly from other developers' contributions, so in that sense, we are all \"Moge'er\"."
+      "message": "Mooogor is a homophone of \"Moge'er,\" a Sichuan phrase from China, which means \"pickpocket.\"\nThe name carries a bit of self-deprecating humor, and it also reflects an attitude. In software development, we all use work created by other developers to some extent: open-source frameworks, utility libraries, design thinking, and various free resources.\nI also used many open-source projects while building Mooogor. I believe you also benefit from these outcomes directly or indirectly in daily work. In a sense, we all \"borrow\" from prior experience and keep creating new value."
     },
     "nt_about_design_goal_title": {
       "message": "Design intent"
     },
     "nt_about_design_goal_desc": {
-      "message": "I reviewed many new tab pages, and most feel like a desktop with lots of utility widgets, such as calendars, tasks, and clocks. In Mooogor Start's design logic, flashy cards may interrupt the original purpose of opening a new tab, so support for such features will have lower priority. Features that help reduce time spent on the new tab will have much higher priority, and your suggestions are welcome."
+      "message": "I have used many new tab pages, and most of them keep getting more complex, like a mini desktop. The features are rich, but they also make it easy to stay on the page and slow down getting started.\nI want the new tab page to be a simple, direct entry point. Open it, quickly find the website you need, and move on instead of being interrupted by extra information.\nSo Mooogor Start will stay restrained and prioritize features that help you start faster, rather than designs that increase dwell time.\nIf you have any ideas or suggestions, feel free to email me:"
     },
     "nt_about_free_title": {
       "message": "Is it free?"
     },
     "nt_about_free_desc": {
-      "message": "Mooogor Start is free. I would only consider charging for features that require cloud services, because cloud providers have costs. Considering security and privacy, I will prioritize offline solutions whenever possible. If Mooogor Start meets your expectations for a new tab page, you can also support me to help keep improvements coming."
+      "message": "Mooogor Start is free.\nIf future features must rely on cloud services (such as cross-device sync), there may be an optional paid plan because cloud services have ongoing costs. For security and privacy, I will prioritize local offline implementations.\nIf Mooogor Start helps you save time, you are also welcome to support it, which gives me more motivation to keep improving this product."
+    },
+    "nt_about_support_button": {
+      "message": "Support Mooogor Start"
     }
   }

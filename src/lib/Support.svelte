@@ -42,7 +42,7 @@
   }
 </script>
 
-<Popup title={t("nt_settings_support")} {onclickClose} type="m">
+<Popup title={t("nt_about_support_button")} {onclickClose} type="m">
   <div class="wrap">
     <Tab {tabs} onclick={(tab) => clickTab(tab)} />
     <div class="qr_box">
