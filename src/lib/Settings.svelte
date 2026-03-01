@@ -12,6 +12,7 @@
     showSetting: boolean;
     userSettings: UserSettings;
     onchangeUserSettings: (userSettings: UserSettings) => void;
+    onclickSupport: () => void;
     currentTabPinned?: boolean;
   }
   let {
@@ -19,6 +20,7 @@
     showSetting,
     userSettings,
     onchangeUserSettings,
+    onclickSupport,
     currentTabPinned = false,
   }: Props = $props();
 
@@ -136,7 +138,11 @@
       openPosOptions,
       setOpenPos,
     )}
-    {@render tembuttonItem(t("nt_settings_support"), () => {}, t("nt_settings_other_title"))}
+    {@render tembuttonItem(
+      t("nt_settings_support"),
+      onclickSupport,
+      t("nt_settings_other_title"),
+    )}
   </div>
 {/snippet}
 

@@ -10,6 +10,7 @@
   import History from "@/lib/History.svelte";
   import Pinneds from "@/lib/Pinneds.svelte";
   import About from "@/lib/About.svelte";
+  import Support from "@/lib/Support.svelte";
   import { hasPermission, requestPermission } from "./methods/getPermission";
   import type { Permission } from "./methods/getPermission";
   import { getBookmarkChildren } from "./methods/getBookmarks";
@@ -54,6 +55,7 @@
   let currentTabPinned = $state(false);
   let showAdd = $state(false);
   let showAbout = $state(false);
+  let showSupport = $state(false);
   let effectiveNewTabOpen = $derived(
     userSettings.newTabOpen || currentTabPinned,
   );
@@ -299,6 +301,7 @@
       {userSettings}
       {currentTabPinned}
       onchangeUserSettings={handleUserSettingsChange}
+      onclickSupport={() => (showSupport = true)}
     >
       <div class="top">
         <div class="bulr">
@@ -411,6 +414,10 @@
 
 {#if showAbout}
   <About onclickClose={() => (showAbout = false)} />
+{/if}
+
+{#if showSupport}
+  <Support onclickClose={() => (showSupport = false)} />
 {/if}
 
 {#snippet headBar()}

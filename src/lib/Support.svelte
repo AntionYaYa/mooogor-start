@@ -1,74 +1,94 @@
 <script lang="ts">
-  import G from "./components/G.svelte";
   import Popup from "./components/Popup.svelte";
-  import { t } from "@/lib/utils/i18n";
+  import Tab from "./components/Tab.svelte";
+  import type { TabItem } from "./components/Tab.svelte";
   import T from "./components/T.svelte";
+  import { t } from "@/lib/utils/i18n";
 
   interface Props {
     onclickClose: () => void;
   }
 
-  type ExtensionRuntime = {
-    runtime?: {
-      getManifest?: () => {
-        version?: string;
-      };
-    };
-  };
+  const payCodeMap = {
+    paypal: {
+      image: "/support/paypal-qr.svg",
+      tip: "PayPal",
+    },
+    wechat: {
+      image: "/support/wechat-qr.svg",
+      tip: "微信",
+    },
+    alipay: {
+      image: "/support/alipay-qr.svg",
+      tip: "支付宝",
+    },
+  } as const;
+
+  type PayType = keyof typeof payCodeMap;
 
   let { onclickClose }: Props = $props();
-  const extensionApi = globalThis as typeof globalThis & {
-    browser?: ExtensionRuntime;
-    chrome?: ExtensionRuntime;
-  };
-  const appVersion =
-    extensionApi.browser?.runtime?.getManifest?.().version ??
-    extensionApi.chrome?.runtime?.getManifest?.().version ??
-    '0.0.0';
+  let tabs: TabItem[] = $state([
+    { key: "paypal", name: "PayPal", sel: true },
+    { key: "wechat", name: "微信", sel: false },
+    { key: "alipay", name: "支付宝", sel: false },
+  ]);
+
+  let currentType = $derived((tabs.find((tab) => tab.sel)?.key ?? "paypal") as PayType);
+
+  function clickTab(tab: TabItem) {
+    tabs.forEach((item) => {
+      item.sel = item.key === tab.key;
+    });
+  }
 </script>
 
-<Popup title={t("nt_settings_about")} {onclickClose} type="m">
-  <G>
-    <G>
-      <G align='c'>
-        <img class="logo" src="/Mooogor.svg" alt="Mooogor2" />
-        <T type="m">V{appVersion}</T>
-      </G>
-    </G>
-  </G>
-  <G  vertical>
-    <G  vertical>
-      <T type="l" bold>{t("nt_about_name_origin_title")}</T>
-      <T type="m" color='var(--c-text-1)'
-        >{t("nt_about_name_origin_desc")}</T
+<Popup title={t("nt_settings_support")} {onclickClose} type="m">
+  <div class="wrap">
+    <Tab {tabs} onclick={(tab) => clickTab(tab)} />
+    <div class="qr_box">
+      <img
+        class="qr_img"
+        src={payCodeMap[currentType].image}
+        alt={payCodeMap[currentType].tip}
+      />
+      <T align="c" type="s" color="var(--c-text-1)"
+        >{payCodeMap[currentType].tip} {t("nt_support_scan_tip")}</T
       >
-    </G>
-    <G  vertical>
-      <T type="l" bold>{t("nt_about_design_goal_title")}</T>
-      <T type="m" color='var(--c-text-1)'
-        >{t("nt_about_design_goal_desc")}</T
-      >
-      <a href="mailto:antion1212@gmail.com" type="Email">
-        <T type="m" color='var(--c-text-1)' >antion1212@gmail.com</T>
-      </a>
-    </G>
-    <G  vertical>
-      <T type="l" bold>{t("nt_about_free_title")}</T>
-      <T type="m" color='var(--c-text-1)'
-        >{t("nt_about_free_desc")}</T
-      >
-    </G>
-    <G full vertical>
-      <T type="m" align="r" bold>Ashton</T>
-    </G>
-  </G>
+    </div>
+  </div>
 </Popup>
 
 <style>
-  .logo {
-    width: 40px;
+  .wrap {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--gap);
   }
-  a{
-    text-decoration-color:var(--c-text-2);
+  .qr_box {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--gap);
+    padding: var(--gap);
+  }
+  .qr_img {
+    width: min(280px, 70vw);
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    border-radius: var(--r1);
+    border: var(--border-1);
+    background-color: var(--c-bg);
+    padding: var(--gap);
+    box-sizing: border-box;
+  }
+  @media (max-width: 720px) {
+    .qr_img {
+      width: min(260px, 82vw);
+    }
   }
 </style>

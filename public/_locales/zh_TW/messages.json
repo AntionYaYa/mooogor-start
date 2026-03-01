@@ -53,6 +53,9 @@
   "nt_settings_support": {
     "message": "贊助"
   },
+  "nt_support_scan_tip": {
+    "message": "掃碼支持"
+  },
   "nt_settings_link_open_title": {
     "message": "連結開啟方式"
   },
