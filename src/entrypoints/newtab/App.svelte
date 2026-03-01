@@ -425,9 +425,9 @@
     <G full>
       <Button align="c" onclick={() => (showAbout = true)}>
         <G>
-          <img class="logo" src="/Mooogor.svg" alt="Mooogor2" />
+          <img class="logo" src="/Mooogor.svg" alt="Mooogor Start" />
         </G>
-        <T>Mooogor 2</T>
+        <T>Mooogor Start</T>
       </Button>
     </G>
     <G>

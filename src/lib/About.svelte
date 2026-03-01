@@ -31,7 +31,7 @@
   <G>
     <G>
       <G align='c'>
-        <img class="logo" src="/Mooogor.svg" alt="Mooogor2" />
+        <img class="logo" src="/Mooogor.svg" alt="Mooogor Start" />
         <T type="m">V{appVersion}</T>
       </G>
     </G>

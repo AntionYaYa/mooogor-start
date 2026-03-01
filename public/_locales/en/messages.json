@@ -1,10 +1,10 @@
 
 {
     "extName": {
-      "message": "Mooogor 2 - Efficient New Tab Launcher"
+      "message": "Mooogor Start - Efficient New Tab Launcher"
     },
     "extDescription": {
-      "message": "Mooogor is a browser new tab page designed to help you enter your next workflow faster and more efficiently, such as opening frequently used websites, searching across sites, or restoring recently closed tabs."
+      "message": "Mooogor Start is a browser new tab page designed to help you enter your next workflow faster and more efficiently, such as opening frequently used websites, searching across sites, or restoring recently closed tabs."
     },
     "nt_title": {
       "message": "New Tab"
@@ -46,7 +46,7 @@
       "message": "Feedback"
     },
     "nt_settings_about": {
-      "message": "About Mooogor 2"
+      "message": "About Mooogor Start"
     },
     "nt_settings_version": {
       "message": "Version"
@@ -199,12 +199,12 @@
       "message": "Design intent"
     },
     "nt_about_design_goal_desc": {
-      "message": "I reviewed many new tab pages, and most feel like a desktop with lots of utility widgets, such as calendars, tasks, and clocks. In Mooogor's design logic, flashy cards may interrupt the original purpose of opening a new tab, so support for such features will have lower priority. Features that help reduce time spent on the new tab will have much higher priority, and your suggestions are welcome."
+      "message": "I reviewed many new tab pages, and most feel like a desktop with lots of utility widgets, such as calendars, tasks, and clocks. In Mooogor Start's design logic, flashy cards may interrupt the original purpose of opening a new tab, so support for such features will have lower priority. Features that help reduce time spent on the new tab will have much higher priority, and your suggestions are welcome."
     },
     "nt_about_free_title": {
       "message": "Is it free?"
     },
     "nt_about_free_desc": {
-      "message": "Mooogor is free. I would only consider charging for features that require cloud services, because cloud providers have costs. Considering security and privacy, I will prioritize offline solutions whenever possible. If Mooogor meets your expectations for a new tab page, you can also support me to help keep improvements coming."
+      "message": "Mooogor Start is free. I would only consider charging for features that require cloud services, because cloud providers have costs. Considering security and privacy, I will prioritize offline solutions whenever possible. If Mooogor Start meets your expectations for a new tab page, you can also support me to help keep improvements coming."
     }
   }
