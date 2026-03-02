@@ -1,32 +1,38 @@
 {
   "en": [
-    { "title": "Google", "url": "https://www.google.com" },
-    { "title": "YouTube", "url": "https://www.youtube.com" },
     { "title": "Gmail", "url": "https://mail.google.com" },
-    { "title": "GitHub", "url": "https://github.com" },
-    { "title": "Reddit", "url": "https://www.reddit.com" },
-    { "title": "Wikipedia", "url": "https://www.wikipedia.org" },
+    { "title": "YouTube", "url": "https://www.youtube.com" },
+    { "title": "Amazon", "url": "https://www.amazon.com" },
+    { "title": "Netflix", "url": "https://www.netflix.com" },
+    { "title": "Facebook", "url": "https://www.facebook.com" },
     { "title": "LinkedIn", "url": "https://www.linkedin.com" },
-    { "title": "X", "url": "https://x.com" }
+    { "title": "Wikipedia", "url": "https://www.wikipedia.org" },
+    { "title": "BBC News", "url": "https://www.bbc.com/news" },
+    { "title": "X", "url": "https://x.com" },
+    { "title": "Reddit", "url": "https://www.reddit.com" }
   ],
   "zh_CN": [
-    { "title": "百度", "url": "https://www.baidu.com" },
-    { "title": "哔哩哔哩", "url": "https://www.bilibili.com" },
-    { "title": "知乎", "url": "https://www.zhihu.com" },
+    { "title": "DeepSeek", "url": "https://chat.deepseek.com" },
+    { "title": "腾讯文档", "url": "https://docs.qq.com" },
     { "title": "微博", "url": "https://weibo.com" },
+    { "title": "知乎", "url": "https://www.zhihu.com" },
+    { "title": "哔哩哔哩", "url": "https://www.bilibili.com" },
     { "title": "淘宝", "url": "https://www.taobao.com" },
     { "title": "京东", "url": "https://www.jd.com" },
-    { "title": "GitHub", "url": "https://github.com" },
-    { "title": "腾讯视频", "url": "https://v.qq.com" }
+    { "title": "抖音", "url": "https://www.douyin.com" },
+    { "title": "小红书", "url": "https://www.xiaohongshu.com" },
+    { "title": "豆瓣", "url": "https://www.douban.com" }
   ],
   "zh_TW": [
-    { "title": "Google", "url": "https://www.google.com.tw" },
-    { "title": "YouTube", "url": "https://www.youtube.com" },
     { "title": "Yahoo 奇摩", "url": "https://tw.yahoo.com" },
-    { "title": "PTT", "url": "https://www.ptt.cc" },
+    { "title": "LINE", "url": "https://line.me" },
     { "title": "Dcard", "url": "https://www.dcard.tw" },
-    { "title": "聯合新聞網", "url": "https://udn.com" },
     { "title": "蝦皮購物", "url": "https://shopee.tw" },
-    { "title": "GitHub", "url": "https://github.com" }
+    { "title": "YouTube", "url": "https://www.youtube.com" },
+    { "title": "Gmail", "url": "https://mail.google.com" },
+    { "title": "104 人力銀行", "url": "https://www.104.com.tw" },
+    { "title": "Facebook", "url": "https://www.facebook.com" },
+    { "title": "Wikipedia", "url": "https://www.wikipedia.org" },
+    { "title": "Instagram", "url": "https://www.instagram.com" }
   ]
 }
