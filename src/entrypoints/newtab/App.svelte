@@ -245,8 +245,6 @@
     }
   }
 
-
-
   function updateSelTab(tab: TabItem) {
     tabs.forEach((item) => {
       item.sel = item.key === tab.key;
@@ -371,15 +369,21 @@
             {#if selTab?.key === "1" && historyStack.length > 0}
               <div in:fly={{ x: -50, duration: 300 }}>
                 <G align="c">
-                  <Button onclick={() => (gridView = !gridView)}>
-                    <G>
-                      <Icon
-                        name={gridView ? "Grid2x2" : "Rows3"}
-                        color="var(--c-text)"
-                        opacity={0.7}
-                      />
-                    </G>
-                  </Button>
+                  {#if gridView}
+                    <Button onclick={() => (gridView = false)} fill>
+                      <Icon name="Rows3" color="var(--c-bg)"/>
+                    </Button>
+                  {:else}
+                    <Button onclick={() => (gridView = true)}>
+                      <G>
+                        <Icon
+                          name="Rows3"
+                          color="var(--c-text)"
+                          opacity={0.7}
+                        />
+                      </G>
+                    </Button>
+                  {/if}
                 </G>
               </div>
             {/if}
@@ -438,17 +442,17 @@
       </Button>
     </G>
     <G>
-    {#if showSetting}
-    <Button onclick={() => (showSetting = !showSetting)} fill>
-        <Icon name="Settings2" color="var(--c-bg)" />
-    </Button>
+      {#if showSetting}
+        <Button onclick={() => (showSetting = !showSetting)} fill>
+          <Icon name="Settings2" color="var(--c-bg)" />
+        </Button>
       {:else}
-      <Button onclick={() => (showSetting = !showSetting)}>
-        <G>
-          <Icon name="Settings2" color="var(--c-text)" />
-        </G>
-      </Button>
-    {/if}
+        <Button onclick={() => (showSetting = !showSetting)}>
+          <G>
+            <Icon name="Settings2" color="var(--c-text)" />
+          </G>
+        </Button>
+      {/if}
     </G>
   </G>
 {/snippet}
@@ -459,7 +463,7 @@
     newTabOpen={effectiveNewTabOpen}
     {showAdd}
     onopenAdd={() => (showAdd = true)}
-    oncloseAdd={()=>showAdd=false}
+    oncloseAdd={() => (showAdd = false)}
     onUpdate={(items) => clickUpdatePinneds(items)}
   />
 {/snippet}
