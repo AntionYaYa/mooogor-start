@@ -9,6 +9,7 @@
   import DragToPinneds from "./DragToPinneds.svelte";
   import { t } from "@/lib/utils/i18n";
   import G from "./components/G.svelte";
+  import Icon from "./components/Icon.svelte";
 
   interface Props {
     bookmarkNode: BookmarkNode;
@@ -124,6 +125,9 @@
           </G>
           <G full align="c">
             <T nowrap type="m">{bkmk.title}</T>
+          </G>
+          <G align="c">
+            <Icon name="ChevronRight" color="var(--c-text-1)"opacity={0.7} />
           </G>
         </button>
       {/if}
