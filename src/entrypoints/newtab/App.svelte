@@ -15,7 +15,12 @@
   import type { Permission } from "./methods/getPermission";
   import { getBookmarkChildren } from "./methods/getBookmarks";
   import type { BookmarkNode } from "./methods/getBookmarks";
-  import { getAllWebSite } from "@/lib/DB/DB";
+  import defaultWebSitesRaw from "@/lib/DB/defaultWebSites.json";
+  import {
+    ensureDefaultWebSites,
+    getAllWebSite,
+    getDomainFromUrl,
+  } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import { fly, slide } from "svelte/transition";
   import { onMount, tick } from "svelte";
@@ -26,8 +31,8 @@
     saveSettings,
     DEFAULT_SETTINGS,
   } from "@/lib/utils/settings";
-  import type { OpenTab, UserSettings } from "@/lib/utils/settings";
-  import { setLanguage, t } from "@/lib/utils/i18n";
+  import type { AppLanguage, OpenTab, UserSettings } from "@/lib/utils/settings";
+  import { getEffectiveLanguage, setLanguage, t } from "@/lib/utils/i18n";
 
   let showSetting = $state(false);
   let allPinneds: WebSite[] = $state([]);
@@ -82,6 +87,39 @@
     return undefined;
   }
 
+  type DefaultWebSiteRaw = {
+    title?: string;
+    url: string;
+  };
+
+  type DefaultWebSitesByLanguage = Record<
+    Exclude<AppLanguage, "auto">,
+    DefaultWebSiteRaw[]
+  >;
+
+  const defaultWebSites = defaultWebSitesRaw as DefaultWebSitesByLanguage;
+
+  function buildDefaultWebSites(
+    language: Exclude<AppLanguage, "auto">,
+  ): Omit<WebSite, "id">[] {
+    const sites = defaultWebSites[language] ?? defaultWebSites.en;
+    const result: Omit<WebSite, "id">[] = [];
+    for (let i = 0; i < sites.length; i++) {
+      const site = sites[i];
+      try {
+        result.push({
+          domain: getDomainFromUrl(site.url),
+          url: site.url,
+          title: site.title,
+          order: i,
+        });
+      } catch {
+        continue;
+      }
+    }
+    return result;
+  }
+
   async function rememberLastOpenTab(tab: TabItem) {
     const nextLastOpenTab = tabKeyToOpenTab(tab.key);
     if (!nextLastOpenTab) return;
@@ -122,6 +160,8 @@
 
   onMount(async () => {
     userSettings = await loadSettings();
+    const language = getEffectiveLanguage(userSettings.language);
+    await ensureDefaultWebSites(buildDefaultWebSites(language));
     await refreshCurrentTabPinnedState();
     await setLanguage(userSettings.language);
     updateTabLabels();

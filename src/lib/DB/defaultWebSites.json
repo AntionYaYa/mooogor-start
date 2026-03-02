@@ -1,0 +1,32 @@
+{
+  "en": [
+    { "title": "Google", "url": "https://www.google.com" },
+    { "title": "YouTube", "url": "https://www.youtube.com" },
+    { "title": "Gmail", "url": "https://mail.google.com" },
+    { "title": "GitHub", "url": "https://github.com" },
+    { "title": "Reddit", "url": "https://www.reddit.com" },
+    { "title": "Wikipedia", "url": "https://www.wikipedia.org" },
+    { "title": "LinkedIn", "url": "https://www.linkedin.com" },
+    { "title": "X", "url": "https://x.com" }
+  ],
+  "zh_CN": [
+    { "title": "百度", "url": "https://www.baidu.com" },
+    { "title": "哔哩哔哩", "url": "https://www.bilibili.com" },
+    { "title": "知乎", "url": "https://www.zhihu.com" },
+    { "title": "微博", "url": "https://weibo.com" },
+    { "title": "淘宝", "url": "https://www.taobao.com" },
+    { "title": "京东", "url": "https://www.jd.com" },
+    { "title": "GitHub", "url": "https://github.com" },
+    { "title": "腾讯视频", "url": "https://v.qq.com" }
+  ],
+  "zh_TW": [
+    { "title": "Google", "url": "https://www.google.com.tw" },
+    { "title": "YouTube", "url": "https://www.youtube.com" },
+    { "title": "Yahoo 奇摩", "url": "https://tw.yahoo.com" },
+    { "title": "PTT", "url": "https://www.ptt.cc" },
+    { "title": "Dcard", "url": "https://www.dcard.tw" },
+    { "title": "聯合新聞網", "url": "https://udn.com" },
+    { "title": "蝦皮購物", "url": "https://shopee.tw" },
+    { "title": "GitHub", "url": "https://github.com" }
+  ]
+}

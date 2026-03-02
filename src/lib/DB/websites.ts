@@ -1,6 +1,8 @@
 import { db } from "./database";
 import type { WebSite } from "./database";
 
+const WEBSITES_SEEDED_KEY = "websites_seeded_v1";
+
 export async function addWebSite(webSite: Omit<WebSite, "id">) {
   const now = Date.now();
   const count = await db.webSites.count();
@@ -41,5 +43,29 @@ export async function updateWebSitesOrder(items: (WebSite & { id: number })[]) {
     for (let i = 0; i < items.length; i++) {
       await db.webSites.update(items[i].id, { order: i, updateAt: now });
     }
+  });
+}
+
+export async function ensureDefaultWebSites(
+  defaults: Omit<WebSite, "id">[],
+) {
+  await db.transaction("rw", db.settings, db.webSites, async () => {
+    const seeded = await db.settings.get(WEBSITES_SEEDED_KEY);
+    if (seeded?.value === true) return;
+
+    const count = await db.webSites.count();
+    if (count === 0 && defaults.length > 0) {
+      const now = Date.now();
+      await db.webSites.bulkAdd(
+        defaults.map((site, i) => ({
+          ...site,
+          order: site.order ?? i,
+          createAt: now,
+          updateAt: now,
+        })),
+      );
+    }
+
+    await db.settings.put({ key: WEBSITES_SEEDED_KEY, value: true });
   });
 }
