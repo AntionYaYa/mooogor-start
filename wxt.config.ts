@@ -15,9 +15,6 @@ export default defineConfig({
     default_locale: 'zh_CN',
     version,
     version_name: `V${version}`,
-    chrome_url_overrides: {
-      page_to_override: 'entrypoints/newtab/index.html',
-    },
     optional_permissions: [
       "bookmarks",
       "history"
