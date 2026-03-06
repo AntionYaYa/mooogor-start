@@ -602,7 +602,6 @@
       rgba(var(--c-bg-rgb), 1),
       rgba(var(--c-bg-rgb), 0)
     );
-    border-radius: var(--r1);
   }
   main {
     display: flex;

@@ -258,8 +258,10 @@
     height: 100%;
     box-sizing: border-box;
 
-    /* background: url(../../assets/bg3.jpg); */
     background-color: var(--c-bg1);
+    /* background: url(../../public/bg/bg2.png);
+    background-position: center;
+    background-size: cover; */
 
     position: relative;
     overflow: hidden;

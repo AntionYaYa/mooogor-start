@@ -1,38 +1,38 @@
 {
   "en": [
-    { "title": "Gmail", "url": "https://mail.google.com" },
-    { "title": "YouTube", "url": "https://www.youtube.com" },
-    { "title": "Amazon", "url": "https://www.amazon.com" },
-    { "title": "Netflix", "url": "https://www.netflix.com" },
-    { "title": "Facebook", "url": "https://www.facebook.com" },
-    { "title": "LinkedIn", "url": "https://www.linkedin.com" },
-    { "title": "Wikipedia", "url": "https://www.wikipedia.org" },
-    { "title": "BBC News", "url": "https://www.bbc.com/news" },
-    { "title": "X", "url": "https://x.com" },
-    { "title": "Reddit", "url": "https://www.reddit.com" }
+    { "title": "Gmail", "url": "https://mail.google.com/mail/u/0/#inbox" },
+    { "title": "YouTube", "url": "https://www.youtube.com/feed/subscriptions" },
+    { "title": "Amazon", "url": "https://www.amazon.com/" },
+    { "title": "Netflix", "url": "https://www.netflix.com/browse" },
+    { "title": "Spotify", "url": "https://open.spotify.com/" },
+    { "title": "Instagram", "url": "https://www.instagram.com/" },
+    { "title": "Reddit", "url": "https://www.reddit.com/" },
+    { "title": "TikTok", "url": "https://www.tiktok.com/foryou" },
+    { "title": "ChatGPT", "url": "https://chatgpt.com/" },
+    { "title": "X", "url": "https://x.com/home" },
+    { "title": "Temu", "url": "https://www.temu.com/" }
   ],
   "zh_CN": [
-    { "title": "DeepSeek", "url": "https://chat.deepseek.com" },
-    { "title": "腾讯文档", "url": "https://docs.qq.com" },
-    { "title": "微博", "url": "https://weibo.com" },
-    { "title": "知乎", "url": "https://www.zhihu.com" },
-    { "title": "哔哩哔哩", "url": "https://www.bilibili.com" },
-    { "title": "淘宝", "url": "https://www.taobao.com" },
-    { "title": "京东", "url": "https://www.jd.com" },
-    { "title": "抖音", "url": "https://www.douyin.com" },
-    { "title": "小红书", "url": "https://www.xiaohongshu.com" },
-    { "title": "豆瓣", "url": "https://www.douban.com" }
+    { "title": "DeepSeek", "url": "https://chat.deepseek.com/" },
+    { "title": "腾讯文档", "url": "https://docs.qq.com/desktop/" },
+    { "title": "微博", "url": "https://weibo.com/" },
+    { "title": "知乎", "url": "https://www.zhihu.com/follow" },
+    { "title": "哔哩哔哩", "url": "https://www.bilibili.com/" },
+    { "title": "淘宝", "url": "https://www.taobao.com/" },
+    { "title": "京东", "url": "https://www.jd.com/" },
+    { "title": "抖音", "url": "https://www.douyin.com/" },
+    { "title": "小红书", "url": "https://www.xiaohongshu.com/" },
+    { "title": "豆瓣", "url": "https://www.douban.com/" }
   ],
   "zh_TW": [
-    { "title": "Yahoo 奇摩", "url": "https://tw.yahoo.com" },
-    { "title": "LINE", "url": "https://line.me" },
-    { "title": "Dcard", "url": "https://www.dcard.tw" },
-    { "title": "蝦皮購物", "url": "https://shopee.tw" },
-    { "title": "YouTube", "url": "https://www.youtube.com" },
-    { "title": "Gmail", "url": "https://mail.google.com" },
-    { "title": "104 人力銀行", "url": "https://www.104.com.tw" },
-    { "title": "Facebook", "url": "https://www.facebook.com" },
-    { "title": "Wikipedia", "url": "https://www.wikipedia.org" },
-    { "title": "Instagram", "url": "https://www.instagram.com" }
+    { "title": "Yahoo 奇摩", "url": "https://tw.yahoo.com/" },
+    { "title": "LINE", "url": "https://line.me/" },
+    { "title": "Dcard", "url": "https://www.dcard.tw/f" },
+    { "title": "蝦皮購物", "url": "https://shopee.tw/" },
+    { "title": "YouTube", "url": "https://www.youtube.com/" },
+    { "title": "Gmail", "url": "https://mail.google.com/mail/u/0/#inbox" },
+    { "title": "Instagram", "url": "https://www.instagram.com/" },
+    { "title": "Reddit", "url": "https://www.reddit.com/" },
+    { "title": "TikTok", "url": "https://www.tiktok.com/foryou" }
   ]
 }
