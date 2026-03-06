@@ -53,6 +53,24 @@
   "nt_support_scan_tip": {
     "message": "掃碼支持"
   },
+  "nt_support_way_wechat": {
+    "message": "微信"
+  },
+  "nt_support_way_paypal": {
+    "message": "PayPal"
+  },
+  "nt_support_way_alipay": {
+    "message": "支付寶"
+  },
+  "nt_support_wechat_scan_hint": {
+    "message": "使用微信 App 掃碼"
+  },
+  "nt_support_paypal_scan_hint": {
+    "message": "使用相機掃碼，或點擊二維碼跳轉"
+  },
+  "nt_support_alipay_scan_hint": {
+    "message": "使用支付寶 App 掃碼"
+  },
   "nt_settings_link_open_title": {
     "message": "連結開啟方式"
   },

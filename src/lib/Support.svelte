@@ -9,40 +9,53 @@
     onclickClose: () => void;
   }
 
-  const supportWays = [
-    {
-      key: "wechat",
-      name: "微信",
-      image: "/support/wechat-qr.jpg",
-      tip: "微信",
-    },
+  type SupportWayKey = "paypal" | "wechat" | "alipay";
+  type SupportWay = {
+    key: SupportWayKey;
+    nameKey: string;
+    image: string;
+    scanHintKey: string;
+    link?: string;
+  };
+
+  const supportWays: SupportWay[] = [
     {
       key: "paypal",
-      name: "PayPal",
+      nameKey: "nt_support_way_paypal",
       image: "/support/paypal-qr.jpg",
-      tip: "PayPal",
+      scanHintKey: "nt_support_paypal_scan_hint",
+      link: "https://www.paypal.com/ncp/payment/PYFARAAQ4KQYW",
     },
-  ] as const;
+    {
+      key: "wechat",
+      nameKey: "nt_support_way_wechat",
+      image: "/support/wechat-qr.jpg",
+      scanHintKey: "nt_support_wechat_scan_hint",
+    },
+    {
+      key: "alipay",
+      nameKey: "nt_support_way_alipay",
+      image: "/support/alipay-qr.jpg",
+      scanHintKey: "nt_support_alipay_scan_hint",
+    },
+  ];
 
   let { onclickClose }: Props = $props();
-  let supportTabs: TabItem[] = $state(
-    supportWays.map((item, index) => ({
+  let currentSupportKey = $state<SupportWayKey>(supportWays[0].key);
+  let supportTabs: TabItem[] = $derived(
+    supportWays.map((item) => ({
       key: item.key,
-      name: item.name,
-      sel: index === 0,
+      name: t(item.nameKey),
+      sel: item.key === currentSupportKey,
     })),
   );
-  let currentSupportKey = $state<string>(supportWays[0].key);
   let currentSupportWay = $derived(
     supportWays.find((item) => item.key === currentSupportKey) ?? supportWays[0],
   );
 
   function clickSupportTab(tab: TabItem) {
-    if (tab.sel) return;
-    supportTabs.forEach((item) => {
-      item.sel = item.key === tab.key;
-    });
-    currentSupportKey = tab.key;
+    if (tab.key === currentSupportKey) return;
+    currentSupportKey = tab.key as SupportWayKey;
   }
 </script>
 
@@ -50,13 +63,28 @@
   <div class="wrap">
     <Tab tabs={supportTabs} onclick={(tab) => clickSupportTab(tab)} />
     <div class="qr_box">
-      <img
-        class="qr_img"
-        src={currentSupportWay.image}
-        alt={currentSupportWay.tip}
-      />
+      {#if currentSupportWay.link}
+        <a
+          class="qr_link"
+          href={currentSupportWay.link}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <img
+            class="qr_img qr_img_link"
+            src={currentSupportWay.image}
+            alt={t(currentSupportWay.nameKey)}
+          />
+        </a>
+      {:else}
+        <img
+          class="qr_img"
+          src={currentSupportWay.image}
+          alt={t(currentSupportWay.nameKey)}
+        />
+      {/if}
       <T align="c" type="s" color="var(--c-text-1)"
-        >{currentSupportWay.tip} {t("nt_support_scan_tip")}</T
+        >{t(currentSupportWay.scanHintKey)}</T
       >
     </div>
   </div>
@@ -88,5 +116,12 @@
     background-color: var(--c-bg);
     padding: var(--gap);
     box-sizing: border-box;
+  }
+  .qr_link {
+    display: flex;
+    border-radius: var(--r1);
+  }
+  .qr_img_link {
+    cursor: pointer;
   }
 </style>
