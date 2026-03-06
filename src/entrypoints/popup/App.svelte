@@ -1,13 +1,24 @@
 <script lang="ts">
- import {
+  import { onMount } from "svelte";
+  import {
     addWebSite,
   } from "@/lib/DB/DB";
 
- async function getActiveTab() {
-  const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-  return tabs[0];
-}
-import validator from "validator";
+  async function getActiveTab() {
+    const [lastFocusedTab] = await browser.tabs.query({
+      active: true,
+      lastFocusedWindow: true,
+    });
+    if (lastFocusedTab) return lastFocusedTab;
+
+    const [currentTab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    return currentTab;
+  }
+
+  import validator from "validator";
   import { getDomainFromUrl } from "@/lib/DB/DB";
   import Button from "@/lib/components/Button.svelte";
   import Input from "@/lib/components/Input.svelte";
@@ -20,13 +31,18 @@ import validator from "validator";
   let inputTitleValue = $state("");
   let inputUrlValueErr = $state(false);
 
-  onMount(async()=>{
-    const tab =  await getActiveTab()
-    if (tab) {
-      inputUrlValue = tab.url??''
-      inputTitleValue = tab.title??''
+  onMount(async () => {
+    try {
+      const tab = await getActiveTab();
+      if (tab) {
+        inputUrlValue = tab.url ?? "";
+        inputTitleValue = tab.title ?? "";
+      }
+    } catch {
+      inputUrlValue = "";
+      inputTitleValue = "";
     }
-  })
+  });
 
   async function clickSave() {
     inputUrlValueErr = false;
@@ -37,7 +53,7 @@ import validator from "validator";
         title: inputTitleValue.trim(),
       };
       await addWebSite(newWebSite);
-      window.close()
+      window.close();
     } else {
       inputUrlValueErr = true;
     }

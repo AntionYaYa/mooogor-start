@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import validator from "validator";
   import type { WebSite } from "@/lib/DB/DB";
   import { getDomainFromUrl } from "@/lib/DB/DB";

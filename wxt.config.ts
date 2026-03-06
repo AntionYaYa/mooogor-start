@@ -20,6 +20,7 @@ export default defineConfig({
       "history"
     ],
     permissions: [
+      "activeTab",
       "favicon",
     ],
   },
