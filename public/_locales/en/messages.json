@@ -1,10 +1,10 @@
 
 {
     "extName": {
-      "message": "Mooogor Start - Efficient New Tab Launcher"
+      "message": "Mooogor Start – Efficient New Tab"
     },
     "extDescription": {
-      "message": "Mooogor Start is a new tab page built to help you jump into your next task faster—open frequently used sites, search across sources, or restore recently closed tabs."
+      "message": "An offline, fast, minimalist, and practical new tab that helps you quickly start your next workflow, such as opening frequently used sites, searching across multiple engines, and restoring browsing history."
     },
     "nt_title": {
       "message": "New Tab"
