@@ -3,7 +3,7 @@
   import Tab from "./components/Tab.svelte";
   import type { TabItem } from "./components/Tab.svelte";
   import T from "./components/T.svelte";
-  import { t } from "@/lib/utils/i18n";
+  import { getEffectiveLanguage, t } from "@/lib/utils/i18n";
 
   interface Props {
     onclickClose: () => void;
@@ -40,8 +40,15 @@
     },
   ];
 
+  function getDefaultSupportKey(): SupportWayKey {
+    const language = getEffectiveLanguage();
+    return language === "zh_CN"
+      ? "wechat"
+      : "paypal";
+  }
+
   let { onclickClose }: Props = $props();
-  let currentSupportKey = $state<SupportWayKey>(supportWays[0].key);
+  let currentSupportKey = $state<SupportWayKey>(getDefaultSupportKey());
   let supportTabs: TabItem[] = $derived(
     supportWays.map((item) => ({
       key: item.key,
