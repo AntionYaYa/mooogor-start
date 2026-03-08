@@ -343,23 +343,9 @@
       onclickSupport={() => (showSupport = true)}
     >
       <div class="top">
-        <div class="bulr">
-          {#each Array.from({ length: 10 }, (_, i) => i) as i}
-            <span
-              style="
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: {(i / 10) * 100}%;
-            backdrop-filter: blur({(10 - i) * 1.1}px);
-            opacity: {1 - i / 10};
-            pointer-events: none;
-          "
-            ></span>
-          {/each}
-        </div>
         {@render headBar()}
+      </div>
+      <div class="search"> 
         <Search
           newTabOpen={effectiveNewTabOpen}
           searchBookmarks={userSettings.searchBookmarks}
@@ -577,31 +563,23 @@
     box-sizing: border-box;
   }
   .top {
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: var(--gap);
-    z-index: 2;
   }
-  .bulr {
-    position: absolute;
-    top: 0;
-    left: 0;
+  .search{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     width: 100%;
-    height: 100%;
-    z-index: -1;
-    overflow: hidden;
-    /* top black, bottom transparent black */
-    background: linear-gradient(
-      to bottom,
-      rgba(var(--c-bg-rgb), 1),
-      rgba(var(--c-bg-rgb), 0)
-    );
+    min-width: 200px;
+    max-width: 600px;
+    padding: var(--gap);
+    position: relative;
+    height: 60px;
   }
   main {
     display: flex;
@@ -611,20 +589,21 @@
     background-size: cover;
     background-repeat: no-repeat;
     align-items: flex-start;
-    background-color: var(--c-bg);
   }
 
   .content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 128px var(--gap) var(--gap) var(--gap);
+    padding:var(--gap);
     width: 100%;
     max-width: 1280px;
     box-sizing: border-box;
     height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
+    background: linear-gradient(180deg, var(--c-mask), rgba(0,0,0,0));
+    border-radius: var(--r4);
   }
 
   /* On screens smaller than 1024px, use full width */

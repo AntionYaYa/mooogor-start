@@ -1,9 +1,9 @@
 @media (prefers-color-scheme: dark) {
 
   :root {
-    --c-bg1: rgb(60, 60, 60);
-    --c-bg: rgb(50, 50, 50);
-    --c-bg-1: #1b1b1d;
+    --c-bg1: #3c3d49;
+    --c-bg: #292A33;
+    --c-bg-1: rgb(40, 40, 40);;
     --c-bg-rgb: 60, 60, 60;
 
     --c-text: rgb(227, 227, 227);
@@ -15,6 +15,11 @@
     --c-mask: rgba(227, 227, 227, 0.05);
     --c-mask-1: rgba(0, 0, 0, 0.1);
 
+    --c-main: #22DD8E;
+    --c-main-1: #00A692;
+
+    --c-main-3: rgba(34, 221, 142,0.3);
+    
     --c-green: rgb(25, 212, 134);
   }
 }
@@ -36,6 +41,9 @@
     --c-mask: rgba(0, 0, 0, 0.05);
     --c-mask-1: rgba(0, 0, 0, 0.1);
 
+    --c-main-bottom: #00A692;
+    --c-main-top: #22DD8E;
+    
     --c-green: rgb(25, 212, 134);
   }
 }

@@ -95,8 +95,8 @@
 
 <div class="layout">
   <div class="left" class:shrink={showSetting}>
-    <div class="apge_box" class:radius={showSetting}>
-      {@render children()}
+    <div class="app_box" class:radius={showSetting}>
+        {@render children()}
     </div>
   </div>
   {#if showSetting}
@@ -229,7 +229,7 @@
     justify-content: space-between;
     width: 100%;
     box-sizing: border-box;
-    background-color: var(--c-bg1);
+    background-color: var(--c-mask);
     border: none;
     border-radius: var(--r1);
     padding: var(--gap);
@@ -250,21 +250,16 @@
     flex-direction: column;
     align-items: flex-start;
   }
-  .apge_box {
+  .app_box {
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-
-    background-color: var(--c-bg1);
-    /* background: url(../../public/bg/bg2.png);
-    background-position: center;
-    background-size: cover; */
-
     position: relative;
     overflow: hidden;
+    background: radial-gradient(circle at bottom, var(--c-main-3) 0%, var(--c-bg) 50%);
   }
   .radius {
     border-radius: var(--r1);
@@ -278,9 +273,7 @@
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    position: relative;
     align-items: center;
-    background-color: var(--c-bg);
     transition: padding 0.3s ease-out;
   }
   .setting {

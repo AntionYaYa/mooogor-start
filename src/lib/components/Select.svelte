@@ -118,7 +118,7 @@
 		justify-content: space-between;
 		width: 100%;
 		box-sizing: border-box;
-		background-color: var(--c-bg1);
+		background-color: var(--c-mask);
 		border: none;
 		border-radius: var(--r1);
 		padding: var(--gap);

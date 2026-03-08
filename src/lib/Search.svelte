@@ -441,8 +441,7 @@
   }
 </script>
 
-<G full align="c">
-  <div class="search_g">
+  <div class="search_g" class:bg={searchAreaFocused && bookmarksResults.length}>
     {@render temInputGroup()}
     {#if searchAreaFocused &&
       ((searchBookmarksEnabled &&
@@ -481,33 +480,34 @@
       </div>
     {/if}
   </div>
-</G>
 
 {#snippet temInputGroup()}
-  <div class="input_group">
-    {#if !showMoreEngines}
-      <input
-        name="Search"
-        class="input"
-        bind:this={searchEl}
-        bind:value={inputValue}
-        type="search"
-        placeholder={enabledEngines[0]?.title
-          ? t("nt_search_placeholder", enabledEngines[0].title)
-          : t("nt_search_placeholder_fallback")}
-        oncompositionstart={() => (isComposing = true)}
-        oncompositionend={(e) => {
-          isComposing = false;
-          suppressNextEnter = true;
-          searchInput((e.currentTarget as HTMLInputElement).value);
-        }}
-        onfocus={handleInputFocus}
-        onblur={handleInputBlur}
-        oninput={() => searchInput(inputValue)}
-        onkeyup={inputKey}
-      />
-    {/if}
-    {@render temEngines()}
+  <div class="input_group_border">
+    <div class="input_group">
+      {#if !showMoreEngines}
+        <input
+          name="Search"
+          class="input"
+          bind:this={searchEl}
+          bind:value={inputValue}
+          type="search"
+          placeholder={enabledEngines[0]?.title
+            ? t("nt_search_placeholder", enabledEngines[0].title)
+            : t("nt_search_placeholder_fallback")}
+          oncompositionstart={() => (isComposing = true)}
+          oncompositionend={(e) => {
+            isComposing = false;
+            suppressNextEnter = true;
+            searchInput((e.currentTarget as HTMLInputElement).value);
+          }}
+          onfocus={handleInputFocus}
+          onblur={handleInputBlur}
+          oninput={() => searchInput(inputValue)}
+          onkeyup={inputKey}
+        />
+      {/if}
+      {@render temEngines()}
+    </div>
   </div>
   {#if showMoreEngines}
     {@render temMoreEngines()}
@@ -650,14 +650,19 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    /* padding: var(--gap); */
-    background-color: var(--c-bg);
-    border-radius: var(--r1);
     width: 100%;
-    min-width: 200px;
-    max-width: 600px;
     box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    padding: var(--gap);
+    border-radius: var(--r2);
   }
+  .bg{
+    background-color: var(--c-bg1);
+  }
+
   .list {
     display: flex;
     gap: var(--gap);
@@ -674,20 +679,28 @@
     padding: var(--gap) 0;
   }
 
+  .input_group_border {
+    width: 100%;
+    padding: 2px;
+    box-sizing: border-box;
+    border-radius: var(--r1);
+    background: transparent;
+  }
+
+  .input_group_border:has(input:focus) {
+    background: linear-gradient(0deg, var(--c-main-1), var(--c-main));
+  }
+
   .input_group {
     display: flex;
     flex-direction: row;
     align-items: center;
-    border-radius: calc(var(--r) + var(--gap));
+    border-radius: calc(var(--r1) - 2px);
     padding: var(--gap);
+    background-color: var(--c-bg1);
     width: 100%;
     box-sizing: border-box;
     justify-content: flex-end;
-  }
-
-  .input_group:has(input:focus) {
-    outline: 2px solid var(--c-text);
-    /* outline: none; */
   }
   .input {
     color: var(--c-text);
