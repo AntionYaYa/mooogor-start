@@ -18,11 +18,15 @@ export interface WebSite {
   updateAt?: number;
 }
 
+export const ENGINE_CATEGORY_KEYS = ["1", "2", "3", "4", "5", "6"] as const;
+export type EngineCategory = (typeof ENGINE_CATEGORY_KEYS)[number];
+
 export interface Engine {
   id?: number; // 自增主键，新增时不需要提供
   title?: string;
   engineUrl: string;
   faviconUrl: string;
+  category?: EngineCategory; // 搜索分类，默认综合（1）
   enabled?: boolean;
   order?: number; // 排序顺序，越小越靠前
   createAt?: number;
@@ -47,3 +51,21 @@ db.version(1).stores({
   engines: "++id,domain",
   settings: "key",
 });
+
+db.version(2)
+  .stores({
+    favicons: "domain",
+    webSites: "++id,domain",
+    engines: "++id,domain,category,enabled,order",
+    settings: "key",
+  })
+  .upgrade(async (tx) => {
+    await tx
+      .table("engines")
+      .toCollection()
+      .modify((engine: Engine) => {
+        if (!engine.category) {
+          engine.category = "1";
+        }
+      });
+  });

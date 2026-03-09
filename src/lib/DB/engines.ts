@@ -1,11 +1,21 @@
 import { db } from "./database";
-import type { Engine } from "./database";
+import type { Engine, EngineCategory } from "./database";
+
+function normalizeEngineCategory(category?: string): EngineCategory {
+  if (category === "2") return "2";
+  if (category === "3") return "3";
+  if (category === "4") return "4";
+  if (category === "5") return "5";
+  if (category === "6") return "6";
+  return "1";
+}
 
 export async function addEngine(engine: Omit<Engine, "id">) {
   const now = Date.now();
   const count = await db.engines.count();
   return await db.engines.add({
     ...engine,
+    category: normalizeEngineCategory(engine.category),
     order: engine.order ?? count,
     createAt: now,
     updateAt: now,
@@ -17,6 +27,7 @@ export async function updateEngine(engine: Engine & { id: number }) {
   const existing = await db.engines.get(engine.id);
   return await db.engines.put({
     ...engine,
+    category: normalizeEngineCategory(engine.category ?? existing?.category),
     createAt: existing?.createAt ?? engine.createAt ?? now,
     updateAt: now,
   });
@@ -85,6 +96,17 @@ export async function updateEnginesState(
   });
 }
 
+export async function updateEngineCategory(
+  id: number,
+  category: EngineCategory,
+) {
+  const now = Date.now();
+  await db.engines.update(id, {
+    category: normalizeEngineCategory(category),
+    updateAt: now,
+  });
+}
+
 export async function ensureDefaultEngines(
   defaults: Omit<Engine, "id">[],
 ) {
@@ -95,6 +117,7 @@ export async function ensureDefaultEngines(
   await db.engines.bulkAdd(
     defaults.map((engine, i) => ({
       ...engine,
+      category: normalizeEngineCategory(engine.category),
       enabled: engine.enabled ?? true,
       order: engine.order ?? i,
       createAt: now,

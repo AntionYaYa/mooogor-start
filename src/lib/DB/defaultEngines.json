@@ -3,6 +3,7 @@
     "title": "Google",
     "engineUrl": "https://www.google.com/search?q=%s",
     "faviconKey": "Google",
+    "category": "1",
     "enabled": true,
     "enabledByLanguage": {
       "default": true,
@@ -14,6 +15,7 @@
     "title": "Bing",
     "engineUrl": "https://www.bing.com/search?q=%s",
     "faviconKey": "Bing",
+    "category": "1",
     "enabled": true,
     "enabledByLanguage": {
       "default": true,
@@ -25,6 +27,7 @@
     "title": "百度",
     "engineUrl": "https://www.baidu.com/s?wd=%s",
     "faviconKey": "Baidu",
+    "category": "1",
     "enabled": true,
     "enabledByLanguage": {
       "default": false,
@@ -36,6 +39,7 @@
     "title": "Yahoo",
     "engineUrl": "https://search.yahoo.com/search?p=%s",
     "faviconKey": "Yahoo",
+    "category": "1",
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
@@ -46,6 +50,7 @@
     "title": "Yandex",
     "engineUrl": "https://yandex.com/search/?text=%s",
     "faviconKey": "Yandex",
+    "category": "1",
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
@@ -56,6 +61,7 @@
     "title": "DuckDuckGo",
     "engineUrl": "https://duckduckgo.com/?q=%s",
     "faviconKey": "DuckDuckGo",
+    "category": "1",
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
@@ -66,6 +72,7 @@
     "title": "搜狗",
     "engineUrl": "https://www.sogou.com/web?query=%s",
     "faviconKey": "Sougou",
+    "category": "1",
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
@@ -77,6 +84,7 @@
     "title": "360",
     "engineUrl": "https://www.so.com/s?q=%s",
     "faviconKey": "Qihu360",
+    "category": "1",
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
@@ -88,6 +96,7 @@
     "title": "Naver",
     "engineUrl": "https://search.naver.com/search.naver?query=%s",
     "faviconKey": "Naver",
+    "category": "1",
     "enabled": false,
     "enabledByLanguage": {
       "default": false,
@@ -98,6 +107,7 @@
     "title": "Perplexity",
     "engineUrl": "https://www.perplexity.ai/search?q=%s",
     "faviconKey": "Perplexity",
+    "category": "1",
     "enabled": true,
     "enabledByLanguage": {
       "default": true,

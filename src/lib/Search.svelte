@@ -15,11 +15,12 @@
   import { flip } from "svelte/animate";
   import { dndzone } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
-  import type { Engine } from "@/lib/DB/DB";
+  import type { Engine, EngineCategory } from "@/lib/DB/DB";
   import {
     ensureDefaultEngines,
     getEnabledEngines,
     getDisabledEngines,
+    updateEngineCategory,
     updateEnginesState,
   } from "@/lib/DB/DB";
   import defaultEnginesRaw from "@/lib/DB/defaultEngines.json";
@@ -77,6 +78,7 @@
     title?: string;
     engineUrl: string;
     faviconKey?: string;
+    category?: EngineCategory;
     enabled?: boolean;
     enabledByLanguage?: Partial<
       Record<Exclude<AppLanguage, "auto"> | "default", boolean>
@@ -97,6 +99,16 @@
     return item.enabled ?? true;
   }
 
+  function resolveEngineCategory(item: DefaultEngineRaw): EngineCategory {
+    const category = item.category;
+    if (category === "2") return "2";
+    if (category === "3") return "3";
+    if (category === "4") return "4";
+    if (category === "5") return "5";
+    if (category === "6") return "6";
+    return "1";
+  }
+
   function buildDefaultEngines(
     language: Exclude<AppLanguage, "auto">,
   ): Omit<Engine, "id">[] {
@@ -104,6 +116,7 @@
       title: item.title,
       engineUrl: item.engineUrl,
       faviconUrl: item.faviconKey ? faviconMap[item.faviconKey] : "",
+      category: resolveEngineCategory(item),
       enabled: resolveEngineEnabled(item, language),
     }));
   }
@@ -134,6 +147,14 @@
   const HISTORY_MAX_RESULTS = 100;
   const SEARCH_DEBOUNCE_MS = 200;
   let isComposing = $state(false);
+  const ENGINE_CATEGORY_ORDER: EngineCategory[] = [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+  ];
 
   enginesGroup = [
     { key: "1", name: "综合", sel: true },
@@ -151,6 +172,75 @@
     enabledEngines = enabled.map((e) => ({ ...e, enabled: true }));
     inputValue = backPageInitInputValue();
   });
+
+  function clickEngineGroup(_tab: TabItem, index: number) {
+    enginesGroup = enginesGroup.map((item, i) => ({
+      ...item,
+      sel: i === index,
+    }));
+  }
+
+  function getSelectedEngineCategory(): EngineCategory {
+    const key = enginesGroup.find((item) => item.sel)?.key;
+    if (key === "2") return "2";
+    if (key === "3") return "3";
+    if (key === "4") return "4";
+    if (key === "5") return "5";
+    if (key === "6") return "6";
+    return "1";
+  }
+
+  function getEngineCategory(engine: Engine): EngineCategory {
+    const category = engine.category;
+    if (category === "2") return "2";
+    if (category === "3") return "3";
+    if (category === "4") return "4";
+    if (category === "5") return "5";
+    if (category === "6") return "6";
+    return "1";
+  }
+
+  function getDisplayEnabledEngines(): Engine[] {
+    if (showMoreEngines) return enabledEngines;
+    const selectedCategory = getSelectedEngineCategory();
+    return enabledEngines.filter(
+      (engine) => getEngineCategory(engine) === selectedCategory,
+    );
+  }
+
+  function getDisplayPlaceholderEngineTitle() {
+    return getDisplayEnabledEngines()[0]?.title;
+  }
+
+  function getCategoryName(category: EngineCategory) {
+    return enginesGroup.find((item) => item.key === category)?.name ?? "综合";
+  }
+
+  function getNextCategory(category: EngineCategory): EngineCategory {
+    const index = ENGINE_CATEGORY_ORDER.indexOf(category);
+    if (index === -1 || index === ENGINE_CATEGORY_ORDER.length - 1) return "1";
+    return ENGINE_CATEGORY_ORDER[index + 1];
+  }
+
+  async function setEngineCategory(
+    engine: Engine,
+    category: EngineCategory,
+  ) {
+    if (!engine.id) return;
+    enabledEngines = enabledEngines.map((item) =>
+      item.id === engine.id ? { ...item, category } : item,
+    );
+    disabledEngines = disabledEngines.map((item) =>
+      item.id === engine.id ? { ...item, category } : item,
+    );
+    await updateEngineCategory(engine.id, category);
+  }
+
+  function clickEngineCategory(engine: Engine) {
+    const current = getEngineCategory(engine);
+    const next = getNextCategory(current);
+    void setEngineCategory(engine, next);
+  }
 
   $effect(() => {
     const scope = `${searchBookmarksEnabled}-${searchHistoryEnabled}`;
@@ -337,9 +427,13 @@
         (active as HTMLAnchorElement).click();
         return;
       }
-      const first = engineEls?.children[0] as HTMLElement | undefined;
-      first?.focus();
-      first?.click();
+      const firstContainer = engineEls?.children[0] as HTMLElement | undefined;
+      const firstLink = firstContainer?.querySelector(
+        "a.engine",
+      ) as HTMLAnchorElement | null;
+      const target = firstLink ?? firstContainer;
+      target?.focus();
+      target?.click();
     }
   }
 
@@ -441,7 +535,7 @@
 </script>
 
 <div class="search">
-  <Tab tabs={enginesGroup} onclick={() => {}} />
+  <Tab tabs={enginesGroup} onclick={clickEngineGroup} />
   <div class="search_g" class:bg={searchAreaFocused && bookmarksResults.length}>
     {@render temInputGroup()}
     {#if searchAreaFocused && ((searchBookmarksEnabled && (bookmarksResults.length || bookmarksLoading)) || (searchHistoryEnabled && (historyResults.length || historyLoading)))}
@@ -489,8 +583,8 @@
           bind:this={searchEl}
           bind:value={inputValue}
           type="search"
-          placeholder={enabledEngines[0]?.title
-            ? t("nt_search_placeholder", enabledEngines[0].title)
+          placeholder={getDisplayPlaceholderEngineTitle()
+            ? t("nt_search_placeholder", getDisplayPlaceholderEngineTitle())
             : t("nt_search_placeholder_fallback")}
           oncompositionstart={() => (isComposing = true)}
           oncompositionend={(e) => {
@@ -520,29 +614,40 @@
       class:drag={showMoreEngines}
       data-dnd-hint={t("nt_drag_to_enable_sortable")}
       use:dndzone={{
-        items: enabledEngines,
+        items: getDisplayEnabledEngines(),
         flipDurationMs: 200,
         type: "engines",
         zoneTabIndex: -1,
         dropTargetStyle: {},
+        dragDisabled: !showMoreEngines,
       }}
       onconsider={handleConsiderEnabled}
       onfinalize={handleFinalizeEnabled}
     >
-      {#each enabledEngines as engine (engine.id)}
-        <a
-          class="engine"
-          href={engine.engineUrl?.replace("%s", inputValue)}
-          target={newTabOpen ? "_blank" : "_self"}
-          rel={newTabOpen ? "noreferrer" : undefined}
-          animate:flip={{ duration: 200 }}
-        >
-          <img
-            class="engine_icon"
-            src={engine.faviconUrl}
-            alt={engine.title ?? ""}
-          />
-        </a>
+      {#each getDisplayEnabledEngines() as engine (engine.id)}
+        <div class="engine_item" animate:flip={{ duration: 200 }}>
+          <a
+            class="engine"
+            href={engine.engineUrl?.replace("%s", inputValue)}
+            target={newTabOpen ? "_blank" : "_self"}
+            rel={newTabOpen ? "noreferrer" : undefined}
+          >
+            <img
+              class="engine_icon"
+              src={engine.faviconUrl}
+              alt={engine.title ?? ""}
+            />
+          </a>
+          {#if showMoreEngines}
+            <button
+              class="engine_category"
+              type="button"
+              onclick={() => clickEngineCategory(engine)}
+            >
+              <T type="s">{getCategoryName(getEngineCategory(engine))}</T>
+            </button>
+          {/if}
+        </div>
       {/each}
     </div>
     <Button onclick={clickEditeEngines}>
@@ -575,18 +680,23 @@
       onfinalize={handleFinalizeDisabled}
     >
       {#each disabledEngines as engine (engine.id)}
-        <button
-          class="more_item"
-          class:more_item_sel={engine.enabled}
-          animate:flip={{ duration: 200 }}
-        >
-          <img
-            class="engine_icon"
-            src={engine.faviconUrl}
-            alt={engine.title ?? ""}
-          />
-          <T type="s">{engine.title}</T>
-        </button>
+        <div class="more_item_row" animate:flip={{ duration: 200 }}>
+          <button class="more_item" class:more_item_sel={engine.enabled}>
+            <img
+              class="engine_icon"
+              src={engine.faviconUrl}
+              alt={engine.title ?? ""}
+            />
+            <T type="s">{engine.title}</T>
+          </button>
+          <button
+            class="engine_category"
+            type="button"
+            onclick={() => clickEngineCategory(engine)}
+          >
+            <T type="s">{getCategoryName(getEngineCategory(engine))}</T>
+          </button>
+        </div>
       {/each}
     </div>
   </div>
@@ -800,6 +910,30 @@
     border-radius: var(--r);
     padding: 2px;
     pointer-events: none;
+  }
+  .engine_item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .engine_category {
+    border: none;
+    background-color: var(--c-mask);
+    border-radius: var(--r);
+    padding: 2px 8px;
+  }
+  .engine_category:active {
+    background-color: var(--c-bg1);
+  }
+  .engine_category:focus-visible {
+    outline: 2px var(--c-text) solid;
+  }
+
+  .more_item_row {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
   }
 
   .item {

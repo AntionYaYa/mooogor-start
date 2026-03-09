@@ -15,7 +15,7 @@ export {
   ensureDefaultWebSites,
 } from "./websites";
 
-export type { Engine } from "./database";
+export type { Engine, EngineCategory } from "./database";
 export {
   addEngine,
   updateEngine,
@@ -26,5 +26,6 @@ export {
   getEngine,
   updateEnginesOrder,
   updateEnginesState,
+  updateEngineCategory,
   ensureDefaultEngines,
 } from "./engines";
