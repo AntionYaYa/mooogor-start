@@ -1,12 +1,16 @@
 <script lang="ts">
+  import { flip } from "svelte/animate";
+  import { dndzone } from "svelte-dnd-action";
+  import type { DndEvent } from "svelte-dnd-action";
   import { fly, slide } from "svelte/transition";
   import G from "./components/G.svelte";
   import T from "./components/T.svelte";
   import Switch from "./components/Switch.svelte";
   import Select, { type SelectOption } from "./components/Select.svelte";
+  import Divider from "./components/Divider.svelte";
   import EditSearchEngine from "./EditSearchEngine.svelte";
   import ManageEngineCategories from "./ManageEngineCategories.svelte";
-  import type { UserSettings } from "@/lib/utils/settings";
+  import type { OpenTab, UserSettings } from "@/lib/utils/settings";
   import type { Engine, EngineCategoryItem } from "@/lib/DB/DB";
   import {
     addEngine,
@@ -18,6 +22,7 @@
     renameEngineCategory,
     addEngineCategory,
     deleteEngineCategory,
+    updateEnginesLayout,
     updateEngineCategoriesOrder,
     updateEngine,
   } from "@/lib/DB/DB";
@@ -31,6 +36,7 @@
     onchangeUserSettings: (userSettings: UserSettings) => void;
     onclickAbout: () => void;
     onclickSupport: () => void;
+    onOpenTab: (tab: OpenTab) => void | Promise<void>;
     currentTabPinned?: boolean;
   }
   let {
@@ -40,6 +46,7 @@
     onchangeUserSettings,
     onclickAbout,
     onclickSupport,
+    onOpenTab,
     currentTabPinned = false,
   }: Props = $props();
 
@@ -77,7 +84,8 @@
   let lockNewTabOpenSwitch = $derived(currentTabPinned);
   type SettingsPage =
     | "root"
-    | "search"
+    | "searchScope"
+    | "searchEngines"
     | "common"
     | "bookmarks"
     | "history"
@@ -88,17 +96,19 @@
   let settingEnabledEngines: Engine[] = $state([]);
   let settingDisabledEngines: Engine[] = $state([]);
   let settingEngineCategories: EngineCategoryItem[] = $state([]);
+  let settingEngineGroups: Record<CategoryId, Engine[]> = $state({});
   let settingEnginesLoading = $state(false);
   let settingEnginesLoaded = $state(false);
   let settingEnginesSaving = $state(false);
   let showCategoryManager = $state(false);
   let showSearchEngineEditor = $state(false);
   let editingSearchEngine: Engine | null = $state(null);
+  let persistEngineLayoutTimer: ReturnType<typeof setTimeout> | null = $state(null);
 
   function openSettingPage(page: Exclude<SettingsPage, "root">) {
     pageDirection = 1;
     settingPage = page;
-    if (page === "search") {
+    if (page === "searchEngines") {
       void loadSearchSettingEngines(true);
     }
   }
@@ -109,7 +119,10 @@
   }
 
   function getSettingPageTitle() {
-    if (settingPage === "search") return t("nt_settings_search_title");
+    if (settingPage === "searchScope") return t("nt_settings_search_scope");
+    if (settingPage === "searchEngines") {
+      return t("nt_settings_search_engines_title");
+    }
     if (settingPage === "common") return t("nt_tab_common");
     if (settingPage === "bookmarks") return t("nt_tab_bookmarks");
     if (settingPage === "history") return t("nt_tab_history");
@@ -172,12 +185,128 @@
     setNewTabOpen(swith);
   }
 
+  function openFeatureTab(tab: OpenTab) {
+    void onOpenTab(tab);
+  }
+
   function getSearchEngineCategoryOptions(): SelectOption[] {
     return settingEngineCategories.map((item) => ({
       label: item.name,
       value: item.id,
       sel: false,
     }));
+  }
+
+  function sortSearchEngines(items: Engine[]) {
+    return [...items].sort(
+      (a, b) =>
+        (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER),
+    );
+  }
+
+  function buildSearchEngineGroups(allEngines: Engine[] = getAllSearchSettingEngines()) {
+    const grouped = Object.fromEntries(
+      settingEngineCategories.map((category) => [category.id, [] as Engine[]]),
+    ) as Record<CategoryId, Engine[]>;
+
+    for (const engine of allEngines) {
+      const normalizedCategory = normalizeEngineCategory(engine.category);
+      const categoryId = grouped[normalizedCategory]
+        ? normalizedCategory
+        : getFallbackCategoryId();
+      grouped[categoryId] = [
+        ...(grouped[categoryId] ?? []),
+        { ...engine, category: categoryId },
+      ];
+    }
+
+    return grouped;
+  }
+
+  function syncSearchSettingEnginesFromGroups(
+    groups: Record<CategoryId, Engine[]> = settingEngineGroups,
+  ) {
+    const orderedEngines = settingEngineCategories.flatMap((category) =>
+      (groups[category.id] ?? []).map((engine) => ({
+        ...engine,
+        category: category.id,
+      })),
+    );
+
+    settingEnabledEngines = orderedEngines.filter((engine) => engine.enabled !== false);
+    settingDisabledEngines = orderedEngines.filter((engine) => engine.enabled === false);
+  }
+
+  function syncSearchEngineGroups() {
+    const nextGroups = buildSearchEngineGroups();
+    settingEngineGroups = nextGroups;
+    syncSearchSettingEnginesFromGroups(nextGroups);
+  }
+
+  function setSearchEngineGroupItems(categoryId: CategoryId, items: Engine[]) {
+    const nextGroups = {
+      ...settingEngineGroups,
+      [categoryId]: items.map((item) => ({
+        ...item,
+        category: categoryId,
+      })),
+    };
+    settingEngineGroups = nextGroups;
+    syncSearchSettingEnginesFromGroups(nextGroups);
+  }
+
+  function queuePersistSearchEngineLayout() {
+    if (persistEngineLayoutTimer) {
+      clearTimeout(persistEngineLayoutTimer);
+    }
+    persistEngineLayoutTimer = setTimeout(() => {
+      persistEngineLayoutTimer = null;
+      void persistSearchEngineLayout();
+    }, 16);
+  }
+
+  async function persistSearchEngineLayout() {
+    const orderedEngines = settingEngineCategories.flatMap((category) =>
+      (settingEngineGroups[category.id] ?? []).map((engine, index) => ({
+        ...engine,
+        category: category.id,
+        order: index,
+      })),
+    );
+    const orderedWithIds: (Engine & { id: number })[] = orderedEngines.flatMap(
+      (engine) => (engine.id ? [{ ...engine, id: engine.id }] : []),
+    );
+    if (!orderedWithIds.length) return;
+
+    settingEnginesSaving = true;
+    try {
+      await updateEnginesLayout(orderedWithIds);
+      const synced = orderedWithIds.map((engine, index) => ({
+        ...engine,
+        order: index,
+      }));
+      const nextGroups = buildSearchEngineGroups(synced);
+      settingEngineGroups = nextGroups;
+      syncSearchSettingEnginesFromGroups(nextGroups);
+      notifyEngineConfigUpdated();
+    } finally {
+      settingEnginesSaving = false;
+    }
+  }
+
+  function handleSearchEngineGroupConsider(
+    categoryId: CategoryId,
+    e: CustomEvent<DndEvent<Engine>>,
+  ) {
+    setSearchEngineGroupItems(categoryId, e.detail.items);
+  }
+
+  function handleSearchEngineGroupFinalize(
+    categoryId: CategoryId,
+    e: CustomEvent<DndEvent<Engine>>,
+  ) {
+    setSearchEngineGroupItems(categoryId, e.detail.items);
+    queuePersistSearchEngineLayout();
   }
 
   function openCategoryManager() {
@@ -218,6 +347,10 @@
   async function loadSearchSettingEngines(force: boolean = false) {
     if (settingEnginesLoading) return;
     if (!force && settingEnginesLoaded) return;
+    if (persistEngineLayoutTimer) {
+      clearTimeout(persistEngineLayoutTimer);
+      persistEngineLayoutTimer = null;
+    }
     settingEnginesLoading = true;
     try {
       await ensureDefaultEngineCategories(buildDefaultEngineCategories());
@@ -241,6 +374,7 @@
         ...engine,
         category: engine.category?.trim() || fallbackCategoryId,
       }));
+      syncSearchEngineGroups();
       settingEnginesLoaded = true;
     } finally {
       settingEnginesLoading = false;
@@ -248,20 +382,15 @@
   }
 
   function getAllSearchSettingEngines() {
-    return [...settingEnabledEngines, ...settingDisabledEngines];
+    return sortSearchEngines([...settingEnabledEngines, ...settingDisabledEngines]);
   }
 
   function getGroupedSearchEngines() {
-    const allEngines = getAllSearchSettingEngines();
-    return settingEngineCategories
-      .map((category) => ({
-        id: category.id,
-        name: category.name,
-        items: allEngines.filter(
-          (engine) => normalizeEngineCategory(engine.category) === category.id,
-        ),
-      }))
-      .filter((group) => group.items.length > 0);
+    return settingEngineCategories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      items: settingEngineGroups[category.id] ?? [],
+    }));
   }
 
   async function addSearchCategory(name: string) {
@@ -311,6 +440,7 @@
         ...item,
         order: index,
       }));
+      syncSearchEngineGroups();
       await updateEngineCategoriesOrder(items);
       notifyEngineConfigUpdated();
     } finally {
@@ -389,14 +519,14 @@
   });
 
   $effect(() => {
-    if (showSetting && settingPage === "search") return;
+    if (showSetting && settingPage === "searchEngines") return;
     closeCategoryManager();
     closeSearchEngineEditor();
   });
 
   $effect(() => {
     if (!showSetting) return;
-    if (settingPage !== "search") return;
+    if (settingPage !== "searchEngines") return;
     if (settingEnginesLoaded || settingEnginesLoading) return;
     void loadSearchSettingEngines();
   });
@@ -447,8 +577,10 @@
           >
             {#if settingPage === "root"}
               {@render temSettingRoot()}
-            {:else if settingPage === "search"}
-              {@render temSettingSearch()}
+            {:else if settingPage === "searchScope"}
+              {@render temSettingSearchScope()}
+            {:else if settingPage === "searchEngines"}
+              {@render temSettingSearchEngines()}
             {:else if settingPage === "common"}
               {@render temSettingCommon()}
             {:else if settingPage === "bookmarks"}
@@ -494,30 +626,60 @@
 
 {#snippet temSettingRoot()}
   <div class="setting_con">
+    {@render temSectionTitle(t("nt_settings_search_title"))}
     {@render temEntranceItem(
-      t("nt_settings_search_title"),
-      () => openSettingPage("search"),
+      t("nt_settings_search_scope"),
+      () => openSettingPage("searchScope"),
     )}
     {@render temEntranceItem(
+      t("nt_settings_search_engines_title"),
+      () => openSettingPage("searchEngines"),
+    )}
+    {@render temSectionTitle(t("nt_settings_websites_title"))}
+    {@render temEntranceItem(
       t("nt_tab_common"),
-      () => openSettingPage("common"),
+      () => openFeatureTab("common"),
     )}
     {@render temEntranceItem(
       t("nt_tab_bookmarks"),
-      () => openSettingPage("bookmarks"),
+      () => openFeatureTab("bookmark"),
     )}
     {@render temEntranceItem(
       t("nt_tab_history"),
-      () => openSettingPage("history"),
+      () => openFeatureTab("history"),
+    )}
+    {@render temDividerItem()}
+    {@render temswithcItem(
+      t("nt_settings_link_open_title"),
+      t("nt_settings_new_tab_open"),
+      t("nt_settings_new_tab_tip"),
+      effectiveNewTabOpenSwitch,
+      onswitchNewTabOpen,
+      lockNewTabOpenSwitch,
+    )}
+    {@render temselectItem(
+      t("nt_settings_default_open"),
+      openPosOptions,
+      setOpenPos,
+    )}
+    {@render temDividerItem()}
+    {@render temselectItem(
+      t("nt_settings_language"),
+      languageOptions,
+      setLanguage,
     )}
     {@render temEntranceItem(
-      t("nt_settings_other_title"),
-      () => openSettingPage("other"),
+      t("nt_settings_about"),
+      onclickAbout,
+    )}
+    {@render temEntranceItem(
+      t("nt_about_support_button"),
+      onclickSupport,
     )}
   </div>
 {/snippet}
 
-{#snippet temSettingSearch()}
+{#snippet temSettingSearchScope()}
   <div class="setting_con">
     {@render temswithcItem(
       t("nt_settings_search_scope"),
@@ -533,13 +695,16 @@
       userSettings.searchHistory,
       setSearchHistory,
     )}
-    <div class="select_item">
-      <G>
-        <T type="s" color="var(--c-text-1)"
-          >{t("nt_settings_search_engines_title")}</T
-        >
-      </G>
+  </div>
+{/snippet}
 
+{#snippet temSettingSearchEngines()}
+  <div class="setting_con">
+    {@render temEntranceItem(
+      t("nt_settings_search_edit_categories"),
+      openCategoryManager,
+    )}
+    <div class="select_item">
       {#if settingEnginesLoading && !settingEnginesLoaded}
         <div class="engine_loading">
           <Icon name="Loading" color="var(--c-text)" />
@@ -550,7 +715,18 @@
         </div>
       {/if}
     </div>
-    {@render tembuttonItem(t("nt_settings_search_edit_categories"), openCategoryManager)}
+  </div>
+{/snippet}
+
+{#snippet temSectionTitle(text: string)}
+  <div class="section_title">
+    <T type="s" color="var(--c-text-1)">{text}</T>
+  </div>
+{/snippet}
+
+{#snippet temDividerItem()}
+  <div class="setting_divider">
+    <Divider />
   </div>
 {/snippet}
 
@@ -633,53 +809,64 @@
 {/snippet}
 
 {#snippet temSearchEngineGroups()}
-  {#if !getAllSearchSettingEngines().length}
-    <div class="engine_empty_row">
-      <T type="s" color="var(--c-text-1)">{t("nt_settings_search_no_engines")}</T>
-    </div>
-  {:else}
-    {#each getGroupedSearchEngines() as group (group.id)}
-      <div class="engine_group">
-        <G>
-          <T type="s" color="var(--c-text-1)">{group.name}</T>
-        </G>
-        <div class="engine_list">
-          {#each group.items as engine (engine.id)}
-            <button
-              class="engine_row engine_row_button"
-              class:disabled_engine={engine.enabled === false}
-              type="button"
-              disabled={settingEnginesSaving}
-              onclick={() => openEditSearchEngineEditor(engine)}
-            >
-              {#if engine.faviconUrl}
-                <img
-                  class="engine_manage_icon"
-                  src={engine.faviconUrl}
-                  alt={engine.title ?? ""}
-                />
-              {:else}
-                <div class="engine_manage_icon engine_manage_icon_fallback">
-                  <T type="s">{engine.title?.slice(0, 1) ?? "?"}</T>
-                </div>
-              {/if}
-              <div class="engine_meta">
-                <div class="engine_meta_title">
-                  <T nowrap>{engine.title ?? t("nt_unnamed")}</T>
-                  {#if engine.enabled === false}
-                    <span class="engine_state_tag">
-                      <T type="s">{t("nt_settings_search_disabled_tag")}</T>
-                    </span>
-                  {/if}
-                </div>
-                <T type="s" color="var(--c-text-1)">{engine.engineUrl}</T>
+  {#each getGroupedSearchEngines() as group (group.id)}
+    <div class="engine_group">
+      <G>
+        <T type="s" color="var(--c-text-1)">{group.name}</T>
+      </G>
+      <div
+        class="engine_list"
+        class:engine_list_empty={!group.items.length}
+        use:dndzone={{
+          items: group.items,
+          flipDurationMs: 200,
+          type: "settings-engines",
+          zoneTabIndex: -1,
+          zoneItemTabIndex: -1,
+          dropTargetStyle: {},
+          dragDisabled: settingEnginesSaving,
+        }}
+        onconsider={(e) => handleSearchEngineGroupConsider(group.id, e)}
+        onfinalize={(e) => handleSearchEngineGroupFinalize(group.id, e)}
+      >
+        {#each group.items as engine (engine.id)}
+          <button
+            class="engine_row engine_row_button"
+            class:disabled_engine={engine.enabled === false}
+            type="button"
+            disabled={settingEnginesSaving}
+            animate:flip={{ duration: 200 }}
+            onclick={() => openEditSearchEngineEditor(engine)}
+          >
+            {#if engine.faviconUrl}
+              <img
+                class="engine_manage_icon"
+                src={engine.faviconUrl}
+                alt={engine.title ?? ""}
+              />
+            {:else}
+              <div class="engine_manage_icon engine_manage_icon_fallback">
+                <T type="s">{engine.title?.slice(0, 1) ?? "?"}</T>
               </div>
-            </button>
-          {/each}
-        </div>
+            {/if}
+            <div class="engine_meta">
+              <div class="engine_meta_title">
+                <T nowrap>{engine.title ?? t("nt_unnamed")}</T>
+              </div>
+            </div>
+            <div class="engine_row_side">
+              {#if engine.enabled === false}
+                <span class="engine_state_tag">
+                  <T type="s">{t("nt_settings_search_disabled_tag")}</T>
+                </span>
+              {/if}
+              <Icon name="Rows3" color="var(--c-text)" opacity={0.35} />
+            </div>
+          </button>
+        {/each}
       </div>
-    {/each}
-  {/if}
+    </div>
+  {/each}
   <button
     class="engine_add_btn"
     type="button"
@@ -788,6 +975,17 @@
     padding: var(--gap);
     gap: var(--gap);
   }
+  .section_title {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    padding: calc(var(--gap) * 1.5) var(--gap) 0;
+  }
+  .setting_divider {
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--gap) var(--gap) 0;
+  }
   .engine_loading {
     display: flex;
     justify-content: center;
@@ -813,6 +1011,13 @@
     width: 100%;
     box-sizing: border-box;
     gap: var(--gap);
+    min-height: 56px;
+  }
+  .engine_list_empty {
+    padding: var(--gap);
+    border-radius: var(--r1);
+    background-color: var(--c-mask);
+    border: 1px dashed var(--c-border);
   }
   .engine_row {
     display: flex;
@@ -840,14 +1045,6 @@
   .disabled_engine {
     opacity: 0.55;
   }
-  .engine_empty_row {
-    display: flex;
-    width: 100%;
-    box-sizing: border-box;
-    padding: var(--gap);
-    border-radius: var(--r1);
-    background-color: var(--c-mask);
-  }
   .engine_manage_icon {
     width: 24px;
     height: 24px;
@@ -868,12 +1065,18 @@
     width: 100%;
     box-sizing: border-box;
     min-width: 0;
-    gap: 4px;
+    gap: 0;
   }
   .engine_meta_title {
     display: flex;
     align-items: center;
+    min-width: 0;
+  }
+  .engine_row_side {
+    display: flex;
+    align-items: center;
     gap: 8px;
+    flex-shrink: 0;
   }
   .engine_state_tag {
     display: inline-flex;
@@ -964,6 +1167,6 @@
     justify-content: space-between;
     align-items: center;
     flex-wrap: nowrap;
-    width: 300px;
+    padding: var(--gap);
   }
 </style>

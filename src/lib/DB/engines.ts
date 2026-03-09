@@ -68,6 +68,21 @@ export async function updateEnginesOrder(items: (Engine & { id: number })[]) {
   });
 }
 
+export async function updateEnginesLayout(items: (Engine & { id: number })[]) {
+  const now = Date.now();
+  await db.transaction("rw", db.engines, async () => {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      await db.engines.update(item.id, {
+        order: i,
+        category: normalizeEngineCategory(item.category),
+        enabled: item.enabled !== false,
+        updateAt: now,
+      });
+    }
+  });
+}
+
 export async function updateEnginesState(
   enabledItems: (Engine & { id: number })[],
   disabledItems: (Engine & { id: number })[],

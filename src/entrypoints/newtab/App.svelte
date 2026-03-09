@@ -285,6 +285,14 @@
     }
   }
 
+  async function handleSettingsOpenTab(tab: OpenTab) {
+    const targetIndex = openTabToIndex(tab);
+    const targetTab = tabs[targetIndex];
+    if (!targetTab) return;
+    await clickTab(targetTab, targetIndex);
+    showSetting = false;
+  }
+
   function updateSelTab(tab: TabItem) {
     tabs.forEach((item) => {
       item.sel = item.key === tab.key;
@@ -341,6 +349,7 @@
       onchangeUserSettings={handleUserSettingsChange}
       onclickAbout={() => (showAbout = true)}
       onclickSupport={() => (showSupport = true)}
+      onOpenTab={handleSettingsOpenTab}
     >
       <div class="top">
         {@render headBar()}

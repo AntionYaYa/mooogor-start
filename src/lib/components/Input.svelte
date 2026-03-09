@@ -46,7 +46,7 @@
 <style>
 	.input_g {
 		display: flex;
-		background-color: var(--c-bg);
+		background-color: var(--c-mask);
 		border-radius: var(--r);
 		padding: var(--gap);
 		flex-direction: column;

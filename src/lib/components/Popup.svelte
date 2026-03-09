@@ -67,7 +67,7 @@
 	.pannel {
 		width: 100%;
 		max-height: 100vh;
-		background-color: var(--c-bg1);
+		background-color: var(--c-bg);
 		padding: calc(var(--gap) * 2);
 		display: flex;
 		flex-direction: column;

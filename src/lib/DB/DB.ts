@@ -24,6 +24,7 @@ export {
   getDisabledEngines,
   getAllEnableEngine,
   getEngine,
+  updateEnginesLayout,
   updateEnginesOrder,
   updateEnginesState,
   updateEngineCategory,

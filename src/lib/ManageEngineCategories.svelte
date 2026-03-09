@@ -57,10 +57,9 @@
     await onRename(category.id, nextName);
   }
 
-  async function handleNewCategoryBlur() {
+  async function handleAddCategory() {
     const nextName = newCategoryName.trim();
     if (!nextName) {
-      newCategoryName = "";
       return;
     }
     await onAdd(nextName);
@@ -70,6 +69,12 @@
   function handleCategoryKeydown(e: KeyboardEvent) {
     if (e.key !== "Enter") return;
     (e.currentTarget as HTMLInputElement).blur();
+  }
+
+  function handleAddCategoryKeydown(e: KeyboardEvent) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    void handleAddCategory();
   }
 
   function handleConsider(e: CustomEvent<DndEvent<EngineCategoryItem>>) {
@@ -142,9 +147,16 @@
       bind:value={newCategoryName}
       disabled={saving}
       placeholder={t("nt_settings_search_category_add_placeholder")}
-      onblur={() => void handleNewCategoryBlur()}
-      onkeydown={handleCategoryKeydown}
+      onkeydown={handleAddCategoryKeydown}
     />
+    <button
+      class="add_btn"
+      type="button"
+      disabled={saving || !newCategoryName.trim()}
+      onclick={() => void handleAddCategory()}
+    >
+      <T type="s">{t("nt_settings_search_add_category")}</T>
+    </button>
   </div>
 
   <G full>
@@ -202,6 +214,17 @@
     flex-shrink: 0;
   }
   .delete_btn:disabled {
+    opacity: 0.4;
+  }
+  .add_btn {
+    border: none;
+    background-color: var(--c-bg1);
+    border-radius: var(--r);
+    padding: 4px 8px;
+    color: var(--c-text);
+    flex-shrink: 0;
+  }
+  .add_btn:disabled {
     opacity: 0.4;
   }
   .add_row {

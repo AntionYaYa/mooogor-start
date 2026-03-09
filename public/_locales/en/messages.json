@@ -88,7 +88,7 @@
       "message": "Search Scope"
     },
     "nt_settings_search_title": {
-      "message": "Search Settings"
+      "message": "Quick Search"
     },
     "nt_settings_search_bookmarks": {
       "message": "Search Bookmarks"
@@ -97,7 +97,10 @@
       "message": "Search History"
     },
     "nt_settings_search_engines_title": {
-      "message": "Search Engine Management"
+      "message": "Search Engines"
+    },
+    "nt_settings_websites_title": {
+      "message": "Websites"
     },
     "nt_settings_search_edit_categories": {
       "message": "Edit Categories"
