@@ -1,5 +1,4 @@
 <script lang="ts">
-	import G from "./G.svelte";
 	import T from "./T.svelte";
 
 	export type TabItem = {

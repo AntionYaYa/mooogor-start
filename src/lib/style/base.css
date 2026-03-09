@@ -10,9 +10,10 @@
 
   --shadow: 0px 10px 50px 0px var(--c-mask-1);
 
-  --border-1: 2px solid var(--c-border);
-  --border: 2px solid var(--c-text);
-  --border1: 2px solid var(--c-text-1);
+  --border: 2px solid var(--c-border);
+  --border1: 2px solid var(--c-border1);
+  --border2: 2px solid var(--c-border2);
+  --border3: 2px solid var(--c-border3);
 
   --r: 10px;
   --r1: calc(var(--r) + var(--gap));

@@ -34,6 +34,8 @@
   import G from "./components/G.svelte";
   import { getEffectiveLanguage, t } from "@/lib/utils/i18n";
   import type { AppLanguage } from "@/lib/utils/settings";
+  import Tab from "./components/Tab.svelte";
+  import type { TabItem } from "./components/Tab.svelte";
 
   type ItemType = BookmarkSubType | "engine" | "todo" | "history";
 
@@ -108,6 +110,7 @@
 
   const defaultEngines = buildDefaultEngines(getEffectiveLanguage());
 
+  let enginesGroup: TabItem[] = $state([]);
   let enabledEngines: Engine[] = $state([]);
   let disabledEngines: Engine[] = $state([]);
   let bookmarksResults: SearchItem[] = $state([]);
@@ -132,18 +135,14 @@
   const SEARCH_DEBOUNCE_MS = 200;
   let isComposing = $state(false);
 
-  // function handleDocumentClick(e: MouseEvent) {
-  //   const target = e.target as HTMLElement | null;
-  //   if (!target) return;
-  //   if (
-  //     target.closest(
-  //       "input, textarea, select, [contenteditable='true'], [data-search-exempt]",
-  //     )
-  //   ) {
-  //     return;
-  //   }
-  //   searchEl?.focus();
-  // }
+  enginesGroup = [
+    { key: "1", name: "综合", sel: true },
+    { key: "2", name: "图片", sel: false },
+    { key: "3", name: "视频", sel: false },
+    { key: "4", name: "图标", sel: false },
+    { key: "5", name: "字体", sel: false },
+    { key: "6", name: "音乐", sel: false },
+  ];
 
   onMount(async () => {
     // window.addEventListener("click", handleDocumentClick); //获取焦点
@@ -441,12 +440,11 @@
   }
 </script>
 
+<div class="search">
+  <Tab tabs={enginesGroup} onclick={() => {}} />
   <div class="search_g" class:bg={searchAreaFocused && bookmarksResults.length}>
     {@render temInputGroup()}
-    {#if searchAreaFocused &&
-      ((searchBookmarksEnabled &&
-        (bookmarksResults.length || bookmarksLoading)) ||
-        (searchHistoryEnabled && (historyResults.length || historyLoading)))}
+    {#if searchAreaFocused && ((searchBookmarksEnabled && (bookmarksResults.length || bookmarksLoading)) || (searchHistoryEnabled && (historyResults.length || historyLoading)))}
       <div
         class="list"
         bind:this={listEls}
@@ -471,8 +469,7 @@
           {/each}
         {/if}
 
-        {#if (searchHistoryEnabled && historyLoading) ||
-          (searchBookmarksEnabled && bookmarksLoading)}
+        {#if (searchHistoryEnabled && historyLoading) || (searchBookmarksEnabled && bookmarksLoading)}
           <div class="more_trigger">
             <Icon name="Loading" color="var(--c-text)" />
           </div>
@@ -480,6 +477,7 @@
       </div>
     {/if}
   </div>
+</div>
 
 {#snippet temInputGroup()}
   <div class="input_group_border">
@@ -613,12 +611,23 @@
 {/snippet}
 
 <style>
+  .search {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    min-width: 200px;
+    max-width: 600px;
+    padding: var(--gap);
+    position: relative;
+    height: 100px;
+  }
   .engines_M {
     display: flex;
     align-items: center;
     flex-direction: row;
   }
-  .w100{
+  .w100 {
     width: 100%;
     box-sizing: border-box;
     justify-content: flex-end;
@@ -630,6 +639,8 @@
     padding: var(--gap) 40px var(--gap) var(--gap);
     width: 100%;
     box-sizing: border-box;
+    background-color: var(--c-bg1);
+    border-radius: var(--r1);
   }
 
   .more_item {
@@ -641,7 +652,6 @@
     filter: grayscale();
     align-items: center;
     overflow: hidden;
-    background-color: var(--c-bg1);
   }
   .more_item_sel {
     filter: grayscale(0);
@@ -653,13 +663,13 @@
     width: 100%;
     box-sizing: border-box;
     position: absolute;
-    top: 0;
+    top: 40px;
     left: 0;
     z-index: 10;
     padding: var(--gap);
     border-radius: var(--r2);
   }
-  .bg{
+  .bg {
     background-color: var(--c-bg1);
   }
 
@@ -688,7 +698,7 @@
   }
 
   .input_group_border:has(input:focus) {
-    background: linear-gradient(0deg, var(--c-main-1), var(--c-main));
+    background: linear-gradient(0deg, var(--c-main), var(--c-main-1));
   }
 
   .input_group {
@@ -723,7 +733,7 @@
     outline: none;
   }
 
-  .more_g{
+  .more_g {
     display: flex;
     align-items: center;
     justify-content: flex-end;

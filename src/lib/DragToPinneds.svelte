@@ -71,9 +71,9 @@
     align-items: center;
     justify-content: center;
     flex-direction: row;
-    border: var(--c-text-2) dashed 2px;
+    border: var(--c-border) dashed 2px;
   }
   .inbox {
-    border: var(--c-text) dashed 2px;
+    border: var(--c-border4) dashed 2px;
   }
 </style>

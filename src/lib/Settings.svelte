@@ -7,6 +7,7 @@
   import type { UserSettings } from "@/lib/utils/settings";
   import { t } from "@/lib/utils/i18n";
   import Icon from "./components/Icon.svelte";
+    import Button from "./components/Button.svelte";
   interface Props {
     children: any;
     showSetting: boolean;
@@ -161,10 +162,12 @@
   <div class="select_item">
     {#if title}
       <G>
-        <T type="s" color="var(--c-text)">{title}</T>
+        <T type="s" color="var(--c-text-1)">{title}</T>
       </G>
     {/if}
-    <button class="trigger" onclick={onChange}>
+    <div class="trigger" >
+    <Button onclick={onChange} full align='c'>
+
       <G vertical full>
         <T>{text}</T>
       </G>
@@ -175,7 +178,8 @@
           opacity={externalLink ? 0.7 : 0}
         />
       </G>
-    </button>
+    </Button>
+    </div>
   </div>
 {/snippet}
 
@@ -190,16 +194,18 @@
   <div class="select_item">
     {#if title}
       <G>
-        <T type="s" color="var(--c-text)">{title}</T>
+        <T type="s" color="var(--c-text-1)">{title}</T>
       </G>
     {/if}
     <div class="trigger">
-      <G vertical full>
-        <T>{swcText}</T>
-      </G>
-      <G>
-        <Switch {turnOn} onSwitch={onChange} disabled={switchDisabled} />
-      </G>
+      <Button onclick={()=>onChange(!turnOn)} full align='c'>
+        <G vertical full>
+          <T>{swcText}</T>
+        </G>
+        <G>
+          <Switch {turnOn} disabled={switchDisabled} />
+        </G>
+      </Button>
     </div>
     {#if des}
       <G>
@@ -216,7 +222,7 @@
 )}
   <div class="select_item">
     <G vertical full>
-      <T type="s" color="var(--c-text)">{title}</T>
+      <T type="s" color="var(--c-text-1)">{title}</T>
     </G>
     <Select {options} {onChange} />
   </div>

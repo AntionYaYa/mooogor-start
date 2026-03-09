@@ -345,13 +345,11 @@
       <div class="top">
         {@render headBar()}
       </div>
-      <div class="search"> 
         <Search
           newTabOpen={effectiveNewTabOpen}
           searchBookmarks={userSettings.searchBookmarks}
           searchHistory={userSettings.searchHistory}
         />
-      </div>
       <div class="content">
         <div class="tabs">
           <div class="side side-left">
@@ -557,7 +555,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    border: var(--border-1);
+    border: var(--border);
     border-radius: var(--r1);
     padding: var(--gap);
     box-sizing: border-box;
@@ -570,17 +568,7 @@
     align-items: center;
     padding: var(--gap);
   }
-  .search{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    min-width: 200px;
-    max-width: 600px;
-    padding: var(--gap);
-    position: relative;
-    height: 60px;
-  }
+
   main {
     display: flex;
     flex-direction: row;
@@ -589,6 +577,7 @@
     background-size: cover;
     background-repeat: no-repeat;
     align-items: flex-start;
+    background-color: var(--c-bg-1);
   }
 
   .content {
@@ -622,8 +611,6 @@
     height: 100%;
     border-radius: var(--r1);
     padding: var(--gap);
-    /* background-color: var(--c-mask-1); */
-    /* border:var(--border-1) */
   }
   .tab_content {
     position: absolute;

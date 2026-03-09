@@ -119,7 +119,7 @@
     width: min(280px, 70vw);
     object-fit: contain;
     border-radius: var(--r1);
-    border: var(--border-1);
+    border: var(--border);
     background-color: var(--c-bg);
     padding: var(--gap);
     box-sizing: border-box;

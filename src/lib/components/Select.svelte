@@ -6,6 +6,7 @@
 	import { t } from "@/lib/utils/i18n";
 	import { slide } from "svelte/transition";
 	import G from "./G.svelte";
+    import Button from "./Button.svelte";
 
 	export type SelectOption = {
 		label: string;
@@ -58,18 +59,20 @@
 </script>
 
 <div class="select" bind:this={rootEl}>
-	<button class="trigger" onclick={handleToggle}>
-		<G full>
-			<T>{selected ? selected.label : t("nt_select_placeholder")}</T>
-		</G>
-		<G>
-			<Icon
-				name={open ? "ChevronUp" : "ChevronDown"}
-				opacity={0.7}
-				color="var(--c-text)"
-			/>
-		</G>
-	</button>
+	<div class="trigger" >
+		<Button onclick={handleToggle} align='c' full>
+			<G full>
+				<T>{selected ? selected.label : t("nt_select_placeholder")}</T>
+			</G>
+			<G>
+				<Icon
+					name={open ? "ChevronUp" : "ChevronDown"}
+					opacity={0.7}
+					color="var(--c-text)"
+				/>
+			</G>
+		</Button>
+	</div>
 	{#if open}
 		<div class="menu" transition:slide={{ duration: 200 }}>
 			<div class="menu_items">
@@ -119,7 +122,6 @@
 		width: 100%;
 		box-sizing: border-box;
 		background-color: var(--c-mask);
-		border: none;
 		border-radius: var(--r1);
 		padding: var(--gap);
 	}

@@ -2,15 +2,9 @@
 	import { t } from "@/lib/utils/i18n";
 	interface Props {
 		turnOn: boolean;
-		onSwitch: (swith: boolean) => void;
 		disabled?: boolean;
 	}
-	let { turnOn, onSwitch, disabled = false }: Props = $props();
-
-	function handleClick() {
-		if (disabled) return;
-		onSwitch(!turnOn);
-	}
+	let { turnOn, disabled = false }: Props = $props();
 </script>
 
 <button
@@ -18,7 +12,6 @@
 	title={t("nt_switch")}
 	class="outside"
 	{disabled}
-	onclick={handleClick}
 >
 	<div class="ball {turnOn ? 'ball_on' : 'ball_off'}"></div>
 </button>
@@ -57,10 +50,11 @@
 	}
 	.ball_on {
 		left: 12px;
-		background-color: var(--c-green);
+		background: linear-gradient(0deg, var(--c-main), var(--c-main-1));
 	}
 	.ball_off {
 		left: 0;
-		background-color: var(--c-text-1);
+		background: linear-gradient(0deg, var(--c-main), var(--c-main-1));
+		filter: grayscale(1);
 	}
 </style>
