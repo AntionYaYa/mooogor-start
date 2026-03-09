@@ -127,7 +127,7 @@
             <T nowrap type="m">{bkmk.title}</T>
           </G>
           <G align="c">
-            <Icon name="ChevronRight" color="var(--c-text-1)"opacity={0.7} />
+            <Icon name="ChevronRight" color="var(--c-text-1)"opacity={0.6} />
           </G>
         </button>
       {/if}

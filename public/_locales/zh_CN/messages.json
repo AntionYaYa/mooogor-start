@@ -87,11 +87,119 @@
     "nt_settings_search_scope": {
       "message": "搜索范围"
     },
+    "nt_settings_search_title": {
+      "message": "搜索设置"
+    },
     "nt_settings_search_bookmarks": {
       "message": "搜索书签"
     },
     "nt_settings_search_history": {
       "message": "搜索历史记录"
+    },
+    "nt_settings_search_engines_title": {
+      "message": "搜索引擎管理"
+    },
+    "nt_settings_search_edit_categories": {
+      "message": "分类编辑"
+    },
+    "nt_settings_search_categories_title": {
+      "message": "分类管理"
+    },
+    "nt_settings_search_category_placeholder": {
+      "message": "分类名称"
+    },
+    "nt_settings_search_category_add_placeholder": {
+      "message": "新增分类名称"
+    },
+    "nt_settings_search_add_category": {
+      "message": "新增分类"
+    },
+    "nt_settings_search_edit_category": {
+      "message": "编辑分类"
+    },
+    "nt_settings_search_category_name_required": {
+      "message": "请输入分类名称"
+    },
+    "nt_settings_search_enabled_engines": {
+      "message": "已启用引擎"
+    },
+    "nt_settings_search_disabled_engines": {
+      "message": "已禁用引擎"
+    },
+    "nt_settings_search_reload_engines": {
+      "message": "刷新"
+    },
+    "nt_settings_search_enable": {
+      "message": "启用"
+    },
+    "nt_settings_search_disable": {
+      "message": "禁用"
+    },
+    "nt_settings_search_no_enabled_engines": {
+      "message": "暂无已启用引擎"
+    },
+    "nt_settings_search_no_disabled_engines": {
+      "message": "暂无已禁用引擎"
+    },
+    "nt_settings_search_no_engines": {
+      "message": "暂无搜索引擎"
+    },
+    "nt_settings_search_disabled_tag": {
+      "message": "已禁用"
+    },
+    "nt_settings_search_add_engine": {
+      "message": "新增搜索引擎"
+    },
+    "nt_settings_search_edit_engine": {
+      "message": "编辑搜索引擎"
+    },
+    "nt_settings_search_engine_url_placeholder": {
+      "message": "*搜索链接，使用 %s 作为关键词"
+    },
+    "nt_settings_search_engine_category": {
+      "message": "引擎分类"
+    },
+    "nt_settings_search_engine_enabled": {
+      "message": "启用搜索引擎"
+    },
+    "nt_settings_search_engine_name_required": {
+      "message": "请输入搜索引擎名称"
+    },
+    "nt_settings_search_engine_url_required": {
+      "message": "请输入搜索链接"
+    },
+    "nt_settings_search_engine_url_keyword": {
+      "message": "搜索链接必须包含 %s"
+    },
+    "nt_settings_search_engine_url_invalid": {
+      "message": "请输入有效的搜索链接"
+    },
+    "nt_settings_search_category_manage_hint": {
+      "message": "拖拽可排序，名称失去焦点后自动保存"
+    },
+    "nt_engine_category_all": {
+      "message": "综合"
+    },
+    "nt_engine_category_image": {
+      "message": "图片"
+    },
+    "nt_engine_category_video": {
+      "message": "视频"
+    },
+    "nt_engine_category_icon": {
+      "message": "图标"
+    },
+    "nt_engine_category_font": {
+      "message": "字体"
+    },
+    "nt_engine_category_music": {
+      "message": "音乐"
+    },
+    "nt_settings_title": {
+      "message": "设置"
+    },
+    "nt_settings_empty": {
+      "message": "当前分类暂无可配置项"
     },
     "nt_lang_auto": {
       "message": "跟随系统"
@@ -164,6 +272,9 @@
     },
     "nt_save": {
       "message": "保存"
+    },
+    "nt_cancel": {
+      "message": "取消"
     },
     "nt_select_placeholder": {
       "message": "请选择"

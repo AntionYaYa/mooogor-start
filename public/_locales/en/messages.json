@@ -87,11 +87,119 @@
     "nt_settings_search_scope": {
       "message": "Search Scope"
     },
+    "nt_settings_search_title": {
+      "message": "Search Settings"
+    },
     "nt_settings_search_bookmarks": {
       "message": "Search Bookmarks"
     },
     "nt_settings_search_history": {
       "message": "Search History"
+    },
+    "nt_settings_search_engines_title": {
+      "message": "Search Engine Management"
+    },
+    "nt_settings_search_edit_categories": {
+      "message": "Edit Categories"
+    },
+    "nt_settings_search_categories_title": {
+      "message": "Categories"
+    },
+    "nt_settings_search_category_placeholder": {
+      "message": "Category name"
+    },
+    "nt_settings_search_category_add_placeholder": {
+      "message": "New category name"
+    },
+    "nt_settings_search_add_category": {
+      "message": "Add Category"
+    },
+    "nt_settings_search_edit_category": {
+      "message": "Edit Category"
+    },
+    "nt_settings_search_category_name_required": {
+      "message": "Enter a category name"
+    },
+    "nt_settings_search_enabled_engines": {
+      "message": "Enabled Engines"
+    },
+    "nt_settings_search_disabled_engines": {
+      "message": "Disabled Engines"
+    },
+    "nt_settings_search_reload_engines": {
+      "message": "Refresh"
+    },
+    "nt_settings_search_enable": {
+      "message": "Enable"
+    },
+    "nt_settings_search_disable": {
+      "message": "Disable"
+    },
+    "nt_settings_search_no_enabled_engines": {
+      "message": "No enabled engines"
+    },
+    "nt_settings_search_no_disabled_engines": {
+      "message": "No disabled engines"
+    },
+    "nt_settings_search_no_engines": {
+      "message": "No search engines yet"
+    },
+    "nt_settings_search_disabled_tag": {
+      "message": "Disabled"
+    },
+    "nt_settings_search_add_engine": {
+      "message": "Add Search Engine"
+    },
+    "nt_settings_search_edit_engine": {
+      "message": "Edit Search Engine"
+    },
+    "nt_settings_search_engine_url_placeholder": {
+      "message": "*Search URL, use %s as the query"
+    },
+    "nt_settings_search_engine_category": {
+      "message": "Engine Category"
+    },
+    "nt_settings_search_engine_enabled": {
+      "message": "Enable Search Engine"
+    },
+    "nt_settings_search_engine_name_required": {
+      "message": "Enter a search engine name"
+    },
+    "nt_settings_search_engine_url_required": {
+      "message": "Enter a search URL"
+    },
+    "nt_settings_search_engine_url_keyword": {
+      "message": "The search URL must include %s"
+    },
+    "nt_settings_search_engine_url_invalid": {
+      "message": "Enter a valid search URL"
+    },
+    "nt_settings_search_category_manage_hint": {
+      "message": "Drag to sort. Names save automatically on blur."
+    },
+    "nt_engine_category_all": {
+      "message": "All"
+    },
+    "nt_engine_category_image": {
+      "message": "Images"
+    },
+    "nt_engine_category_video": {
+      "message": "Videos"
+    },
+    "nt_engine_category_icon": {
+      "message": "Icons"
+    },
+    "nt_engine_category_font": {
+      "message": "Fonts"
+    },
+    "nt_engine_category_music": {
+      "message": "Music"
+    },
+    "nt_settings_title": {
+      "message": "Settings"
+    },
+    "nt_settings_empty": {
+      "message": "No configurable items in this section yet."
     },
     "nt_lang_auto": {
       "message": "Follow system"
@@ -164,6 +272,9 @@
     },
     "nt_save": {
       "message": "Save"
+    },
+    "nt_cancel": {
+      "message": "Cancel"
     },
     "nt_select_placeholder": {
       "message": "Select"

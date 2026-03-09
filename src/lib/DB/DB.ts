@@ -29,3 +29,13 @@ export {
   updateEngineCategory,
   ensureDefaultEngines,
 } from "./engines";
+
+export type { EngineCategoryItem } from "./database";
+export {
+  getEngineCategories,
+  ensureDefaultEngineCategories,
+  addEngineCategory,
+  renameEngineCategory,
+  deleteEngineCategory,
+  updateEngineCategoriesOrder,
+} from "./engineCategories";

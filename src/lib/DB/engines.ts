@@ -2,12 +2,7 @@ import { db } from "./database";
 import type { Engine, EngineCategory } from "./database";
 
 function normalizeEngineCategory(category?: string): EngineCategory {
-  if (category === "2") return "2";
-  if (category === "3") return "3";
-  if (category === "4") return "4";
-  if (category === "5") return "5";
-  if (category === "6") return "6";
-  return "1";
+  return category?.trim() || "1";
 }
 
 export async function addEngine(engine: Omit<Engine, "id">) {

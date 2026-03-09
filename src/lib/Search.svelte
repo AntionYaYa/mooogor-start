@@ -15,12 +15,13 @@
   import { flip } from "svelte/animate";
   import { dndzone } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
-  import type { Engine, EngineCategory } from "@/lib/DB/DB";
+  import type { Engine, EngineCategory, EngineCategoryItem } from "@/lib/DB/DB";
   import {
     ensureDefaultEngines,
+    ensureDefaultEngineCategories,
     getEnabledEngines,
     getDisabledEngines,
-    updateEngineCategory,
+    getEngineCategories,
     updateEnginesState,
   } from "@/lib/DB/DB";
   import defaultEnginesRaw from "@/lib/DB/defaultEngines.json";
@@ -122,7 +123,22 @@
   }
 
   const defaultEngines = buildDefaultEngines(getEffectiveLanguage());
+  function buildDefaultEngineCategories(): Pick<
+    EngineCategoryItem,
+    "id" | "name"
+  >[] {
+    return [
+      { id: "1", name: t("nt_engine_category_all") },
+      { id: "2", name: t("nt_engine_category_image") },
+      { id: "3", name: t("nt_engine_category_video") },
+      { id: "4", name: t("nt_engine_category_icon") },
+      { id: "5", name: t("nt_engine_category_font") },
+      { id: "6", name: t("nt_engine_category_music") },
+    ];
+  }
 
+  let engineCategories: EngineCategoryItem[] = $state([]);
+  let selectedCategoryId = $state("1");
   let enginesGroup: TabItem[] = $state([]);
   let enabledEngines: Engine[] = $state([]);
   let disabledEngines: Engine[] = $state([]);
@@ -147,99 +163,89 @@
   const HISTORY_MAX_RESULTS = 100;
   const SEARCH_DEBOUNCE_MS = 200;
   let isComposing = $state(false);
-  const ENGINE_CATEGORY_ORDER: EngineCategory[] = [
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-  ];
+  function getFallbackCategoryId() {
+    return engineCategories[0]?.id ?? "1";
+  }
 
-  enginesGroup = [
-    { key: "1", name: "综合", sel: true },
-    { key: "2", name: "图片", sel: false },
-    { key: "3", name: "视频", sel: false },
-    { key: "4", name: "图标", sel: false },
-    { key: "5", name: "字体", sel: false },
-    { key: "6", name: "音乐", sel: false },
-  ];
+  function normalizeEngineCategoryId(category?: string): EngineCategory {
+    return category?.trim() || getFallbackCategoryId();
+  }
 
-  onMount(async () => {
-    // window.addEventListener("click", handleDocumentClick); //获取焦点
-    await ensureDefaultEngines(defaultEngines); //初始化把数据添加到Engines表里，有就不会添加
-    const enabled = await getEnabledEngines();
-    enabledEngines = enabled.map((e) => ({ ...e, enabled: true }));
-    inputValue = backPageInitInputValue();
-  });
-
-  function clickEngineGroup(_tab: TabItem, index: number) {
-    enginesGroup = enginesGroup.map((item, i) => ({
-      ...item,
-      sel: i === index,
+  function syncEnginesGroupTabs() {
+    enginesGroup = engineCategories.map((item) => ({
+      key: item.id,
+      name: item.name,
+      sel: item.id === selectedCategoryId,
     }));
   }
 
-  function getSelectedEngineCategory(): EngineCategory {
-    const key = enginesGroup.find((item) => item.sel)?.key;
-    if (key === "2") return "2";
-    if (key === "3") return "3";
-    if (key === "4") return "4";
-    if (key === "5") return "5";
-    if (key === "6") return "6";
-    return "1";
+  async function loadEngineCategoriesFromDb() {
+    await ensureDefaultEngineCategories(buildDefaultEngineCategories());
+    engineCategories = await getEngineCategories();
+    if (!engineCategories.length) {
+      selectedCategoryId = "1";
+      enginesGroup = [];
+      return;
+    }
+    if (!engineCategories.some((item) => item.id === selectedCategoryId)) {
+      selectedCategoryId = engineCategories[0].id;
+    }
+    syncEnginesGroupTabs();
   }
 
-  function getEngineCategory(engine: Engine): EngineCategory {
-    const category = engine.category;
-    if (category === "2") return "2";
-    if (category === "3") return "3";
-    if (category === "4") return "4";
-    if (category === "5") return "5";
-    if (category === "6") return "6";
-    return "1";
+  async function loadEnabledEnginesFromDb() {
+    const enabled = await getEnabledEngines();
+    enabledEngines = enabled.map((e) => ({ ...e, enabled: true }));
+  }
+
+  async function loadDisabledEnginesFromDb() {
+    const disabled = await getDisabledEngines();
+    disabledEngines = disabled.map((e) => ({ ...e, enabled: false }));
+  }
+
+  async function refreshEngineConfig() {
+    await loadEngineCategoriesFromDb();
+    await loadEnabledEnginesFromDb();
+    if (showMoreEngines) {
+      await loadDisabledEnginesFromDb();
+    }
+  }
+
+  onMount(() => {
+    const handleEngineConfigUpdated = () => {
+      void refreshEngineConfig();
+    };
+    window.addEventListener("engine-config-updated", handleEngineConfigUpdated);
+
+    void (async () => {
+      await ensureDefaultEngines(defaultEngines); //初始化把数据添加到Engines表里，有就不会添加
+      await refreshEngineConfig();
+      inputValue = backPageInitInputValue();
+    })();
+
+    return () => {
+      window.removeEventListener(
+        "engine-config-updated",
+        handleEngineConfigUpdated,
+      );
+    };
+  });
+
+  function clickEngineGroup(tab: TabItem) {
+    selectedCategoryId = tab.key;
+    syncEnginesGroupTabs();
   }
 
   function getDisplayEnabledEngines(): Engine[] {
     if (showMoreEngines) return enabledEngines;
-    const selectedCategory = getSelectedEngineCategory();
+    if (!selectedCategoryId) return enabledEngines;
     return enabledEngines.filter(
-      (engine) => getEngineCategory(engine) === selectedCategory,
+      (engine) => normalizeEngineCategoryId(engine.category) === selectedCategoryId,
     );
   }
 
   function getDisplayPlaceholderEngineTitle() {
     return getDisplayEnabledEngines()[0]?.title;
-  }
-
-  function getCategoryName(category: EngineCategory) {
-    return enginesGroup.find((item) => item.key === category)?.name ?? "综合";
-  }
-
-  function getNextCategory(category: EngineCategory): EngineCategory {
-    const index = ENGINE_CATEGORY_ORDER.indexOf(category);
-    if (index === -1 || index === ENGINE_CATEGORY_ORDER.length - 1) return "1";
-    return ENGINE_CATEGORY_ORDER[index + 1];
-  }
-
-  async function setEngineCategory(
-    engine: Engine,
-    category: EngineCategory,
-  ) {
-    if (!engine.id) return;
-    enabledEngines = enabledEngines.map((item) =>
-      item.id === engine.id ? { ...item, category } : item,
-    );
-    disabledEngines = disabledEngines.map((item) =>
-      item.id === engine.id ? { ...item, category } : item,
-    );
-    await updateEngineCategory(engine.id, category);
-  }
-
-  function clickEngineCategory(engine: Engine) {
-    const current = getEngineCategory(engine);
-    const next = getNextCategory(current);
-    void setEngineCategory(engine, next);
   }
 
   $effect(() => {
@@ -465,9 +471,7 @@
   async function clickEditeEngines() {
     showMoreEngines = !showMoreEngines;
     if (!showMoreEngines) return;
-    if (disabledEngines.length) return;
-    const disabled = await getDisabledEngines();
-    disabledEngines = disabled.map((e) => ({ ...e, enabled: false }));
+    await loadDisabledEnginesFromDb();
   }
 
   function getResultEls() {
@@ -625,29 +629,19 @@
       onfinalize={handleFinalizeEnabled}
     >
       {#each getDisplayEnabledEngines() as engine (engine.id)}
-        <div class="engine_item" animate:flip={{ duration: 200 }}>
-          <a
-            class="engine"
-            href={engine.engineUrl?.replace("%s", inputValue)}
-            target={newTabOpen ? "_blank" : "_self"}
-            rel={newTabOpen ? "noreferrer" : undefined}
-          >
-            <img
-              class="engine_icon"
-              src={engine.faviconUrl}
-              alt={engine.title ?? ""}
-            />
-          </a>
-          {#if showMoreEngines}
-            <button
-              class="engine_category"
-              type="button"
-              onclick={() => clickEngineCategory(engine)}
-            >
-              <T type="s">{getCategoryName(getEngineCategory(engine))}</T>
-            </button>
-          {/if}
-        </div>
+        <a
+          class="engine"
+          href={engine.engineUrl?.replace("%s", inputValue)}
+          target={newTabOpen ? "_blank" : "_self"}
+          rel={newTabOpen ? "noreferrer" : undefined}
+          animate:flip={{ duration: 200 }}
+        >
+          <img
+            class="engine_icon"
+            src={engine.faviconUrl}
+            alt={engine.title ?? ""}
+          />
+        </a>
       {/each}
     </div>
     <Button onclick={clickEditeEngines}>
@@ -655,7 +649,7 @@
         <Icon
           name={showMoreEngines ? "X" : "Plus"}
           color="var(--c-text)"
-          opacity={0.7}
+          opacity={0.6}
         />
       </G>
     </Button>
@@ -680,23 +674,18 @@
       onfinalize={handleFinalizeDisabled}
     >
       {#each disabledEngines as engine (engine.id)}
-        <div class="more_item_row" animate:flip={{ duration: 200 }}>
-          <button class="more_item" class:more_item_sel={engine.enabled}>
-            <img
-              class="engine_icon"
-              src={engine.faviconUrl}
-              alt={engine.title ?? ""}
-            />
-            <T type="s">{engine.title}</T>
-          </button>
-          <button
-            class="engine_category"
-            type="button"
-            onclick={() => clickEngineCategory(engine)}
-          >
-            <T type="s">{getCategoryName(getEngineCategory(engine))}</T>
-          </button>
-        </div>
+        <button
+          class="more_item"
+          class:more_item_sel={engine.enabled}
+          animate:flip={{ duration: 200 }}
+        >
+          <img
+            class="engine_icon"
+            src={engine.faviconUrl}
+            alt={engine.title ?? ""}
+          />
+          <T type="s">{engine.title}</T>
+        </button>
       {/each}
     </div>
   </div>
@@ -910,30 +899,6 @@
     border-radius: var(--r);
     padding: 2px;
     pointer-events: none;
-  }
-  .engine_item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-  .engine_category {
-    border: none;
-    background-color: var(--c-mask);
-    border-radius: var(--r);
-    padding: 2px 8px;
-  }
-  .engine_category:active {
-    background-color: var(--c-bg1);
-  }
-  .engine_category:focus-visible {
-    outline: 2px var(--c-text) solid;
-  }
-
-  .more_item_row {
-    display: flex;
-    align-items: center;
-    gap: var(--gap);
   }
 
   .item {

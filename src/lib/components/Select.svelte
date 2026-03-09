@@ -67,7 +67,7 @@
 			<G>
 				<Icon
 					name={open ? "ChevronUp" : "ChevronDown"}
-					opacity={0.7}
+					opacity={0.6}
 					color="var(--c-text)"
 				/>
 			</G>
@@ -85,7 +85,7 @@
 						<Icon
 							name="Check"
 							color="var(--c-green)"
-							opacity={option.sel ? 0.7 : 0}
+							opacity={option.sel ? 0.6 : 0}
 						/>
 					</button>
 				{/each}

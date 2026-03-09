@@ -18,8 +18,15 @@ export interface WebSite {
   updateAt?: number;
 }
 
-export const ENGINE_CATEGORY_KEYS = ["1", "2", "3", "4", "5", "6"] as const;
-export type EngineCategory = (typeof ENGINE_CATEGORY_KEYS)[number];
+export type EngineCategory = string;
+
+export interface EngineCategoryItem {
+  id: string; // 分类ID
+  name: string;
+  order?: number;
+  createAt?: number;
+  updateAt?: number;
+}
 
 export interface Engine {
   id?: number; // 自增主键，新增时不需要提供
@@ -42,6 +49,7 @@ export const db = new Dexie("Mooogor") as Dexie & {
   favicons: EntityTable<Favicon, "domain">;
   webSites: EntityTable<WebSite, "id">;
   engines: EntityTable<Engine, "id">;
+  engineCategories: EntityTable<EngineCategoryItem, "id">;
   settings: EntityTable<SettingRow, "key">;
 };
 
@@ -69,3 +77,11 @@ db.version(2)
         }
       });
   });
+
+db.version(3).stores({
+  favicons: "domain",
+  webSites: "++id,domain",
+  engines: "++id,domain,category,enabled,order",
+  engineCategories: "id,order",
+  settings: "key",
+});

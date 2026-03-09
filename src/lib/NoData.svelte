@@ -14,7 +14,7 @@
 </script>
   <G vertical>
     <G full align='c'>
-      <Icon name={iconName} color="var(--c-text)" opacity={0.7} size={30} />
+      <Icon name={iconName} color="var(--c-text)" opacity={0.6} size={30} />
     </G>
     <T align="c" type='m'>{title}</T>
     <T align="c" type='s'>{text}</T>
