@@ -1038,22 +1038,6 @@
   .disabled_engine {
     opacity: 0.55;
   }
-<<<<<<< HEAD
-  .engine_manage_icon {
-    width: 24px;
-    height: 24px;
-    border-radius: var(--r);
-  }
-  .engine_manage_icon_fallback {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--c-bg1);
-    color: var(--c-text);
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-=======
   .engine_empty_row {
     display: flex;
     width: 100%;
@@ -1063,7 +1047,6 @@
     background-color: var(--c-mask);
   }
 
->>>>>>> 1dea0a7 (121221)
   .engine_meta {
     display: flex;
     flex-direction: column;
