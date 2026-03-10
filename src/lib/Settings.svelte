@@ -29,6 +29,7 @@
   import { t } from "@/lib/utils/i18n";
   import Icon from "./components/Icon.svelte";
   import Button from "./components/Button.svelte";
+    import EngineIcon from "./EngineIcon.svelte";
   interface Props {
     children: any;
     showSetting: boolean;
@@ -809,44 +810,36 @@
 {/snippet}
 
 {#snippet temSearchEngineGroups()}
-  {#each getGroupedSearchEngines() as group (group.id)}
-    <div class="engine_group">
-      <G>
-        <T type="s" color="var(--c-text-1)">{group.name}</T>
-      </G>
-      <div
-        class="engine_list"
-        class:engine_list_empty={!group.items.length}
-        use:dndzone={{
-          items: group.items,
-          flipDurationMs: 200,
-          type: "settings-engines",
-          zoneTabIndex: -1,
-          zoneItemTabIndex: -1,
-          dropTargetStyle: {},
-          dragDisabled: settingEnginesSaving,
-        }}
-        onconsider={(e) => handleSearchEngineGroupConsider(group.id, e)}
-        onfinalize={(e) => handleSearchEngineGroupFinalize(group.id, e)}
-      >
-        {#each group.items as engine (engine.id)}
-          <button
-            class="engine_row engine_row_button"
-            class:disabled_engine={engine.enabled === false}
-            type="button"
-            disabled={settingEnginesSaving}
-            animate:flip={{ duration: 200 }}
-            onclick={() => openEditSearchEngineEditor(engine)}
-          >
-            {#if engine.faviconUrl}
-              <img
-                class="engine_manage_icon"
-                src={engine.faviconUrl}
-                alt={engine.title ?? ""}
-              />
-            {:else}
-              <div class="engine_manage_icon engine_manage_icon_fallback">
-                <T type="s">{engine.title?.slice(0, 1) ?? "?"}</T>
+  {#if !getAllSearchSettingEngines().length}
+    <div class="engine_empty_row">
+      <T type="s" color="var(--c-text-1)">{t("nt_settings_search_no_engines")}</T>
+    </div>
+  {:else}
+    {#each getGroupedSearchEngines() as group (group.id)}
+      <div class="engine_group">
+        <G>
+          <T type="s" color="var(--c-text-1)">{group.name}</T>
+        </G>
+        <div class="engine_list">
+          {#each group.items as engine (engine.id)}
+            <button
+              class="engine_row engine_row_button"
+              class:disabled_engine={engine.enabled === false}
+              type="button"
+              disabled={settingEnginesSaving}
+              onclick={() => openEditSearchEngineEditor(engine)}
+            >
+              <EngineIcon imgUrl={engine.faviconUrl} alt={engine.title??'?'}/>
+              <div class="engine_meta">
+                <div class="engine_meta_title">
+                  <T nowrap>{engine.title ?? t("nt_unnamed")}</T>
+                  {#if engine.enabled === false}
+                    <span class="engine_state_tag">
+                      <T type="s">{t("nt_settings_search_disabled_tag")}</T>
+                    </span>
+                  {/if}
+                </div>
+                <T type="s" color="var(--c-text-1)">{engine.engineUrl}</T>
               </div>
             {/if}
             <div class="engine_meta">
@@ -1045,6 +1038,7 @@
   .disabled_engine {
     opacity: 0.55;
   }
+<<<<<<< HEAD
   .engine_manage_icon {
     width: 24px;
     height: 24px;
@@ -1059,6 +1053,17 @@
     overflow: hidden;
     flex-shrink: 0;
   }
+=======
+  .engine_empty_row {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--gap);
+    border-radius: var(--r1);
+    background-color: var(--c-mask);
+  }
+
+>>>>>>> 1dea0a7 (121221)
   .engine_meta {
     display: flex;
     flex-direction: column;

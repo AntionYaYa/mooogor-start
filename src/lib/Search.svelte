@@ -38,6 +38,7 @@
   import type { AppLanguage } from "@/lib/utils/settings";
   import Tab from "./components/Tab.svelte";
   import type { TabItem } from "./components/Tab.svelte";
+    import EngineIcon from "./EngineIcon.svelte";
 
   type ItemType = BookmarkSubType | "engine" | "todo" | "history";
 
@@ -636,11 +637,7 @@
           rel={newTabOpen ? "noreferrer" : undefined}
           animate:flip={{ duration: 200 }}
         >
-          <img
-            class="engine_icon"
-            src={engine.faviconUrl}
-            alt={engine.title ?? ""}
-          />
+          <EngineIcon imgUrl={engine.faviconUrl} alt={engine.title ?? ""}/>
         </a>
       {/each}
     </div>
@@ -920,5 +917,8 @@
   .engine:focus,
   .item:focus {
     outline: 2px var(--c-text) solid;
+  }
+  a{
+    text-decoration: none;
   }
 </style>
