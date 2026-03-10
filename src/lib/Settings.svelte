@@ -10,8 +10,6 @@
   import Divider from "./components/Divider.svelte";
   import EditSearchEngine from "./EditSearchEngine.svelte";
   import ManageEngineCategories from "./ManageEngineCategories.svelte";
-  import Popup from "./components/Popup.svelte";
-  import Input from "./components/Input.svelte";
   import type { OpenTab, UserSettings } from "@/lib/utils/settings";
   import type { Engine, EngineCategoryItem } from "@/lib/DB/DB";
   import {
@@ -105,8 +103,6 @@
   let settingEnginesSaving = $state(false);
   let expandedCategoryIds = $state<Set<string>>(new Set());
   let showCategoryManager = $state(false);
-  let showAddCategoryPopup = $state(false);
-  let addCategoryName = $state("");
   let showSearchEngineEditor = $state(false);
   let editingSearchEngine: Engine | null = $state(null);
   let persistEngineLayoutTimer: ReturnType<typeof setTimeout> | null =
@@ -330,26 +326,6 @@
 
   function closeCategoryManager() {
     showCategoryManager = false;
-  }
-
-  function openAddCategoryPopup() {
-    addCategoryName = "";
-    showAddCategoryPopup = true;
-  }
-
-  function closeAddCategoryPopup() {
-    showAddCategoryPopup = false;
-    addCategoryName = "";
-  }
-
-  async function confirmAddCategory() {
-    const name = addCategoryName.trim();
-    if (!name) return;
-    const newId = await addSearchCategory(name);
-    closeAddCategoryPopup();
-    if (newId) {
-      expandedCategoryIds = new Set([...expandedCategoryIds, newId]);
-    }
   }
 
   let addingToCategoryId = $state<string | null>(null);
@@ -662,36 +638,6 @@
   {/if}
 </div>
 
-{#if showAddCategoryPopup}
-  <Popup
-    type="s"
-    title={t("nt_settings_search_add_category")}
-    onclickClose={closeAddCategoryPopup}
-  >
-    <G full>
-      <Input
-        name="add-category-name"
-        type="text"
-        placeholder={t("nt_settings_search_category_add_placeholder")}
-        bind:value={addCategoryName}
-        disabled={settingEnginesSaving}
-      />
-    </G>
-    <G full>
-      <Button
-        fill
-        full
-        onclick={() => void confirmAddCategory()}
-        disabled={settingEnginesSaving || !addCategoryName.trim()}
-      >
-        <G full>
-          <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
-        </G>
-      </Button>
-    </G>
-  </Popup>
-{/if}
-
 {#if showCategoryManager}
   <ManageEngineCategories
     categories={settingEngineCategories}
@@ -987,15 +933,6 @@
       {/if}
     </div>
   {/each}
-  <button
-    class="engine_add_category_btn"
-    type="button"
-    disabled={settingEnginesSaving}
-    onclick={openAddCategoryPopup}
-  >
-    <Icon name="Plus" color="var(--c-text)" opacity={0.5} />
-    <T>{t("nt_settings_search_add_category")}</T>
-  </button>
 {/snippet}
 
 {#snippet tembuttonItem(
@@ -1151,8 +1088,7 @@
   .disabled_engine {
     filter: grayscale(1);
   }
-  .engine_add_in_empty_btn,
-  .engine_add_category_btn {
+  .engine_add_in_empty_btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1166,12 +1102,10 @@
     padding: calc(var(--gap) * 1.2);
     cursor: pointer;
   }
-  .engine_add_in_empty_btn:focus-visible,
-  .engine_add_category_btn:focus-visible {
+  .engine_add_in_empty_btn:focus-visible {
     outline: 2px solid var(--c-text);
   }
-  .engine_add_in_empty_btn:disabled,
-  .engine_add_category_btn:disabled {
+  .engine_add_in_empty_btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
