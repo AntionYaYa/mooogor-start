@@ -7,14 +7,15 @@
     imgUrl?: string;
     alt: string;
     size?: Size;
+    disabled?: boolean;
   }
-  let { imgUrl, size = "l", alt }: Props = $props();
+  let { imgUrl, size = "l", alt,disabled }: Props = $props();
 </script>
 
 {#if imgUrl}
-  <img class="engine_icon" src={imgUrl} alt={alt ?? ""} />
+  <img class="engine_icon" class:disabled={disabled} src={imgUrl} alt={alt ?? ""} />
 {:else}
-  <div class="engine_icon engine_icon_fallback">
+  <div class="engine_icon engine_icon_fallback" class:disabled={disabled} >
     <T type="s" align='c'>{alt?.slice(0, 1) ?? "?"}</T>
   </div>
 {/if}
@@ -48,5 +49,8 @@
     justify-content: center;
     background-color: var(--c-mask);
     overflow: hidden;
+  }
+  .disabled{
+    opacity: 0.6;
   }
 </style>

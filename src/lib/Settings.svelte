@@ -10,6 +10,8 @@
   import Divider from "./components/Divider.svelte";
   import EditSearchEngine from "./EditSearchEngine.svelte";
   import ManageEngineCategories from "./ManageEngineCategories.svelte";
+  import Popup from "./components/Popup.svelte";
+  import Input from "./components/Input.svelte";
   import type { OpenTab, UserSettings } from "@/lib/utils/settings";
   import type { Engine, EngineCategoryItem } from "@/lib/DB/DB";
   import {
@@ -29,7 +31,7 @@
   import { t } from "@/lib/utils/i18n";
   import Icon from "./components/Icon.svelte";
   import Button from "./components/Button.svelte";
-    import EngineIcon from "./EngineIcon.svelte";
+  import EngineIcon from "./EngineIcon.svelte";
   interface Props {
     children: any;
     showSetting: boolean;
@@ -101,10 +103,14 @@
   let settingEnginesLoading = $state(false);
   let settingEnginesLoaded = $state(false);
   let settingEnginesSaving = $state(false);
+  let expandedCategoryIds = $state<Set<string>>(new Set());
   let showCategoryManager = $state(false);
+  let showAddCategoryPopup = $state(false);
+  let addCategoryName = $state("");
   let showSearchEngineEditor = $state(false);
   let editingSearchEngine: Engine | null = $state(null);
-  let persistEngineLayoutTimer: ReturnType<typeof setTimeout> | null = $state(null);
+  let persistEngineLayoutTimer: ReturnType<typeof setTimeout> | null =
+    $state(null);
 
   function openSettingPage(page: Exclude<SettingsPage, "root">) {
     pageDirection = 1;
@@ -201,11 +207,14 @@
   function sortSearchEngines(items: Engine[]) {
     return [...items].sort(
       (a, b) =>
-        (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER),
+        (a.order ?? Number.MAX_SAFE_INTEGER) -
+        (b.order ?? Number.MAX_SAFE_INTEGER),
     );
   }
 
-  function buildSearchEngineGroups(allEngines: Engine[] = getAllSearchSettingEngines()) {
+  function buildSearchEngineGroups(
+    allEngines: Engine[] = getAllSearchSettingEngines(),
+  ) {
     const grouped = Object.fromEntries(
       settingEngineCategories.map((category) => [category.id, [] as Engine[]]),
     ) as Record<CategoryId, Engine[]>;
@@ -234,8 +243,12 @@
       })),
     );
 
-    settingEnabledEngines = orderedEngines.filter((engine) => engine.enabled !== false);
-    settingDisabledEngines = orderedEngines.filter((engine) => engine.enabled === false);
+    settingEnabledEngines = orderedEngines.filter(
+      (engine) => engine.enabled !== false,
+    );
+    settingDisabledEngines = orderedEngines.filter(
+      (engine) => engine.enabled === false,
+    );
   }
 
   function syncSearchEngineGroups() {
@@ -319,8 +332,38 @@
     showCategoryManager = false;
   }
 
+  function openAddCategoryPopup() {
+    addCategoryName = "";
+    showAddCategoryPopup = true;
+  }
+
+  function closeAddCategoryPopup() {
+    showAddCategoryPopup = false;
+    addCategoryName = "";
+  }
+
+  async function confirmAddCategory() {
+    const name = addCategoryName.trim();
+    if (!name) return;
+    const newId = await addSearchCategory(name);
+    closeAddCategoryPopup();
+    if (newId) {
+      expandedCategoryIds = new Set([...expandedCategoryIds, newId]);
+    }
+  }
+
+  let addingToCategoryId = $state<string | null>(null);
+
   function openAddSearchEngineEditor() {
     editingSearchEngine = null;
+    addingToCategoryId = null;
+    showSearchEngineEditor = true;
+    closeCategoryManager();
+  }
+
+  function openAddSearchEngineEditorForCategory(categoryId: string) {
+    editingSearchEngine = null;
+    addingToCategoryId = categoryId;
     showSearchEngineEditor = true;
     closeCategoryManager();
   }
@@ -333,6 +376,7 @@
 
   function closeSearchEngineEditor() {
     editingSearchEngine = null;
+    addingToCategoryId = null;
     showSearchEngineEditor = false;
   }
 
@@ -362,7 +406,10 @@
       ]);
       settingEngineCategories = categories;
       const fallbackCategoryId = categories[0]?.id ?? "1";
-      settingEnabledEngines = enabled.map((engine) => ({ ...engine, enabled: true }));
+      settingEnabledEngines = enabled.map((engine) => ({
+        ...engine,
+        enabled: true,
+      }));
       settingDisabledEngines = disabled.map((engine) => ({
         ...engine,
         enabled: false,
@@ -376,14 +423,29 @@
         category: engine.category?.trim() || fallbackCategoryId,
       }));
       syncSearchEngineGroups();
+      if (expandedCategoryIds.size === 0 && categories[0]?.id) {
+        expandedCategoryIds = new Set([categories[0].id]);
+      }
       settingEnginesLoaded = true;
     } finally {
       settingEnginesLoading = false;
     }
   }
 
+  function toggleCategoryExpanded(categoryId: string) {
+    expandedCategoryIds = new Set(expandedCategoryIds);
+    if (expandedCategoryIds.has(categoryId)) {
+      expandedCategoryIds.delete(categoryId);
+    } else {
+      expandedCategoryIds.add(categoryId);
+    }
+  }
+
   function getAllSearchSettingEngines() {
-    return sortSearchEngines([...settingEnabledEngines, ...settingDisabledEngines]);
+    return sortSearchEngines([
+      ...settingEnabledEngines,
+      ...settingDisabledEngines,
+    ]);
   }
 
   function getGroupedSearchEngines() {
@@ -394,12 +456,13 @@
     }));
   }
 
-  async function addSearchCategory(name: string) {
+  async function addSearchCategory(name: string): Promise<string | void> {
     settingEnginesSaving = true;
     try {
-      await addEngineCategory(name);
+      const newId = await addEngineCategory(name);
       await loadSearchSettingEngines(true);
       notifyEngineConfigUpdated();
+      return newId;
     } finally {
       settingEnginesSaving = false;
     }
@@ -473,7 +536,8 @@
           title: payload.title,
           engineUrl: payload.engineUrl,
           faviconUrl:
-            buildEngineFaviconUrl(payload.engineUrl) || currentEngine.faviconUrl,
+            buildEngineFaviconUrl(payload.engineUrl) ||
+            currentEngine.faviconUrl,
           category: normalizedCategory,
           enabled: payload.enabled,
         });
@@ -598,11 +662,43 @@
   {/if}
 </div>
 
+{#if showAddCategoryPopup}
+  <Popup
+    type="s"
+    title={t("nt_settings_search_add_category")}
+    onclickClose={closeAddCategoryPopup}
+  >
+    <G full>
+      <Input
+        name="add-category-name"
+        type="text"
+        placeholder={t("nt_settings_search_category_add_placeholder")}
+        bind:value={addCategoryName}
+        disabled={settingEnginesSaving}
+      />
+    </G>
+    <G full>
+      <Button
+        fill
+        full
+        onclick={() => void confirmAddCategory()}
+        disabled={settingEnginesSaving || !addCategoryName.trim()}
+      >
+        <G full>
+          <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
+        </G>
+      </Button>
+    </G>
+  </Popup>
+{/if}
+
 {#if showCategoryManager}
   <ManageEngineCategories
     categories={settingEngineCategories}
     saving={settingEnginesSaving}
-    onAdd={addSearchCategory}
+    onAdd={async (name) => {
+      await addSearchCategory(name);
+    }}
     onRename={renameSearchCategoryById}
     onDelete={deleteSearchCategoryById}
     onReorder={reorderSearchCategories}
@@ -615,7 +711,11 @@
     isEdit={!!editingSearchEngine}
     titleValue={editingSearchEngine?.title}
     urlValue={editingSearchEngine?.engineUrl}
-    categoryValue={normalizeEngineCategory(editingSearchEngine?.category)}
+    categoryValue={
+      editingSearchEngine
+        ? normalizeEngineCategory(editingSearchEngine.category)
+        : (addingToCategoryId ?? getFallbackCategoryId())
+    }
     enabledValue={editingSearchEngine?.enabled !== false}
     categoryOptions={getSearchEngineCategoryOptions()}
     saving={settingEnginesSaving}
@@ -628,26 +728,21 @@
 {#snippet temSettingRoot()}
   <div class="setting_con">
     {@render temSectionTitle(t("nt_settings_search_title"))}
-    {@render temEntranceItem(
-      t("nt_settings_search_scope"),
-      () => openSettingPage("searchScope"),
+    {@render temEntranceItem(t("nt_settings_search_scope"), () =>
+      openSettingPage("searchScope"),
     )}
-    {@render temEntranceItem(
-      t("nt_settings_search_engines_title"),
-      () => openSettingPage("searchEngines"),
+    {@render temEntranceItem(t("nt_settings_search_engines_title"), () =>
+      openSettingPage("searchEngines"),
     )}
     {@render temSectionTitle(t("nt_settings_websites_title"))}
-    {@render temEntranceItem(
-      t("nt_tab_common"),
-      () => openFeatureTab("common"),
+    {@render temEntranceItem(t("nt_tab_common"), () =>
+      openFeatureTab("common"),
     )}
-    {@render temEntranceItem(
-      t("nt_tab_bookmarks"),
-      () => openFeatureTab("bookmark"),
+    {@render temEntranceItem(t("nt_tab_bookmarks"), () =>
+      openFeatureTab("bookmark"),
     )}
-    {@render temEntranceItem(
-      t("nt_tab_history"),
-      () => openFeatureTab("history"),
+    {@render temEntranceItem(t("nt_tab_history"), () =>
+      openFeatureTab("history"),
     )}
     {@render temDividerItem()}
     {@render temswithcItem(
@@ -669,14 +764,8 @@
       languageOptions,
       setLanguage,
     )}
-    {@render temEntranceItem(
-      t("nt_settings_about"),
-      onclickAbout,
-    )}
-    {@render temEntranceItem(
-      t("nt_about_support_button"),
-      onclickSupport,
-    )}
+    {@render temEntranceItem(t("nt_settings_about"), onclickAbout)}
+    {@render temEntranceItem(t("nt_about_support_button"), onclickSupport)}
   </div>
 {/snippet}
 
@@ -708,12 +797,14 @@
     <div class="select_item">
       {#if settingEnginesLoading && !settingEnginesLoaded}
         <div class="engine_loading">
+        <G>
           <Icon name="Loading" color="var(--c-text)" />
+        </G>
         </div>
       {:else}
-        <div class="engine_manage_sections">
+        <!-- <div class="engine_manage_sections"> -->
           {@render temSearchEngineGroups()}
-        </div>
+        <!-- </div> -->
       {/if}
     </div>
   </div>
@@ -777,11 +868,7 @@
   </div>
 {/snippet}
 
-{#snippet temEntranceItem(
-  text: string,
-  onChange: () => void,
-  title?: string,
-)}
+{#snippet temEntranceItem(text: string, onChange: () => void, title?: string)}
   <div class="select_item">
     {#if title}
       <G>
@@ -810,64 +897,104 @@
 {/snippet}
 
 {#snippet temSearchEngineGroups()}
-  {#if !getAllSearchSettingEngines().length}
-    <div class="engine_empty_row">
-      <T type="s" color="var(--c-text-1)">{t("nt_settings_search_no_engines")}</T>
-    </div>
-  {:else}
-    {#each getGroupedSearchEngines() as group (group.id)}
-      <div class="engine_group">
-        <G>
-          <T type="s" color="var(--c-text-1)">{group.name}</T>
-        </G>
-        <div class="engine_list">
-          {#each group.items as engine (engine.id)}
+  {#each getGroupedSearchEngines() as group (group.id)}
+    {@const isExpanded = expandedCategoryIds.has(group.id)}
+    <div class="engine_group">
+        <Button full onclick={() => toggleCategoryExpanded(group.id)}>
+          <G full align="c">
+            <Icon
+              name={isExpanded ? "ChevronDown" : "ChevronRight"}
+              color="var(--c-text)"
+              opacity={0.6}
+            />
+          <T type="m" color="var(--c-text-1)" nowrap>{group.name}</T>
+          </G>
+          <G align="c">
+            <T type="s" color="var(--c-text-2)" nowrap>{group.items.length}</T>
+          </G>
+        </Button>
+        
+
+      {#if isExpanded}
+        <div
+          class="engine_list_wrapper"
+          class:engine_list_empty={!group.items.length}
+          transition:slide={{ duration: 200 }}
+        >
+          <div
+            class="engine_list"
+            use:dndzone={{
+              items: group.items,
+              flipDurationMs: 200,
+              type: "settings-engines",
+              zoneTabIndex: -1,
+              zoneItemTabIndex: -1,
+              dropTargetStyle: {},
+              dragDisabled: settingEnginesSaving,
+            }}
+            onconsider={(e) => handleSearchEngineGroupConsider(group.id, e)}
+            onfinalize={(e) => handleSearchEngineGroupFinalize(group.id, e)}
+          >
+            {#each group.items as engine (engine.id)}
+              <div
+                class="engine_row"
+                class:disabled_engine={engine.enabled === false}
+                animate:flip={{ duration: 200 }}
+              >
+                <Button
+                  full
+                  onclick={() => openEditSearchEngineEditor(engine)}
+                  align="c"
+                >
+                  <G full align="c">
+                    <EngineIcon
+                      imgUrl={engine.faviconUrl}
+                      alt={engine.title ?? "?"}
+                      disabled={engine.enabled === false}
+                    />
+                    <T
+                      nowrap
+                      color={engine.enabled ? "var(--c-text)" : "var(--c-text-1)"}
+                      >{engine.title ?? t("nt_unnamed")}</T
+                    >
+                  </G>
+                </Button>
+              </div>
+            {/each}
+          </div>
+          {#if group.items.length === 0}
             <button
-              class="engine_row engine_row_button"
-              class:disabled_engine={engine.enabled === false}
               type="button"
+              class="engine_add_in_empty_btn"
               disabled={settingEnginesSaving}
-              onclick={() => openEditSearchEngineEditor(engine)}
+              onclick={() => openAddSearchEngineEditorForCategory(group.id)}
             >
-              <EngineIcon imgUrl={engine.faviconUrl} alt={engine.title??'?'}/>
-              <div class="engine_meta">
-                <div class="engine_meta_title">
-                  <T nowrap>{engine.title ?? t("nt_unnamed")}</T>
-                  {#if engine.enabled === false}
-                    <span class="engine_state_tag">
-                      <T type="s">{t("nt_settings_search_disabled_tag")}</T>
-                    </span>
-                  {/if}
-                </div>
-                <T type="s" color="var(--c-text-1)">{engine.engineUrl}</T>
-              </div>
-            {/if}
-            <div class="engine_meta">
-              <div class="engine_meta_title">
-                <T nowrap>{engine.title ?? t("nt_unnamed")}</T>
-              </div>
-            </div>
-            <div class="engine_row_side">
-              {#if engine.enabled === false}
-                <span class="engine_state_tag">
-                  <T type="s">{t("nt_settings_search_disabled_tag")}</T>
-                </span>
-              {/if}
-              <Icon name="Rows3" color="var(--c-text)" opacity={0.35} />
-            </div>
-          </button>
-        {/each}
-      </div>
+              <Icon name="Plus" color="var(--c-text)" opacity={0.5} />
+              <T>{t("nt_settings_search_add_engine")}</T>
+            </button>
+          {:else}
+            <button
+              type="button"
+              class="engine_add_in_category_btn"
+              disabled={settingEnginesSaving}
+              onclick={() => openAddSearchEngineEditorForCategory(group.id)}
+            >
+              <Icon name="Plus" color="var(--c-text)" opacity={0.5} />
+              <T type="s">{t("nt_settings_search_add_engine")}</T>
+            </button>
+          {/if}
+        </div>
+      {/if}
     </div>
   {/each}
   <button
-    class="engine_add_btn"
+    class="engine_add_category_btn"
     type="button"
     disabled={settingEnginesSaving}
-    onclick={openAddSearchEngineEditor}
+    onclick={openAddCategoryPopup}
   >
     <Icon name="Plus" color="var(--c-text)" opacity={0.5} />
-    <T>{t("nt_settings_search_add_engine")}</T>
+    <T>{t("nt_settings_search_add_category")}</T>
   </button>
 {/snippet}
 
@@ -991,12 +1118,19 @@
     box-sizing: border-box;
     gap: var(--gap);
   }
-  .engine_manage_sections {
+  .engine_list_wrapper {
     display: flex;
     flex-direction: column;
     width: 100%;
     box-sizing: border-box;
     gap: var(--gap);
+  }
+  .engine_list_wrapper.engine_list_empty {
+    padding: var(--gap);
+    border-radius: var(--r1);
+    background-color: var(--c-mask);
+    border: 1px dashed var(--c-border);
+    min-height: 56px;
   }
   .engine_list {
     display: flex;
@@ -1004,77 +1138,21 @@
     width: 100%;
     box-sizing: border-box;
     gap: var(--gap);
-    min-height: 56px;
-  }
-  .engine_list_empty {
-    padding: var(--gap);
-    border-radius: var(--r1);
-    background-color: var(--c-mask);
-    border: 1px dashed var(--c-border);
+    min-height: 40px;
   }
   .engine_row {
     display: flex;
     align-items: center;
-    gap: var(--gap);
     width: 100%;
     box-sizing: border-box;
     background-color: var(--c-mask);
-    border-radius: var(--r1);
-    padding: var(--gap);
-    min-width: 0;
-  }
-  .engine_row_button {
-    border: none;
-    text-align: left;
-    color: inherit;
-    cursor: pointer;
-  }
-  .engine_row_button:focus-visible {
-    outline: 2px solid var(--c-text);
-  }
-  .engine_row_button:disabled {
-    cursor: default;
+    border-radius: var(--r);
   }
   .disabled_engine {
-    opacity: 0.55;
+    filter: grayscale(1);
   }
-  .engine_empty_row {
-    display: flex;
-    width: 100%;
-    box-sizing: border-box;
-    padding: var(--gap);
-    border-radius: var(--r1);
-    background-color: var(--c-mask);
-  }
-
-  .engine_meta {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    box-sizing: border-box;
-    min-width: 0;
-    gap: 0;
-  }
-  .engine_meta_title {
-    display: flex;
-    align-items: center;
-    min-width: 0;
-  }
-  .engine_row_side {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-  .engine_state_tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 6px;
-    border-radius: 999px;
-    background-color: var(--c-bg1);
-    color: var(--c-text-1);
-  }
-  .engine_add_btn {
+  .engine_add_in_empty_btn,
+  .engine_add_category_btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1086,9 +1164,37 @@
     color: var(--c-text);
     border-radius: var(--r1);
     padding: calc(var(--gap) * 1.2);
+    cursor: pointer;
   }
-  .engine_add_btn:focus-visible {
+  .engine_add_in_empty_btn:focus-visible,
+  .engine_add_category_btn:focus-visible {
     outline: 2px solid var(--c-text);
+  }
+  .engine_add_in_empty_btn:disabled,
+  .engine_add_category_btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .engine_add_in_category_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px dashed var(--c-text-2);
+    background-color: transparent;
+    color: var(--c-text);
+    border-radius: var(--r);
+    padding: var(--gap);
+    cursor: pointer;
+  }
+  .engine_add_in_category_btn:focus-visible {
+    outline: 2px solid var(--c-text);
+  }
+  .engine_add_in_category_btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
   .setting_con {
     width: 300px;

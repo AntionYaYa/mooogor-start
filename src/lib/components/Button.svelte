@@ -7,6 +7,7 @@
 		full?: boolean;
 		align?: Align
 		skipTabFocus?: boolean;
+		disabled?: boolean;
 		onclick?: (event: MouseEvent) => void;
 	}
 
@@ -17,10 +18,11 @@
 		onclick,
 		skipTabFocus,
 		align,
+		disabled = false,
 	}: Props = $props();
 </script>
 
-<button class="btn {align}" class:fill class:unfill={!fill} class:full {onclick} tabindex={skipTabFocus?-1:undefined}>
+<button class="btn {align}" class:fill class:unfill={!fill} class:full {onclick} {disabled} tabindex={skipTabFocus?-1:undefined}>
 		{@render children()}
 </button>
 

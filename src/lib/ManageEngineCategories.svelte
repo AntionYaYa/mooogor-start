@@ -111,9 +111,7 @@
   >
     {#each draftCategories as category (category.id)}
       <div class="category_row" animate:flip={{ duration: 200 }}>
-        <div class="drag_mark">
-          <Icon name="Rows3" color="var(--c-text)" opacity={0.4} />
-        </div>
+      <G align='c' full>
         <input
           class="category_input"
           type="text"
@@ -133,6 +131,7 @@
         >
           <T type="s">{t("nt_delete")}</T>
         </button>
+      </G>
       </div>
     {/each}
   </div>
