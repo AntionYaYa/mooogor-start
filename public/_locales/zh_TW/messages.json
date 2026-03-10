@@ -101,9 +101,6 @@
   "nt_settings_websites_title": {
     "message": "網站"
   },
-  "nt_settings_search_edit_categories": {
-    "message": "分類編輯"
-  },
   "nt_settings_search_categories_title": {
     "message": "分類管理"
   },
@@ -150,7 +147,7 @@
     "message": "已停用"
   },
   "nt_settings_search_add_engine": {
-    "message": "新增搜尋引擎"
+    "message": "自訂搜尋引擎"
   },
   "nt_settings_search_edit_engine": {
     "message": "編輯搜尋引擎"

@@ -1,17 +1,21 @@
 <script lang="ts">
 
 	type Align = "c" | "r";
+	type R ="r_o"| "r1" | "r2"|"r3";
+	
 	interface Props {
 		children: any;
 		vertical?: boolean;
 		full?: boolean;
+		fill?: boolean
+		r?: R;
 		gap?: boolean;
 		align?: Align
 	}
-	let { children, vertical,full,align,gap }: Props = $props();
+	let { children, vertical,full,align,gap, r,fill }: Props = $props();
 </script>
 
-<div class="{vertical?'vertical':''} {align} {full?'full':''}" class:gap={gap}>
+<div class="{vertical?'vertical':''} {align} {r}" class:full={full}  class:gap={gap} class:fill={fill}>
 	{@render children()}
 </div>
 
@@ -24,6 +28,20 @@
 		padding: var(--gap);
 		border-radius: var(--r);
 	}
+
+	.r_o{
+		border-radius: var(--r);
+	}
+	.r1{
+		border-radius: var(--r1);
+	}
+	.r2{
+		border-radius: var(--r2);
+	}
+	.r3{
+		border-radius: var(--r3);
+	}
+
 	.gap{
 		gap: var(--gap);
 	}
@@ -44,5 +62,8 @@
 		width: 100%;
 		box-sizing: border-box;
 		overflow: hidden;
+	}
+	.fill{
+		background-color: var(--c-mask);
 	}
 </style>

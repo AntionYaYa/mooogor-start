@@ -403,7 +403,7 @@
               <div in:fly={{ x: -50, duration: 300 }}>
                 <G align="c">
                   {#if gridView}
-                    <Button onclick={() => (gridView = false)} fill>
+                    <Button onclick={() => (gridView = false)} bg='var(--c-text)'>
                       <Icon name="Rows3" color="var(--c-bg)"/>
                     </Button>
                   {:else}
@@ -476,8 +476,10 @@
     </G>
     <G>
       {#if showSetting}
-        <Button onclick={() => (showSetting = !showSetting)} fill>
+        <Button onclick={() => (showSetting = !showSetting)} bg='var(--c-text)'>
+          <G>
           <Icon name="Settings2" color="var(--c-bg)" />
+        </G>
         </Button>
       {:else}
         <Button onclick={() => (showSetting = !showSetting)}>
@@ -548,8 +550,10 @@
         <T align="c" type="s">{desc}</T>
       </G>
       <G vertical align="c">
-        <Button onclick={() => clickGetPermission(permission)} fill>
-          <T color="var(--c-bg)">{t("nt_authorize")}</T>
+        <Button onclick={() => clickGetPermission(permission)} bg='var(--c-text)'>
+          <G >
+            <T color="var(--c-bg)">{t("nt_authorize")}</T>
+          </G >
         </Button>
       </G>
     </G>

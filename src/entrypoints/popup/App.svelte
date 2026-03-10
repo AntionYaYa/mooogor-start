@@ -85,7 +85,7 @@
       />
     </G>
     <G full>
-        <Button fill onclick={clickSave} full>
+        <Button bg='var(--c-text)' onclick={clickSave} full>
           <G full>
           <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
         </G>

@@ -6,17 +6,15 @@
 	import { fade, fly } from "svelte/transition";
 	import { onMount, onDestroy } from "svelte";
 
-	type Type = 's'|'m'
+	type Type = "s" | "m" |'l';
 	interface Props {
 		children: any;
 		title: string;
 		onclickClose: () => void;
 		shake?: boolean;
-		type:Type
+		type: Type;
 	}
 	let { children, title, onclickClose, type }: Props = $props();
-
-	
 
 	onMount(() => {
 		window.addEventListener("keydown", handleKeyDown);
@@ -33,16 +31,16 @@
 	}
 </script>
 
-<div class="mask" transition:fade={{duration: 200}}>
-	<div class="pannel {type}"  transition:fly={{ y: -50, duration: 200 }}>
-			<G full align="c">
-				<T>{title}</T>
-				<Button onclick={onclickClose}>
-					<G>
+<div class="mask" transition:fade={{ duration: 200 }}>
+	<div class="pannel {type}" transition:fly={{ y: -50, duration: 200 }}>
+		<G full align="c">
+			<T>{title}</T>
+			<Button onclick={onclickClose}>
+				<G>
 					<Icon name="X" color="var(--c-text)" />
-					</G>
-				</Button>
-			</G>
+				</G>
+			</Button>
+		</G>
 		<div class="content">
 			{@render children()}
 		</div>
@@ -50,7 +48,7 @@
 </div>
 
 <style>
-	.content{
+	.content {
 		display: flex;
 		flex-direction: column;
 		height: 100%;
@@ -58,10 +56,13 @@
 		overflow-y: auto;
 		width: 100%;
 	}
-	.s{
+	.s {
 		max-width: 320px;
 	}
-	.m{
+	.m {
+		max-width: 460px;
+	}
+	.l {
 		max-width: 600px;
 	}
 	.pannel {
@@ -86,5 +87,4 @@
 		height: 100%;
 		background-color: rgba(0, 0, 0, 0.4);
 	}
-	
 </style>

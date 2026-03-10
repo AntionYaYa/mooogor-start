@@ -29,7 +29,7 @@
     '0.0.0';
 </script>
 
-<Popup title={t("nt_settings_about")} {onclickClose} type="m">
+<Popup title={t("nt_settings_about")} {onclickClose} type="l">
   <G>
     <G>
       <G align='c'>
@@ -67,8 +67,10 @@
       </div>
     </G>
     <G full>
-      <Button fill onclick={onclickSupport}>
+      <Button bg='var(--c-text)' onclick={onclickSupport}>
+      <G>
         <T color="var(--c-bg)">{t("nt_about_support_button")}</T>
+      </G>
       </Button>
     </G>
     <G full>

@@ -13,25 +13,31 @@
 
   interface Props {
     isEdit?: boolean;
-    urlValue?:string;
-    titleValue?:string;
+    urlValue?: string;
+    titleValue?: string;
     onSave: (newWebSite: WebSite) => void;
     onclickClose: () => void;
   }
 
-  let { isEdit = false, urlValue ,titleValue,onSave, onclickClose }: Props = $props();
+  let {
+    isEdit = false,
+    urlValue,
+    titleValue,
+    onSave,
+    onclickClose,
+  }: Props = $props();
   let inputUrlValue = $state("");
   let inputTitleValue = $state("");
   let inputUrlValueErr = $state(false);
 
-  onMount(()=>{
+  onMount(() => {
     if (urlValue) {
-      inputUrlValue = urlValue
+      inputUrlValue = urlValue;
     }
     if (titleValue) {
-      inputTitleValue = titleValue
+      inputTitleValue = titleValue;
     }
-  })
+  });
 
   function clickSave() {
     inputUrlValueErr = false;
@@ -50,7 +56,11 @@
   }
 </script>
 
-<Popup type='s' title={isEdit ? t("nt_edit_pinned_title") : t("nt_add_pinned_title")} {onclickClose}>
+<Popup
+  type="s"
+  title={isEdit ? t("nt_edit_pinned_title") : t("nt_add_pinned_title")}
+  {onclickClose}
+>
   <G full>
     <Shake shake={inputUrlValueErr}>
       <Input
@@ -70,10 +80,12 @@
     />
   </G>
   <G full>
-      <Button fill onclick={clickSave} full>
-        <G full>
+    <Button bg="var(--c-text)" onclick={clickSave} full r='r1'>
+      <G full>
+      <G full>
         <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
       </G>
-      </Button>
+      </G>
+    </Button>
   </G>
 </Popup>

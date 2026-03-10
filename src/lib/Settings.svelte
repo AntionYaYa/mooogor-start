@@ -657,11 +657,9 @@
     isEdit={!!editingSearchEngine}
     titleValue={editingSearchEngine?.title}
     urlValue={editingSearchEngine?.engineUrl}
-    categoryValue={
-      editingSearchEngine
-        ? normalizeEngineCategory(editingSearchEngine.category)
-        : (addingToCategoryId ?? getFallbackCategoryId())
-    }
+    categoryValue={editingSearchEngine
+      ? normalizeEngineCategory(editingSearchEngine.category)
+      : (addingToCategoryId ?? getFallbackCategoryId())}
     enabledValue={editingSearchEngine?.enabled !== false}
     categoryOptions={getSearchEngineCategoryOptions()}
     saving={settingEnginesSaving}
@@ -736,20 +734,20 @@
 
 {#snippet temSettingSearchEngines()}
   <div class="setting_con">
-    {@render temEntranceItem(
-      t("nt_settings_search_edit_categories"),
+    {@render tembuttonItem(
+      t("nt_settings_search_categories_title"),
       openCategoryManager,
     )}
     <div class="select_item">
       {#if settingEnginesLoading && !settingEnginesLoaded}
         <div class="engine_loading">
-        <G>
-          <Icon name="Loading" color="var(--c-text)" />
-        </G>
+          <G>
+            <Icon name="Loading" color="var(--c-text)" />
+          </G>
         </div>
       {:else}
         <!-- <div class="engine_manage_sections"> -->
-          {@render temSearchEngineGroups()}
+        {@render temSearchEngineGroups()}
         <!-- </div> -->
       {/if}
     </div>
@@ -846,20 +844,18 @@
   {#each getGroupedSearchEngines() as group (group.id)}
     {@const isExpanded = expandedCategoryIds.has(group.id)}
     <div class="engine_group">
-        <Button full onclick={() => toggleCategoryExpanded(group.id)}>
-          <G full align="c">
-            <Icon
-              name={isExpanded ? "ChevronDown" : "ChevronRight"}
-              color="var(--c-text)"
-              opacity={0.6}
-            />
-          <T type="m" color="var(--c-text-1)" nowrap>{group.name}</T>
-          </G>
-          <G align="c">
-            <T type="s" color="var(--c-text-2)" nowrap>{group.items.length}</T>
-          </G>
-        </Button>
-        
+      <Button full onclick={() => toggleCategoryExpanded(group.id)}>
+        <G full align="c">
+          <Icon
+            name={isExpanded ? "ChevronDown" : "ChevronRight"}
+            color="var(--c-text)"
+          />
+          <T type="m" color="var(--c-text)" nowrap>{group.name}</T>
+        </G>
+        <G align="c">
+          <T type="s" color="var(--c-text-2)" nowrap>{group.items.length}</T>
+        </G>
+      </Button>
 
       {#if isExpanded}
         <div
@@ -900,7 +896,9 @@
                     />
                     <T
                       nowrap
-                      color={engine.enabled ? "var(--c-text)" : "var(--c-text-1)"}
+                      color={engine.enabled
+                        ? "var(--c-text)"
+                        : "var(--c-text-1)"}
                       >{engine.title ?? t("nt_unnamed")}</T
                     >
                   </G>
@@ -908,27 +906,14 @@
               </div>
             {/each}
           </div>
-          {#if group.items.length === 0}
-            <button
-              type="button"
-              class="engine_add_in_empty_btn"
-              disabled={settingEnginesSaving}
-              onclick={() => openAddSearchEngineEditorForCategory(group.id)}
-            >
-              <Icon name="Plus" color="var(--c-text)" opacity={0.5} />
-              <T>{t("nt_settings_search_add_engine")}</T>
-            </button>
-          {:else}
-            <button
-              type="button"
-              class="engine_add_in_category_btn"
-              disabled={settingEnginesSaving}
-              onclick={() => openAddSearchEngineEditorForCategory(group.id)}
-            >
+          <Button
+            onclick={() => openAddSearchEngineEditorForCategory(group.id)}
+          >
+            <G align="c">
               <Icon name="Plus" color="var(--c-text)" opacity={0.5} />
               <T type="s">{t("nt_settings_search_add_engine")}</T>
-            </button>
-          {/if}
+            </G>
+          </Button>
         </div>
       {/if}
     </div>
@@ -1030,7 +1015,7 @@
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
-    gap: var(--gap);
+    /* gap: var(--gap); */
   }
   .section_title {
     display: flex;
@@ -1061,13 +1046,13 @@
     width: 100%;
     box-sizing: border-box;
     gap: var(--gap);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r1);
+    padding: var(--gap);
   }
   .engine_list_wrapper.engine_list_empty {
-    padding: var(--gap);
-    border-radius: var(--r1);
-    background-color: var(--c-mask);
     border: 1px dashed var(--c-border);
-    min-height: 56px;
+    min-height: 40px;
   }
   .engine_list {
     display: flex;
@@ -1088,48 +1073,7 @@
   .disabled_engine {
     filter: grayscale(1);
   }
-  .engine_add_in_empty_btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    box-sizing: border-box;
-    border: 1px dashed var(--c-text-2);
-    background-color: transparent;
-    color: var(--c-text);
-    border-radius: var(--r1);
-    padding: calc(var(--gap) * 1.2);
-    cursor: pointer;
-  }
-  .engine_add_in_empty_btn:focus-visible {
-    outline: 2px solid var(--c-text);
-  }
-  .engine_add_in_empty_btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  .engine_add_in_category_btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    width: 100%;
-    box-sizing: border-box;
-    border: 1px dashed var(--c-text-2);
-    background-color: transparent;
-    color: var(--c-text);
-    border-radius: var(--r);
-    padding: var(--gap);
-    cursor: pointer;
-  }
-  .engine_add_in_category_btn:focus-visible {
-    outline: 2px solid var(--c-text);
-  }
-  .engine_add_in_category_btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+
   .setting_con {
     width: 300px;
     display: flex;

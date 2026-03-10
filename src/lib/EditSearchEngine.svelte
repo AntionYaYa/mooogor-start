@@ -110,6 +110,15 @@
     : t("nt_settings_search_add_engine")}
   {onclickClose}
 >
+  <G vertical>
+    <G full>
+      <T type="s" color="var(--c-text-1)">
+        {t("nt_settings_search_engine_category")}
+      </T>
+    </G>
+    <Select options={popupCategoryOptions} onChange={setCategory} />
+  </G>
+
   <G full>
     <Input
       name="engine-title"
@@ -126,77 +135,49 @@
       placeholder={t("nt_settings_search_engine_url_placeholder")}
       bind:value={inputUrlValue}
       disabled={saving}
+      err={inputError}
     />
   </G>
-  <G full vertical>
-    <T type="s" color="var(--c-text-1)">
-      {t("nt_settings_search_engine_category")}
-    </T>
-    <Select options={popupCategoryOptions} onChange={setCategory} />
-  </G>
-  <div class="switch_row">
-    <G vertical full>
-      <T>{t("nt_settings_search_engine_enabled")}</T>
-    </G>
-    <div
-      class="switch_wrap"
-      role="button"
-      tabindex={saving ? -1 : 0}
-      aria-disabled={saving}
-      onclick={() => !saving && (enabled = !enabled)}
-      onkeydown={(e) => {
-        if (saving) return;
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          enabled = !enabled;
-        }
-      }}
-    >
-      <Switch turnOn={enabled} disabled={saving} />
-    </div>
-  </div>
-  {#if inputError}
-    <G full>
-      <T type="s" color="var(--c-red)">{inputError}</T>
-    </G>
-  {/if}
+
   <G full>
-    <Button fill full onclick={() => void clickSave()}>
-      <G full>
-        <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
-      </G>
-    </Button>
-  </G>
-  {#if isEdit && onDelete}
-    <G full>
-      <Button full onclick={() => void clickDelete()}>
+    <G full fill r="r1">
+      <Button full onclick={() => !saving && (enabled = !enabled)}>
         <G full>
-          <T align="c">{t("nt_delete")}</T>
+          <T>{t("nt_settings_search_engine_enabled")}</T>
+          <Switch turnOn={enabled} disabled={saving} />
         </G>
       </Button>
     </G>
-  {/if}
+  </G>
+
+  <div>
+    {#if isEdit && onDelete}
+        <G fill r="r1">
+          <Button full  onclick={() => void clickDelete()}>
+            <G full>
+              <T align="c" >{t("nt_delete")}</T>
+            </G>
+          </Button>
+        </G>
+    {/if}
+    <G fill r="r1">
+      <Button onclick={() => void clickSave()} bg='var(--c-text)'>
+        <G full>
+          <T align="c" color='var(--c-bg)'>{t("nt_save")}</T>
+        </G>
+      </Button>
+    </G>
+  </div>
 </Popup>
 
 <style>
-  .switch_row {
+  div {
     display: flex;
     align-items: center;
+    flex-direction: row;
     justify-content: space-between;
     width: 100%;
     box-sizing: border-box;
-    background-color: var(--c-mask);
-    border-radius: var(--r1);
     padding: var(--gap);
-    gap: var(--gap);
-  }
-  .switch_wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .switch_wrap:focus-visible {
-    outline: 2px solid var(--c-text);
-    border-radius: var(--r);
   }
 </style>

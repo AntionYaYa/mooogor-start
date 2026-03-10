@@ -102,9 +102,6 @@
     "nt_settings_websites_title": {
       "message": "Websites"
     },
-    "nt_settings_search_edit_categories": {
-      "message": "Edit Categories"
-    },
     "nt_settings_search_categories_title": {
       "message": "Categories"
     },
@@ -151,7 +148,7 @@
       "message": "Disabled"
     },
     "nt_settings_search_add_engine": {
-      "message": "Add Search Engine"
+      "message": "Custom Search Engine"
     },
     "nt_settings_search_edit_engine": {
       "message": "Edit Search Engine"
