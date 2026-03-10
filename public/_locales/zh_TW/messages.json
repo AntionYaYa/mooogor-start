@@ -98,6 +98,12 @@
   "nt_settings_search_engines_title": {
     "message": "搜尋引擎"
   },
+  "nt_settings_search_reset_default": {
+    "message": "恢復預設"
+  },
+  "nt_settings_search_reset_confirm": {
+    "message": "確定要將搜尋引擎恢復至初始狀態嗎？此操作將清除所有自訂的搜尋引擎和分類，且無法復原。"
+  },
   "nt_settings_websites_title": {
     "message": "網站"
   },

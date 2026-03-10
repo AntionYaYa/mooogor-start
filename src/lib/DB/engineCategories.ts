@@ -33,6 +33,34 @@ export async function ensureDefaultEngineCategories(
   );
 }
 
+export async function clearAllEngineCategories() {
+  await db.engineCategories.clear();
+}
+
+function addEngineCategoriesUnsafe(
+  defaults: Pick<EngineCategoryItem, "id" | "name">[],
+) {
+  const now = Date.now();
+  return db.engineCategories.bulkAdd(
+    defaults.map((item, index) => ({
+      id: item.id,
+      name: normalizeCategoryName(item.name),
+      order: index,
+      createAt: now,
+      updateAt: now,
+    })),
+  );
+}
+
+export async function resetEngineCategoriesToDefault(
+  defaults: Pick<EngineCategoryItem, "id" | "name">[],
+) {
+  await db.transaction("rw", db.engineCategories, async () => {
+    await db.engineCategories.clear();
+    await addEngineCategoriesUnsafe(defaults);
+  });
+}
+
 export async function addEngineCategory(name: string): Promise<string> {
   const normalized = normalizeCategoryName(name);
   if (!normalized) {

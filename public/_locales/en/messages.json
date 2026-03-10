@@ -99,6 +99,12 @@
     "nt_settings_search_engines_title": {
       "message": "Search Engines"
     },
+    "nt_settings_search_reset_default": {
+      "message": "Restore defaults"
+    },
+    "nt_settings_search_reset_confirm": {
+      "message": "Are you sure you want to restore search engines to their initial state? This will remove all custom search engines and categories, and cannot be undone."
+    },
     "nt_settings_websites_title": {
       "message": "Websites"
     },
@@ -178,7 +184,7 @@
       "message": "Drag to sort. Names save automatically on blur."
     },
     "nt_engine_category_all": {
-      "message": "All"
+      "message": "General"
     },
     "nt_engine_category_image": {
       "message": "Images"

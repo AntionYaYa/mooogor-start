@@ -135,3 +135,28 @@ export async function ensureDefaultEngines(
     })),
   );
 }
+
+export async function clearAllEngines() {
+  await db.engines.clear();
+}
+
+function addEnginesUnsafe(defaults: Omit<Engine, "id">[]) {
+  const now = Date.now();
+  return db.engines.bulkAdd(
+    defaults.map((engine, i) => ({
+      ...engine,
+      category: normalizeEngineCategory(engine.category),
+      enabled: engine.enabled ?? true,
+      order: engine.order ?? i,
+      createAt: now,
+      updateAt: now,
+    })),
+  );
+}
+
+export async function resetEnginesToDefault(defaults: Omit<Engine, "id">[]) {
+  await db.transaction("rw", db.engines, async () => {
+    await db.engines.clear();
+    await addEnginesUnsafe(defaults);
+  });
+}

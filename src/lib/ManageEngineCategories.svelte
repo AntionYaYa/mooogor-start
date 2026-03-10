@@ -8,6 +8,7 @@
   import T from "./components/T.svelte";
   import Icon from "./components/Icon.svelte";
   import { t } from "@/lib/utils/i18n";
+  import Button from "./components/Button.svelte";
 
   interface Props {
     categories: EngineCategoryItem[];
@@ -15,7 +16,9 @@
     onAdd: (name: string) => void | Promise<void>;
     onRename: (id: string, name: string) => void | Promise<void>;
     onDelete: (id: string) => void | Promise<void>;
-    onReorder: (items: (EngineCategoryItem & { id: string })[]) => void | Promise<void>;
+    onReorder: (
+      items: (EngineCategoryItem & { id: string })[],
+    ) => void | Promise<void>;
     onclickClose: () => void;
   }
 
@@ -85,7 +88,9 @@
     draftCategories = e.detail.items;
     await onReorder(
       draftCategories
-        .filter((item): item is EngineCategoryItem & { id: string } => !!item.id)
+        .filter(
+          (item): item is EngineCategoryItem & { id: string } => !!item.id,
+        )
         .map((item, index) => ({
           ...item,
           order: index,
@@ -111,55 +116,66 @@
   >
     {#each draftCategories as category (category.id)}
       <div class="category_row" animate:flip={{ duration: 200 }}>
-      <G align='c' full>
-        <input
-          class="category_input"
-          type="text"
-          value={draftNameMap[category.id] ?? category.name}
-          disabled={saving}
-          placeholder={t("nt_settings_search_category_placeholder")}
-          oninput={(e) =>
-            setDraftName(category.id, (e.currentTarget as HTMLInputElement).value)}
-          onblur={() => void handleCategoryBlur(category)}
-          onkeydown={handleCategoryKeydown}
-        />
-        <button
-          class="delete_btn"
-          type="button"
-          disabled={saving || categories.length <= 1}
-          onclick={() => void onDelete(category.id)}
-        >
-          <T type="s">{t("nt_delete")}</T>
-        </button>
-      </G>
+        <G align="c" full fill r="r1">
+          <Icon name="GripHorizontal" color="var(--c-text)" opacity={0.6} />
+          <input
+            class="category_input"
+            type="text"
+            value={draftNameMap[category.id] ?? category.name}
+            disabled={saving}
+            placeholder={t("nt_settings_search_category_placeholder")}
+            oninput={(e) =>
+              setDraftName(
+                category.id,
+                (e.currentTarget as HTMLInputElement).value,
+              )}
+            onblur={() => void handleCategoryBlur(category)}
+            onkeydown={handleCategoryKeydown}
+          />
+          <Button
+            onclick={() => void onDelete(category.id)}
+            disabled={saving || categories.length <= 1}
+          >
+            <G>
+              <Icon
+                name="Minus"
+                color="var(--c-text)"
+                opacity={categories.length > 1 ? 1 : 0.2}
+              />
+            </G>
+          </Button>
+        </G>
       </div>
     {/each}
   </div>
 
-  <div class="category_row add_row">
-    <div class="drag_mark">
-      <Icon name="Plus" color="var(--c-text)" opacity={0.4} />
-    </div>
-    <input
-      class="category_input"
-      type="text"
-      bind:value={newCategoryName}
-      disabled={saving}
-      placeholder={t("nt_settings_search_category_add_placeholder")}
-      onkeydown={handleAddCategoryKeydown}
-    />
-    <button
-      class="add_btn"
-      type="button"
-      disabled={saving || !newCategoryName.trim()}
-      onclick={() => void handleAddCategory()}
-    >
-      <T type="s">{t("nt_settings_search_add_category")}</T>
-    </button>
-  </div>
+  <G full>
+    <G full fill r="r1" align="c">
+      <input
+        class="category_input"
+        type="text"
+        bind:value={newCategoryName}
+        disabled={saving}
+        placeholder={t("nt_settings_search_category_add_placeholder")}
+        onkeydown={handleAddCategoryKeydown}
+      />
+      <Button
+        disabled={saving || !newCategoryName.trim()}
+        onclick={() => void handleAddCategory()}
+      >
+        <G>
+          <Icon
+            name="Plus"
+            color="var(--c-text)"
+            opacity={newCategoryName.length >= 1 ? 1 : 0.2}
+          />
+        </G>
+      </Button>
+    </G>
+  </G>
 
   <G full>
-    <T type="s" color="var(--c-text-1)">
+    <T type="s">
       {t("nt_settings_search_category_manage_hint")}
     </T>
   </G>
@@ -172,6 +188,7 @@
     width: 100%;
     box-sizing: border-box;
     gap: var(--gap);
+    padding: var(--gap);
   }
   .category_row {
     display: flex;
@@ -179,16 +196,9 @@
     gap: var(--gap);
     width: 100%;
     box-sizing: border-box;
-    background-color: var(--c-mask);
     border-radius: var(--r1);
-    padding: var(--gap);
   }
-  .drag_mark {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
+
   .category_input {
     width: 100%;
     box-sizing: border-box;
@@ -197,36 +207,12 @@
     color: var(--c-text);
     font-size: var(--f-size-m);
     min-width: 0;
+    padding: var(--gap);
   }
   .category_input::placeholder {
     color: var(--c-text-2);
   }
   .category_input:focus {
     outline: none;
-  }
-  .delete_btn {
-    border: none;
-    background-color: var(--c-bg1);
-    border-radius: var(--r);
-    padding: 4px 8px;
-    color: var(--c-text);
-    flex-shrink: 0;
-  }
-  .delete_btn:disabled {
-    opacity: 0.4;
-  }
-  .add_btn {
-    border: none;
-    background-color: var(--c-bg1);
-    border-radius: var(--r);
-    padding: 4px 8px;
-    color: var(--c-text);
-    flex-shrink: 0;
-  }
-  .add_btn:disabled {
-    opacity: 0.4;
-  }
-  .add_row {
-    margin-top: var(--gap);
   }
 </style>

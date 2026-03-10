@@ -38,7 +38,7 @@
   import type { AppLanguage } from "@/lib/utils/settings";
   import Tab from "./components/Tab.svelte";
   import type { TabItem } from "./components/Tab.svelte";
-    import EngineIcon from "./EngineIcon.svelte";
+  import EngineIcon from "./EngineIcon.svelte";
 
   type ItemType = BookmarkSubType | "engine" | "todo" | "history";
 
@@ -241,7 +241,8 @@
     if (showMoreEngines) return enabledEngines;
     if (!selectedCategoryId) return enabledEngines;
     return enabledEngines.filter(
-      (engine) => normalizeEngineCategoryId(engine.category) === selectedCategoryId,
+      (engine) =>
+        normalizeEngineCategoryId(engine.category) === selectedCategoryId,
     );
   }
 
@@ -274,11 +275,22 @@
     return searchEl.value;
   }
 
-  function handleConsiderEnabled(e: CustomEvent<DndEvent<Engine>>) {
-    enabledEngines = e.detail.items.map((item) => ({
+  function mergeEnabledFromZone(zoneItems: Engine[]): Engine[] {
+    const zoneResult = zoneItems.map((item) => ({
       ...item,
       enabled: true,
     }));
+    if (showMoreEngines || engineCategories.length <= 1) {
+      return zoneResult;
+    }
+    const otherEnabled = enabledEngines.filter(
+      (e) => normalizeEngineCategoryId(e.category) !== selectedCategoryId,
+    );
+    return [...otherEnabled, ...zoneResult];
+  }
+
+  function handleConsiderEnabled(e: CustomEvent<DndEvent<Engine>>) {
+    enabledEngines = mergeEnabledFromZone(e.detail.items);
   }
 
   function handleConsiderDisabled(e: CustomEvent<DndEvent<Engine>>) {
@@ -288,11 +300,7 @@
     }));
   }
 
-  async function handleFinalizeEnabled(e: CustomEvent<DndEvent<Engine>>) {
-    enabledEngines = e.detail.items.map((item) => ({
-      ...item,
-      enabled: true,
-    }));
+  async function persistEnginesState() {
     const enabledWithIds = enabledEngines.filter(
       (i): i is Engine & { id: number } => !!i.id,
     );
@@ -304,20 +312,17 @@
     }
   }
 
+  async function handleFinalizeEnabled(e: CustomEvent<DndEvent<Engine>>) {
+    enabledEngines = mergeEnabledFromZone(e.detail.items);
+    await persistEnginesState();
+  }
+
   async function handleFinalizeDisabled(e: CustomEvent<DndEvent<Engine>>) {
     disabledEngines = e.detail.items.map((item) => ({
       ...item,
       enabled: false,
     }));
-    const enabledWithIds = enabledEngines.filter(
-      (i): i is Engine & { id: number } => !!i.id,
-    );
-    const disabledWithIds = disabledEngines.filter(
-      (i): i is Engine & { id: number } => !!i.id,
-    );
-    if (enabledWithIds.length || disabledWithIds.length) {
-      await updateEnginesState(enabledWithIds, disabledWithIds);
-    }
+    await persistEnginesState();
   }
 
   async function searchInput(value: string) {
@@ -471,8 +476,7 @@
 
   async function clickEditeEngines() {
     showMoreEngines = !showMoreEngines;
-    if (!showMoreEngines) return;
-    await loadDisabledEnginesFromDb();
+    await refreshEngineConfig();
   }
 
   function getResultEls() {
@@ -539,9 +543,14 @@
   }
 </script>
 
-<div class="search">
-  <Tab tabs={enginesGroup} onclick={clickEngineGroup} />
-  <div class="search_g" class:bg={searchAreaFocused && bookmarksResults.length}>
+<div
+  class="search"
+  class:hided_tab={enginesGroup.length <= 1}
+>
+  {#if enginesGroup.length > 1}
+    <Tab tabs={enginesGroup} onclick={clickEngineGroup}/>
+  {/if}
+  <div class="search_g"  class:bg={searchAreaFocused && bookmarksResults.length} class:top0={enginesGroup.length <= 1}>
     {@render temInputGroup()}
     {#if searchAreaFocused && ((searchBookmarksEnabled && (bookmarksResults.length || bookmarksLoading)) || (searchHistoryEnabled && (historyResults.length || historyLoading)))}
       <div
@@ -624,7 +633,6 @@
         type: "engines",
         zoneTabIndex: -1,
         dropTargetStyle: {},
-        dragDisabled: !showMoreEngines,
       }}
       onconsider={handleConsiderEnabled}
       onfinalize={handleFinalizeEnabled}
@@ -637,7 +645,7 @@
           rel={newTabOpen ? "noreferrer" : undefined}
           animate:flip={{ duration: 200 }}
         >
-          <EngineIcon imgUrl={engine.faviconUrl} alt={engine.title ?? ""}/>
+          <EngineIcon imgUrl={engine.faviconUrl} alt={engine.title ?? ""} />
         </a>
       {/each}
     </div>
@@ -665,7 +673,6 @@
         type: "engines",
         zoneTabIndex: -1,
         dropTargetStyle: {},
-        dragDisabled: !showMoreEngines,
       }}
       onconsider={handleConsiderDisabled}
       onfinalize={handleFinalizeDisabled}
@@ -676,12 +683,7 @@
           class:more_item_sel={engine.enabled}
           animate:flip={{ duration: 200 }}
         >
-          <img
-            class="engine_icon"
-            src={engine.faviconUrl}
-            alt={engine.title ?? ""}
-          />
-          <T type="s">{engine.title}</T>
+          <EngineIcon imgUrl={engine.faviconUrl} alt={engine.title ?? ""} />
         </button>
       {/each}
     </div>
@@ -711,13 +713,16 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
-    min-width: 200px;
-    max-width: 600px;
+    min-width: 600px;
+    max-width: 100%;
     padding: var(--gap);
     position: relative;
     height: 100px;
   }
+  .hided_tab{
+    height: 60px;
+  }
+
   .engines_M {
     display: flex;
     align-items: center;
@@ -759,11 +764,14 @@
     width: 100%;
     box-sizing: border-box;
     position: absolute;
-    top: 40px;
+    top: 45px;
     left: 0;
     z-index: 10;
     padding: var(--gap);
     border-radius: var(--r2);
+  }
+  .top0{
+    top:0;
   }
   .bg {
     background-color: var(--c-bg1);
@@ -890,13 +898,6 @@
   .engine:focus-visible {
     outline: 2px var(--c-text) solid;
   }
-  .engine_icon {
-    width: 26px;
-    height: 26px;
-    border-radius: var(--r);
-    padding: 2px;
-    pointer-events: none;
-  }
 
   .item {
     display: flex;
@@ -918,7 +919,7 @@
   .item:focus {
     outline: 2px var(--c-text) solid;
   }
-  a{
+  a {
     text-decoration: none;
   }
 </style>

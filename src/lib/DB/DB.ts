@@ -29,7 +29,10 @@ export {
   updateEnginesState,
   updateEngineCategory,
   ensureDefaultEngines,
+  resetEnginesToDefault,
 } from "./engines";
+
+export { resetSearchEnginesToDefault } from "./resetSearchEngines";
 
 export type { EngineCategoryItem } from "./database";
 export {

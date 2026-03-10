@@ -99,6 +99,12 @@
     "nt_settings_search_engines_title": {
       "message": "搜索引擎"
     },
+    "nt_settings_search_reset_default": {
+      "message": "恢复默认"
+    },
+    "nt_settings_search_reset_confirm": {
+      "message": "确定要恢复搜索引擎到初始状态吗？此操作将清除所有自定义的搜索引擎和分类，且无法撤销。"
+    },
     "nt_settings_websites_title": {
       "message": "网站"
     },

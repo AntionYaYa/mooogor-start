@@ -142,7 +142,7 @@
   <G full>
     <G full fill r="r1">
       <Button full onclick={() => !saving && (enabled = !enabled)}>
-        <G full>
+        <G full align="c">
           <T>{t("nt_settings_search_engine_enabled")}</T>
           <Switch turnOn={enabled} disabled={saving} />
         </G>
@@ -151,22 +151,22 @@
   </G>
 
   <div>
-    {#if isEdit && onDelete}
-        <G fill r="r1">
-          <Button full  onclick={() => void clickDelete()}>
-            <G full>
-              <T align="c" >{t("nt_delete")}</T>
-            </G>
-          </Button>
-        </G>
-    {/if}
-    <G fill r="r1">
-      <Button onclick={() => void clickSave()} bg='var(--c-text)'>
+    <Button onclick={() => void clickSave()} bg="var(--c-text)" r="r1">
+      <G>
         <G full>
-          <T align="c" color='var(--c-bg)'>{t("nt_save")}</T>
+          <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
+        </G>
+      </G>
+    </Button>
+    {#if isEdit && onDelete}
+      <Button fill r="r1" onclick={() => void clickDelete()}>
+        <G align="c">
+          <G>
+            <T align="c">{t("nt_delete")}</T>
+          </G>
         </G>
       </Button>
-    </G>
+    {/if}
   </div>
 </Popup>
 
@@ -179,5 +179,6 @@
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
+    flex-direction: row-reverse;
   }
 </style>

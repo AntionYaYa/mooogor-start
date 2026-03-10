@@ -17,7 +17,7 @@
 <div>
 	{#each tabs as tab,i}
 		<button class={tab.sel ? "sel" : "unsel"} onclick={() => onclick(tab,i)}>
-			<T color={tab.sel ? "var(--c-text)" : "var(--c-text-1)"}
+			<T color={tab.sel ? "var(--c-text)" : "var(--c-text-1)"} nowrap
 				>{tab.name}</T
 			>
 		</button>
@@ -34,6 +34,7 @@
 		width: 100%;
 		box-sizing: border-box;
 		justify-content: center;
+		overflow: auto;
 	}
 	button {
 		display: flex;

@@ -31,9 +31,11 @@
 
 <Popup title={t("nt_settings_about")} {onclickClose} type="l">
   <G>
-    <G>
+    <G align='c'>
       <G align='c'>
         <img class="logo" src="/Mooogor.svg" alt="Mooogor Start" />
+      </G>
+      <G align='c'>
         <T type="m">V{appVersion}</T>
       </G>
     </G>

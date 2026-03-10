@@ -25,7 +25,9 @@
     updateEnginesLayout,
     updateEngineCategoriesOrder,
     updateEngine,
+    resetSearchEnginesToDefault,
   } from "@/lib/DB/DB";
+  import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
   import { t } from "@/lib/utils/i18n";
   import Icon from "./components/Icon.svelte";
   import Button from "./components/Button.svelte";
@@ -60,7 +62,7 @@
 
   const languageBase = [
     { label: t("nt_lang_auto"), value: "auto" },
-    { label: "简体中文", value: "zh_CN" },
+    { label: "简体中文", value: "zh_CN" ,dividerTop: true},
     { label: "繁體中文", value: "zh_TW" },
     { label: "English", value: "en" },
   ] as const;
@@ -553,6 +555,22 @@
     await removeSearchEngine(editingSearchEngine);
   }
 
+  async function resetSearchEnginesToDefaultConfirm() {
+    if (settingEnginesSaving) return;
+    const msg = t("nt_settings_search_reset_confirm");
+    if (!confirm(msg)) return;
+    settingEnginesSaving = true;
+    try {
+      const defaultCategories = buildDefaultEngineCategories();
+      const defaultEngines = buildDefaultEngines(userSettings.language);
+      await resetSearchEnginesToDefault(defaultCategories, defaultEngines);
+      await loadSearchSettingEngines(true);
+      notifyEngineConfigUpdated();
+    } finally {
+      settingEnginesSaving = false;
+    }
+  }
+
   $effect(() => {
     if (!showSetting && settingPage !== "root") {
       settingPage = "root";
@@ -597,9 +615,18 @@
         <G full>
           <T type="m" align="c">{getSettingPageTitle()}</T>
         </G>
-        <Button skipTabFocus>
+        <Button
+          onclick={settingPage === "searchEngines"
+            ? resetSearchEnginesToDefaultConfirm
+            : undefined}
+          skipTabFocus={settingPage !== "searchEngines"}
+        >
           <G>
-            <Icon name="ChevronLeft" color="var(--c-text)" opacity={0} />
+            <Icon
+              name="RotateCcw"
+              color="var(--c-text)"
+              opacity={settingPage === "searchEngines" ? 0.6 : 0}
+            />
           </G>
         </Button>
       </div>
@@ -678,6 +705,9 @@
     {@render temEntranceItem(t("nt_settings_search_engines_title"), () =>
       openSettingPage("searchEngines"),
     )}
+
+    <Divider />
+
     {@render temSectionTitle(t("nt_settings_websites_title"))}
     {@render temEntranceItem(t("nt_tab_common"), () =>
       openFeatureTab("common"),
@@ -688,7 +718,11 @@
     {@render temEntranceItem(t("nt_tab_history"), () =>
       openFeatureTab("history"),
     )}
-    {@render temDividerItem()}
+    {@render temselectItem(
+      t("nt_settings_default_open"),
+      openPosOptions,
+      setOpenPos,
+    )}
     {@render temswithcItem(
       t("nt_settings_link_open_title"),
       t("nt_settings_new_tab_open"),
@@ -697,19 +731,15 @@
       onswitchNewTabOpen,
       lockNewTabOpenSwitch,
     )}
-    {@render temselectItem(
-      t("nt_settings_default_open"),
-      openPosOptions,
-      setOpenPos,
-    )}
-    {@render temDividerItem()}
+
+     <Divider />
     {@render temselectItem(
       t("nt_settings_language"),
       languageOptions,
       setLanguage,
     )}
-    {@render temEntranceItem(t("nt_settings_about"), onclickAbout)}
-    {@render temEntranceItem(t("nt_about_support_button"), onclickSupport)}
+    {@render tembuttonItem(t("nt_settings_about"), onclickAbout,t('nt_settings_other_title'))}
+    {@render tembuttonItem(t("nt_about_support_button"), onclickSupport)}
   </div>
 {/snippet}
 
@@ -738,7 +768,7 @@
       t("nt_settings_search_categories_title"),
       openCategoryManager,
     )}
-    <div class="select_item">
+    <div class="categories_list">
       {#if settingEnginesLoading && !settingEnginesLoaded}
         <div class="engine_loading">
           <G>
@@ -746,9 +776,7 @@
           </G>
         </div>
       {:else}
-        <!-- <div class="engine_manage_sections"> -->
         {@render temSearchEngineGroups()}
-        <!-- </div> -->
       {/if}
     </div>
   </div>
@@ -757,12 +785,6 @@
 {#snippet temSectionTitle(text: string)}
   <div class="section_title">
     <T type="s" color="var(--c-text-1)">{text}</T>
-  </div>
-{/snippet}
-
-{#snippet temDividerItem()}
-  <div class="setting_divider">
-    <Divider />
   </div>
 {/snippet}
 
@@ -819,16 +841,16 @@
         <T type="s" color="var(--c-text-1)">{title}</T>
       </G>
     {/if}
-    <div class="trigger">
-      <Button full align="c" onclick={onChange}>
+      <Button full align="c" onclick={onChange} fill r='r1'>
+        <G full align="c">
         <G vertical full>
           <T>{text}</T>
         </G>
         <G>
           <Icon name="ChevronRight" color="var(--c-text)" opacity={0.6} />
         </G>
+        </G>
       </Button>
-    </div>
   </div>
 {/snippet}
 
@@ -848,7 +870,7 @@
         <G full align="c">
           <Icon
             name={isExpanded ? "ChevronDown" : "ChevronRight"}
-            color="var(--c-text)"
+            color="var(--c-text-1)"
           />
           <T type="m" color="var(--c-text)" nowrap>{group.name}</T>
         </G>
@@ -887,12 +909,12 @@
                   full
                   onclick={() => openEditSearchEngineEditor(engine)}
                   align="c"
+                  fill
                 >
                   <G full align="c">
                     <EngineIcon
                       imgUrl={engine.faviconUrl}
                       alt={engine.title ?? "?"}
-                      disabled={engine.enabled === false}
                     />
                     <T
                       nowrap
@@ -902,6 +924,13 @@
                       >{engine.title ?? t("nt_unnamed")}</T
                     >
                   </G>
+                  {#if !engine.enabled}
+                    <G>
+                      <T type="s" color="var(--c-text-2)" nowrap
+                        >{t("nt_settings_search_disabled_tag")}</T
+                      >
+                    </G>
+                  {/if}
                 </Button>
               </div>
             {/each}
@@ -932,8 +961,8 @@
         <T type="s" color="var(--c-text-1)">{title}</T>
       </G>
     {/if}
-    <div class="trigger">
-      <Button onclick={onChange} full align="c">
+      <Button onclick={onChange} full align="c" fill r='r1'>
+        <G full align="c">
         <G vertical full>
           <T>{text}</T>
         </G>
@@ -944,8 +973,8 @@
             opacity={externalLink ? 0.6 : 0}
           />
         </G>
+        </G>
       </Button>
-    </div>
   </div>
 {/snippet}
 
@@ -963,16 +992,16 @@
         <T type="s" color="var(--c-text-1)">{title}</T>
       </G>
     {/if}
-    <div class="trigger">
-      <Button onclick={() => onChange(!turnOn)} full align="c">
+    <Button onclick={() => onChange(!turnOn)} full fill align="c" r="r1">
+      <G full align="c">
         <G vertical full>
           <T>{swcText}</T>
         </G>
         <G>
           <Switch {turnOn} disabled={switchDisabled} />
         </G>
-      </Button>
-    </div>
+      </G>
+    </Button>
     {#if des}
       <G>
         <T type="s">{des}</T>
@@ -995,19 +1024,13 @@
 {/snippet}
 
 <style>
-  .trigger {
+  .categories_list {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
     width: 100%;
     box-sizing: border-box;
-    background-color: var(--c-mask);
-    border: none;
-    border-radius: var(--r1);
     padding: var(--gap);
-  }
-  .trigger:focus-visible {
-    outline: 2px solid var(--c-text);
+    gap: calc(var(--gap) * 2);
   }
   .select_item {
     display: flex;
@@ -1022,11 +1045,6 @@
     width: 100%;
     box-sizing: border-box;
     padding: calc(var(--gap) * 1.5) var(--gap) 0;
-  }
-  .setting_divider {
-    width: 100%;
-    box-sizing: border-box;
-    padding: var(--gap) var(--gap) 0;
   }
   .engine_loading {
     display: flex;
@@ -1067,7 +1085,6 @@
     align-items: center;
     width: 100%;
     box-sizing: border-box;
-    background-color: var(--c-mask);
     border-radius: var(--r);
   }
   .disabled_engine {

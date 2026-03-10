@@ -12,6 +12,7 @@
 	title={t("nt_switch")}
 	class="outside"
 	{disabled}
+	tabindex="-1"
 >
 	<div class="ball {turnOn ? 'ball_on' : 'ball_off'}"></div>
 </button>

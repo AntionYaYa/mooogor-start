@@ -60,6 +60,9 @@
 	.fill {
 		background-color: var(--c-mask);
 	}
+	.fill:active{
+		background-color: var(--c-mask1);
+	}
 	.full {
 		width: 100%;
 		box-sizing: border-box;

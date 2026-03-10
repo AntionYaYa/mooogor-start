@@ -6,7 +6,7 @@
 	import { t } from "@/lib/utils/i18n";
 	import { slide } from "svelte/transition";
 	import G from "./G.svelte";
-    import Button from "./Button.svelte";
+	import Button from "./Button.svelte";
 
 	export type SelectOption = {
 		label: string;
@@ -59,8 +59,8 @@
 </script>
 
 <div class="select" bind:this={rootEl}>
-	<div class="trigger" >
-		<Button onclick={handleToggle} align='c' full>
+	<Button onclick={handleToggle} align="c" full fill r="r1">
+		<G full align="c">
 			<G full>
 				<T>{selected ? selected.label : t("nt_select_placeholder")}</T>
 			</G>
@@ -71,8 +71,8 @@
 					color="var(--c-text)"
 				/>
 			</G>
-		</Button>
-	</div>
+		</G>
+	</Button>
 	{#if open}
 		<div class="menu" transition:slide={{ duration: 200 }}>
 			<div class="menu_items">
@@ -115,22 +115,6 @@
 		width: 100%;
 		box-sizing: border-box;
 	}
-	.trigger {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		width: 100%;
-		box-sizing: border-box;
-		background-color: var(--c-mask);
-		border-radius: var(--r1);
-		padding: var(--gap);
-	}
-	.trigger:active {
-		background-color: var(--c-mask);
-	}
-	.trigger:focus-visible {
-		outline: 2px solid var(--c-text);
-	}
 	.menu {
 		position: absolute;
 		left: 0;
@@ -143,6 +127,7 @@
 		z-index: 10;
 		overflow-y: auto;
 		box-sizing: border-box;
+		max-height: 268px;
 	}
 	.menu_items {
 		display: flex;
