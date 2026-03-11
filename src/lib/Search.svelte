@@ -639,7 +639,7 @@
           onkeyup={inputKey}
         />
       {/if}
-      {#if inputValue.length}
+      {#if inputValue.length && !showMoreEngines}
         <Button
           onclick={() => {
             inputValue = "";

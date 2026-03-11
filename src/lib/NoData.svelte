@@ -16,6 +16,6 @@
     <G full align='c'>
       <Icon name={iconName} color="var(--c-text)" opacity={0.6} size={30} />
     </G>
-    <T align="c" type='m'>{title}</T>
+    <T align="c" type='m' color='var(--c-text-1)'>{title}</T>
     <T align="c" type='s'>{text}</T>
   </G>

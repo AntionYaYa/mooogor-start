@@ -183,6 +183,9 @@
     "nt_settings_search_category_manage_hint": {
       "message": "Drag to sort. Names save automatically on blur."
     },
+    "nt_settings_search_drag_reorder_or_move": {
+      "message": "Drag to reorder or move between categories."
+    },
     "nt_engine_category_all": {
       "message": "General"
     },

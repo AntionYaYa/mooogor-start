@@ -182,6 +182,9 @@
   "nt_settings_search_category_manage_hint": {
     "message": "可拖曳排序，名稱失去焦點後會自動儲存"
   },
+  "nt_settings_search_drag_reorder_or_move": {
+    "message": "拖曳即可排序，也可拖曳到其他分類"
+  },
   "nt_engine_category_all": {
     "message": "綜合"
   },

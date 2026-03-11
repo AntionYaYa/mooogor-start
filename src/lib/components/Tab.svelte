@@ -21,7 +21,7 @@
 			class={tab.sel ? (selectedBg ? "sel" : "sel_nobg") : "unsel"}
 			onclick={() => onclick(tab,i)}
 		>
-			<T color={tab.sel ? "var(--c-text)" : "var(--c-text-1)"} nowrap
+			<T color={tab.sel ? "var(--c-text)" : selectedBg?"var(--c-text-1)":'var(--c-text-2)'} nowrap
 				>{tab.name}</T
 			>
 		</button>

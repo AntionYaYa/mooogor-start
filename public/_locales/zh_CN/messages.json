@@ -183,6 +183,9 @@
     "nt_settings_search_category_manage_hint": {
       "message": "拖拽可排序，名称失去焦点后自动保存"
     },
+    "nt_settings_search_drag_reorder_or_move": {
+      "message": "拖拽排序，也可拖拽到其他分类。"
+    },
     "nt_engine_category_all": {
       "message": "综合"
     },

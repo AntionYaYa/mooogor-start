@@ -37,9 +37,7 @@
     }
     return dayGroups.some((group) => group.items.length);
   });
-  const showEmpty = $derived.by(
-    () => !hasHistory && !loadingMore && !hasMore,
-  );
+  const showEmpty = $derived.by(() => !hasHistory && !loadingMore && !hasMore);
 
   let menuX = $state(0);
   let menuY = $state(0);
@@ -203,9 +201,10 @@
     dragging = false;
   }
 </script>
+
 <div class="page">
   {#if showEmpty}
-  <NoData iconName='History' title={t("nt_history_empty")} />
+    <NoData iconName="History" title={t("nt_history_empty")} />
   {:else}
     <div class="history">
       <DragToPinneds active={dragging} onDrop={clickAddtoPinneds} />
@@ -257,7 +256,6 @@
 {/snippet}
 
 {#snippet temHistoryItem(history: HistoryItem)}
-
   <a
     class="item"
     href={history.url}
@@ -274,11 +272,10 @@
       <T type="m" bold nowrap>{history.title}</T>
     </G>
     <G align="c">
-      <Icon name="Eye" color="var(--c-text)" opacity={0.6} size={16}/>
+      <Icon name="Eye" color="var(--c-text)" opacity={0.6} size={16} />
       <T type="s" nowrap>{history.visitCount}</T>
     </G>
   </a>
-
 {/snippet}
 
 <style>

@@ -998,6 +998,9 @@
       {/if}
     </div>
   {/each}
+  <G full>
+    <T type='s'>{t('nt_settings_search_drag_reorder_or_move')}</T>
+  </G>
 {/snippet}
 
 {#snippet tembuttonItem(

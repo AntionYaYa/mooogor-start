@@ -424,7 +424,9 @@
                 <G align="c">
                   {#if gridView}
                     <Button onclick={() => (gridView = false)} bg='var(--c-text)'>
-                      <Icon name="Rows3" color="var(--c-bg)"/>
+                      <G>
+                        <Icon name="Rows3" color="var(--c-bg)"/>
+                      </G>
                     </Button>
                   {:else}
                     <Button onclick={() => (gridView = true)}>
@@ -624,10 +626,8 @@
     max-width: 1280px;
     box-sizing: border-box;
     height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
     background: linear-gradient(180deg, var(--c-mask), rgba(0,0,0,0));
-    border-radius: var(--r2);
+    border-radius: var(--r3);
   }
 
   /* On screens smaller than 1024px, use full width */
@@ -646,6 +646,8 @@
     height: 100%;
     border-radius: var(--r1);
     padding: var(--gap);
+    overflow-y: auto;
+    overflow-x: hidden;
   }
   .tab_content {
     position: absolute;
