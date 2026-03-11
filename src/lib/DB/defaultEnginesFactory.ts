@@ -1,5 +1,5 @@
 import type { Engine, EngineCategory } from "./database";
-import defaultEnginesRaw from "./defaultEngines.json";
+import defaultEngineGroupsRaw from "./defaultEngines.json";
 import type { AppLanguage } from "@/lib/utils/settings";
 import { getEffectiveLanguage } from "@/lib/utils/i18n";
 
@@ -27,18 +27,22 @@ const faviconMap: Record<string, string> = {
   Yandex,
 };
 
-type DefaultEngineRaw = {
+type DefaultEngineItem = {
   title?: string;
   engineUrl: string;
   faviconKey?: string;
-  category?: EngineCategory;
   enabledByLanguage?: Partial<
     Record<Exclude<AppLanguage, "auto"> | "default", boolean>
   >;
 };
 
+type DefaultEngineGroup = {
+  category?: EngineCategory;
+  engines: DefaultEngineItem[];
+};
+
 function resolveEngineEnabled(
-  item: DefaultEngineRaw,
+  item: DefaultEngineItem,
   language: Exclude<AppLanguage, "auto">,
 ) {
   const byLanguage = item.enabledByLanguage;
@@ -51,8 +55,7 @@ function resolveEngineEnabled(
   return true;
 }
 
-function resolveEngineCategory(item: DefaultEngineRaw): EngineCategory {
-  const category = item.category;
+function resolveEngineCategory(category?: EngineCategory): EngineCategory {
   if (category === "2") return "2";
   if (category === "3") return "3";
   if (category === "4") return "4";
@@ -65,11 +68,15 @@ export function buildDefaultEngines(
   language?: AppLanguage,
 ): Omit<Engine, "id">[] {
   const effectiveLang = getEffectiveLanguage(language);
-  return (defaultEnginesRaw as DefaultEngineRaw[]).map((item) => ({
-    title: item.title,
-    engineUrl: item.engineUrl,
-    faviconUrl: item.faviconKey ? faviconMap[item.faviconKey] ?? "" : "",
-    category: resolveEngineCategory(item),
-    enabled: resolveEngineEnabled(item, effectiveLang),
-  }));
+  const groups = defaultEngineGroupsRaw as DefaultEngineGroup[];
+  return groups.flatMap((group) => {
+    const category = resolveEngineCategory(group.category);
+    return (group.engines ?? []).map((item) => ({
+      title: item.title,
+      engineUrl: item.engineUrl,
+      faviconUrl: item.faviconKey ? faviconMap[item.faviconKey] ?? "" : "",
+      category,
+      enabled: resolveEngineEnabled(item, effectiveLang),
+    }));
+  });
 }

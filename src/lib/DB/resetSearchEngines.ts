@@ -35,7 +35,7 @@ export async function resetSearchEnginesToDefault(
           ...engine,
           category: normalizeEngineCategory(engine.category),
           enabled: engine.enabled ?? true,
-          order: engine.order ?? i,
+          order: i,
           createAt: now,
           updateAt: now,
         })),
