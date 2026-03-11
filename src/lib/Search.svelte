@@ -238,7 +238,6 @@
   }
 
   function getDisplayEnabledEngines(): Engine[] {
-    if (showMoreEngines) return enabledEngines;
     if (!selectedCategoryId) return enabledEngines;
     return enabledEngines.filter(
       (engine) =>
@@ -246,6 +245,14 @@
     );
   }
 
+  function getDisplayDisabledEngines(): Engine[] {
+    if (!selectedCategoryId) return disabledEngines;
+
+    return disabledEngines.filter(
+      (engine) =>
+        normalizeEngineCategoryId(engine.category) === selectedCategoryId,
+    );
+  }
   function getDisplayPlaceholderEngineTitle() {
     return getDisplayEnabledEngines()[0]?.title;
   }
@@ -280,12 +287,15 @@
       ...item,
       enabled: true,
     }));
-    if (showMoreEngines || engineCategories.length <= 1) {
+
+    if (engineCategories.length <= 1) {
       return zoneResult;
     }
+
     const otherEnabled = enabledEngines.filter(
       (e) => normalizeEngineCategoryId(e.category) !== selectedCategoryId,
     );
+
     return [...otherEnabled, ...zoneResult];
   }
 
@@ -543,14 +553,15 @@
   }
 </script>
 
-<div
-  class="search"
-  class:hided_tab={enginesGroup.length <= 1}
->
+<div class="search" class:hided_tab={enginesGroup.length <= 1}>
   {#if enginesGroup.length > 1}
-    <Tab tabs={enginesGroup} onclick={clickEngineGroup}/>
+    <Tab tabs={enginesGroup} onclick={clickEngineGroup} />
   {/if}
-  <div class="search_g"  class:bg={searchAreaFocused && bookmarksResults.length} class:top0={enginesGroup.length <= 1}>
+  <div
+    class="search_g"
+    class:bg={searchAreaFocused && bookmarksResults.length}
+    class:top0={enginesGroup.length <= 1}
+  >
     {@render temInputGroup()}
     {#if searchAreaFocused && ((searchBookmarksEnabled && (bookmarksResults.length || bookmarksLoading)) || (searchHistoryEnabled && (historyResults.length || historyLoading)))}
       <div
@@ -668,7 +679,7 @@
       class:drag={showMoreEngines}
       data-dnd-hint={t("nt_drag_to_disable")}
       use:dndzone={{
-        items: disabledEngines,
+        items: getDisplayDisabledEngines(),
         flipDurationMs: 200,
         type: "engines",
         zoneTabIndex: -1,
@@ -677,7 +688,7 @@
       onconsider={handleConsiderDisabled}
       onfinalize={handleFinalizeDisabled}
     >
-      {#each disabledEngines as engine (engine.id)}
+      {#each getDisplayDisabledEngines() as engine (engine.id)}
         <button
           class="more_item"
           class:more_item_sel={engine.enabled}
@@ -719,7 +730,7 @@
     position: relative;
     height: 100px;
   }
-  .hided_tab{
+  .hided_tab {
     height: 60px;
   }
 
@@ -770,8 +781,8 @@
     padding: var(--gap);
     border-radius: var(--r2);
   }
-  .top0{
-    top:0;
+  .top0 {
+    top: 0;
   }
   .bg {
     background-color: var(--c-bg1);
