@@ -81,7 +81,6 @@
     engineUrl: string;
     faviconKey?: string;
     category?: EngineCategory;
-    enabled?: boolean;
     enabledByLanguage?: Partial<
       Record<Exclude<AppLanguage, "auto"> | "default", boolean>
     >;
@@ -98,7 +97,7 @@
     if (typeof byLanguage?.default === "boolean") {
       return byLanguage.default;
     }
-    return item.enabled ?? true;
+    return true;
   }
 
   function resolveEngineCategory(item: DefaultEngineRaw): EngineCategory {

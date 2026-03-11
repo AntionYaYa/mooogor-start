@@ -51,9 +51,9 @@
   {#if localSrc}
     <img src={localSrc} {alt} draggable="false" />
   {:else}
-    <G align="c">
+    <span >
       <T type="s" align="c">{alt?.slice(0, 1) ?? "?"}</T>
-    </G>
+    </span>
   {/if}
 </div>
 
@@ -65,6 +65,16 @@
     box-sizing: border-box;
     object-fit: cover;
     pointer-events: none;
+    border-radius: calc(var(--r) / 2);
+    background-color: var(--c-mask);
+  }
+  span{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
     border-radius: calc(var(--r) / 2);
     background-color: var(--c-mask);
   }
