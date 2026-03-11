@@ -964,7 +964,6 @@
                 >
                   <G full align="c">
                     <EngineIcon
-                      imgUrl={engine.faviconUrl}
                       alt={engine.title ?? "?"}
                       engineUrl={engine.engineUrl}
                     />

@@ -670,7 +670,6 @@
           animate:flip={{ duration: 200 }}
         >
           <EngineIcon
-            imgUrl={engine.faviconUrl}
             alt={engine.title ?? ""}
             engineUrl={engine.engineUrl}
           />
@@ -712,7 +711,6 @@
           animate:flip={{ duration: 200 }}
         >
           <EngineIcon
-            imgUrl={engine.faviconUrl}
             alt={engine.title ?? ""}
             engineUrl={engine.engineUrl}
           />
@@ -932,7 +930,7 @@
   }
   .engine {
     display: flex;
-    border-radius: var(--r);
+    border-radius: calc(var(--r) / 2 + 2px);
     overflow: hidden;
     cursor: default !important;
   }
