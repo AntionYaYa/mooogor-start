@@ -225,6 +225,10 @@
     void onOpenTab(tab);
   }
 
+  function openBookmarksManager() {
+    browser.tabs.update({ url: 'chrome://bookmarks/' });
+  }
+
   function getSearchEngineCategoryOptions(): SelectOption[] {
     return settingEngineCategories.map((item) => ({
       label: item.name,
@@ -763,9 +767,7 @@
     {@render temEntranceItem(t("nt_tab_common"), () =>
       openFeatureTab("common"),
     )}
-    {@render temEntranceItem(t("nt_tab_bookmarks"), () =>
-      openFeatureTab("bookmark"),
-    )}
+    {@render temEntranceItem(t("nt_tab_bookmarks"), openBookmarksManager)}
     {@render temEntranceItem(t("nt_tab_history"), () =>
       openFeatureTab("history"),
     )}
