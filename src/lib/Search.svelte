@@ -329,6 +329,9 @@
     );
     if (enabledWithIds.length || disabledWithIds.length) {
       await updateEnginesState(enabledWithIds, disabledWithIds);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("engine-config-updated"));
+      }
     }
   }
 

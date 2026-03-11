@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { flip } from "svelte/animate";
   import { dndzone } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
@@ -181,6 +182,12 @@
   function notifyEngineConfigUpdated() {
     if (typeof window === "undefined") return;
     window.dispatchEvent(new CustomEvent("engine-config-updated"));
+  }
+
+  function handleEngineConfigUpdated() {
+    if (!showSetting) return;
+    if (settingPage !== "searchEngines") return;
+    void loadSearchSettingEngines(true);
   }
 
   function setOpenPos(value: string) {
@@ -600,6 +607,16 @@
     if (!showSetting && settingPage !== "root") {
       settingPage = "root";
     }
+  });
+
+  onMount(() => {
+    window.addEventListener("engine-config-updated", handleEngineConfigUpdated);
+    return () => {
+      window.removeEventListener(
+        "engine-config-updated",
+        handleEngineConfigUpdated,
+      );
+    };
   });
 
   $effect(() => {
