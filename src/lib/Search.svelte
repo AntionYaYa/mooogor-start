@@ -172,6 +172,16 @@
     return category?.trim() || getFallbackCategoryId();
   }
 
+  function openSearchEngineSettings() {
+    if (typeof window === "undefined") return;
+    const categoryId = selectedCategoryId || getFallbackCategoryId();
+    window.dispatchEvent(
+      new CustomEvent("open-settings-search-engines", {
+        detail: { categoryId },
+      }),
+    );
+  }
+
   function syncEnginesGroupTabs() {
     enginesGroup = engineCategories.map((item) => ({
       key: item.id,
@@ -698,6 +708,15 @@
         </button>
       {/each}
     </div>
+    <Button onclick={openSearchEngineSettings}>
+      <G>
+        <Icon
+          name="ArrowUpRight"
+          color="var(--c-text)"
+          opacity={0.6}
+        />
+      </G>
+    </Button>
   </div>
 {/snippet}
 
@@ -746,9 +765,9 @@
   }
   .more_engines_M {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    padding: var(--gap) 40px var(--gap) var(--gap);
+    flex-direction: row;
+    align-items: center;
+    padding: var(--gap);
     width: 100%;
     box-sizing: border-box;
     background-color: var(--c-bg1);

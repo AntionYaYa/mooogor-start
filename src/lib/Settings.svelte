@@ -32,6 +32,7 @@
   import Icon from "./components/Icon.svelte";
   import Button from "./components/Button.svelte";
   import EngineIcon from "./EngineIcon.svelte";
+  type OpenSearchEnginesRequest = { id: number; categoryId?: string | null };
   interface Props {
     children: any;
     showSetting: boolean;
@@ -41,6 +42,7 @@
     onclickSupport: () => void;
     onOpenTab: (tab: OpenTab) => void | Promise<void>;
     currentTabPinned?: boolean;
+    openSearchEnginesRequest?: OpenSearchEnginesRequest | null;
   }
   let {
     children,
@@ -51,6 +53,7 @@
     onclickSupport,
     onOpenTab,
     currentTabPinned = false,
+    openSearchEnginesRequest = null,
   }: Props = $props();
 
   const openPosBase = [
@@ -104,6 +107,8 @@
   let settingEnginesLoaded = $state(false);
   let settingEnginesSaving = $state(false);
   let expandedCategoryIds = $state<Set<string>>(new Set());
+  let pendingExpandCategoryId = $state<string | null>(null);
+  let lastOpenSearchEnginesRequestId = $state(0);
   let showCategoryManager = $state(false);
   let showSearchEngineEditor = $state(false);
   let editingSearchEngine: Engine | null = $state(null);
@@ -152,6 +157,25 @@
 
   function normalizeEngineCategory(category?: string): CategoryId {
     return category?.trim() || getFallbackCategoryId();
+  }
+
+  function resolveSearchEngineCategoryId(categoryId?: string | null) {
+    if (!settingEngineCategories.length) return null;
+    if (categoryId) {
+      const exists = settingEngineCategories.some(
+        (category) => category.id === categoryId,
+      );
+      if (exists) return categoryId;
+    }
+    return settingEngineCategories[0]?.id ?? null;
+  }
+
+  function applyPendingCategoryExpansion() {
+    if (!pendingExpandCategoryId) return;
+    const resolvedId = resolveSearchEngineCategoryId(pendingExpandCategoryId);
+    pendingExpandCategoryId = null;
+    if (!resolvedId) return;
+    expandedCategoryIds = new Set([resolvedId]);
   }
 
   function notifyEngineConfigUpdated() {
@@ -401,6 +425,7 @@
         category: engine.category?.trim() || fallbackCategoryId,
       }));
       syncSearchEngineGroups();
+      applyPendingCategoryExpansion();
       if (expandedCategoryIds.size === 0 && categories[0]?.id) {
         expandedCategoryIds = new Set([categories[0].id]);
       }
@@ -575,6 +600,15 @@
     if (!showSetting && settingPage !== "root") {
       settingPage = "root";
     }
+  });
+
+  $effect(() => {
+    if (!showSetting) return;
+    if (!openSearchEnginesRequest) return;
+    if (openSearchEnginesRequest.id === lastOpenSearchEnginesRequestId) return;
+    lastOpenSearchEnginesRequestId = openSearchEnginesRequest.id;
+    pendingExpandCategoryId = openSearchEnginesRequest.categoryId ?? null;
+    openSettingPage("searchEngines");
   });
 
   $effect(() => {

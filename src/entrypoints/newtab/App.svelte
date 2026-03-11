@@ -36,6 +36,8 @@
 
   let showSetting = $state(false);
   let allPinneds: WebSite[] = $state([]);
+  type OpenSearchEnginesRequest = { id: number; categoryId?: string };
+  let openSearchEnginesRequest = $state<OpenSearchEnginesRequest | null>(null);
 
   let bookmarksPermission = $state(false);
   let currentNode: BookmarkNode | undefined = $state();
@@ -182,6 +184,19 @@
       void refreshCurrentTabPinnedState();
     };
     window.addEventListener("focus", refreshPinnedOnFocus);
+    const handleOpenSearchEngines = (event: Event) => {
+      const detail = (event as CustomEvent<{ categoryId?: string }>).detail;
+      showSetting = true;
+      const nextId = (openSearchEnginesRequest?.id ?? 0) + 1;
+      openSearchEnginesRequest = {
+        id: nextId,
+        categoryId: detail?.categoryId,
+      };
+    };
+    window.addEventListener(
+      "open-settings-search-engines",
+      handleOpenSearchEngines,
+    );
 
     // Fallback for browsers where pin/unpin events may not fire reliably.
     const pollId = window.setInterval(() => {
@@ -191,6 +206,10 @@
     return () => {
       browser.tabs.onUpdated.removeListener(handleCurrentTabUpdated);
       window.removeEventListener("focus", refreshPinnedOnFocus);
+      window.removeEventListener(
+        "open-settings-search-engines",
+        handleOpenSearchEngines,
+      );
       window.clearInterval(pollId);
     };
   });
@@ -350,6 +369,7 @@
       onclickAbout={() => (showAbout = true)}
       onclickSupport={() => (showSupport = true)}
       onOpenTab={handleSettingsOpenTab}
+      {openSearchEnginesRequest}
     >
       <div class="top">
         {@render headBar()}
