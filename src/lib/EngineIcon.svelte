@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getDomainFromUrl, getFavicon } from "@/lib/DB/DB";
   import T from "./components/T.svelte";
 
   type Size = "xl" | "l" | "s";
@@ -8,15 +9,52 @@
     alt: string;
     size?: Size;
     disabled?: boolean;
+    engineUrl?: string;
   }
-  let { imgUrl, size = "l", alt,disabled }: Props = $props();
+  let { imgUrl, size = "l", alt, disabled, engineUrl }: Props = $props();
+
+  function resolveEngineDomain(url?: string) {
+    if (!url) return undefined;
+    try {
+      return getDomainFromUrl(url.replace("%s", "search"));
+    } catch {
+      return undefined;
+    }
+  }
+
+  async function getLocalFavicon(): Promise<Blob | undefined> {
+    const domain = resolveEngineDomain(engineUrl);
+    if (!domain) return undefined;
+    const favicon = await getFavicon(domain);
+    return favicon?.blob;
+  }
 </script>
 
-{#if imgUrl}
-  <img class="engine_icon" class:disabled={disabled} src={imgUrl} alt={alt ?? ""} />
+{#if imgUrl || engineUrl}
+  {#await getLocalFavicon() then localFavicon}
+    {#if localFavicon}
+      <img
+        class="engine_icon"
+        class:disabled={disabled}
+        src={URL.createObjectURL(localFavicon)}
+        alt={alt ?? ""}
+      />
+    {:else if imgUrl}
+      <img
+        class="engine_icon"
+        class:disabled={disabled}
+        src={imgUrl}
+        alt={alt ?? ""}
+      />
+    {:else}
+      <div class="engine_icon engine_icon_fallback" class:disabled={disabled}>
+        <T type="s" align="c">{alt?.slice(0, 1) ?? "?"}</T>
+      </div>
+    {/if}
+  {/await}
 {:else}
-  <div class="engine_icon engine_icon_fallback" class:disabled={disabled} >
-    <T type="s" align='c'>{alt?.slice(0, 1) ?? "?"}</T>
+  <div class="engine_icon engine_icon_fallback" class:disabled={disabled}>
+    <T type="s" align="c">{alt?.slice(0, 1) ?? "?"}</T>
   </div>
 {/if}
 

@@ -966,6 +966,7 @@
                     <EngineIcon
                       imgUrl={engine.faviconUrl}
                       alt={engine.title ?? "?"}
+                      engineUrl={engine.engineUrl}
                     />
                     <T
                       nowrap

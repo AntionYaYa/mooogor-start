@@ -669,7 +669,11 @@
           rel={newTabOpen ? "noreferrer" : undefined}
           animate:flip={{ duration: 200 }}
         >
-          <EngineIcon imgUrl={engine.faviconUrl} alt={engine.title ?? ""} />
+          <EngineIcon
+            imgUrl={engine.faviconUrl}
+            alt={engine.title ?? ""}
+            engineUrl={engine.engineUrl}
+          />
         </a>
       {/each}
     </div>
@@ -707,7 +711,11 @@
           class:more_item_sel={engine.enabled}
           animate:flip={{ duration: 200 }}
         >
-          <EngineIcon imgUrl={engine.faviconUrl} alt={engine.title ?? ""} />
+          <EngineIcon
+            imgUrl={engine.faviconUrl}
+            alt={engine.title ?? ""}
+            engineUrl={engine.engineUrl}
+          />
         </button>
       {/each}
     </div>

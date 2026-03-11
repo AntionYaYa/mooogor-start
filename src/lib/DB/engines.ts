@@ -1,5 +1,6 @@
 import { db } from "./database";
 import type { Engine, EngineCategory } from "./database";
+import { ensureEngineFavicons } from "./favicons";
 
 function normalizeEngineCategory(category?: string): EngineCategory {
   return category?.trim() || "1";
@@ -121,19 +122,20 @@ export async function ensureDefaultEngines(
   defaults: Omit<Engine, "id">[],
 ) {
   const count = await db.engines.count();
-  if (count > 0) return;
-
-  const now = Date.now();
-  await db.engines.bulkAdd(
-    defaults.map((engine, i) => ({
-      ...engine,
-      category: normalizeEngineCategory(engine.category),
-      enabled: engine.enabled ?? true,
-      order: engine.order ?? i,
-      createAt: now,
-      updateAt: now,
-    })),
-  );
+  if (count === 0) {
+    const now = Date.now();
+    await db.engines.bulkAdd(
+      defaults.map((engine, i) => ({
+        ...engine,
+        category: normalizeEngineCategory(engine.category),
+        enabled: engine.enabled ?? true,
+        order: engine.order ?? i,
+        createAt: now,
+        updateAt: now,
+      })),
+    );
+  }
+  await ensureEngineFavicons(defaults);
 }
 
 export async function clearAllEngines() {
@@ -159,4 +161,5 @@ export async function resetEnginesToDefault(defaults: Omit<Engine, "id">[]) {
     await db.engines.clear();
     await addEnginesUnsafe(defaults);
   });
+  await ensureEngineFavicons(defaults);
 }

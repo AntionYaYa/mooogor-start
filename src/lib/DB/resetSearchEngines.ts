@@ -1,6 +1,7 @@
 import { db } from "./database";
 import type { Engine, EngineCategory } from "./database";
 import type { EngineCategoryItem } from "./database";
+import { ensureEngineFavicons } from "./favicons";
 
 function normalizeEngineCategory(category?: string): EngineCategory {
   return category?.trim() || "1";
@@ -41,4 +42,5 @@ export async function resetSearchEnginesToDefault(
       );
     },
   );
+  await ensureEngineFavicons(defaultEngines);
 }
