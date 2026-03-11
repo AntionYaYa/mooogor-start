@@ -1,7 +1,11 @@
 <script lang="ts">
   import T from "./components/T.svelte";
-  import { getFavicon, getDomainFromUrl } from "../lib/DB/DB";
-    import G from "./components/G.svelte";
+  import { getDomainFromUrl } from "../lib/DB/DB";
+  import G from "./components/G.svelte";
+  import {
+    ensureEngineFaviconCached,
+    getCachedEngineFavicon,
+  } from "../lib/utils/engineFaviconCache";
 
 
   interface Props {
@@ -10,24 +14,44 @@
     engineUrl?: string;
   }
   let { alt, disabled, engineUrl }: Props = $props();
+  let localSrc = $state<string | null>(null);
 
-  async function getLoaclFavicon(): Promise<Blob | undefined> {
-    if (!engineUrl) return undefined
-    const domain = getDomainFromUrl(engineUrl);
-    const favicon = await getFavicon(domain);
-    return favicon ? favicon.blob : undefined;
+  function resolveEngineDomain(url?: string) {
+    if (!url) return undefined;
+    try {
+      return getDomainFromUrl(url.replace("%s", "search"));
+    } catch {
+      return undefined;
+    }
   }
+
+  $effect(() => {
+    const domain = resolveEngineDomain(engineUrl);
+    if (!domain) {
+      localSrc = null;
+      return;
+    }
+    const cached = getCachedEngineFavicon(domain);
+    if (cached !== undefined) {
+      localSrc = cached;
+      return;
+    }
+    localSrc = null;
+    let cancelled = false;
+    void ensureEngineFaviconCached(domain).then((url) => {
+      if (!cancelled) localSrc = url;
+    });
+    return () => {
+      cancelled = true;
+    };
+  });
 </script>
 
 <div class="engine_icon">
-  {#if engineUrl}
-    {#await getLoaclFavicon() then localFavicon}
-      {#if localFavicon}
-        <img src={URL.createObjectURL(localFavicon)} {alt} draggable="false" />
-      {/if}
-    {/await}
+  {#if localSrc}
+    <img src={localSrc} {alt} draggable="false" />
   {:else}
-    <G align='c'>
+    <G align="c">
       <T type="s" align="c">{alt?.slice(0, 1) ?? "?"}</T>
     </G>
   {/if}

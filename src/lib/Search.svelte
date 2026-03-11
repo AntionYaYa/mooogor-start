@@ -568,11 +568,14 @@
 
 <div class="search" class:hided_tab={enginesGroup.length <= 1}>
   {#if enginesGroup.length > 1}
-    <Tab tabs={enginesGroup} onclick={clickEngineGroup} />
+    <Tab tabs={enginesGroup} onclick={clickEngineGroup} selectedBg={false}/>
   {/if}
   <div
     class="search_g"
-    class:bg={searchAreaFocused && bookmarksResults.length}
+    class:bg={searchAreaFocused &&
+      ((searchBookmarksEnabled &&
+        (bookmarksResults.length || bookmarksLoading)) ||
+        (searchHistoryEnabled && (historyResults.length || historyLoading)))}
     class:top0={enginesGroup.length <= 1}
   >
     {@render temInputGroup()}
@@ -636,6 +639,18 @@
           onkeyup={inputKey}
         />
       {/if}
+      {#if inputValue.length}
+        <Button
+          onclick={() => {
+            inputValue = "";
+            searchInput("");
+          }}
+        >
+          <G>
+            <Icon name="X" color="var(--c-text)" opacity={0.6} size={16} />
+          </G>
+        </Button>
+      {/if}
       {@render temEngines()}
     </div>
   </div>
@@ -669,10 +684,7 @@
           rel={newTabOpen ? "noreferrer" : undefined}
           animate:flip={{ duration: 200 }}
         >
-          <EngineIcon
-            alt={engine.title ?? ""}
-            engineUrl={engine.engineUrl}
-          />
+          <EngineIcon alt={engine.title ?? ""} engineUrl={engine.engineUrl} />
         </a>
       {/each}
     </div>
@@ -710,20 +722,13 @@
           class:more_item_sel={engine.enabled}
           animate:flip={{ duration: 200 }}
         >
-          <EngineIcon
-            alt={engine.title ?? ""}
-            engineUrl={engine.engineUrl}
-          />
+          <EngineIcon alt={engine.title ?? ""} engineUrl={engine.engineUrl} />
         </button>
       {/each}
     </div>
     <Button onclick={openSearchEngineSettings}>
       <G>
-        <Icon
-          name="ArrowUpRight"
-          color="var(--c-text)"
-          opacity={0.6}
-        />
+        <Icon name="SquarePen" color="var(--c-text)" opacity={0.6} />
       </G>
     </Button>
   </div>
@@ -748,6 +753,15 @@
 {/snippet}
 
 <style>
+  .input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+  }
+
+  .input::-moz-search-clear {
+    display: none;
+  }
   .search {
     display: flex;
     flex-direction: column;
@@ -756,7 +770,7 @@
     max-width: 100%;
     padding: var(--gap);
     position: relative;
-    height: 100px;
+    min-height: 120px;
   }
   .hided_tab {
     height: 60px;

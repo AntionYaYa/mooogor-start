@@ -488,10 +488,12 @@
   <G full align="c">
     <G full>
       <Button align="c" onclick={() => (showAbout = true)}>
+        <G align='c'>
         <G>
           <img class="logo" src="/Mooogor.svg" alt="Mooogor Start" />
         </G>
         <T>Mooogor Start</T>
+      </G>
       </Button>
     </G>
     <G>
@@ -625,7 +627,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     background: linear-gradient(180deg, var(--c-mask), rgba(0,0,0,0));
-    border-radius: var(--r4);
+    border-radius: var(--r2);
   }
 
   /* On screens smaller than 1024px, use full width */

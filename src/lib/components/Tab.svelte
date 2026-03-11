@@ -10,13 +10,17 @@
 		// children: any;
 		tabs: TabItem[];
 		onclick: (tab: TabItem,i:number) => void;
+		selectedBg?: boolean;
 	}
-	let { tabs, onclick }: Props = $props();
+	let { tabs, onclick, selectedBg = true }: Props = $props();
 </script>
 
 <div>
 	{#each tabs as tab,i}
-		<button class={tab.sel ? "sel" : "unsel"} onclick={() => onclick(tab,i)}>
+		<button
+			class={tab.sel ? (selectedBg ? "sel" : "sel_nobg") : "unsel"}
+			onclick={() => onclick(tab,i)}
+		>
 			<T color={tab.sel ? "var(--c-text)" : "var(--c-text-1)"} nowrap
 				>{tab.name}</T
 			>
@@ -51,6 +55,9 @@
 	.sel {
 		background-color: var(--c-mask);
 		/* font-weight: bold; */
+	}
+	.sel_nobg {
+		background-color: unset;
 	}
 	.unsel {
 		background-color: unset;
