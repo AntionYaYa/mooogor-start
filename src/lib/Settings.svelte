@@ -767,11 +767,11 @@
     <Divider />
 
     {@render temSectionTitle(t("nt_settings_websites_title"))}
-    {@render temEntranceItem(t("nt_tab_common"), () =>
+    {@render temEntranceItem(t("nt_manage_common"), () =>
       openFeatureTab("common"),
     )}
-    {@render tembuttonItem(t("nt_tab_bookmarks"), openBookmarksManager,'',true)}
-    {@render tembuttonItem(t("nt_tab_history"), openHistoryManager,'',true)}
+    {@render tembuttonItem(t("nt_manage_bookmarks"), openBookmarksManager,'',true)}
+    {@render tembuttonItem(t("nt_manage_history"), openHistoryManager,'',true)}
     {@render temselectItem(
       t("nt_settings_default_open"),
       openPosOptions,

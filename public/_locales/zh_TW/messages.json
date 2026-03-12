@@ -107,6 +107,15 @@
   "nt_settings_websites_title": {
     "message": "網站"
   },
+  "nt_manage_common": {
+    "message": "常用管理"
+  },
+  "nt_manage_bookmarks": {
+    "message": "书签管理"
+  },
+  "nt_manage_history": {
+    "message": "历史管理"
+  },
   "nt_settings_search_categories_title": {
     "message": "分類管理"
   },

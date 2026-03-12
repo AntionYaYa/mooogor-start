@@ -108,6 +108,15 @@
     "nt_settings_websites_title": {
       "message": "Websites"
     },
+    "nt_manage_common": {
+      "message": "Manage Favourites"
+    },
+    "nt_manage_bookmarks": {
+      "message": "Manage Bookmarks"
+    },
+    "nt_manage_history": {
+      "message": "Manage History"
+    },
     "nt_settings_search_categories_title": {
       "message": "Categories"
     },
