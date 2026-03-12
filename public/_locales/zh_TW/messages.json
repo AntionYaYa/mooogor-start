@@ -113,8 +113,14 @@
   "nt_manage_bookmarks": {
     "message": "书签管理"
   },
+  "nt_manage_bookmarks_confirm": {
+    "message": "確定跳轉到瀏覽器的書籤管理？"
+  },
   "nt_manage_history": {
-    "message": "历史管理"
+    "message": "历史記錄管理"
+  },
+  "nt_manage_history_confirm": {
+    "message": "確定跳轉到瀏覽器的歷史記錄？"
   },
   "nt_settings_search_categories_title": {
     "message": "分類管理"

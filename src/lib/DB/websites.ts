@@ -2,30 +2,43 @@ import { db } from "./database";
 import type { WebSite } from "./database";
 
 const WEBSITES_SEEDED_KEY = "websites_seeded_v1";
+const WEBSITES_UPDATED_EVENT = "websites-updated";
+
+function notifyWebSitesUpdated() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(WEBSITES_UPDATED_EVENT));
+}
 
 export async function addWebSite(webSite: Omit<WebSite, "id">) {
   const now = Date.now();
   const count = await db.webSites.count();
-  return await db.webSites.add({
+  const id = await db.webSites.add({
     ...webSite,
     order: webSite.order ?? count,
     createAt: now,
     updateAt: now,
   });
+  notifyWebSitesUpdated();
+  return id;
 }
 
 export async function updateWebSite(webSite: WebSite & { id: number }) {
   const now = Date.now();
   const existing = await db.webSites.get(webSite.id);
-  return await db.webSites.put({
+  const result = await db.webSites.put({
     ...webSite,
+    order: webSite.order ?? existing?.order,
     createAt: existing?.createAt ?? webSite.createAt ?? now,
     updateAt: now,
   });
+  notifyWebSitesUpdated();
+  return result;
 }
 
 export async function deleteWebSite(id: number) {
-  return await db.webSites.delete(id);
+  const result = await db.webSites.delete(id);
+  notifyWebSitesUpdated();
+  return result;
 }
 
 export async function getAllWebSite(): Promise<WebSite[]> {
@@ -44,6 +57,7 @@ export async function updateWebSitesOrder(items: (WebSite & { id: number })[]) {
       await db.webSites.update(items[i].id, { order: i, updateAt: now });
     }
   });
+  notifyWebSitesUpdated();
 }
 
 export async function ensureDefaultWebSites(

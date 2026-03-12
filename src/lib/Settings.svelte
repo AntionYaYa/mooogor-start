@@ -11,9 +11,15 @@
   import Divider from "./components/Divider.svelte";
   import EditSearchEngine from "./EditSearchEngine.svelte";
   import ManageEngineCategories from "./ManageEngineCategories.svelte";
+  import AddPinned from "./AddPinned.svelte";
   import type { OpenTab, UserSettings } from "@/lib/utils/settings";
-  import type { Engine, EngineCategoryItem } from "@/lib/DB/DB";
+  import type { Engine, EngineCategoryItem, WebSite } from "@/lib/DB/DB";
   import {
+    addWebSite,
+    updateWebSite,
+    deleteWebSite,
+    getAllWebSite,
+    updateWebSitesOrder,
     addEngine,
     deleteEngine,
     ensureDefaultEngineCategories,
@@ -32,6 +38,7 @@
   import { t } from "@/lib/utils/i18n";
   import Icon from "./components/Icon.svelte";
   import Button from "./components/Button.svelte";
+  import BkmkIcon from "./BkmkIcon.svelte";
   import EngineIcon from "./EngineIcon.svelte";
   type OpenSearchEnginesRequest = { id: number; categoryId?: string | null };
   interface Props {
@@ -66,7 +73,7 @@
 
   const languageBase = [
     { label: t("nt_lang_auto"), value: "auto" },
-    { label: "简体中文", value: "zh_CN" ,dividerTop: true},
+    { label: "简体中文", value: "zh_CN", dividerTop: true },
     { label: "繁體中文", value: "zh_TW" },
     { label: "English", value: "en" },
   ] as const;
@@ -113,6 +120,12 @@
   let showCategoryManager = $state(false);
   let showSearchEngineEditor = $state(false);
   let editingSearchEngine: Engine | null = $state(null);
+  let commonSites: WebSite[] = $state([]);
+  let commonSitesLoading = $state(false);
+  let commonSitesRequestId = $state(0);
+  let commonSitesDragging = $state(false);
+  let showCommonEditor = $state(false);
+  let editingCommonSite: WebSite | null = $state(null);
   let persistEngineLayoutTimer: ReturnType<typeof setTimeout> | null =
     $state(null);
 
@@ -121,6 +134,9 @@
     settingPage = page;
     if (page === "searchEngines") {
       void loadSearchSettingEngines(true);
+    }
+    if (page === "common") {
+      void loadCommonSites();
     }
   }
 
@@ -190,6 +206,12 @@
     void loadSearchSettingEngines(true);
   }
 
+  function handleWebSitesUpdated() {
+    if (!showSetting) return;
+    if (settingPage !== "common") return;
+    void loadCommonSites();
+  }
+
   function setOpenPos(value: string) {
     onchangeUserSettings({
       ...userSettings,
@@ -226,10 +248,74 @@
   }
 
   function openBookmarksManager() {
-    browser.tabs.update({ url: 'chrome://bookmarks/' });
+    if (!confirm(t("nt_manage_bookmarks_confirm"))) return;
+    browser.tabs.update({ url: "chrome://bookmarks/" });
   }
   function openHistoryManager() {
-    browser.tabs.update({ url: 'chrome://history/' });
+    if (!confirm(t("nt_manage_history_confirm"))) return;
+    browser.tabs.update({ url: "chrome://history/" });
+  }
+
+  async function loadCommonSites() {
+    commonSitesRequestId += 1;
+    const requestId = commonSitesRequestId;
+    commonSitesLoading = true;
+    try {
+      const items = await getAllWebSite();
+      if (requestId !== commonSitesRequestId) return;
+      commonSites = items;
+      commonSitesDragging = false;
+    } finally {
+      if (requestId === commonSitesRequestId) {
+        commonSitesLoading = false;
+      }
+    }
+  }
+
+  function openAddCommonSiteEditor() {
+    editingCommonSite = null;
+    showCommonEditor = true;
+  }
+
+  function openEditCommonSiteEditor(site: WebSite) {
+    editingCommonSite = site;
+    showCommonEditor = true;
+  }
+
+  function closeCommonEditor() {
+    editingCommonSite = null;
+    showCommonEditor = false;
+  }
+
+  async function saveCommonSite(payload: WebSite) {
+    if (editingCommonSite?.id) {
+      await updateWebSite({ ...payload, id: editingCommonSite.id });
+    } else {
+      await addWebSite(payload);
+    }
+    await loadCommonSites();
+  }
+
+  async function removeEditingCommonSite() {
+    if (!editingCommonSite?.id) return;
+    await deleteWebSite(editingCommonSite.id);
+    await loadCommonSites();
+  }
+
+  function handleCommonSitesConsider(e: CustomEvent<DndEvent<WebSite>>) {
+    commonSitesDragging = true;
+    commonSites = e.detail.items;
+  }
+
+  async function handleCommonSitesFinalize(e: CustomEvent<DndEvent<WebSite>>) {
+    commonSitesDragging = false;
+    const items = e.detail.items;
+    commonSites = items;
+    const withIds = items.filter(
+      (item): item is WebSite & { id: number } => !!item.id,
+    );
+    if (withIds.length === 0) return;
+    await updateWebSitesOrder(withIds);
   }
 
   function getSearchEngineCategoryOptions(): SelectOption[] {
@@ -618,11 +704,13 @@
 
   onMount(() => {
     window.addEventListener("engine-config-updated", handleEngineConfigUpdated);
+    window.addEventListener("websites-updated", handleWebSitesUpdated);
     return () => {
       window.removeEventListener(
         "engine-config-updated",
         handleEngineConfigUpdated,
       );
+      window.removeEventListener("websites-updated", handleWebSitesUpdated);
     };
   });
 
@@ -642,6 +730,11 @@
   });
 
   $effect(() => {
+    if (showSetting && settingPage === "common") return;
+    closeCommonEditor();
+  });
+
+  $effect(() => {
     if (!showSetting) return;
     if (settingPage !== "searchEngines") return;
     if (settingEnginesLoaded || settingEnginesLoading) return;
@@ -658,35 +751,7 @@
   {#if showSetting}
     <div class="setting" transition:slide={{ duration: 200, axis: "x" }}>
       <div class="header">
-        <Button
-          onclick={settingPage === "root" ? undefined : goBackSettingPage}
-          skipTabFocus={settingPage === "root"}
-        >
-          <G>
-            <Icon
-              name="ChevronLeft"
-              color="var(--c-text)"
-              opacity={settingPage === "root" ? 0 : 0.6}
-            />
-          </G>
-        </Button>
-        <G full>
-          <T type="m" align="c">{getSettingPageTitle()}</T>
-        </G>
-        <Button
-          onclick={settingPage === "searchEngines"
-            ? resetSearchEnginesToDefaultConfirm
-            : undefined}
-          skipTabFocus={settingPage !== "searchEngines"}
-        >
-          <G>
-            <Icon
-              name="RotateCcw"
-              color="var(--c-text)"
-              opacity={settingPage === "searchEngines" ? 0.6 : 0}
-            />
-          </G>
-        </Button>
+        {@render temHeader()}
       </div>
       <div class="setting_body">
         {#key settingPage}
@@ -754,6 +819,49 @@
   />
 {/if}
 
+{#if showCommonEditor}
+  <AddPinned
+    isEdit={!!editingCommonSite}
+    urlValue={editingCommonSite?.url}
+    titleValue={editingCommonSite?.title}
+    onSave={saveCommonSite}
+    onDelete={editingCommonSite ? removeEditingCommonSite : undefined}
+    onclickClose={closeCommonEditor}
+  />
+{/if}
+
+{#snippet temHeader()}
+  <Button
+    onclick={settingPage === "root" ? undefined : goBackSettingPage}
+    skipTabFocus={settingPage === "root"}
+  >
+    <G>
+      <Icon
+        name="ChevronLeft"
+        color="var(--c-text)"
+        opacity={settingPage === "root" ? 0 : 0.6}
+      />
+    </G>
+  </Button>
+  <G full>
+    <T type="m" align="c">{getSettingPageTitle()}</T>
+  </G>
+  <Button
+    onclick={settingPage === "searchEngines"
+      ? resetSearchEnginesToDefaultConfirm
+      : undefined}
+    skipTabFocus={settingPage !== "searchEngines"}
+  >
+    <G>
+      <Icon
+        name="RotateCcw"
+        color="var(--c-text)"
+        opacity={settingPage === "searchEngines" ? 0.6 : 0}
+      />
+    </G>
+  </Button>
+{/snippet}
+
 {#snippet temSettingRoot()}
   <div class="setting_con">
     {@render temSectionTitle(t("nt_settings_search_title"))}
@@ -768,10 +876,20 @@
 
     {@render temSectionTitle(t("nt_settings_websites_title"))}
     {@render temEntranceItem(t("nt_manage_common"), () =>
-      openFeatureTab("common"),
+      openSettingPage("common"),
     )}
-    {@render tembuttonItem(t("nt_manage_bookmarks"), openBookmarksManager,'',true)}
-    {@render tembuttonItem(t("nt_manage_history"), openHistoryManager,'',true)}
+    {@render tembuttonItem(
+      t("nt_manage_bookmarks"),
+      openBookmarksManager,
+      "",
+      true,
+    )}
+    {@render tembuttonItem(
+      t("nt_manage_history"),
+      openHistoryManager,
+      "",
+      true,
+    )}
     {@render temselectItem(
       t("nt_settings_default_open"),
       openPosOptions,
@@ -786,13 +904,17 @@
       lockNewTabOpenSwitch,
     )}
 
-     <Divider />
+    <Divider />
     {@render temselectItem(
       t("nt_settings_language"),
       languageOptions,
       setLanguage,
     )}
-    {@render tembuttonItem(t("nt_settings_about"), onclickAbout,t('nt_settings_other_title'))}
+    {@render tembuttonItem(
+      t("nt_settings_about"),
+      onclickAbout,
+      t("nt_settings_other_title"),
+    )}
     {@render tembuttonItem(t("nt_about_support_button"), onclickSupport)}
   </div>
 {/snippet}
@@ -844,24 +966,61 @@
 
 {#snippet temSettingCommon()}
   <div class="setting_con">
-    {@render temselectItem(
-      t("nt_settings_language"),
-      languageOptions,
-      setLanguage,
-    )}
-    {@render temswithcItem(
-      t("nt_settings_link_open_title"),
-      t("nt_settings_new_tab_open"),
-      t("nt_settings_new_tab_tip"),
-      effectiveNewTabOpenSwitch,
-      onswitchNewTabOpen,
-      lockNewTabOpenSwitch,
-    )}
-    {@render temselectItem(
-      t("nt_settings_default_open"),
-      openPosOptions,
-      setOpenPos,
-    )}
+    <div
+      class="common_list"
+      class:drag={commonSitesDragging}
+      use:dndzone={{
+        items: commonSites,
+        flipDurationMs: 200,
+        type: "settings-common",
+        zoneTabIndex: -1,
+        zoneItemTabIndex: -1,
+        dropTargetStyle: {},
+        dragDisabled: commonSitesLoading,
+      }}
+      onconsider={handleCommonSitesConsider}
+      onfinalize={handleCommonSitesFinalize}
+    >
+      {#if commonSitesLoading}
+        <div class="engine_loading">
+          <G>
+            <Icon name="Loading" color="var(--c-text)" />
+          </G>
+        </div>
+      {:else if commonSites.length === 0}
+        {@render temEmptyItem()}
+      {:else}
+        {#each commonSites as site (site.id)}
+          <div class="common_row" animate:flip={{ duration: 200 }}>
+            <Button
+              full
+              align="c"
+              fill
+              onclick={() => openEditCommonSiteEditor(site)}
+            >
+              <G full align="c">
+                <G full>
+                  <BkmkIcon
+                    imgUrl={site.url}
+                    alt={site.title ?? site.url}
+                    size="s"
+                  />
+                  <T nowrap>{site.title ?? t("nt_unnamed")}</T>
+                </G>
+              </G>
+            </Button>
+          </div>
+        {/each}
+      {/if}
+    </div>
+    <G full>
+      <Button full onclick={openAddCommonSiteEditor}>
+        <G align="c">
+          <Icon name="Plus" color="var(--c-text)" opacity={0.5} />
+          <T type="s">{t("nt_add_pinned_title")}</T>
+        </G>
+      </Button>
+    </G>
   </div>
 {/snippet}
 
@@ -895,16 +1054,16 @@
         <T type="s" color="var(--c-text-1)">{title}</T>
       </G>
     {/if}
-      <Button full align="c" onclick={onChange} fill r='r1'>
-        <G full align="c">
+    <Button full align="c" onclick={onChange} fill r="r1">
+      <G full align="c">
         <G vertical full>
           <T>{text}</T>
         </G>
         <G>
           <Icon name="ChevronRight" color="var(--c-text)" opacity={0.6} />
         </G>
-        </G>
-      </Button>
+      </G>
+    </Button>
   </div>
 {/snippet}
 
@@ -1002,7 +1161,7 @@
     </div>
   {/each}
   <G full>
-    <T type='s'>{t('nt_settings_search_drag_reorder_or_move')}</T>
+    <T type="s">{t("nt_settings_search_drag_reorder_or_move")}</T>
   </G>
 {/snippet}
 
@@ -1018,8 +1177,8 @@
         <T type="s" color="var(--c-text-1)">{title}</T>
       </G>
     {/if}
-      <Button onclick={onChange} full align="c" fill r='r1'>
-        <G full align="c">
+    <Button onclick={onChange} full align="c" fill r="r1">
+      <G full align="c">
         <G vertical full>
           <T>{text}</T>
         </G>
@@ -1030,8 +1189,8 @@
             opacity={externalLink ? 0.6 : 0}
           />
         </G>
-        </G>
-      </Button>
+      </G>
+    </Button>
   </div>
 {/snippet}
 
@@ -1114,6 +1273,21 @@
     width: 100%;
     box-sizing: border-box;
     gap: var(--gap);
+  }
+  .common_list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--gap);
+    gap: var(--gap);
+  }
+  .common_list.drag {
+    outline: var(--c-mask) 2px dashed;
+  }
+  .common_row {
+    width: 100%;
+    box-sizing: border-box;
   }
   .engine_list_wrapper {
     display: flex;

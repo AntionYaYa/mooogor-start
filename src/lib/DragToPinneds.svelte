@@ -45,14 +45,15 @@
 <style>
   .darg_text {
     position: absolute;
+    pointer-events: none;
   }
   .darg_g {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     z-index: 10;
     width: 100%;
-    height: 200px;
+    height: 60px;
     box-sizing: border-box;
     display: flex;
     padding: var(--gap);
@@ -67,7 +68,7 @@
     box-sizing: border-box;
     background-color: var(--c-bg1);
     padding: var(--gap);
-    border-radius: var(--r);
+    border-radius: var(--r2);
     align-items: center;
     justify-content: center;
     flex-direction: row;

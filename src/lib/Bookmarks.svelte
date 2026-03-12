@@ -6,7 +6,7 @@
   import LinkContextMenu from "./LinkContextMenu.svelte";
   import Button from "./components/Button.svelte";
   import NoData from "./NoData.svelte";
-  import DragToPinneds from "./DragToPinneds.svelte";
+
   import { t } from "@/lib/utils/i18n";
   import G from "./components/G.svelte";
   import Icon from "./components/Icon.svelte";
@@ -16,6 +16,7 @@
     list?: boolean;
     newTabOpen?: boolean;
     onclickFolder: (bkmk: BookmarkNode) => void;
+    onDarging?: (item: { url: string; title?: string } | null) => void;
   }
 
   let {
@@ -23,9 +24,10 @@
     list,
     newTabOpen = false,
     onclickFolder,
+    onDarging,
   }: Props = $props();
   let currentBkmk: BookmarkNode | undefined = $state();
-  let darging = $state(false);
+
   let showMenu = $state(false);
 
   let menuX = $state(0);
@@ -48,11 +50,13 @@
   function dragStart(e: DragEvent, bkmk: BookmarkNode) {
     currentBkmk = bkmk;
     e.dataTransfer?.setData("text/plain", bkmk.url ?? "");
-    darging = true;
+    if (bkmk.url) {
+      onDarging?.({ url: bkmk.url, title: bkmk.title });
+    }
   }
 
   function ondragend() {
-    darging = false;
+    onDarging?.(null);
   }
 
   async function clickAddtoPinneds() {
@@ -61,11 +65,10 @@
     if (!currentBkmk.url) return;
     await addToPinneds(currentBkmk.url, currentBkmk.title);
     currentBkmk = undefined;
-    darging = false;
+    onDarging?.(null);
   }
 </script>
 
-<DragToPinneds active={darging} onDrop={clickAddtoPinneds} />
 <div class="page">
   {#if bookmarkNode.children?.length}
     <div class="content {list ? 'list' : 'grid'}">

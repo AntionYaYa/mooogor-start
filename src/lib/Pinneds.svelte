@@ -95,7 +95,6 @@
     oncloseAdd();
   }
   async function clickDeleteWebSite() {
-    showMenu = false;
     if (currentPinned?.id) {
       await deleteWebSite(currentPinned.id);
     }
@@ -149,6 +148,7 @@
     urlValue={openByEdit ? currentPinned?.url : undefined}
     titleValue={openByEdit ? currentPinned?.title : undefined}
     onSave={clickSaveWebSite}
+    onDelete={clickDeleteWebSite}
     onclickClose={clickCloseAdd}
   />
 {/if}
@@ -163,11 +163,6 @@
     <Button full onclick={clickEditWebSite}>
       <G>
         <T>{t("nt_edit")}</T>
-      </G>
-    </Button>
-    <Button full onclick={clickDeleteWebSite}>
-      <G>
-        <T>{t("nt_delete")}</T>
       </G>
     </Button>
   </LinkContextMenu>

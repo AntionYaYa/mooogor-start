@@ -7,16 +7,16 @@
   import Icon from "./components/Icon.svelte";
   import LinkContextMenu from "./LinkContextMenu.svelte";
   import Button from "./components/Button.svelte";
-  import DragToPinneds from "./DragToPinneds.svelte";
   import { addToPinneds } from "@/lib/utils/pinneds";
   import NoData from "./NoData.svelte";
   import { t } from "@/lib/utils/i18n";
 
   interface Props {
     newTabOpen?: boolean;
+    onDarging?: (item: { url: string; title?: string } | null) => void;
   }
 
-  let { newTabOpen = false }: Props = $props();
+  let { newTabOpen = false, onDarging }: Props = $props();
 
   let tenMinHistory: HistoryItem[] = $state([]);
   let oneHHistory: HistoryItem[] = $state([]);
@@ -29,7 +29,6 @@
 
   let currentHistory: HistoryItem | undefined = $state();
   let showMenu = $state(false);
-  let dragging = $state(false);
 
   const hasHistory = $derived.by(() => {
     if (tenMinHistory.length || oneHHistory.length || todayHistory.length) {
@@ -178,7 +177,7 @@
     if (!currentHistory.url) return;
     await addToPinneds(currentHistory.url, currentHistory.title);
     currentHistory = undefined;
-    dragging = false;
+    onDarging?.(null);
   }
 
   function showContextMenu(e: MouseEvent, history: HistoryItem) {
@@ -194,11 +193,13 @@
   function dragStart(e: DragEvent, history: HistoryItem) {
     currentHistory = history;
     e.dataTransfer?.setData("text/plain", history.url ?? "");
-    dragging = true;
+    if (history.url) {
+      onDarging?.({ url: history.url, title: history.title });
+    }
   }
 
   function dragEnd() {
-    dragging = false;
+    onDarging?.(null);
   }
 </script>
 
@@ -207,7 +208,6 @@
     <NoData iconName="History" title={t("nt_history_empty")} />
   {:else}
     <div class="history">
-      <DragToPinneds active={dragging} onDrop={clickAddtoPinneds} />
       {#if tenMinHistory.length}
         {@render temHistoryGroup(t("nt_history_recent"), tenMinHistory)}
       {/if}

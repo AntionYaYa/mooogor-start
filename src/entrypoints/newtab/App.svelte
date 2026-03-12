@@ -22,6 +22,7 @@
     getDomainFromUrl,
   } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
+  import { addToPinneds } from "@/lib/utils/pinneds";
   import { fly, slide } from "svelte/transition";
   import { onMount, tick } from "svelte";
   import Icon from "@/lib/components/Icon.svelte";
@@ -33,6 +34,7 @@
   } from "@/lib/utils/settings";
   import type { AppLanguage, OpenTab, UserSettings } from "@/lib/utils/settings";
   import { getEffectiveLanguage, setLanguage, t } from "@/lib/utils/i18n";
+  import DragToPinneds from "@/lib/DragToPinneds.svelte";
 
   let showSetting = $state(false);
   let allPinneds: WebSite[] = $state([]);
@@ -56,6 +58,9 @@
   let showNext = $state(false);
   let firstMount = $state(true);
   let i18nRenderKey = $state(0);
+
+  let darging = $state(false);
+  let draggingItem = $state<{ url: string; title?: string } | null>(null);
 
   let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
   let currentTabId: number | undefined = $state();
@@ -198,6 +203,11 @@
       handleOpenSearchEngines,
     );
 
+    const handleWebSitesUpdated = () => {
+      void refreshPinnedsFromDb();
+    };
+    window.addEventListener("websites-updated", handleWebSitesUpdated);
+
     // Fallback for browsers where pin/unpin events may not fire reliably.
     const pollId = window.setInterval(() => {
       void refreshCurrentTabPinnedState();
@@ -210,6 +220,7 @@
         "open-settings-search-engines",
         handleOpenSearchEngines,
       );
+      window.removeEventListener("websites-updated", handleWebSitesUpdated);
       window.clearInterval(pollId);
     };
   });
@@ -304,6 +315,27 @@
     }
   }
 
+  function handleDarging(item: { url: string; title?: string } | null) {
+    if (item) {
+      draggingItem = item;
+      darging = true;
+      return;
+    }
+    draggingItem = null;
+    darging = false;
+  }
+
+  async function handleDropToPinneds() {
+    if (!draggingItem?.url) return;
+    await addToPinneds(draggingItem.url, draggingItem.title);
+    draggingItem = null;
+    darging = false;
+  }
+
+  async function refreshPinnedsFromDb() {
+    allPinneds = await getAllWebSite();
+  }
+
   async function handleSettingsOpenTab(tab: OpenTab) {
     const targetIndex = openTabToIndex(tab);
     const targetTab = tabs[targetIndex];
@@ -380,6 +412,7 @@
           searchHistory={userSettings.searchHistory}
         />
       <div class="content">
+        <DragToPinneds active={darging} onDrop={handleDropToPinneds} />
         <div class="tabs">
           <div class="side side-left">
             {#if selTab?.key === "0"}
@@ -541,6 +574,7 @@
       bookmarkNode={currentNode}
       newTabOpen={effectiveNewTabOpen}
       onclickFolder={(bkmk) => clickFolder(bkmk)}
+      onDarging={handleDarging}
     />
   {/if}
 {/snippet}
@@ -554,7 +588,7 @@
       "history",
     )}
   {:else}
-    <History newTabOpen={effectiveNewTabOpen} />
+    <History newTabOpen={effectiveNewTabOpen} onDarging={handleDarging} />
   {/if}
 {/snippet}
 
@@ -628,6 +662,7 @@
     height: 100%;
     background: linear-gradient(180deg, var(--c-mask), rgba(0,0,0,0));
     border-radius: var(--r3);
+    position: relative;
   }
 
   /* On screens smaller than 1024px, use full width */

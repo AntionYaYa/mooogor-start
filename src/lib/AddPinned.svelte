@@ -15,7 +15,8 @@
     isEdit?: boolean;
     urlValue?: string;
     titleValue?: string;
-    onSave: (newWebSite: WebSite) => void;
+    onSave: (newWebSite: WebSite) => void | Promise<void>;
+    onDelete?: () => void | Promise<void>;
     onclickClose: () => void;
   }
 
@@ -24,6 +25,7 @@
     urlValue,
     titleValue,
     onSave,
+    onDelete,
     onclickClose,
   }: Props = $props();
   let inputUrlValue = $state("");
@@ -39,7 +41,7 @@
     }
   });
 
-  function clickSave() {
+  async function clickSave() {
     inputUrlValueErr = false;
     if (validator.isURL(inputUrlValue)) {
       const newWebSite = {
@@ -47,12 +49,18 @@
         url: inputUrlValue,
         title: inputTitleValue.trim(),
       };
-      onSave(newWebSite);
+      await onSave(newWebSite);
       inputUrlValue = inputTitleValue = "";
       onclickClose();
     } else {
       inputUrlValueErr = true;
     }
+  }
+
+  async function clickDelete() {
+    if (!onDelete) return;
+    await onDelete();
+    onclickClose();
   }
 </script>
 
@@ -79,13 +87,45 @@
       bind:value={inputTitleValue}
     />
   </G>
-  <G full>
-    <Button bg="var(--c-text)" onclick={clickSave} full r='r1'>
-      <G full>
-      <G full>
-        <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
-      </G>
-      </G>
-    </Button>
-  </G>
+  {#if isEdit && onDelete}
+    <div class="actions">
+      <Button bg="var(--c-text)" onclick={() => void clickSave()} r="r1">
+        <G full>
+          <G full>
+            <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
+          </G>
+        </G>
+      </Button>
+      <Button fill r="r1" onclick={() => void clickDelete()}>
+        <G align="c">
+          <G>
+            <T align="c">{t("nt_delete")}</T>
+          </G>
+        </G>
+      </Button>
+    </div>
+  {:else}
+    <G full>
+      <Button bg="var(--c-text)" onclick={() => void clickSave()} full r="r1">
+        <G full>
+          <G full>
+            <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
+          </G>
+        </G>
+      </Button>
+    </G>
+  {/if}
 </Popup>
+
+<style>
+  .actions {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--gap);
+    flex-direction: row-reverse;
+  }
+</style>

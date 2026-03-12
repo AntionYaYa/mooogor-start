@@ -114,8 +114,14 @@
     "nt_manage_bookmarks": {
       "message": "Manage Bookmarks"
     },
+    "nt_manage_bookmarks_confirm": {
+      "message": "Open the browser bookmarks manager?"
+    },
     "nt_manage_history": {
       "message": "Manage History"
+    },
+    "nt_manage_history_confirm": {
+      "message": "Open the browser history page?"
     },
     "nt_settings_search_categories_title": {
       "message": "Categories"
