@@ -99,6 +99,7 @@
       await deleteWebSite(currentPinned.id);
     }
     onUpdate();
+    showMenu = false;
   }
 </script>
 
@@ -163,6 +164,11 @@
     <Button full onclick={clickEditWebSite}>
       <G>
         <T>{t("nt_edit")}</T>
+      </G>
+    </Button>
+    <Button full onclick={clickDeleteWebSite}>
+      <G>
+        <T>{t("nt_delete")}</T>
       </G>
     </Button>
   </LinkContextMenu>
