@@ -39,6 +39,27 @@
     "nt_settings_language": {
       "message": "Language"
     },
+    "nt_settings_theme": {
+      "message": "Theme"
+    },
+    "nt_theme_default": {
+      "message": "Forest"
+    },
+    "nt_theme_ocean": {
+      "message": "Ocean"
+    },
+    "nt_theme_sunset": {
+      "message": "Sunset"
+    },
+    "nt_theme_purple": {
+      "message": "Aurora"
+    },
+    "nt_theme_yellow": {
+      "message": "Warm Sun"
+    },
+    "nt_theme_random": {
+      "message": "Random"
+    },
     "nt_settings_default_open": {
       "message": "Open by default:"
     },

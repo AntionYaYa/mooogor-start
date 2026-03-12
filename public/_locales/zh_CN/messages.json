@@ -39,6 +39,27 @@
     "nt_settings_language": {
       "message": "语言设置"
     },
+    "nt_settings_theme": {
+      "message": "主题颜色"
+    },
+    "nt_theme_default": {
+      "message": "森林"
+    },
+    "nt_theme_ocean": {
+      "message": "海洋"
+    },
+    "nt_theme_sunset": {
+      "message": "日落"
+    },
+    "nt_theme_purple": {
+      "message": "极光"
+    },
+    "nt_theme_yellow": {
+      "message": "暖阳"
+    },
+    "nt_theme_random": {
+      "message": "随机"
+    },
     "nt_settings_default_open": {
       "message": "默认打开："
     },

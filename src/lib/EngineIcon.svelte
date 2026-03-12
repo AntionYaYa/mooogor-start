@@ -66,7 +66,7 @@
     object-fit: cover;
     pointer-events: none;
     border-radius: calc(var(--r) / 2);
-    background-color: var(--c-mask);
+    background-color: var(--c-card);
   }
   span{
     display: flex;
@@ -76,7 +76,7 @@
     height: 100%;
     box-sizing: border-box;
     border-radius: calc(var(--r) / 2);
-    background-color: var(--c-mask);
+    background-color: var(--c-card);
   }
 
   .engine_icon {

@@ -38,6 +38,27 @@
   "nt_settings_language": {
     "message": "語言設定"
   },
+  "nt_settings_theme": {
+    "message": "主題顏色"
+  },
+  "nt_theme_default": {
+    "message": "森林"
+  },
+  "nt_theme_ocean": {
+    "message": "海洋"
+  },
+  "nt_theme_sunset": {
+    "message": "夕陽"
+  },
+  "nt_theme_purple": {
+    "message": "極光"
+  },
+  "nt_theme_yellow": {
+    "message": "暖陽"
+  },
+  "nt_theme_random": {
+    "message": "隨機"
+  },
   "nt_settings_default_open": {
     "message": "預設開啟："
   },

@@ -34,6 +34,7 @@
   } from "@/lib/utils/settings";
   import type { AppLanguage, OpenTab, UserSettings } from "@/lib/utils/settings";
   import { getEffectiveLanguage, setLanguage, t } from "@/lib/utils/i18n";
+  import { applyTheme } from "@/lib/utils/theme";
   import DragToPinneds from "@/lib/DragToPinneds.svelte";
 
   let showSetting = $state(false);
@@ -79,7 +80,8 @@
       a.newTabOpen === b.newTabOpen &&
       a.searchBookmarks === b.searchBookmarks &&
       a.searchHistory === b.searchHistory &&
-      a.language === b.language
+      a.language === b.language &&
+      a.theme === b.theme
     );
   }
 
@@ -167,6 +169,7 @@
 
   onMount(async () => {
     userSettings = await loadSettings();
+    applyTheme(userSettings.theme);
     const language = getEffectiveLanguage(userSettings.language);
     await ensureDefaultWebSites(buildDefaultWebSites(language));
     await refreshCurrentTabPinnedState();
@@ -229,7 +232,11 @@
     if (isSameSettings(userSettings, next)) return;
 
     const languageChanged = userSettings.language !== next.language;
+    const themeChanged = userSettings.theme !== next.theme;
     userSettings = next;
+    if (themeChanged) {
+      applyTheme(next.theme);
+    }
     if (languageChanged) {
       await Promise.all([saveSettings(next), setLanguage(next.language)]);
       updateTabLabels();

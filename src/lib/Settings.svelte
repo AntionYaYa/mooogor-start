@@ -78,6 +78,15 @@
     { label: "English", value: "en" },
   ] as const;
 
+  const themeBase = [
+    { label: t("nt_theme_default"), value: "default" },
+    { label: t("nt_theme_ocean"), value: "ocean" },
+    { label: t("nt_theme_sunset"), value: "sunset" },
+    { label: t("nt_theme_purple"), value: "purple" },
+    { label: t("nt_theme_yellow"), value: "yellow" },
+    { label: t("nt_theme_random"), value: "random", dividerTop: true },
+  ] as const;
+
   let openPosOptions = $derived(
     openPosBase.map((o) => ({
       ...o,
@@ -89,6 +98,13 @@
     languageBase.map((o) => ({
       ...o,
       sel: o.value === userSettings.language,
+    })),
+  );
+
+  let themeOptions = $derived(
+    themeBase.map((o) => ({
+      ...o,
+      sel: o.value === userSettings.theme,
     })),
   );
 
@@ -223,6 +239,13 @@
     onchangeUserSettings({
       ...userSettings,
       language: value as UserSettings["language"],
+    });
+  }
+
+  function setTheme(value: string) {
+    onchangeUserSettings({
+      ...userSettings,
+      theme: value as UserSettings["theme"],
     });
   }
 
@@ -905,6 +928,11 @@
     )}
 
     <Divider />
+    {@render temselectItem(
+      t("nt_settings_theme"),
+      themeOptions,
+      setTheme,
+    )}
     {@render temselectItem(
       t("nt_settings_language"),
       languageOptions,

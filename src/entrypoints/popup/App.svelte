@@ -3,6 +3,8 @@
   import {
     addWebSite,
   } from "@/lib/DB/DB";
+  import { loadSettings } from "@/lib/utils/settings";
+  import { applyTheme } from "@/lib/utils/theme";
 
   async function getActiveTab() {
     const [lastFocusedTab] = await browser.tabs.query({
@@ -32,6 +34,8 @@
   let inputUrlValueErr = $state(false);
 
   onMount(async () => {
+    const settings = await loadSettings();
+    applyTheme(settings.theme);
     try {
       const tab = await getActiveTab();
       if (tab) {

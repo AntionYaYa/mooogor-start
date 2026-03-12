@@ -7,6 +7,13 @@ export type AppLanguage =
   | "en";
 export type OpenTab = "common" | "bookmark" | "history";
 export type DefaultOpen = OpenTab | "last";
+export type AppTheme =
+  | "default"
+  | "ocean"
+  | "sunset"
+  | "purple"
+  | "yellow"
+  | "random";
 
 export type UserSettings = {
   defaultOpen: DefaultOpen;
@@ -15,6 +22,7 @@ export type UserSettings = {
   searchBookmarks: boolean;
   searchHistory: boolean;
   language: AppLanguage;
+  theme: AppTheme;
 };
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -24,6 +32,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   searchBookmarks: true,
   searchHistory: true,
   language: "auto",
+  theme: "default",
 };
 
 const SETTINGS_KEY = "settings";
@@ -34,6 +43,14 @@ const LANGUAGE_VALUES = [
   "zh_CN",
   "zh_TW",
   "en",
+] as const;
+const THEME_VALUES = [
+  "default",
+  "ocean",
+  "sunset",
+  "purple",
+  "yellow",
+  "random",
 ] as const;
 
 function isDefaultOpen(
@@ -50,6 +67,10 @@ function isOpenTab(value: unknown): value is OpenTab {
 
 function isLanguage(value: unknown): value is AppLanguage {
   return LANGUAGE_VALUES.includes(value as AppLanguage);
+}
+
+function isTheme(value: unknown): value is AppTheme {
+  return THEME_VALUES.includes(value as AppTheme);
 }
 
 export async function loadSettings(): Promise<UserSettings> {
@@ -69,6 +90,7 @@ export async function loadSettings(): Promise<UserSettings> {
     language: isLanguage(stored?.language)
       ? stored.language
       : DEFAULT_SETTINGS.language,
+    theme: isTheme(stored?.theme) ? stored.theme : DEFAULT_SETTINGS.theme,
   };
 }
 
