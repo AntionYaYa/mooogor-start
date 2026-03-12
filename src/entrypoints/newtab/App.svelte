@@ -660,7 +660,7 @@
     max-width: 1280px;
     box-sizing: border-box;
     height: 100%;
-    background: linear-gradient(180deg, var(--c-mask), rgba(0,0,0,0));
+    background: linear-gradient(180deg, var(--c-card), rgba(0,0,0,0));
     border-radius: var(--r3);
     position: relative;
   }

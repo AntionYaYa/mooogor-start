@@ -18,9 +18,10 @@
 
     --c-mask1: rgba(227, 227, 227, 0.1);
     --c-mask: rgba(227, 227, 227, 0.05);
-    --c-mask-1: rgba(0, 0, 0, 0.1);
 
-    --c-main: #22DD8E;
+    --c-card: rgba(255, 255, 255, 0.05);
+
+    --c-main: #22dd8e;
     --c-main-1: #00A692;
 
     --c-main-3: rgba(34, 221, 142,0.3);
@@ -34,22 +35,31 @@
 @media (prefers-color-scheme: light) {
   :root {
     --c-bg1: #FFFFFF;
-    --c-bg: #F4F6FE;
-    --c-bg-1: #dcdfe9;
-    --c-bg-rgb: 255, 255, 255;
+    --c-bg: #f0f2f6;
+    --c-bg-1: #e2e6ed;
 
-    --c-text: rgb(31, 31, 31);
-    --c-text-1: rgba(31, 31, 31, 0.7);
-    --c-text-2: rgba(31, 31, 31, 0.3);
-    --c-border: rgba(31, 31, 31, 0.1);
+    --c-t: 0, 0, 0;
+    --c-text: rgb(var(--c-t));
+    --c-text-1: rgba(var(--c-t), 0.6);
+    --c-text-2: rgba(var(--c-t), 0.4);
+
+    --c-border: rgba(var(--c-t), 0.1);
+    --c-border1: rgba(var(--c-t), 0.2);
+    --c-border2: rgba(var(--c-t), 0.4);
+    --c-border3: rgba(var(--c-t), 0.6);
+    --c-border4: rgba(var(--c-t));
 
     --c-mask1: rgba(0, 0, 0, 0.1);
     --c-mask: rgba(0, 0, 0, 0.05);
-    --c-mask-1: rgba(0, 0, 0, 0.1);
 
-    --c-main-bottom: #00A692;
-    --c-main-top: #22DD8E;
-    
+    --c-card: rgba(255, 255, 255, 1);
+
+    --c-main: #22DD8E;
+    --c-main-1: #00bfa9;
+
+    --c-main-3: rgba(0, 255, 149, 0.3);
+
     --c-green: rgb(25, 212, 134);
+    --c-red: rgb(242, 40, 97);
   }
 }
