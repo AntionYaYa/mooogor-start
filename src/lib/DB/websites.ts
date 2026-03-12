@@ -83,3 +83,24 @@ export async function ensureDefaultWebSites(
     await db.settings.put({ key: WEBSITES_SEEDED_KEY, value: true });
   });
 }
+
+export async function resetWebSitesToDefault(
+  defaults: Omit<WebSite, "id">[],
+) {
+  await db.transaction("rw", db.settings, db.webSites, async () => {
+    await db.webSites.clear();
+    const now = Date.now();
+    if (defaults.length > 0) {
+      await db.webSites.bulkAdd(
+        defaults.map((site, i) => ({
+          ...site,
+          order: i,
+          createAt: now,
+          updateAt: now,
+        })),
+      );
+    }
+    await db.settings.put({ key: WEBSITES_SEEDED_KEY, value: true });
+  });
+  notifyWebSitesUpdated();
+}

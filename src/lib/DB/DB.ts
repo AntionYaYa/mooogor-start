@@ -13,6 +13,7 @@ export {
   getWebSite,
   updateWebSitesOrder,
   ensureDefaultWebSites,
+  resetWebSitesToDefault,
 } from "./websites";
 
 export type { Engine, EngineCategory } from "./database";

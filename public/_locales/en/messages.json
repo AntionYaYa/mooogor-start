@@ -126,6 +126,9 @@
     "nt_settings_search_reset_confirm": {
       "message": "Are you sure you want to restore search engines to their initial state? This will remove all custom search engines and categories, and cannot be undone."
     },
+    "nt_settings_common_reset_confirm": {
+      "message": "Are you sure you want to restore favourites to their initial state? This will remove all custom favourites and cannot be undone."
+    },
     "nt_settings_websites_title": {
       "message": "Websites"
     },

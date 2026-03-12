@@ -12,14 +12,16 @@
   import EditSearchEngine from "./EditSearchEngine.svelte";
   import ManageEngineCategories from "./ManageEngineCategories.svelte";
   import AddPinned from "./AddPinned.svelte";
-  import type { OpenTab, UserSettings } from "@/lib/utils/settings";
+  import type { AppLanguage, OpenTab, UserSettings } from "@/lib/utils/settings";
   import type { Engine, EngineCategoryItem, WebSite } from "@/lib/DB/DB";
+  import defaultWebSitesRaw from "@/lib/DB/defaultWebSites.json";
   import {
     addWebSite,
     updateWebSite,
     deleteWebSite,
     getAllWebSite,
     updateWebSitesOrder,
+    resetWebSitesToDefault,
     addEngine,
     deleteEngine,
     ensureDefaultEngineCategories,
@@ -33,9 +35,10 @@
     updateEngineCategoriesOrder,
     updateEngine,
     resetSearchEnginesToDefault,
+    getDomainFromUrl,
   } from "@/lib/DB/DB";
   import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
-  import { t } from "@/lib/utils/i18n";
+  import { getEffectiveLanguage, t } from "@/lib/utils/i18n";
   import Icon from "./components/Icon.svelte";
   import Button from "./components/Button.svelte";
   import BkmkIcon from "./BkmkIcon.svelte";
@@ -277,6 +280,39 @@
   function openHistoryManager() {
     if (!confirm(t("nt_manage_history_confirm"))) return;
     browser.tabs.update({ url: "chrome://history/" });
+  }
+
+  type DefaultWebSiteRaw = {
+    title?: string;
+    url: string;
+  };
+
+  type DefaultWebSitesByLanguage = Record<
+    Exclude<AppLanguage, "auto">,
+    DefaultWebSiteRaw[]
+  >;
+
+  const defaultWebSites = defaultWebSitesRaw as DefaultWebSitesByLanguage;
+
+  function buildDefaultWebSites(
+    language: Exclude<AppLanguage, "auto">,
+  ): Omit<WebSite, "id">[] {
+    const sites = defaultWebSites[language] ?? defaultWebSites.en;
+    const result: Omit<WebSite, "id">[] = [];
+    for (let i = 0; i < sites.length; i++) {
+      const site = sites[i];
+      try {
+        result.push({
+          domain: getDomainFromUrl(site.url),
+          url: site.url,
+          title: site.title,
+          order: i,
+        });
+      } catch {
+        continue;
+      }
+    }
+    return result;
   }
 
   async function loadCommonSites() {
@@ -719,6 +755,21 @@
     }
   }
 
+  async function resetCommonSitesToDefaultConfirm() {
+    if (commonSitesLoading) return;
+    const msg = t("nt_settings_common_reset_confirm");
+    if (!confirm(msg)) return;
+    commonSitesLoading = true;
+    try {
+      const language = getEffectiveLanguage(userSettings.language);
+      const defaults = buildDefaultWebSites(language);
+      await resetWebSitesToDefault(defaults);
+      await loadCommonSites();
+    } finally {
+      commonSitesLoading = false;
+    }
+  }
+
   $effect(() => {
     if (!showSetting && settingPage !== "root") {
       settingPage = "root";
@@ -872,14 +923,18 @@
   <Button
     onclick={settingPage === "searchEngines"
       ? resetSearchEnginesToDefaultConfirm
-      : undefined}
-    skipTabFocus={settingPage !== "searchEngines"}
+      : settingPage === "common"
+        ? resetCommonSitesToDefaultConfirm
+        : undefined}
+    skipTabFocus={!(settingPage === "searchEngines" || settingPage === "common")}
   >
     <G>
       <Icon
         name="RotateCcw"
         color="var(--c-text)"
-        opacity={settingPage === "searchEngines" ? 0.6 : 0}
+        opacity={
+          settingPage === "searchEngines" || settingPage === "common" ? 0.6 : 0
+        }
       />
     </G>
   </Button>

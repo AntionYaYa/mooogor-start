@@ -125,6 +125,9 @@
   "nt_settings_search_reset_confirm": {
     "message": "確定要將搜尋引擎恢復至初始狀態嗎？此操作將清除所有自訂的搜尋引擎和分類，且無法復原。"
   },
+  "nt_settings_common_reset_confirm": {
+    "message": "確定要將常用網站恢復至初始狀態嗎？此操作將清除所有自訂常用網站，且無法復原。"
+  },
   "nt_settings_websites_title": {
     "message": "網站"
   },

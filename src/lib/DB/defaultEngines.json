@@ -218,18 +218,18 @@
         "engineUrl": "https://www.iconfont.cn/search/index?q=%s",
         "faviconKey": "Iconfont",
         "enabledByLanguage": {
-          "default": true,
+          "default": false,
           "zh_CN": true,
-          "zh_TW": true
+          "zh_TW": false
         }
       },
       {
         "title": "Font Awesome",
         "engineUrl": "https://fontawesome.com/search?q=%s",
-        "faviconKey": "Font Awesome",
+        "faviconKey": "FontAwesome",
         "enabledByLanguage": {
           "default": true,
-          "zh_CN": true,
+          "zh_CN": false,
           "zh_TW": true
         }
       },
@@ -246,27 +246,7 @@
       {
         "title": "Phosphor Icons",
         "engineUrl": "https://phosphoricons.com/?q=%s",
-        "faviconKey": "Phosphor Icons",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
-      },
-      {
-        "title": "Material Symbols",
-        "engineUrl": "https://fonts.google.com/icons?selected=Material+Symbols&icon.query=%s",
-        "faviconKey": "Google Fonts",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": false,
-          "zh_TW": true
-        }
-      },
-      {
-        "title": "Iconify",
-        "engineUrl": "https://icon-sets.iconify.design/?query=%s",
-        "faviconKey": "Iconify",
+        "faviconKey": "PhosphorIcons",
         "enabledByLanguage": {
           "default": true,
           "zh_CN": true,
@@ -291,7 +271,7 @@
       {
         "title": "Google Fonts",
         "engineUrl": "https://fonts.google.com/?query=%s",
-        "faviconKey": "Google Fonts",
+        "faviconKey": "GoogleFonts",
         "enabledByLanguage": {
           "default": true,
           "zh_CN": false,
@@ -299,38 +279,18 @@
         }
       },
       {
-        "title": "Dafont",
-        "engineUrl": "https://www.dafont.com/search.php?q=%s",
-        "faviconKey": "Dafont",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
-      },
-      {
-        "title": "100font",
-        "engineUrl": "https://www.100font.com/?s=%s",
-        "faviconKey": "100font",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
-      },
-      {
         "title": "字由 HelloFont",
-        "engineUrl": "https://www.hellofont.cn/font/search/%s",
+        "engineUrl": "https://www.hellofont.cn/search?word=%s",
         "faviconKey": "HelloFont",
         "enabledByLanguage": {
-          "default": true,
+          "default": false,
           "zh_CN": true,
-          "zh_TW": true
+          "zh_TW": false
         }
       },
       {
         "title": "Fontshare",
-        "engineUrl": "https://www.fontshare.com/?search=%s",
+        "engineUrl": "https://www.fontshare.com/?q=%s",
         "faviconKey": "Fontshare",
         "enabledByLanguage": {
           "default": true,
@@ -341,21 +301,21 @@
       {
         "title": "Adobe Fonts",
         "engineUrl": "https://fonts.adobe.com/search?query=%s",
-        "faviconKey": "Adobe Fonts",
+        "faviconKey": "AdobeFonts",
         "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
+          "default": false,
+          "zh_CN": false,
+          "zh_TW": false
         }
       },
       {
         "title": "Font Squirrel",
         "engineUrl": "https://www.fontsquirrel.com/fonts/list/search?q=%s",
-        "faviconKey": "Font Squirrel",
+        "faviconKey": "FontSquirrel",
         "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
+          "default": false,
+          "zh_CN": false,
+          "zh_TW": false
         }
       }
     ]
@@ -368,7 +328,7 @@
         "engineUrl": "https://open.spotify.com/search/%s",
         "faviconKey": "Spotify",
         "enabledByLanguage": {
-          "default": false,
+          "default": true,
           "zh_CN": false,
           "zh_TW": true
         }
@@ -388,7 +348,7 @@
         "engineUrl": "https://music.youtube.com/search?q=%s",
         "faviconKey": "YouTubeMusic",
         "enabledByLanguage": {
-          "default": false,
+          "default": true,
           "zh_CN": false,
           "zh_TW": true
         }
@@ -398,7 +358,7 @@
         "engineUrl": "https://y.qq.com/portal/search.html#page=1&searchid=1&remoteplace=txt.yqq.song&s=%s",
         "faviconKey": "QQMusic",
         "enabledByLanguage": {
-          "default": true,
+          "default": false,
           "zh_CN": true,
           "zh_TW": false
         }
@@ -408,7 +368,7 @@
         "engineUrl": "https://music.163.com/#/search/m/?s=%s&type=1",
         "faviconKey": "NeteaseMusic",
         "enabledByLanguage": {
-          "default": true,
+          "default": false,
           "zh_CN": true,
           "zh_TW": false
         }
@@ -418,8 +378,8 @@
         "engineUrl": "https://www.kugou.com/yy/html/search.html#searchType=song&searchKey=%s",
         "faviconKey": "KugouMusic",
         "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
+          "default": false,
+          "zh_CN": false,
           "zh_TW": false
         }
       },
@@ -428,9 +388,9 @@
         "engineUrl": "https://www.bensound.com/royalty-free-music?search=%s",
         "faviconKey": "Bensound",
         "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
+          "default": false,
+          "zh_CN": false,
+          "zh_TW": false
         }
       },
       {
