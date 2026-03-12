@@ -60,28 +60,12 @@ db.version(1).stores({
   settings: "key",
 });
 
-db.version(2)
-  .stores({
-    favicons: "domain",
-    webSites: "++id,domain",
-    engines: "++id,domain,category,enabled,order",
-    settings: "key",
-  })
-  .upgrade(async (tx) => {
-    await tx
-      .table("engines")
-      .toCollection()
-      .modify((engine: Engine) => {
-        if (!engine.category) {
-          engine.category = "1";
-        }
-      });
-  });
-
-db.version(3).stores({
+db.version(2).stores({
   favicons: "domain",
   webSites: "++id,domain",
   engines: "++id,domain,category,enabled,order",
   engineCategories: "id,order",
   settings: "key",
 });
+
+

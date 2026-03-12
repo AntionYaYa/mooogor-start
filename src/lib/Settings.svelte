@@ -228,6 +228,9 @@
   function openBookmarksManager() {
     browser.tabs.update({ url: 'chrome://bookmarks/' });
   }
+  function openHistoryManager() {
+    browser.tabs.update({ url: 'chrome://history/' });
+  }
 
   function getSearchEngineCategoryOptions(): SelectOption[] {
     return settingEngineCategories.map((item) => ({
@@ -767,10 +770,8 @@
     {@render temEntranceItem(t("nt_tab_common"), () =>
       openFeatureTab("common"),
     )}
-    {@render temEntranceItem(t("nt_tab_bookmarks"), openBookmarksManager)}
-    {@render temEntranceItem(t("nt_tab_history"), () =>
-      openFeatureTab("history"),
-    )}
+    {@render tembuttonItem(t("nt_tab_bookmarks"), openBookmarksManager,'',true)}
+    {@render tembuttonItem(t("nt_tab_history"), openHistoryManager,'',true)}
     {@render temselectItem(
       t("nt_settings_default_open"),
       openPosOptions,
