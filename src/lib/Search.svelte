@@ -586,7 +586,7 @@
           }}
         >
           <G>
-            <Icon name="X" color="var(--c-text)" opacity={0.6} size={16} />
+            <Icon name="X" color="var(--c-text)" opacity={0.4} size={16} />
           </G>
         </Button>
       {/if}
