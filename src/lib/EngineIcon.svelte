@@ -1,11 +1,7 @@
 <script lang="ts">
   import T from "./components/T.svelte";
-  import { getDomainFromUrl } from "../lib/DB/DB";
+  import { getDomainFromUrl, getFavicon } from "../lib/DB/DB";
   import G from "./components/G.svelte";
-  import {
-    ensureEngineFaviconCached,
-    getCachedEngineFavicon,
-  } from "../lib/utils/engineFaviconCache";
 
 
   interface Props {
@@ -31,18 +27,22 @@
       localSrc = null;
       return;
     }
-    const cached = getCachedEngineFavicon(domain);
-    if (cached !== undefined) {
-      localSrc = cached;
-      return;
-    }
     localSrc = null;
     let cancelled = false;
-    void ensureEngineFaviconCached(domain).then((url) => {
-      if (!cancelled) localSrc = url;
-    });
+    let objectUrl: string | null = null;
+    void (async () => {
+      const record = await getFavicon(domain);
+      if (cancelled) return;
+      if (!record?.blob) {
+        localSrc = null;
+        return;
+      }
+      objectUrl = URL.createObjectURL(record.blob);
+      localSrc = objectUrl;
+    })();
     return () => {
       cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   });
 </script>

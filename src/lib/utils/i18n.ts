@@ -12,7 +12,6 @@ type MessageValue = {
 type MessageMap = Record<string, MessageValue>;
 
 const LANGUAGE_KEY = "nt_language";
-const MESSAGES_CACHE_PREFIX = "nt_messages_";
 const LANGUAGE_VALUES = [
   "auto",
   "zh_CN",
@@ -32,34 +31,6 @@ function readLanguagePreference(): AppLanguage {
   if (typeof localStorage === "undefined") return "auto";
   const value = localStorage.getItem(LANGUAGE_KEY);
   return isLanguage(value) ? value : "auto";
-}
-
-function getCacheKey(language: Exclude<AppLanguage, "auto">): string {
-  return `${MESSAGES_CACHE_PREFIX}${language}`;
-}
-
-function readCachedMessages(language: AppLanguage): MessageMap | null {
-  if (language === "auto") return null;
-  if (typeof localStorage === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(getCacheKey(language));
-    if (!raw) return null;
-    return JSON.parse(raw) as MessageMap;
-  } catch {
-    return null;
-  }
-}
-
-function saveCachedMessages(
-  language: Exclude<AppLanguage, "auto">,
-  messages: MessageMap,
-) {
-  if (typeof localStorage === "undefined") return;
-  try {
-    localStorage.setItem(getCacheKey(language), JSON.stringify(messages));
-  } catch {
-    // Ignore quota or serialization failures.
-  }
 }
 
 function getI18nApi() {
@@ -94,10 +65,7 @@ export function getEffectiveLanguage(
 }
 
 function readInitialMessages(): MessageMap | null {
-  if (currentLanguage === "auto") {
-    return readCachedMessages(resolveAutoLanguage());
-  }
-  return readCachedMessages(currentLanguage);
+  return null;
 }
 
 function getRuntimeApi() {
@@ -144,33 +112,24 @@ export async function setLanguage(language: AppLanguage): Promise<void> {
   }
   if (nextLanguage === "auto") {
     const autoLanguage = resolveAutoLanguage();
-    const cached = readCachedMessages(autoLanguage);
     if (requestSeq !== languageRequestSeq) return;
-    currentMessages = cached ?? null;
+    currentMessages = null;
     try {
       const messages = await fetchMessages(autoLanguage);
       if (requestSeq !== languageRequestSeq) return;
       currentMessages = messages;
-      saveCachedMessages(autoLanguage, messages);
     } catch {
       if (requestSeq !== languageRequestSeq) return;
-      if (!currentMessages) currentMessages = cached ?? null;
     }
     return;
   }
-  const cached = readCachedMessages(nextLanguage);
   if (requestSeq !== languageRequestSeq) return;
-  if (cached) {
-    currentMessages = cached;
-  }
   try {
     const messages = await fetchMessages(nextLanguage);
     if (requestSeq !== languageRequestSeq) return;
     currentMessages = messages;
-    saveCachedMessages(nextLanguage, messages);
   } catch {
     if (requestSeq !== languageRequestSeq) return;
-    if (!currentMessages) currentMessages = cached;
   }
 }
 
