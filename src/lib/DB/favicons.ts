@@ -48,21 +48,36 @@ export async function ensureEngineFavicons(engines: EngineFaviconSource[]) {
   const domains = entries.map(([domain]) => domain);
   const existingRecords = await db.favicons.bulkGet(domains);
 
+  const pending: Favicon[] = [];
   const missing: Array<{ domain: string; faviconUrl: string }> = [];
+  const now = Date.now();
   for (let i = 0; i < entries.length; i++) {
     const [domain, faviconUrl] = entries[i];
     const existing = existingRecords[i];
-    if (existing?.blob || existing?.faviconUrl) continue;
+    if (existing?.blob) {
+      if (existing.faviconUrl !== faviconUrl) {
+        pending.push({
+          domain,
+          faviconUrl,
+          blob: existing.blob,
+          lastUpdated: now,
+        });
+      }
+      continue;
+    }
     missing.push({ domain, faviconUrl });
   }
-  if (!missing.length) return;
 
-  const now = Date.now();
-  const pending = await Promise.all(
-    missing.map(async ({ domain, faviconUrl }) => {
-      const blob = await fetchFaviconBlob(faviconUrl);
-      return { domain, faviconUrl, blob, lastUpdated: now } as Favicon;
-    }),
-  );
-  await db.favicons.bulkPut(pending);
+  if (missing.length) {
+    const fetched = await Promise.all(
+      missing.map(async ({ domain, faviconUrl }) => {
+        const blob = await fetchFaviconBlob(faviconUrl);
+        return { domain, faviconUrl, blob, lastUpdated: now } as Favicon;
+      }),
+    );
+    pending.push(...fetched);
+  }
+  if (pending.length) {
+    await db.favicons.bulkPut(pending);
+  }
 }
