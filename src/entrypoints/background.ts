@@ -1,14 +1,18 @@
 import { saveFavicon, getDomainFromUrl, getWebSite,getEngine } from "../lib/DB/DB";
 import type { Favicon } from "../lib/DB/DB";
-import { onMessage } from "webext-bridge/background";
-
 export default defineBackground(() => {
-  onMessage("saveFavicon", onFavicon);
-  onMessage("shouldStoreFavicon", onShouldStoreFavicon);
+  browser.runtime.onMessage.addListener((message) => {
+    if (!message || typeof message !== "object") return;
+    const { type, payload } = message as {
+      type?: string;
+      payload?: { url?: string; faviconUrl?: string };
+    };
+    if (type === "saveFavicon") return onFavicon(payload);
+    if (type === "shouldStoreFavicon") return onShouldStoreFavicon(payload);
+  });
 });
 
-
-async function onFavicon({ data }: { data: any }) {
+async function onFavicon(data?: { url?: string; faviconUrl?: string }) {
   if (!data?.url || !data?.faviconUrl) return;
   const shouldStore = await shouldStoreFavicon(data.url);
   if (!shouldStore) return;
@@ -23,7 +27,7 @@ async function onFavicon({ data }: { data: any }) {
 
 }
 
-async function onShouldStoreFavicon({ data }: { data: any }) {
+async function onShouldStoreFavicon(data?: { url?: string }) {
   if (!data?.url) return false;
   return await shouldStoreFavicon(data.url);
 }
