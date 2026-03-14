@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { faviconMap } from "@/lib/DB/engineFavicons";
-
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { flip } from "svelte/animate";
@@ -15,7 +13,7 @@
     getEngineCategories,
     updateEnginesState,
   } from "@/lib/DB/DB";
-  import defaultEngineGroupsRaw from "@/lib/DB/defaultEngines.json";
+  import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
 
   import type { BookmarkSubType } from "../entrypoints/newtab/methods/getBookmarks";
   import { searchBookmarks } from "../entrypoints/newtab/methods/getBookmarks";
@@ -25,8 +23,7 @@
   import Icon from "./components/Icon.svelte";
   import T from "./components/T.svelte";
   import G from "./components/G.svelte";
-  import { getEffectiveLanguage, t } from "@/lib/utils/i18n";
-  import type { AppLanguage } from "@/lib/utils/settings";
+  import { t } from "@/lib/utils/i18n";
   import Tab from "./components/Tab.svelte";
   import type { TabItem } from "./components/Tab.svelte";
   import EngineIcon from "./EngineIcon.svelte";
@@ -53,62 +50,7 @@
     folderPath?: string;
     iconUrl?: string;
   }
-
-
-  type DefaultEngineItem = {
-    title?: string;
-    engineUrl: string;
-    faviconKey?: string;
-    enabledByLanguage?: Partial<
-      Record<Exclude<AppLanguage, "auto"> | "default", boolean>
-    >;
-  };
-
-  type DefaultEngineGroup = {
-    category?: EngineCategory;
-    engines: DefaultEngineItem[];
-  };
-
-  function resolveEngineEnabled(
-    item: DefaultEngineItem,
-    language: Exclude<AppLanguage, "auto">,
-  ) {
-    const byLanguage = item.enabledByLanguage;
-    if (typeof byLanguage?.[language] === "boolean") {
-      return byLanguage[language];
-    }
-    if (typeof byLanguage?.default === "boolean") {
-      return byLanguage.default;
-    }
-    return true;
-  }
-
-  function resolveEngineCategory(category?: EngineCategory): EngineCategory {
-    if (category === "2") return "2";
-    if (category === "3") return "3";
-    if (category === "4") return "4";
-    if (category === "5") return "5";
-    if (category === "6") return "6";
-    return "1";
-  }
-
-  function buildDefaultEngines(
-    language: Exclude<AppLanguage, "auto">,
-  ): Omit<Engine, "id">[] {
-    const groups = defaultEngineGroupsRaw as DefaultEngineGroup[];
-    return groups.flatMap((group) => {
-      const category = resolveEngineCategory(group.category);
-      return (group.engines ?? []).map((item) => ({
-        title: item.title,
-        engineUrl: item.engineUrl,
-        faviconUrl: item.faviconKey ? faviconMap[item.faviconKey] ?? "" : "",
-        category,
-        enabled: resolveEngineEnabled(item, language),
-      }));
-    });
-  }
-
-  const defaultEngines = buildDefaultEngines(getEffectiveLanguage());
+  const defaultEngines = buildDefaultEngines();
   function buildDefaultEngineCategories(): Pick<
     EngineCategoryItem,
     "id" | "name"
@@ -156,6 +98,26 @@
   function normalizeEngineCategoryId(category?: string): EngineCategory {
     return category?.trim() || getFallbackCategoryId();
   }
+
+  let displayEnabledEngines = $derived(
+    !selectedCategoryId
+      ? enabledEngines
+      : enabledEngines.filter(
+          (engine) =>
+            normalizeEngineCategoryId(engine.category) === selectedCategoryId,
+        ),
+  );
+  let displayDisabledEngines = $derived(
+    !selectedCategoryId
+      ? disabledEngines
+      : disabledEngines.filter(
+          (engine) =>
+            normalizeEngineCategoryId(engine.category) === selectedCategoryId,
+        ),
+  );
+  let displayPlaceholderEngineTitle = $derived(
+    displayEnabledEngines[0]?.title,
+  );
 
   function openSearchEngineSettings() {
     if (typeof window === "undefined") return;
@@ -230,26 +192,6 @@
   function clickEngineGroup(tab: TabItem) {
     selectedCategoryId = tab.key;
     syncEnginesGroupTabs();
-  }
-
-  function getDisplayEnabledEngines(): Engine[] {
-    if (!selectedCategoryId) return enabledEngines;
-    return enabledEngines.filter(
-      (engine) =>
-        normalizeEngineCategoryId(engine.category) === selectedCategoryId,
-    );
-  }
-
-  function getDisplayDisabledEngines(): Engine[] {
-    if (!selectedCategoryId) return disabledEngines;
-
-    return disabledEngines.filter(
-      (engine) =>
-        normalizeEngineCategoryId(engine.category) === selectedCategoryId,
-    );
-  }
-  function getDisplayPlaceholderEngineTitle() {
-    return getDisplayEnabledEngines()[0]?.title;
   }
 
   $effect(() => {
@@ -609,8 +551,8 @@
           bind:this={searchEl}
           bind:value={inputValue}
           type="search"
-          placeholder={getDisplayPlaceholderEngineTitle()
-            ? t("nt_search_placeholder", getDisplayPlaceholderEngineTitle())
+          placeholder={displayPlaceholderEngineTitle
+            ? t("nt_search_placeholder", displayPlaceholderEngineTitle)
             : t("nt_search_placeholder_fallback")}
           oncompositionstart={() => (isComposing = true)}
           oncompositionend={(e) => {
@@ -652,7 +594,7 @@
       class:drag={showMoreEngines}
       data-dnd-hint={t("nt_drag_to_enable_sortable")}
       use:dndzone={{
-        items: getDisplayEnabledEngines(),
+        items: displayEnabledEngines,
         flipDurationMs: 200,
         type: "engines",
         zoneTabIndex: -1,
@@ -661,7 +603,7 @@
       onconsider={handleConsiderEnabled}
       onfinalize={handleFinalizeEnabled}
     >
-      {#each getDisplayEnabledEngines() as engine (engine.id)}
+      {#each displayEnabledEngines as engine (engine.id)}
         <a
           class="engine"
           href={engine.engineUrl?.replace("%s", inputValue)}
@@ -692,7 +634,7 @@
       class:drag={showMoreEngines}
       data-dnd-hint={t("nt_drag_to_disable")}
       use:dndzone={{
-        items: getDisplayDisabledEngines(),
+        items: displayDisabledEngines,
         flipDurationMs: 200,
         type: "engines",
         zoneTabIndex: -1,
@@ -701,7 +643,7 @@
       onconsider={handleConsiderDisabled}
       onfinalize={handleFinalizeDisabled}
     >
-      {#each getDisplayDisabledEngines() as engine (engine.id)}
+      {#each displayDisabledEngines as engine (engine.id)}
         <button
           class="more_item"
           class:more_item_sel={engine.enabled}

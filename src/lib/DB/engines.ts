@@ -12,6 +12,7 @@ export async function addEngine(engine: Omit<Engine, "id">) {
   return await db.engines.add({
     ...engine,
     category: normalizeEngineCategory(engine.category),
+    enabled: engine.enabled ?? true,
     order: engine.order ?? count,
     createAt: now,
     updateAt: now,
@@ -21,9 +22,12 @@ export async function addEngine(engine: Omit<Engine, "id">) {
 export async function updateEngine(engine: Engine & { id: number }) {
   const now = Date.now();
   const existing = await db.engines.get(engine.id);
+  const nextEnabled =
+    typeof engine.enabled === "boolean" ? engine.enabled : existing?.enabled ?? true;
   return await db.engines.put({
     ...engine,
     category: normalizeEngineCategory(engine.category ?? existing?.category),
+    enabled: nextEnabled,
     createAt: existing?.createAt ?? engine.createAt ?? now,
     updateAt: now,
   });
