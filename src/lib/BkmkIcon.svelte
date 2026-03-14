@@ -1,5 +1,30 @@
+<script context="module" lang="ts">
+  import { getFavicon } from "../lib/DB/DB";
+
+  const faviconBlobCache = new Map<string, Promise<Blob | undefined>>();
+
+  function getCachedFaviconBlob(domain: string): Promise<Blob | undefined> {
+    const cached = faviconBlobCache.get(domain);
+    if (cached) return cached;
+    const pending = getFavicon(domain)
+      .then((record) => {
+        const blob = record?.blob;
+        if (!blob) {
+          faviconBlobCache.delete(domain);
+        }
+        return blob;
+      })
+      .catch(() => {
+        faviconBlobCache.delete(domain);
+        return undefined;
+      });
+    faviconBlobCache.set(domain, pending);
+    return pending;
+  }
+</script>
+
 <script lang="ts">
-  import { getFavicon, getDomainFromUrl } from "../lib/DB/DB";
+  import { getDomainFromUrl } from "../lib/DB/DB";
   import Folder from "./components/svg/Folder.svelte";
 
   type Size = "xl" | "l" | "s";
@@ -12,28 +37,63 @@
   }
   let { imgUrl, size = "l", alt, folderIcon }: Props = $props();
 
+  let localSrc = $state<string | null>(null);
+  let localResolved = $state(false);
+
   function getChromeFavicon(url: string, size: number = 128): string {
     return `chrome-extension://${browser.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(url)}&size=${size}`;
   }
 
-  async function getLoaclFavicon(): Promise<Blob | undefined> {
-    const domain = getDomainFromUrl(imgUrl!);
-    const favicon = await getFavicon(domain);
-    return favicon ? favicon.blob : undefined;
-  }
+  $effect(() => {
+    if (folderIcon || !imgUrl) {
+      localSrc = null;
+      localResolved = false;
+      return;
+    }
+    let domain: string | undefined;
+    try {
+      domain = getDomainFromUrl(imgUrl);
+    } catch {
+      domain = undefined;
+    }
+    if (!domain) {
+      localSrc = null;
+      localResolved = true;
+      return;
+    }
+    localSrc = null;
+    localResolved = false;
+    let cancelled = false;
+    let objectUrl: string | null = null;
+    void (async () => {
+      const blob = await getCachedFaviconBlob(domain);
+      if (cancelled) return;
+      if (blob) {
+        objectUrl = URL.createObjectURL(blob);
+        localSrc = objectUrl;
+      } else {
+        localSrc = null;
+      }
+      localResolved = true;
+    })();
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  });
 </script>
 
 <div class={size}>
   {#if folderIcon}
     <Folder color="var(--c-text-1)" />
   {:else if imgUrl}
-    {#await getLoaclFavicon() then localFavicon}
-      {#if localFavicon}
-        <img src={URL.createObjectURL(localFavicon)} {alt} draggable="false" />
+    {#if localResolved}
+      {#if localSrc}
+        <img src={localSrc} {alt} draggable="false" />
       {:else}
         <img src={getChromeFavicon(imgUrl)} {alt} draggable="false" />
       {/if}
-    {/await}
+    {/if}
   {/if}
 </div>
 
