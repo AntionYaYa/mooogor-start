@@ -67,5 +67,3 @@ db.version(2).stores({
   engineCategories: "id,order",
   settings: "key",
 });
-
-
