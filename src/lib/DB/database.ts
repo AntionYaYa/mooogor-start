@@ -60,10 +60,35 @@ db.version(1).stores({
   settings: "key",
 });
 
-db.version(2).stores({
-  favicons: "domain",
-  webSites: "++id,domain",
-  engines: "++id,domain,category,enabled,order",
-  engineCategories: "id,order",
-  settings: "key",
-});
+db.version(2)
+  .stores({
+    favicons: "domain",
+    webSites: "++id,domain,order",
+    engines: "++id,domain,category,enabled,order",
+    engineCategories: "id,order",
+    settings: "key",
+  })
+  .upgrade(async (tx) => {
+    const table = tx.table("webSites");
+    const items = await table.toArray();
+    if (!items.length) return;
+
+    let maxOrder = -1;
+    for (const item of items) {
+      const order = (item as WebSite).order;
+      if (typeof order === "number" && Number.isFinite(order) && order > maxOrder) {
+        maxOrder = order;
+      }
+    }
+
+    let nextOrder = maxOrder + 1;
+    const updates = items.flatMap((item) => {
+      const order = (item as WebSite).order;
+      if (typeof order === "number" && Number.isFinite(order)) return [];
+      return [{ ...item, order: nextOrder++ }];
+    });
+
+    if (updates.length) {
+      await table.bulkPut(updates);
+    }
+  });

@@ -43,8 +43,7 @@ export async function deleteWebSite(id: number) {
 }
 
 export async function getAllWebSite(): Promise<WebSite[]> {
-  const sites = await db.webSites.toArray();
-  return sites.sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999));
+  return await db.webSites.orderBy("order").toArray();
 }
 
 export async function getWebSite(domain: string): Promise<WebSite | undefined> {
