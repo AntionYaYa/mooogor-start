@@ -187,30 +187,24 @@
 
   onMount(() => {
     browser.tabs.onUpdated.addListener(handleCurrentTabUpdated);
+    const handleTabActivated = () => {
+      void refreshCurrentTabPinnedState();
+    };
+    const handleWindowFocusChanged = (windowId: number) => {
+      const noneId =
+        (browser.windows as { WINDOW_ID_NONE?: number } | undefined)
+          ?.WINDOW_ID_NONE ?? -1;
+      if (windowId === noneId) return;
+      void refreshCurrentTabPinnedState();
+    };
 
     const refreshPinnedOnFocus = () => {
       void refreshCurrentTabPinnedState();
     };
     window.addEventListener("focus", refreshPinnedOnFocus);
-    let pollId: number | null = null;
-    const startPinnedPoll = () => {
-      if (pollId !== null) return;
-      pollId = window.setInterval(() => {
-        if (document.visibilityState !== "visible") return;
-        void refreshCurrentTabPinnedState();
-      }, 1500);
-    };
-    const stopPinnedPoll = () => {
-      if (pollId === null) return;
-      window.clearInterval(pollId);
-      pollId = null;
-    };
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         void refreshCurrentTabPinnedState();
-        startPinnedPoll();
-      } else {
-        stopPinnedPoll();
       }
     };
     const handleOpenSearchEngines = (event: Event) => {
@@ -232,12 +226,16 @@
     };
     window.addEventListener("websites-updated", handleWebSitesUpdated);
 
-    // Fallback for browsers where pin/unpin events may not fire reliably.
+    browser.tabs.onActivated.addListener(handleTabActivated);
+    browser.windows.onFocusChanged.addListener(handleWindowFocusChanged);
+
     handleVisibilityChange();
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       browser.tabs.onUpdated.removeListener(handleCurrentTabUpdated);
+      browser.tabs.onActivated.removeListener(handleTabActivated);
+      browser.windows.onFocusChanged.removeListener(handleWindowFocusChanged);
       window.removeEventListener("focus", refreshPinnedOnFocus);
       window.removeEventListener(
         "open-settings-search-engines",
@@ -245,7 +243,6 @@
       );
       window.removeEventListener("websites-updated", handleWebSitesUpdated);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      stopPinnedPoll();
     };
   });
 
