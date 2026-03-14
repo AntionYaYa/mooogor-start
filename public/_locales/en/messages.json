@@ -243,6 +243,9 @@
     "nt_engine_category_music": {
       "message": "Music"
     },
+    "nt_engine_category_fallback": {
+      "message": "Uncategorized"
+    },
     "nt_settings_title": {
       "message": "Settings"
     },

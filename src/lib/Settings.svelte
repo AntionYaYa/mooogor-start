@@ -25,6 +25,8 @@
     addEngine,
     deleteEngine,
     ensureDefaultEngineCategories,
+    ensureFallbackEngineCategory,
+    FALLBACK_ENGINE_CATEGORY_ID,
     getEnabledEngines,
     getEngineCategories,
     getDisabledEngines,
@@ -185,6 +187,16 @@
       { id: "5", name: t("nt_engine_category_font") },
       { id: "6", name: t("nt_engine_category_music") },
     ];
+  }
+
+  function resolveMissingCategoryId(
+    categories: EngineCategoryItem[] = settingEngineCategories,
+  ): CategoryId {
+    return (
+      categories.find((item) => item.id === FALLBACK_ENGINE_CATEGORY_ID)?.id ??
+      categories[0]?.id ??
+      "1"
+    );
   }
 
   function getFallbackCategoryId(): CategoryId {
@@ -404,7 +416,7 @@
       const normalizedCategory = normalizeEngineCategory(engine.category);
       const categoryId = grouped[normalizedCategory]
         ? normalizedCategory
-        : getFallbackCategoryId();
+        : resolveMissingCategoryId();
       grouped[categoryId] = [
         ...(grouped[categoryId] ?? []),
         { ...engine, category: categoryId },
@@ -566,7 +578,7 @@
         getDisabledEngines(),
       ]);
       settingEngineCategories = categories;
-      const fallbackCategoryId = categories[0]?.id ?? "1";
+      const fallbackCategoryId = resolveMissingCategoryId(categories);
       settingEnabledEngines = enabled.map((engine) => ({
         ...engine,
         enabled: true,
@@ -643,10 +655,9 @@
 
   async function deleteSearchCategoryById(id: string) {
     if (settingEngineCategories.length <= 1) return;
-    const fallbackCategoryId = settingEngineCategories.find(
-      (item) => item.id !== id,
-    )?.id;
-    if (!fallbackCategoryId) return;
+    if (id === FALLBACK_ENGINE_CATEGORY_ID) return;
+    const fallbackCategoryId = await ensureFallbackCategoryId();
+    if (!fallbackCategoryId || fallbackCategoryId === id) return;
     settingEnginesSaving = true;
     try {
       await deleteEngineCategory(id, fallbackCategoryId);
@@ -737,6 +748,18 @@
   async function removeEditingSearchEngine() {
     if (!editingSearchEngine) return;
     await removeSearchEngine(editingSearchEngine);
+  }
+
+  async function ensureFallbackCategoryId(): Promise<CategoryId> {
+    if (
+      settingEngineCategories.some(
+        (item) => item.id === FALLBACK_ENGINE_CATEGORY_ID,
+      )
+    ) {
+      return FALLBACK_ENGINE_CATEGORY_ID;
+    }
+    await ensureFallbackEngineCategory(t("nt_engine_category_fallback"));
+    return FALLBACK_ENGINE_CATEGORY_ID;
   }
 
   async function resetSearchEnginesToDefaultConfirm() {
@@ -866,6 +889,7 @@
   <ManageEngineCategories
     categories={settingEngineCategories}
     saving={settingEnginesSaving}
+    lockedIds={[FALLBACK_ENGINE_CATEGORY_ID]}
     onAdd={async (name) => {
       await addSearchCategory(name);
     }}

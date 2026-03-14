@@ -8,6 +8,7 @@
   import {
     ensureDefaultEngines,
     ensureDefaultEngineCategories,
+    FALLBACK_ENGINE_CATEGORY_ID,
     getEnabledEngines,
     getDisabledEngines,
     getEngineCategories,
@@ -96,7 +97,14 @@
   }
 
   function normalizeEngineCategoryId(category?: string): EngineCategory {
-    return category?.trim() || getFallbackCategoryId();
+    const normalized = category?.trim();
+    if (
+      normalized &&
+      engineCategories.some((item) => item.id === normalized)
+    ) {
+      return normalized;
+    }
+    return getFallbackCategoryId();
   }
 
   let displayEnabledEngines = $derived(
@@ -139,7 +147,11 @@
 
   async function loadEngineCategoriesFromDb() {
     await ensureDefaultEngineCategories(buildDefaultEngineCategories());
-    engineCategories = await getEngineCategories();
+    const categories = await getEngineCategories();
+    const visibleCategories = categories.filter(
+      (item) => item.id !== FALLBACK_ENGINE_CATEGORY_ID,
+    );
+    engineCategories = visibleCategories.length ? visibleCategories : categories;
     if (!engineCategories.length) {
       selectedCategoryId = "1";
       enginesGroup = [];
@@ -874,6 +886,7 @@
     border-radius: calc(var(--r) / 2 + 2px);
     overflow: hidden;
     cursor: default !important;
+    min-width: 30px;
   }
   .engine:focus-visible {
     outline: 2px var(--c-text) solid;

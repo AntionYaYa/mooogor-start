@@ -243,6 +243,9 @@
     "nt_engine_category_music": {
       "message": "音乐"
     },
+    "nt_engine_category_fallback": {
+      "message": "未分类"
+    },
     "nt_settings_title": {
       "message": "设置"
     },

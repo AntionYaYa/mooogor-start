@@ -1,6 +1,8 @@
 import { db } from "./database";
 import type { EngineCategoryItem } from "./database";
 
+export const FALLBACK_ENGINE_CATEGORY_ID = "__fallback__";
+
 function normalizeCategoryName(name: string) {
   return name.trim();
 }
@@ -77,6 +79,36 @@ export async function addEngineCategory(name: string): Promise<string> {
     updateAt: now,
   });
   return id;
+}
+
+export async function ensureEngineCategory(
+  item: Pick<EngineCategoryItem, "id" | "name">,
+  options: { order?: number } = {},
+): Promise<string> {
+  const existing = await db.engineCategories.get(item.id);
+  if (existing) return existing.id;
+  const normalized = normalizeCategoryName(item.name);
+  if (!normalized) {
+    throw new Error("Category name required");
+  }
+  const now = Date.now();
+  const count = await db.engineCategories.count();
+  const order = typeof options.order === "number" ? options.order : count;
+  await db.engineCategories.add({
+    id: item.id,
+    name: normalized,
+    order,
+    createAt: now,
+    updateAt: now,
+  });
+  return item.id;
+}
+
+export async function ensureFallbackEngineCategory(name: string): Promise<string> {
+  return await ensureEngineCategory({
+    id: FALLBACK_ENGINE_CATEGORY_ID,
+    name,
+  });
 }
 
 export async function renameEngineCategory(id: string, name: string) {

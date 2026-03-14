@@ -13,6 +13,7 @@
   interface Props {
     categories: EngineCategoryItem[];
     saving?: boolean;
+    lockedIds?: string[];
     onAdd: (name: string) => void | Promise<void>;
     onRename: (id: string, name: string) => void | Promise<void>;
     onDelete: (id: string) => void | Promise<void>;
@@ -25,12 +26,17 @@
   let {
     categories,
     saving = false,
+    lockedIds = [],
     onAdd,
     onRename,
     onDelete,
     onReorder,
     onclickClose,
   }: Props = $props();
+
+  function isLockedCategory(id: string) {
+    return lockedIds.includes(id);
+  }
 
   let draftCategories: EngineCategoryItem[] = $state([]);
   let draftNameMap: Record<string, string> = $state({});
@@ -134,13 +140,19 @@
           />
           <Button
             onclick={() => void onDelete(category.id)}
-            disabled={saving || categories.length <= 1}
+            disabled={
+              saving || categories.length <= 1 || isLockedCategory(category.id)
+            }
           >
             <G>
               <Icon
                 name="Minus"
                 color="var(--c-text)"
-                opacity={categories.length > 1 ? 1 : 0.2}
+                opacity={
+                  categories.length > 1 && !isLockedCategory(category.id)
+                    ? 1
+                    : 0.2
+                }
               />
             </G>
           </Button>

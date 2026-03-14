@@ -242,6 +242,9 @@
   "nt_engine_category_music": {
     "message": "音樂"
   },
+  "nt_engine_category_fallback": {
+    "message": "未分類"
+  },
   "nt_settings_title": {
     "message": "設定"
   },
