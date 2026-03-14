@@ -192,6 +192,27 @@
       void refreshCurrentTabPinnedState();
     };
     window.addEventListener("focus", refreshPinnedOnFocus);
+    let pollId: number | null = null;
+    const startPinnedPoll = () => {
+      if (pollId !== null) return;
+      pollId = window.setInterval(() => {
+        if (document.visibilityState !== "visible") return;
+        void refreshCurrentTabPinnedState();
+      }, 1500);
+    };
+    const stopPinnedPoll = () => {
+      if (pollId === null) return;
+      window.clearInterval(pollId);
+      pollId = null;
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void refreshCurrentTabPinnedState();
+        startPinnedPoll();
+      } else {
+        stopPinnedPoll();
+      }
+    };
     const handleOpenSearchEngines = (event: Event) => {
       const detail = (event as CustomEvent<{ categoryId?: string }>).detail;
       showSetting = true;
@@ -212,9 +233,8 @@
     window.addEventListener("websites-updated", handleWebSitesUpdated);
 
     // Fallback for browsers where pin/unpin events may not fire reliably.
-    const pollId = window.setInterval(() => {
-      void refreshCurrentTabPinnedState();
-    }, 1500);
+    handleVisibilityChange();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       browser.tabs.onUpdated.removeListener(handleCurrentTabUpdated);
@@ -224,7 +244,8 @@
         handleOpenSearchEngines,
       );
       window.removeEventListener("websites-updated", handleWebSitesUpdated);
-      window.clearInterval(pollId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      stopPinnedPoll();
     };
   });
 
