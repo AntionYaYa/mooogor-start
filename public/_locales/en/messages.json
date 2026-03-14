@@ -1,390 +1,392 @@
-
 {
-    "extName": {
-      "message": "Mooogor Start – Efficient New Tab"
-    },
-    "extDescription": {
-      "message": "An offline, fast, minimalist new tab that helps you start your next workflow instantly—open frequently used sites, search across multiple engines, and quickly restore browsing history."
-    },
-    "nt_title": {
-      "message": "New Tab"
-    },
-    "nt_tab_common": {
-      "message": "Favourites"
-    },
-    "nt_tab_bookmarks": {
-      "message": "Bookmarks"
-    },
-    "nt_tab_history": {
-      "message": "History"
-    },
-    "nt_back": {
-      "message": "Back"
-    },
-    "nt_need_permission_bookmarks": {
-      "message": "Authorize bookmarks access"
-    },
-    "nt_permission_desc_bookmarks": {
-      "message": "After authorizing, you can browse or search your saved bookmarks."
-    },
-    "nt_need_permission_history": {
-      "message": "Authorize history access"
-    },
-    "nt_permission_desc_history": {
-      "message": "After authorizing, you can browse or search your history."
-    },
-    "nt_authorize": {
-      "message": "Authorize"
-    },
-    "nt_settings_language": {
-      "message": "Language"
-    },
-    "nt_settings_theme": {
-      "message": "Theme"
-    },
-    "nt_theme_default": {
-      "message": "Forest"
-    },
-    "nt_theme_ocean": {
-      "message": "Ocean"
-    },
-    "nt_theme_sunset": {
-      "message": "Sunset"
-    },
-    "nt_theme_purple": {
-      "message": "Aurora"
-    },
-    "nt_theme_yellow": {
-      "message": "Warm Sun"
-    },
-    "nt_theme_random": {
-      "message": "Random"
-    },
-    "nt_settings_default_open": {
-      "message": "Open by default:"
-    },
-    "nt_settings_feedback": {
-      "message": "Feedback"
-    },
-    "nt_settings_about": {
-      "message": "About"
-    },
-    "nt_settings_version": {
-      "message": "Version"
-    },
-    "nt_support_scan_tip": {
-      "message": "scan to support"
-    },
-    "nt_support_way_wechat": {
-      "message": "WeChat"
-    },
-    "nt_support_way_paypal": {
-      "message": "PayPal"
-    },
-    "nt_support_way_alipay": {
-      "message": "Alipay"
-    },
-    "nt_support_wechat_scan_hint": {
-      "message": "Scan with WeChat app"
-    },
-    "nt_support_paypal_scan_hint": {
-      "message": "Scan with camera, or click the QR code to open link"
-    },
-    "nt_support_alipay_scan_hint": {
-      "message": "Scan with Alipay app"
-    },
-    "nt_settings_link_open_title": {
-      "message": "Link opening"
-    },
-    "nt_settings_other_title": {
-      "message": "Other"
-    },
-    "nt_settings_new_tab_open": {
-      "message": "Open links in a new tab"
-    },
-    "nt_settings_new_tab_tip": {
-      "message": "Automatically enabled when pinned to the tab bar."
-    },
-    "nt_settings_search_scope": {
-      "message": "Search Scope"
-    },
-    "nt_settings_search_title": {
-      "message": "Quick Search"
-    },
-    "nt_settings_search_bookmarks": {
-      "message": "Search Bookmarks"
-    },
-    "nt_settings_search_history": {
-      "message": "Search History"
-    },
-    "nt_settings_search_engines_title": {
-      "message": "Search Engines"
-    },
-    "nt_settings_search_reset_default": {
-      "message": "Restore defaults"
-    },
-    "nt_settings_search_reset_confirm": {
-      "message": "Are you sure you want to restore search engines to their initial state? This will remove all custom search engines and categories, and cannot be undone."
-    },
-    "nt_settings_common_reset_confirm": {
-      "message": "Are you sure you want to restore favourites to their initial state? This will remove all custom favourites and cannot be undone."
-    },
-    "nt_settings_websites_title": {
-      "message": "Websites"
-    },
-    "nt_manage_common": {
-      "message": "Manage Favourites"
-    },
-    "nt_manage_bookmarks": {
-      "message": "Manage Bookmarks"
-    },
-    "nt_manage_bookmarks_confirm": {
-      "message": "Open the browser bookmarks manager?"
-    },
-    "nt_manage_history": {
-      "message": "Manage History"
-    },
-    "nt_manage_history_confirm": {
-      "message": "Open the browser history page?"
-    },
-    "nt_settings_search_categories_title": {
-      "message": "Categories"
-    },
-    "nt_settings_search_category_placeholder": {
-      "message": "Category name"
-    },
-    "nt_settings_search_category_add_placeholder": {
-      "message": "New category name"
-    },
-    "nt_settings_search_add_category": {
-      "message": "Add Category"
-    },
-    "nt_settings_search_edit_category": {
-      "message": "Edit Category"
-    },
-    "nt_settings_search_category_name_required": {
-      "message": "Enter a category name"
-    },
-    "nt_settings_search_enabled_engines": {
-      "message": "Enabled Engines"
-    },
-    "nt_settings_search_disabled_engines": {
-      "message": "Disabled Engines"
-    },
-    "nt_settings_search_reload_engines": {
-      "message": "Refresh"
-    },
-    "nt_settings_search_enable": {
-      "message": "Enable"
-    },
-    "nt_settings_search_disable": {
-      "message": "Disable"
-    },
-    "nt_settings_search_no_enabled_engines": {
-      "message": "No enabled engines"
-    },
-    "nt_settings_search_no_disabled_engines": {
-      "message": "No disabled engines"
-    },
-    "nt_settings_search_no_engines": {
-      "message": "No search engines yet"
-    },
-    "nt_settings_search_disabled_tag": {
-      "message": "Disabled"
-    },
-    "nt_settings_search_add_engine": {
-      "message": "Custom Search Engine"
-    },
-    "nt_settings_search_edit_engine": {
-      "message": "Edit Search Engine"
-    },
-    "nt_settings_search_engine_url_placeholder": {
-      "message": "*Search URL, use %s as the query"
-    },
-    "nt_settings_search_engine_category": {
-      "message": "Engine Category"
-    },
-    "nt_settings_search_engine_enabled": {
-      "message": "Enable Search Engine"
-    },
-    "nt_settings_search_engine_name_required": {
-      "message": "Enter a search engine name"
-    },
-    "nt_settings_search_engine_url_required": {
-      "message": "Enter a search URL"
-    },
-    "nt_settings_search_engine_url_keyword": {
-      "message": "The search URL must include %s"
-    },
-    "nt_settings_search_engine_url_invalid": {
-      "message": "Enter a valid search URL"
-    },
-    "nt_settings_search_category_manage_hint": {
-      "message": "Drag to sort. Names save automatically on blur."
-    },
-    "nt_settings_search_drag_reorder_or_move": {
-      "message": "Drag to reorder or move between categories."
-    },
-    "nt_engine_category_all": {
-      "message": "General"
-    },
-    "nt_engine_category_image": {
-      "message": "Images"
-    },
-    "nt_engine_category_video": {
-      "message": "Videos"
-    },
-    "nt_engine_category_icon": {
-      "message": "Icons"
-    },
-    "nt_engine_category_font": {
-      "message": "Fonts"
-    },
-    "nt_engine_category_music": {
-      "message": "Music"
-    },
-    "nt_engine_category_fallback": {
-      "message": "Uncategorized"
-    },
-    "nt_settings_title": {
-      "message": "Settings"
-    },
-    "nt_settings_empty": {
-      "message": "No configurable items in this section yet."
-    },
-    "nt_lang_auto": {
-      "message": "Follow system"
-    },
-    "nt_lang_zh_cn": {
-      "message": "Simplified Chinese"
-    },
-    "nt_lang_zh_tw": {
-      "message": "Traditional Chinese"
-    },
-    "nt_lang_en": {
-      "message": "English"
-    },
-    "nt_default_common": {
-      "message": "Favourites"
-    },
-    "nt_default_bookmark": {
-      "message": "Bookmarks"
-    },
-    "nt_default_history": {
-      "message": "History"
-    },
-    "nt_default_last": {
-      "message": "Remember last opened"
-    },
-    "nt_history_yesterday": {
-      "message": "Yesterday"
-    },
-    "nt_history_empty": {
-      "message": "No history yet"
-    },
-    "nt_history_recent": {
-      "message": "Just now"
-    },
-    "nt_history_1h": {
-      "message": "Within 1 hour"
-    },
-    "nt_history_today": {
-      "message": "Today"
-    },
-    "nt_add_to_pinned": {
-      "message": "Add to Favourites"
-    },
-    "nt_no_pinned": {
-      "message": "No Favourites sites yet"
-    },
-    "nt_no_pinned_desc": {
-      "message": "Click + in the top-left to add favourites, or right-click in Bookmarks/History to add."
-    },
-    "nt_no_bookmarks": {
-      "message": "No bookmarks yet"
-    },
-    "nt_edit": {
-      "message": "Edit"
-    },
-    "nt_delete": {
-      "message": "Delete"
-    },
-    "nt_add_pinned_title": {
-      "message": "Add Favourites site"
-    },
-    "nt_edit_pinned_title": {
-      "message": "Edit Favourites site"
-    },
-    "nt_input_url": {
-      "message": "*URL"
-    },
-    "nt_input_name": {
-      "message": "Name"
-    },
-    "nt_save": {
-      "message": "Save"
-    },
-    "nt_cancel": {
-      "message": "Cancel"
-    },
-    "nt_select_placeholder": {
-      "message": "Select"
-    },
-    "nt_open_new_tab": {
-      "message": "Open in new tab"
-    },
-    "nt_open_new_window": {
-      "message": "Open in new window"
-    },
-    "nt_open_incognito": {
-      "message": "Open in incognito window"
-    },
-    "nt_copy_link": {
-      "message": "Copy link"
-    },
-    "nt_unnamed": {
-      "message": "Untitled"
-    },
-    "nt_label_bookmarks": {
-      "message": "Bookmarks"
-    },
-    "nt_label_history": {
-      "message": "History"
-    },
-    "nt_search_placeholder": {
-      "message": "Search with $1"
-    },
-    "nt_search_placeholder_fallback": {
-      "message": "Search"
-    },
-    "nt_drag_to_disable": {
-      "message": "Drag here to disable"
-    },
-    "nt_drag_to_enable_sortable": {
-      "message": "Drag here to enable (sortable)"
-    },
-    "nt_switch": {
-      "message": "Toggle"
-    },
-    "nt_about_name_origin_title": {
-      "message": "Name origin"
-    },
-    "nt_about_name_origin_desc": {
-      "message": "Mooogor is a homophone of \"Moge'er,\" a Sichuan phrase from China, which means \"pickpocket.\"\nThe name carries a bit of self-deprecating humor, and it also reflects an attitude. In software development, we all use work created by other developers to some extent: open-source frameworks, utility libraries, design thinking, and various free resources.\nI also used many open-source projects while building Mooogor. I believe you also benefit from these outcomes directly or indirectly in daily work. In a sense, we all \"borrow\" from prior experience and keep creating new value."
-    },
-    "nt_about_design_goal_title": {
-      "message": "Design intent"
-    },
-    "nt_about_design_goal_desc": {
-      "message": "I have used many new tab pages, and most of them keep getting more complex, like a mini desktop. The features are rich, but they also make it easy to stay on the page and slow down getting started.\nI want the new tab page to be a simple, direct entry point. Open it, quickly find the website you need, and move on instead of being interrupted by extra information.\nSo Mooogor Start will stay restrained and prioritize features that help you start faster, rather than designs that increase dwell time.\nIf you have any ideas or suggestions, feel free to email me:"
-    },
-    "nt_about_free_title": {
-      "message": "Is it free?"
-    },
-    "nt_about_free_desc": {
-      "message": "Mooogor Start is free.\nIf future features must rely on cloud services (such as cross-device sync), there may be an optional paid plan because cloud services have ongoing costs. For security and privacy, I will prioritize local offline implementations.\nIf Mooogor Start helps you save time, you are also welcome to support it, which gives me more motivation to keep improving this product."
-    },
-    "nt_about_support_button": {
-      "message": "Support Mooogor Start"
-    }
+  "extName": {
+    "message": "Mooogor Start – Efficient New Tab"
+  },
+  "extDescription": {
+    "message": "An offline, fast, minimalist new tab that helps you start your next workflow instantly—open frequently used sites, search across multiple engines, and quickly restore browsing history."
+  },
+  "nt_title": {
+    "message": "New Tab"
+  },
+  "nt_tab_common": {
+    "message": "Favourites"
+  },
+  "nt_tab_bookmarks": {
+    "message": "Bookmarks"
+  },
+  "nt_tab_history": {
+    "message": "History"
+  },
+  "nt_back": {
+    "message": "Back"
+  },
+  "nt_need_permission_bookmarks": {
+    "message": "Authorize bookmarks access"
+  },
+  "nt_permission_desc_bookmarks": {
+    "message": "After authorizing, you can browse or search your saved bookmarks."
+  },
+  "nt_need_permission_history": {
+    "message": "Authorize history access"
+  },
+  "nt_permission_desc_history": {
+    "message": "After authorizing, you can browse or search your history."
+  },
+  "nt_authorize": {
+    "message": "Authorize"
+  },
+  "nt_settings_language": {
+    "message": "Language"
+  },
+  "nt_settings_theme": {
+    "message": "Theme"
+  },
+  "nt_theme_default": {
+    "message": "Forest"
+  },
+  "nt_theme_ocean": {
+    "message": "Ocean"
+  },
+  "nt_theme_sunset": {
+    "message": "Sunset"
+  },
+  "nt_theme_purple": {
+    "message": "Aurora"
+  },
+  "nt_theme_yellow": {
+    "message": "Warm Sun"
+  },
+  "nt_theme_random": {
+    "message": "Random"
+  },
+  "nt_settings_default_open": {
+    "message": "Open by default:"
+  },
+  "nt_settings_feedback": {
+    "message": "Feedback"
+  },
+  "nt_settings_about": {
+    "message": "About"
+  },
+  "nt_settings_version": {
+    "message": "Version"
+  },
+  "nt_support_scan_tip": {
+    "message": "scan to support"
+  },
+  "nt_support_way_wechat": {
+    "message": "WeChat"
+  },
+  "nt_support_way_paypal": {
+    "message": "PayPal"
+  },
+  "nt_support_way_alipay": {
+    "message": "Alipay"
+  },
+  "nt_support_wechat_scan_hint": {
+    "message": "Scan with WeChat app"
+  },
+  "nt_support_paypal_scan_hint": {
+    "message": "Scan with camera, or click the QR code to open link"
+  },
+  "nt_support_alipay_scan_hint": {
+    "message": "Scan with Alipay app"
+  },
+  "nt_settings_link_open_title": {
+    "message": "Link opening"
+  },
+  "nt_settings_other_title": {
+    "message": "Other"
+  },
+  "nt_settings_new_tab_open": {
+    "message": "Open links in a new tab"
+  },
+  "nt_settings_new_tab_tip": {
+    "message": "Automatically enabled when pinned to the tab bar."
+  },
+  "nt_settings_search_scope": {
+    "message": "Search Scope"
+  },
+  "nt_settings_search_title": {
+    "message": "Quick Search"
+  },
+  "nt_settings_search_bookmarks": {
+    "message": "Search Bookmarks"
+  },
+  "nt_settings_search_history": {
+    "message": "Search History"
+  },
+  "nt_settings_search_engines_title": {
+    "message": "Search Engines"
+  },
+  "nt_settings_search_reset_default": {
+    "message": "Restore defaults"
+  },
+  "nt_settings_search_reset_confirm": {
+    "message": "Are you sure you want to restore search engines to their initial state? This will remove all custom search engines and categories, and cannot be undone."
+  },
+  "nt_settings_common_reset_confirm": {
+    "message": "Are you sure you want to restore favourites to their initial state? This will remove all custom favourites and cannot be undone."
+  },
+  "nt_settings_websites_title": {
+    "message": "Websites"
+  },
+  "nt_manage_common": {
+    "message": "Manage Favourites"
+  },
+  "nt_manage_bookmarks": {
+    "message": "Manage Bookmarks"
+  },
+  "nt_manage_bookmarks_confirm": {
+    "message": "Open the browser bookmarks manager?"
+  },
+  "nt_manage_history": {
+    "message": "Manage History"
+  },
+  "nt_manage_history_confirm": {
+    "message": "Open the browser history page?"
+  },
+  "nt_settings_search_categories_title": {
+    "message": "Categories"
+  },
+  "nt_settings_search_category_placeholder": {
+    "message": "Category name"
+  },
+  "nt_settings_search_category_add_placeholder": {
+    "message": "New category name"
+  },
+  "nt_settings_search_add_category": {
+    "message": "Add Category"
+  },
+  "nt_settings_search_edit_category": {
+    "message": "Edit Category"
+  },
+  "nt_settings_search_category_name_required": {
+    "message": "Enter a category name"
+  },
+  "nt_settings_search_enabled_engines": {
+    "message": "Enabled Engines"
+  },
+  "nt_settings_search_disabled_engines": {
+    "message": "Disabled Engines"
+  },
+  "nt_settings_search_reload_engines": {
+    "message": "Refresh"
+  },
+  "nt_settings_search_enable": {
+    "message": "Enable"
+  },
+  "nt_settings_search_disable": {
+    "message": "Disable"
+  },
+  "nt_settings_search_no_enabled_engines": {
+    "message": "No enabled engines"
+  },
+  "nt_settings_search_no_disabled_engines": {
+    "message": "No disabled engines"
+  },
+  "nt_settings_search_no_engines": {
+    "message": "No search engines yet"
+  },
+  "nt_settings_search_disabled_tag": {
+    "message": "Disabled"
+  },
+  "nt_settings_search_add_engine": {
+    "message": "Custom Search Engine"
+  },
+  "nt_settings_search_edit_engine": {
+    "message": "Edit Search Engine"
+  },
+  "nt_settings_search_engine_url_placeholder": {
+    "message": "*Search URL, use %s as the query"
+  },
+  "nt_settings_search_engine_category": {
+    "message": "Engine Category"
+  },
+  "nt_settings_search_engine_enabled": {
+    "message": "Enable Search Engine"
+  },
+  "nt_settings_search_engine_name_required": {
+    "message": "Enter a search engine name"
+  },
+  "nt_settings_search_engine_url_required": {
+    "message": "Enter a search URL"
+  },
+  "nt_settings_search_engine_url_keyword": {
+    "message": "The search URL must include %s"
+  },
+  "nt_settings_search_engine_url_invalid": {
+    "message": "Enter a valid search URL"
+  },
+  "nt_settings_search_category_manage_hint": {
+    "message": "Drag to sort. Names save automatically on blur."
+  },
+  "nt_settings_search_delete_category_confirm": {
+    "message": "Are you sure you want to delete this category? All $1 search engines in this category will also be deleted."
+  },
+  "nt_settings_search_drag_reorder_or_move": {
+    "message": "Drag to reorder or move between categories."
+  },
+  "nt_engine_category_all": {
+    "message": "General"
+  },
+  "nt_engine_category_image": {
+    "message": "Images"
+  },
+  "nt_engine_category_video": {
+    "message": "Videos"
+  },
+  "nt_engine_category_icon": {
+    "message": "Icons"
+  },
+  "nt_engine_category_font": {
+    "message": "Fonts"
+  },
+  "nt_engine_category_music": {
+    "message": "Music"
+  },
+  "nt_engine_category_fallback": {
+    "message": "Uncategorized"
+  },
+  "nt_settings_title": {
+    "message": "Settings"
+  },
+  "nt_settings_empty": {
+    "message": "No configurable items in this section yet."
+  },
+  "nt_lang_auto": {
+    "message": "Follow system"
+  },
+  "nt_lang_zh_cn": {
+    "message": "Simplified Chinese"
+  },
+  "nt_lang_zh_tw": {
+    "message": "Traditional Chinese"
+  },
+  "nt_lang_en": {
+    "message": "English"
+  },
+  "nt_default_common": {
+    "message": "Favourites"
+  },
+  "nt_default_bookmark": {
+    "message": "Bookmarks"
+  },
+  "nt_default_history": {
+    "message": "History"
+  },
+  "nt_default_last": {
+    "message": "Remember last opened"
+  },
+  "nt_history_yesterday": {
+    "message": "Yesterday"
+  },
+  "nt_history_empty": {
+    "message": "No history yet"
+  },
+  "nt_history_recent": {
+    "message": "Just now"
+  },
+  "nt_history_1h": {
+    "message": "Within 1 hour"
+  },
+  "nt_history_today": {
+    "message": "Today"
+  },
+  "nt_add_to_pinned": {
+    "message": "Add to Favourites"
+  },
+  "nt_no_pinned": {
+    "message": "No Favourites sites yet"
+  },
+  "nt_no_pinned_desc": {
+    "message": "Click + in the top-left to add favourites, or right-click in Bookmarks/History to add."
+  },
+  "nt_no_bookmarks": {
+    "message": "No bookmarks yet"
+  },
+  "nt_edit": {
+    "message": "Edit"
+  },
+  "nt_delete": {
+    "message": "Delete"
+  },
+  "nt_add_pinned_title": {
+    "message": "Add Favourites site"
+  },
+  "nt_edit_pinned_title": {
+    "message": "Edit Favourites site"
+  },
+  "nt_input_url": {
+    "message": "*URL"
+  },
+  "nt_input_name": {
+    "message": "Name"
+  },
+  "nt_save": {
+    "message": "Save"
+  },
+  "nt_cancel": {
+    "message": "Cancel"
+  },
+  "nt_select_placeholder": {
+    "message": "Select"
+  },
+  "nt_open_new_tab": {
+    "message": "Open in new tab"
+  },
+  "nt_open_new_window": {
+    "message": "Open in new window"
+  },
+  "nt_open_incognito": {
+    "message": "Open in incognito window"
+  },
+  "nt_copy_link": {
+    "message": "Copy link"
+  },
+  "nt_unnamed": {
+    "message": "Untitled"
+  },
+  "nt_label_bookmarks": {
+    "message": "Bookmarks"
+  },
+  "nt_label_history": {
+    "message": "History"
+  },
+  "nt_search_placeholder": {
+    "message": "Search with $1"
+  },
+  "nt_search_placeholder_fallback": {
+    "message": "Search"
+  },
+  "nt_drag_to_disable": {
+    "message": "Drag here to disable"
+  },
+  "nt_drag_to_enable_sortable": {
+    "message": "Drag here to enable (sortable)"
+  },
+  "nt_switch": {
+    "message": "Toggle"
+  },
+  "nt_about_name_origin_title": {
+    "message": "Name origin"
+  },
+  "nt_about_name_origin_desc": {
+    "message": "Mooogor is a homophone of \"Moge'er,\" a Sichuan phrase from China, which means \"pickpocket.\"\nThe name carries a bit of self-deprecating humor, and it also reflects an attitude. In software development, we all use work created by other developers to some extent: open-source frameworks, utility libraries, design thinking, and various free resources.\nI also used many open-source projects while building Mooogor. I believe you also benefit from these outcomes directly or indirectly in daily work. In a sense, we all \"borrow\" from prior experience and keep creating new value."
+  },
+  "nt_about_design_goal_title": {
+    "message": "Design intent"
+  },
+  "nt_about_design_goal_desc": {
+    "message": "I have used many new tab pages, and most of them keep getting more complex, like a mini desktop. The features are rich, but they also make it easy to stay on the page and slow down getting started.\nI want the new tab page to be a simple, direct entry point. Open it, quickly find the website you need, and move on instead of being interrupted by extra information.\nSo Mooogor Start will stay restrained and prioritize features that help you start faster, rather than designs that increase dwell time.\nIf you have any ideas or suggestions, feel free to email me:"
+  },
+  "nt_about_free_title": {
+    "message": "Is it free?"
+  },
+  "nt_about_free_desc": {
+    "message": "Mooogor Start is free.\nIf future features must rely on cloud services (such as cross-device sync), there may be an optional paid plan because cloud services have ongoing costs. For security and privacy, I will prioritize local offline implementations.\nIf Mooogor Start helps you save time, you are also welcome to support it, which gives me more motivation to keep improving this product."
+  },
+  "nt_about_support_button": {
+    "message": "Support Mooogor Start"
   }
+}

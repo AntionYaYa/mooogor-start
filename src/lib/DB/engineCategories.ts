@@ -104,7 +104,9 @@ export async function ensureEngineCategory(
   return item.id;
 }
 
-export async function ensureFallbackEngineCategory(name: string): Promise<string> {
+export async function ensureFallbackEngineCategory(
+  name: string,
+): Promise<string> {
   return await ensureEngineCategory({
     id: FALLBACK_ENGINE_CATEGORY_ID,
     name,
@@ -132,11 +134,8 @@ export async function deleteEngineCategory(
   }
   const now = Date.now();
   await db.transaction("rw", db.engineCategories, db.engines, async () => {
+    await db.engines.where("category").equals(id).delete();
     await db.engineCategories.delete(id);
-    await db.engines
-      .where("category")
-      .equals(id)
-      .modify({ category: fallbackCategoryId, updateAt: now });
 
     const categories = await db.engineCategories.orderBy("order").toArray();
     for (let i = 0; i < categories.length; i++) {
