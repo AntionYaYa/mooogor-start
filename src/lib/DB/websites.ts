@@ -1,5 +1,6 @@
 import { db } from "./database";
 import type { WebSite } from "./database";
+import { ensureWebSiteFavicons } from "./websiteFavicons";
 
 const WEBSITES_SEEDED_KEY = "websites_seeded_v1";
 const WEBSITES_UPDATED_EVENT = "websites-updated";
@@ -82,6 +83,7 @@ export async function ensureDefaultWebSites(
 
     await db.settings.put({ key: WEBSITES_SEEDED_KEY, value: true });
   });
+  await ensureWebSiteFavicons(defaults);
 }
 
 export async function resetWebSitesToDefault(
@@ -102,5 +104,6 @@ export async function resetWebSitesToDefault(
     }
     await db.settings.put({ key: WEBSITES_SEEDED_KEY, value: true });
   });
+  await ensureWebSiteFavicons(defaults);
   notifyWebSitesUpdated();
 }

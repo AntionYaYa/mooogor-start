@@ -1,14 +1,5 @@
 <script lang="ts">
-  import Baidu from "../assets/engines/Baidu.jpg";
-  import Qihu360 from "../assets/engines/360.jpg";
-  import Bing from "../assets/engines/Bing.jpg";
-  import DuckDuckGo from "../assets/engines/DuckDuckGo.jpg";
-  import Google from "../assets/engines/Google.jpg";
-  import Naver from "../assets/engines/Naver.jpg";
-  import Perplexity from "../assets/engines/Perplexity.jpg";
-  import Sougou from "../assets/engines/Sougou.jpg";
-  import Yahoo from "../assets/engines/Yahoo.jpg";
-  import Yandex from "../assets/engines/Yandex.jpg";
+  import { faviconMap } from "@/lib/DB/engineFavicons";
 
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
@@ -63,18 +54,6 @@
     iconUrl?: string;
   }
 
-  const faviconMap: Record<string, string> = {
-    Baidu,
-    Qihu360,
-    Bing,
-    DuckDuckGo,
-    Google,
-    Naver,
-    Perplexity,
-    Sougou,
-    Yahoo,
-    Yandex,
-  };
 
   type DefaultEngineItem = {
     title?: string;
@@ -122,7 +101,7 @@
       return (group.engines ?? []).map((item) => ({
         title: item.title,
         engineUrl: item.engineUrl,
-        faviconUrl: item.faviconKey ? faviconMap[item.faviconKey] : "",
+        faviconUrl: item.faviconKey ? faviconMap[item.faviconKey] ?? "" : "",
         category,
         enabled: resolveEngineEnabled(item, language),
       }));

@@ -279,16 +279,6 @@
         }
       },
       {
-        "title": "字由 HelloFont",
-        "engineUrl": "https://www.hellofont.cn/search?word=%s",
-        "faviconKey": "HelloFont",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": true,
-          "zh_TW": false
-        }
-      },
-      {
         "title": "Fontshare",
         "engineUrl": "https://www.fontshare.com/?q=%s",
         "faviconKey": "Fontshare",
