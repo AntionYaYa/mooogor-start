@@ -633,37 +633,35 @@
 
 {#snippet temEngines()}
     <div class="engines_M" class:w100={showMoreEngines}>
-        <div class="engines_scroll">
-            <div
-                bind:this={engineEls}
-                class="engines"
-                class:drag={showMoreEngines}
-                data-dnd-hint={t("nt_drag_to_enable_sortable")}
-                use:dndzone={{
-                    items: displayEnabledEngines,
-                    flipDurationMs: 200,
-                    type: "engines",
-                    zoneTabIndex: -1,
-                    dropTargetStyle: {},
-                }}
-                onconsider={handleConsiderEnabled}
-                onfinalize={handleFinalizeEnabled}
-            >
-                {#each displayEnabledEngines as engine (engine.id)}
-                    <a
-                        class="engine"
-                        href={engine.engineUrl?.replace("%s", inputValue)}
-                        target={newTabOpen ? "_blank" : "_self"}
-                        rel={newTabOpen ? "noreferrer" : undefined}
-                        animate:flip={{ duration: 200 }}
-                    >
-                        <EngineIcon
-                            alt={engine.title ?? ""}
-                            engineUrl={engine.engineUrl}
-                        />
-                    </a>
-                {/each}
-            </div>
+        <div
+            bind:this={engineEls}
+            class="engines"
+            class:drag={showMoreEngines}
+            data-dnd-hint={t("nt_drag_to_enable_sortable")}
+            use:dndzone={{
+                items: displayEnabledEngines,
+                flipDurationMs: 200,
+                type: "engines",
+                zoneTabIndex: -1,
+                dropTargetStyle: {},
+            }}
+            onconsider={handleConsiderEnabled}
+            onfinalize={handleFinalizeEnabled}
+        >
+            {#each displayEnabledEngines as engine (engine.id)}
+                <a
+                    class="engine"
+                    href={engine.engineUrl?.replace("%s", inputValue)}
+                    target={newTabOpen ? "_blank" : "_self"}
+                    rel={newTabOpen ? "noreferrer" : undefined}
+                    animate:flip={{ duration: 200 }}
+                >
+                    <EngineIcon
+                        alt={engine.title ?? ""}
+                        engineUrl={engine.engineUrl}
+                    />
+                </a>
+            {/each}
         </div>
         <Button onclick={clickEditeEngines}>
             <G>
@@ -760,14 +758,20 @@
         display: flex;
         align-items: center;
         flex-direction: row;
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: hidden;
         flex: 0 0 auto;
-        min-width: 0;
+        max-width: 300px;
     }
     .w100 {
         width: 100%;
+        flex:none;
+        max-width: none;
         box-sizing: border-box;
         justify-content: flex-end;
+    }
+    .w100 .engines{
+        width: 100%;
     }
     .more_engines_M {
         display: flex;
