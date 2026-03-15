@@ -911,24 +911,6 @@
         pointer-events: none;
     }
 
-    .engines_scroll {
-        overflow-x: auto;
-        overflow-y: hidden;
-        scrollbar-width: thin;
-        scrollbar-color: var(--c-mask) transparent;
-        max-width: 280px;
-    }
-    .engines_scroll::-webkit-scrollbar {
-        height: 6px;
-    }
-    .engines_scroll::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .engines_scroll::-webkit-scrollbar-thumb {
-        background: var(--c-mask);
-        border-radius: 999px;
-    }
-
     .engines {
         display: inline-flex;
         flex-direction: row;
