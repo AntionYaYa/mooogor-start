@@ -314,6 +314,15 @@
   "nt_add_pinned_title": {
     "message": "添加常用网址"
   },
+  "nt_popup_open_newtab": {
+    "message": "打开新标签页"
+  },
+  "nt_popup_add_to_common": {
+    "message": "添加该网站到常用"
+  },
+  "nt_popup_add": {
+    "message": "添加"
+  },
   "nt_edit_pinned_title": {
     "message": "编辑常用网址"
   },

@@ -314,6 +314,15 @@
   "nt_add_pinned_title": {
     "message": "添加常用網站"
   },
+  "nt_popup_open_newtab": {
+    "message": "開啟新分頁"
+  },
+  "nt_popup_add_to_common": {
+    "message": "將此網站加入常用"
+  },
+  "nt_popup_add": {
+    "message": "添加"
+  },
   "nt_edit_pinned_title": {
     "message": "編輯常用網站"
   },

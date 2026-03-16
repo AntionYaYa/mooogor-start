@@ -314,6 +314,15 @@
   "nt_add_pinned_title": {
     "message": "Add Favourites site"
   },
+  "nt_popup_open_newtab": {
+    "message": "Open new tab"
+  },
+  "nt_popup_add_to_common": {
+    "message": "Add this site to Favourites"
+  },
+  "nt_popup_add": {
+    "message": "Add"
+  },
   "nt_edit_pinned_title": {
     "message": "Edit Favourites site"
   },

@@ -70,8 +70,21 @@
         ];
     }
 
+    const ENGINE_CATEGORY_KEY = "nt_engine_category";
+
+    function readSelectedCategoryId(): string | null {
+        if (typeof localStorage === "undefined") return null;
+        const value = localStorage.getItem(ENGINE_CATEGORY_KEY);
+        return value ? value : null;
+    }
+
+    function persistSelectedCategoryId(categoryId: string) {
+        if (typeof localStorage === "undefined") return;
+        localStorage.setItem(ENGINE_CATEGORY_KEY, categoryId);
+    }
+
     let engineCategories: EngineCategoryItem[] = $state([]);
-    let selectedCategoryId = $state("1");
+    let selectedCategoryId = $state(readSelectedCategoryId() ?? "1");
     let enginesGroup: TabItem[] = $state([]);
     let enabledEngines: Engine[] = $state([]);
     let disabledEngines: Engine[] = $state([]);
@@ -168,6 +181,7 @@
         if (!engineCategories.some((item) => item.id === selectedCategoryId)) {
             selectedCategoryId = engineCategories[0].id;
         }
+        persistSelectedCategoryId(selectedCategoryId);
         syncEnginesGroupTabs();
     }
 
@@ -214,6 +228,7 @@
 
     function clickEngineGroup(tab: TabItem) {
         selectedCategoryId = tab.key;
+        persistSelectedCategoryId(selectedCategoryId);
         syncEnginesGroupTabs();
     }
 
@@ -579,6 +594,7 @@
         <div class="input_group">
             {#if !showMoreEngines}
                 <div class="input_box">
+                    <!-- svelte-ignore a11y_autofocus -->
                     <input
                         name="Search"
                         class="input"
@@ -603,6 +619,7 @@
                         onblur={handleInputBlur}
                         oninput={() => searchInput(inputValue)}
                         onkeyup={inputKey}
+                        autofocus
                     />
                     {#if inputValue.length}
                         <Button

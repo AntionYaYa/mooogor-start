@@ -1,8 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import {
-    addWebSite,
-  } from "@/lib/DB/DB";
+  import { addWebSite } from "@/lib/DB/DB";
   import { loadSettings } from "@/lib/utils/settings";
   import { applyTheme } from "@/lib/utils/theme";
 
@@ -28,6 +26,7 @@
   import T from "@/lib/components/T.svelte";
   import Shake from "@/lib/components/Shake.svelte";
   import { t } from "@/lib/utils/i18n";
+  import { resolvePublicAssetUrl } from "@/lib/utils/assetUrl";
 
   let inputUrlValue = $state("");
   let inputTitleValue = $state("");
@@ -62,47 +61,68 @@
       inputUrlValueErr = true;
     }
   }
+
+  async function openNewTabPage() {
+    const url = resolvePublicAssetUrl("newtab.html");
+    await browser.tabs.create({ url });
+    // window.close();
+  }
 </script>
 
-
 <main>
-  <G full align="c">
-    <T>{t("nt_add_pinned_title")}</T>
-  </G>
-  <G vertical full>
+  <G align="c">
     <G full>
-      <Shake shake={inputUrlValueErr}>
+      <G>
+        <img class="logo" src="/Mooogor.svg" alt="Mooogor Start" />
+      </G>
+    </G>
+    <Button fill onclick={openNewTabPage}>
+      <G>
+        <T nowrap>{t("nt_popup_open_newtab")}</T>
+      </G>
+    </Button>
+  </G>
+    <G vertical full>
+      <G full align="c">
+        <T>{t("nt_popup_add_to_common")}</T>
+      </G>
+      <G full>
+        <Shake shake={inputUrlValueErr}>
+          <Input
+            name="url"
+            type="url"
+            placeholder={t("nt_input_url")}
+            bind:value={inputUrlValue}
+          />
+        </Shake>
+      </G>
+      <G full>
         <Input
-          name="url"
-          type="url"
-          placeholder={t("nt_input_url")}
-          bind:value={inputUrlValue}
+          name="title"
+          type="text"
+          placeholder={t("nt_input_name")}
+          bind:value={inputTitleValue}
         />
-      </Shake>
-    </G>
-    <G full>
-      <Input
-        name="title"
-        type="text"
-        placeholder={t("nt_input_name")}
-        bind:value={inputTitleValue}
-      />
-    </G>
-    <G full>
-        <Button bg='var(--c-text)' onclick={clickSave} full>
+      </G>
+      <G full>
+        <Button bg="var(--c-text)" onclick={clickSave} full>
           <G full>
-          <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
-        </G>
+            <T align="c" color="var(--c-bg)">{t("nt_popup_add")}</T>
+          </G>
         </Button>
+      </G>
     </G>
-  </G>
 </main>
+
 <style>
-  main{
+  main {
     width: 260px;
     background-color: var(--c-bg1);
     padding: var(--gap);
     display: flex;
     flex-direction: column;
+  }
+  .logo {
+    width: 24px;
   }
 </style>
