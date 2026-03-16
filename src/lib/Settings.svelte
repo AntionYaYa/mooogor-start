@@ -29,7 +29,6 @@
         addEngine,
         deleteEngine,
         ensureDefaultEngineCategories,
-        ensureFallbackEngineCategory,
         FALLBACK_ENGINE_CATEGORY_ID,
         getEnabledEngines,
         getEngineCategories,
@@ -196,12 +195,7 @@
     function resolveMissingCategoryId(
         categories: EngineCategoryItem[] = settingEngineCategories,
     ): CategoryId {
-        return (
-            categories.find((item) => item.id === FALLBACK_ENGINE_CATEGORY_ID)
-                ?.id ??
-            categories[0]?.id ??
-            "1"
-        );
+        return categories[0]?.id ?? "1";
     }
 
     function getFallbackCategoryId(): CategoryId {
@@ -588,13 +582,18 @@
         settingEnginesLoading = true;
         try {
             await ensureDefaultEngineCategories(buildDefaultEngineCategories());
-            const [categories, enabled, disabled] = await Promise.all([
+            const [rawCategories, enabled, disabled] = await Promise.all([
                 getEngineCategories(),
                 getEnabledEngines(),
                 getDisabledEngines(),
             ]);
-            settingEngineCategories = categories;
-            const fallbackCategoryId = resolveMissingCategoryId(categories);
+            const categories = rawCategories.filter(
+                (item) => item.id !== FALLBACK_ENGINE_CATEGORY_ID,
+            );
+            settingEngineCategories =
+                categories.length > 0 ? categories : rawCategories;
+            const fallbackCategoryId =
+                resolveMissingCategoryId(settingEngineCategories);
             settingEnabledEngines = enabled.map((engine) => ({
                 ...engine,
                 enabled: true,
@@ -677,11 +676,9 @@
         const engineCount = (settingEngineGroups[id] ?? []).length;
         const msg = `${t("nt_delete")}「${category.name}」？\n${t("nt_settings_search_delete_category_confirm", String(engineCount))}`;
         if (!confirm(msg)) return;
-        const fallbackCategoryId = await ensureFallbackCategoryId();
-        if (!fallbackCategoryId || fallbackCategoryId === id) return;
         settingEnginesSaving = true;
         try {
-            await deleteEngineCategory(id, fallbackCategoryId);
+            await deleteEngineCategory(id);
             await loadSearchSettingEngines(true);
             notifyEngineConfigUpdated();
         } finally {
@@ -771,17 +768,6 @@
         await removeSearchEngine(editingSearchEngine);
     }
 
-    async function ensureFallbackCategoryId(): Promise<CategoryId> {
-        if (
-            settingEngineCategories.some(
-                (item) => item.id === FALLBACK_ENGINE_CATEGORY_ID,
-            )
-        ) {
-            return FALLBACK_ENGINE_CATEGORY_ID;
-        }
-        await ensureFallbackEngineCategory(t("nt_engine_category_fallback"));
-        return FALLBACK_ENGINE_CATEGORY_ID;
-    }
 
     async function resetSearchEnginesToDefaultConfirm() {
         if (settingEnginesSaving) return;

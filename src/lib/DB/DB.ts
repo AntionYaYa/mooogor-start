@@ -40,7 +40,6 @@ export {
   getEngineCategories,
   ensureDefaultEngineCategories,
   ensureEngineCategory,
-  ensureFallbackEngineCategory,
   FALLBACK_ENGINE_CATEGORY_ID,
   addEngineCategory,
   renameEngineCategory,

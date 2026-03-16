@@ -104,15 +104,6 @@ export async function ensureEngineCategory(
   return item.id;
 }
 
-export async function ensureFallbackEngineCategory(
-  name: string,
-): Promise<string> {
-  return await ensureEngineCategory({
-    id: FALLBACK_ENGINE_CATEGORY_ID,
-    name,
-  });
-}
-
 export async function renameEngineCategory(id: string, name: string) {
   const normalized = normalizeCategoryName(name);
   if (!normalized) {
@@ -125,13 +116,7 @@ export async function renameEngineCategory(id: string, name: string) {
   });
 }
 
-export async function deleteEngineCategory(
-  id: string,
-  fallbackCategoryId: string,
-) {
-  if (id === fallbackCategoryId) {
-    throw new Error("Fallback category must be different");
-  }
+export async function deleteEngineCategory(id: string) {
   const now = Date.now();
   await db.transaction("rw", db.engineCategories, db.engines, async () => {
     await db.engines.where("category").equals(id).delete();
