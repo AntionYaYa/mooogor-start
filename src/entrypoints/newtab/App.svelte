@@ -175,6 +175,7 @@
     await refreshCurrentTabPinnedState();
     await setLanguage(userSettings.language);
     updateTabLabels();
+    i18nRenderKey += 1;
     const startOpenTab: OpenTab =
       userSettings.defaultOpen === "last"
         ? userSettings.lastOpenTab
