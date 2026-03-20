@@ -1,6 +1,5 @@
-
 export type BookmarkNode = Browser.bookmarks.BookmarkTreeNode;
-export type BookmarkSubType = "bookmarks-bar" | "other" |"mobile"|"managed";
+export type BookmarkSubType = "bookmarks-bar" | "other" | "mobile" | "managed";
 
 export async function getBookmarks(): Promise<BookmarkNode[]> {
   return await browser.bookmarks.getTree();
@@ -17,4 +16,3 @@ export async function searchBookmarks(
   const results = await browser.bookmarks.search({ query });
   return results.slice(0, maxResults);
 }
-

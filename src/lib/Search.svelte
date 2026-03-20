@@ -19,10 +19,14 @@
         updateEnginesState,
     } from "@/lib/DB/DB";
     import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
-
-    import type { BookmarkSubType } from "../entrypoints/newtab/methods/getBookmarks";
-    import { searchBookmarks } from "../entrypoints/newtab/methods/getBookmarks";
-    import type { HistoryItem } from "../entrypoints/newtab/methods/getHistorys";
+    import {
+        type BookmarkSubType,
+        searchBookmarks,
+    } from "@/lib/browser/bookmarks";
+    import {
+        type HistoryItem,
+        searchHistory,
+    } from "@/lib/browser/history";
     import Button from "./components/Button.svelte";
     import BkmkIcon from "./BkmkIcon.svelte";
     import Icon from "./components/Icon.svelte";
@@ -32,6 +36,7 @@
     import Tab from "./components/Tab.svelte";
     import type { TabItem } from "./components/Tab.svelte";
     import EngineIcon from "./EngineIcon.svelte";
+    import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
 
     type ItemType = BookmarkSubType | "engine" | "todo" | "history";
 
@@ -56,19 +61,6 @@
         iconUrl?: string;
     }
     const defaultEngines = buildDefaultEngines();
-    function buildDefaultEngineCategories(): Pick<
-        EngineCategoryItem,
-        "id" | "name"
-    >[] {
-        return [
-            { id: "1", name: t("nt_engine_category_all") },
-            { id: "2", name: t("nt_engine_category_image") },
-            { id: "3", name: t("nt_engine_category_video") },
-            { id: "4", name: t("nt_engine_category_icon") },
-            { id: "5", name: t("nt_engine_category_font") },
-            { id: "6", name: t("nt_engine_category_music") },
-        ];
-    }
 
     const ENGINE_CATEGORY_KEY = "nt_engine_category";
 
@@ -106,7 +98,6 @@
     let searchAreaFocused = $state(false);
     let lastSearchScope = $state<string | null>(null);
 
-    const HISTORY_MAX_RESULTS = 100;
     const SEARCH_DEBOUNCE_MS = 200;
     let isComposing = $state(false);
     function getFallbackCategoryId() {
@@ -494,14 +485,6 @@
         if (next === searchEl) return;
         if (next && listEls?.contains(next)) return;
         searchAreaFocused = false;
-    }
-
-    async function searchHistory(query: string) {
-        return await browser.history.search({
-            text: query,
-            startTime: 0,
-            maxResults: HISTORY_MAX_RESULTS,
-        });
     }
 
     function mapHistoryResults(items: HistoryItem[]): SearchItem[] {

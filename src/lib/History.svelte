@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { HistoryItem } from "../entrypoints/newtab/methods/getHistorys";
+  import type { HistoryItem } from "@/lib/browser/history";
   import T from "./components/T.svelte";
   import G from "./components/G.svelte";
   import BkmkIcon from "./BkmkIcon.svelte";

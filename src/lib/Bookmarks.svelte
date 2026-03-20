@@ -1,7 +1,7 @@
 <script lang="ts">
   import BkmkIcon from "./BkmkIcon.svelte";
   import T from "./components/T.svelte";
-  import type { BookmarkNode } from "../entrypoints/newtab/methods/getBookmarks";
+  import type { BookmarkNode } from "@/lib/browser/bookmarks";
   import { addToPinneds } from "@/lib/utils/pinneds";
   import LinkContextMenu from "./LinkContextMenu.svelte";
   import Button from "./components/Button.svelte";

@@ -11,16 +11,11 @@
   import Pinneds from "@/lib/Pinneds.svelte";
   import About from "@/lib/About.svelte";
   import Support from "@/lib/Support.svelte";
-  import { hasPermission, requestPermission } from "./methods/getPermission";
-  import type { Permission } from "./methods/getPermission";
-  import { getBookmarkChildren } from "./methods/getBookmarks";
-  import type { BookmarkNode } from "./methods/getBookmarks";
-  import defaultWebSitesRaw from "@/lib/DB/defaultWebSites.json";
-  import {
-    ensureDefaultWebSites,
-    getAllWebSite,
-    getDomainFromUrl,
-  } from "@/lib/DB/DB";
+  import { hasPermission, requestPermission } from "@/lib/browser/permissions";
+  import type { Permission } from "@/lib/browser/permissions";
+  import { getBookmarkChildren } from "@/lib/browser/bookmarks";
+  import type { BookmarkNode } from "@/lib/browser/bookmarks";
+  import { ensureDefaultWebSites, getAllWebSite } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import { addToPinneds } from "@/lib/utils/pinneds";
   import { fly, slide } from "svelte/transition";
@@ -32,10 +27,16 @@
     saveSettings,
     DEFAULT_SETTINGS,
   } from "@/lib/utils/settings";
-  import type { AppLanguage, OpenTab, UserSettings } from "@/lib/utils/settings";
+  import type { OpenTab, UserSettings } from "@/lib/utils/settings";
   import { getEffectiveLanguage, setLanguage, t } from "@/lib/utils/i18n";
   import { applyTheme } from "@/lib/utils/theme";
   import DragToPinneds from "@/lib/DragToPinneds.svelte";
+  import { buildDefaultWebSites } from "@/lib/config/defaultWebSites";
+  import {
+    buildNewTabTabs,
+    openTabToIndex,
+    tabKeyToOpenTab,
+  } from "@/lib/config/newtabTabs";
 
   let showSetting = $state(false);
   let allPinneds: WebSite[] = $state([]);
@@ -49,11 +50,7 @@
   let historyPermission = $state(false);
   let gridView = $state(false);
 
-  let tabs: TabItem[] = $state([
-    { key: "0", name: t("nt_tab_common"), sel: false },
-    { key: "1", name: t("nt_tab_bookmarks"), sel: false },
-    { key: "2", name: t("nt_tab_history"), sel: false },
-  ]);
+  let tabs: TabItem[] = $state(buildNewTabTabs());
 
   let selTab: TabItem | undefined = $state();
   let showNext = $state(false);
@@ -83,50 +80,6 @@
       a.language === b.language &&
       a.theme === b.theme
     );
-  }
-
-  function openTabToIndex(tab: OpenTab): number {
-    return tab === "bookmark" ? 1 : tab === "history" ? 2 : 0;
-  }
-
-  function tabKeyToOpenTab(tabKey: string): OpenTab | undefined {
-    if (tabKey === "0") return "common";
-    if (tabKey === "1") return "bookmark";
-    if (tabKey === "2") return "history";
-    return undefined;
-  }
-
-  type DefaultWebSiteRaw = {
-    title?: string;
-    url: string;
-  };
-
-  type DefaultWebSitesByLanguage = Record<
-    Exclude<AppLanguage, "auto">,
-    DefaultWebSiteRaw[]
-  >;
-
-  const defaultWebSites = defaultWebSitesRaw as DefaultWebSitesByLanguage;
-
-  function buildDefaultWebSites(
-    language: Exclude<AppLanguage, "auto">,
-  ): Omit<WebSite, "id">[] {
-    const sites = defaultWebSites[language] ?? defaultWebSites.en;
-    const result: Omit<WebSite, "id">[] = [];
-    for (let i = 0; i < sites.length; i++) {
-      const site = sites[i];
-      try {
-        result.push({
-          domain: getDomainFromUrl(site.url),
-          url: site.url,
-          title: site.title,
-          order: i,
-        });
-      } catch {
-        continue;
-      }
-    }
-    return result;
   }
 
   async function rememberLastOpenTab(tab: TabItem) {

@@ -6,7 +6,9 @@ export async function hasPermission(permission: Permission): Promise<boolean> {
   });
 }
 
-export async function requestPermission(permission: Permission): Promise<boolean> {
+export async function requestPermission(
+  permission: Permission,
+): Promise<boolean> {
   return await browser.permissions.request({
     permissions: [permission],
   });

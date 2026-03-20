@@ -12,42 +12,52 @@
     import EditSearchEngine from "./EditSearchEngine.svelte";
     import ManageEngineCategories from "./ManageEngineCategories.svelte";
     import AddPinned from "./AddPinned.svelte";
+    import SettingsCommonSitesSection from "@/lib/settings/SettingsCommonSitesSection.svelte";
+    import SettingsSearchEnginesSection from "@/lib/settings/SettingsSearchEnginesSection.svelte";
     import type {
-        AppLanguage,
         OpenTab,
         UserSettings,
     } from "@/lib/utils/settings";
     import type { Engine, EngineCategoryItem, WebSite } from "@/lib/DB/DB";
-    import defaultWebSitesRaw from "@/lib/DB/defaultWebSites.json";
     import {
-        addWebSite,
-        updateWebSite,
-        deleteWebSite,
-        getAllWebSite,
-        updateWebSitesOrder,
-        resetWebSitesToDefault,
         addEngine,
         deleteEngine,
-        ensureDefaultEngineCategories,
         FALLBACK_ENGINE_CATEGORY_ID,
-        getEnabledEngines,
-        getEngineCategories,
-        getDisabledEngines,
         renameEngineCategory,
         addEngineCategory,
         deleteEngineCategory,
-        updateEnginesLayout,
         updateEngineCategoriesOrder,
         updateEngine,
         resetSearchEnginesToDefault,
-        getDomainFromUrl,
     } from "@/lib/DB/DB";
     import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
-    import { getEffectiveLanguage, t } from "@/lib/utils/i18n";
+    import { t } from "@/lib/utils/i18n";
     import Icon from "./components/Icon.svelte";
     import Button from "./components/Button.svelte";
     import BkmkIcon from "./BkmkIcon.svelte";
     import EngineIcon from "./EngineIcon.svelte";
+    import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
+    import {
+        deleteCommonSiteEntry,
+        fetchCommonSites,
+        getResetCommonSitesConfirmMessage,
+        persistCommonSitesOrder,
+        resetCommonSitesToDefaultByLanguage,
+        saveCommonSiteEntry,
+    } from "@/lib/settings/commonSites";
+    import {
+        buildEngineFaviconUrl,
+        buildSearchEngineGroups as buildSearchEngineGroupsState,
+        type CategoryId,
+        flattenSearchEngineGroups,
+        getAllSearchSettingEngines as collectAllSearchSettingEngines,
+        getGroupedSearchEngines as collectGroupedSearchEngines,
+        loadSearchEngineSettings,
+        normalizeEngineCategory as normalizeSearchEngineCategory,
+        persistSearchEngineLayout as persistSearchEngineLayoutToDb,
+        resolveMissingCategoryId as resolveMissingSearchCategoryId,
+        splitSearchEnginesByEnabled,
+    } from "@/lib/settings/searchEngines";
     type OpenSearchEnginesRequest = { id: number; categoryId?: string | null };
     interface Props {
         children: any;
@@ -130,7 +140,6 @@
         | "other";
     let settingPage = $state<SettingsPage>("root");
     let pageDirection = $state<1 | -1>(1);
-    type CategoryId = string;
     let settingEnabledEngines: Engine[] = $state([]);
     let settingDisabledEngines: Engine[] = $state([]);
     let settingEngineCategories: EngineCategoryItem[] = $state([]);
@@ -181,21 +190,10 @@
         return t("nt_settings_title");
     }
 
-    function buildDefaultEngineCategories() {
-        return [
-            { id: "1", name: t("nt_engine_category_all") },
-            { id: "2", name: t("nt_engine_category_image") },
-            { id: "3", name: t("nt_engine_category_video") },
-            { id: "4", name: t("nt_engine_category_icon") },
-            { id: "5", name: t("nt_engine_category_font") },
-            { id: "6", name: t("nt_engine_category_music") },
-        ];
-    }
-
     function resolveMissingCategoryId(
         categories: EngineCategoryItem[] = settingEngineCategories,
     ): CategoryId {
-        return categories[0]?.id ?? "1";
+        return resolveMissingSearchCategoryId(categories);
     }
 
     function getFallbackCategoryId(): CategoryId {
@@ -203,7 +201,7 @@
     }
 
     function normalizeEngineCategory(category?: string): CategoryId {
-        return category?.trim() || getFallbackCategoryId();
+        return normalizeSearchEngineCategory(category, settingEngineCategories);
     }
 
     function resolveSearchEngineCategoryId(categoryId?: string | null) {
@@ -295,45 +293,12 @@
         browser.tabs.update({ url: "chrome://history/" });
     }
 
-    type DefaultWebSiteRaw = {
-        title?: string;
-        url: string;
-    };
-
-    type DefaultWebSitesByLanguage = Record<
-        Exclude<AppLanguage, "auto">,
-        DefaultWebSiteRaw[]
-    >;
-
-    const defaultWebSites = defaultWebSitesRaw as DefaultWebSitesByLanguage;
-
-    function buildDefaultWebSites(
-        language: Exclude<AppLanguage, "auto">,
-    ): Omit<WebSite, "id">[] {
-        const sites = defaultWebSites[language] ?? defaultWebSites.en;
-        const result: Omit<WebSite, "id">[] = [];
-        for (let i = 0; i < sites.length; i++) {
-            const site = sites[i];
-            try {
-                result.push({
-                    domain: getDomainFromUrl(site.url),
-                    url: site.url,
-                    title: site.title,
-                    order: i,
-                });
-            } catch {
-                continue;
-            }
-        }
-        return result;
-    }
-
     async function loadCommonSites() {
         commonSitesRequestId += 1;
         const requestId = commonSitesRequestId;
         commonSitesLoading = true;
         try {
-            const items = await getAllWebSite();
+            const items = await fetchCommonSites();
             if (requestId !== commonSitesRequestId) return;
             commonSites = items;
             commonSitesDragging = false;
@@ -360,17 +325,13 @@
     }
 
     async function saveCommonSite(payload: WebSite) {
-        if (editingCommonSite?.id) {
-            await updateWebSite({ ...payload, id: editingCommonSite.id });
-        } else {
-            await addWebSite(payload);
-        }
+        await saveCommonSiteEntry(payload, editingCommonSite?.id);
         await loadCommonSites();
     }
 
     async function removeEditingCommonSite() {
         if (!editingCommonSite?.id) return;
-        await deleteWebSite(editingCommonSite.id);
+        await deleteCommonSiteEntry(editingCommonSite.id);
         await loadCommonSites();
     }
 
@@ -385,11 +346,7 @@
         commonSitesDragging = false;
         const items = e.detail.items;
         commonSites = items;
-        const withIds = items.filter(
-            (item): item is WebSite & { id: number } => !!item.id,
-        );
-        if (withIds.length === 0) return;
-        await updateWebSitesOrder(withIds);
+        await persistCommonSitesOrder(items);
     }
 
     function getSearchEngineCategoryOptions(): SelectOption[] {
@@ -400,54 +357,18 @@
         }));
     }
 
-    function sortSearchEngines(items: Engine[]) {
-        return [...items].sort(
-            (a, b) =>
-                (a.order ?? Number.MAX_SAFE_INTEGER) -
-                (b.order ?? Number.MAX_SAFE_INTEGER),
-        );
-    }
-
     function buildSearchEngineGroups(
         allEngines: Engine[] = getAllSearchSettingEngines(),
     ) {
-        const grouped = Object.fromEntries(
-            settingEngineCategories.map((category) => [
-                category.id,
-                [] as Engine[],
-            ]),
-        ) as Record<CategoryId, Engine[]>;
-
-        for (const engine of allEngines) {
-            const normalizedCategory = normalizeEngineCategory(engine.category);
-            const categoryId = grouped[normalizedCategory]
-                ? normalizedCategory
-                : resolveMissingCategoryId();
-            grouped[categoryId] = [
-                ...(grouped[categoryId] ?? []),
-                { ...engine, category: categoryId },
-            ];
-        }
-
-        return grouped;
+        return buildSearchEngineGroupsState(settingEngineCategories, allEngines);
     }
 
     function syncSearchSettingEnginesFromGroups(
         groups: Record<CategoryId, Engine[]> = settingEngineGroups,
     ) {
-        const orderedEngines = settingEngineCategories.flatMap((category) =>
-            (groups[category.id] ?? []).map((engine) => ({
-                ...engine,
-                category: category.id,
-            })),
-        );
-
-        settingEnabledEngines = orderedEngines.filter(
-            (engine) => engine.enabled !== false,
-        );
-        settingDisabledEngines = orderedEngines.filter(
-            (engine) => engine.enabled === false,
-        );
+        const nextState = splitSearchEnginesByEnabled(settingEngineCategories, groups);
+        settingEnabledEngines = nextState.enabledEngines;
+        settingDisabledEngines = nextState.disabledEngines;
     }
 
     function syncSearchEngineGroups() {
@@ -482,29 +403,15 @@
     }
 
     async function persistSearchEngineLayout() {
-        const orderedEngines = settingEngineCategories.flatMap((category) =>
-            (settingEngineGroups[category.id] ?? []).map((engine, index) => ({
-                ...engine,
-                category: category.id,
-                order: index,
-            })),
-        );
-        const orderedWithIds: (Engine & { id: number })[] =
-            orderedEngines.flatMap((engine) =>
-                engine.id ? [{ ...engine, id: engine.id }] : [],
-            );
-        if (!orderedWithIds.length) return;
-
         settingEnginesSaving = true;
         try {
-            await updateEnginesLayout(orderedWithIds);
-            const synced = orderedWithIds.map((engine, index) => ({
-                ...engine,
-                order: index,
-            }));
-            const nextGroups = buildSearchEngineGroups(synced);
-            settingEngineGroups = nextGroups;
-            syncSearchSettingEnginesFromGroups(nextGroups);
+            const nextState = await persistSearchEngineLayoutToDb(
+                settingEngineCategories,
+                settingEngineGroups,
+            );
+            settingEngineGroups = nextState.groups;
+            settingEnabledEngines = nextState.enabledEngines;
+            settingDisabledEngines = nextState.disabledEngines;
             notifyEngineConfigUpdated();
         } finally {
             settingEnginesSaving = false;
@@ -563,15 +470,6 @@
         showSearchEngineEditor = false;
     }
 
-    function buildEngineFaviconUrl(engineUrl: string) {
-        try {
-            const previewUrl = new URL(engineUrl.replace("%s", "search"));
-            return `https://www.google.com/s2/favicons?domain=${previewUrl.hostname}&sz=64`;
-        } catch {
-            return "";
-        }
-    }
-
     async function loadSearchSettingEngines(force: boolean = false) {
         if (settingEnginesLoading) return;
         if (!force && settingEnginesLoaded) return;
@@ -581,39 +479,14 @@
         }
         settingEnginesLoading = true;
         try {
-            await ensureDefaultEngineCategories(buildDefaultEngineCategories());
-            const [rawCategories, enabled, disabled] = await Promise.all([
-                getEngineCategories(),
-                getEnabledEngines(),
-                getDisabledEngines(),
-            ]);
-            const categories = rawCategories.filter(
-                (item) => item.id !== FALLBACK_ENGINE_CATEGORY_ID,
-            );
-            settingEngineCategories =
-                categories.length > 0 ? categories : rawCategories;
-            const fallbackCategoryId =
-                resolveMissingCategoryId(settingEngineCategories);
-            settingEnabledEngines = enabled.map((engine) => ({
-                ...engine,
-                enabled: true,
-            }));
-            settingDisabledEngines = disabled.map((engine) => ({
-                ...engine,
-                enabled: false,
-            }));
-            settingEnabledEngines = settingEnabledEngines.map((engine) => ({
-                ...engine,
-                category: engine.category?.trim() || fallbackCategoryId,
-            }));
-            settingDisabledEngines = settingDisabledEngines.map((engine) => ({
-                ...engine,
-                category: engine.category?.trim() || fallbackCategoryId,
-            }));
-            syncSearchEngineGroups();
+            const nextState = await loadSearchEngineSettings();
+            settingEngineCategories = nextState.categories;
+            settingEnabledEngines = nextState.enabledEngines;
+            settingDisabledEngines = nextState.disabledEngines;
+            settingEngineGroups = nextState.groups;
             applyPendingCategoryExpansion();
-            if (expandedCategoryIds.size === 0 && categories[0]?.id) {
-                expandedCategoryIds = new Set([categories[0].id]);
+            if (expandedCategoryIds.size === 0 && nextState.categories[0]?.id) {
+                expandedCategoryIds = new Set([nextState.categories[0].id]);
             }
             settingEnginesLoaded = true;
         } finally {
@@ -631,18 +504,17 @@
     }
 
     function getAllSearchSettingEngines() {
-        return sortSearchEngines([
-            ...settingEnabledEngines,
-            ...settingDisabledEngines,
-        ]);
+        return collectAllSearchSettingEngines(
+            settingEnabledEngines,
+            settingDisabledEngines,
+        );
     }
 
     function getGroupedSearchEngines() {
-        return settingEngineCategories.map((category) => ({
-            id: category.id,
-            name: category.name,
-            items: settingEngineGroups[category.id] ?? [],
-        }));
+        return collectGroupedSearchEngines(
+            settingEngineCategories,
+            settingEngineGroups,
+        );
     }
 
     async function addSearchCategory(name: string): Promise<string | void> {
@@ -695,7 +567,12 @@
                 ...item,
                 order: index,
             }));
-            syncSearchEngineGroups();
+            const nextGroups = buildSearchEngineGroupsState(
+                settingEngineCategories,
+                flattenSearchEngineGroups(settingEngineCategories, settingEngineGroups),
+            );
+            settingEngineGroups = nextGroups;
+            syncSearchSettingEnginesFromGroups(nextGroups);
             await updateEngineCategoriesOrder(items);
             notifyEngineConfigUpdated();
         } finally {
@@ -790,13 +667,11 @@
 
     async function resetCommonSitesToDefaultConfirm() {
         if (commonSitesLoading) return;
-        const msg = t("nt_settings_common_reset_confirm");
+        const msg = getResetCommonSitesConfirmMessage();
         if (!confirm(msg)) return;
         commonSitesLoading = true;
         try {
-            const language = getEffectiveLanguage(userSettings.language);
-            const defaults = buildDefaultWebSites(language);
-            await resetWebSitesToDefault(defaults);
+            await resetCommonSitesToDefaultByLanguage(userSettings.language);
             await loadCommonSites();
         } finally {
             commonSitesLoading = false;
@@ -885,9 +760,29 @@
                         {:else if settingPage === "searchScope"}
                             {@render temSettingSearchScope()}
                         {:else if settingPage === "searchEngines"}
-                            {@render temSettingSearchEngines()}
+                            <SettingsSearchEnginesSection
+                                settingEnginesLoading={settingEnginesLoading}
+                                settingEnginesLoaded={settingEnginesLoaded}
+                                settingEnginesSaving={settingEnginesSaving}
+                                expandedCategoryIds={expandedCategoryIds}
+                                groups={getGroupedSearchEngines()}
+                                onOpenCategoryManager={openCategoryManager}
+                                onToggleCategoryExpanded={toggleCategoryExpanded}
+                                onConsiderGroup={handleSearchEngineGroupConsider}
+                                onFinalizeGroup={handleSearchEngineGroupFinalize}
+                                onEditEngine={openEditSearchEngineEditor}
+                                onAddEngineToCategory={openAddSearchEngineEditorForCategory}
+                            />
                         {:else if settingPage === "common"}
-                            {@render temSettingCommon()}
+                            <SettingsCommonSitesSection
+                                {commonSites}
+                                {commonSitesLoading}
+                                {commonSitesDragging}
+                                onConsider={handleCommonSitesConsider}
+                                onFinalize={handleCommonSitesFinalize}
+                                onAdd={openAddCommonSiteEditor}
+                                onEdit={openEditCommonSiteEditor}
+                            />
                         {:else if settingPage === "bookmarks"}
                             {@render temSettingBookmarks()}
                         {:else if settingPage === "history"}
@@ -1061,90 +956,9 @@
     </div>
 {/snippet}
 
-{#snippet temSettingSearchEngines()}
-    <div class="setting_con">
-        {@render tembuttonItem(
-            t("nt_settings_search_categories_title"),
-            openCategoryManager,
-        )}
-        <div class="categories_list">
-            {#if settingEnginesLoading && !settingEnginesLoaded}
-                <div class="engine_loading">
-                    <G>
-                        <Icon name="Loading" color="var(--c-text)" />
-                    </G>
-                </div>
-            {:else}
-                {@render temSearchEngineGroups()}
-            {/if}
-        </div>
-    </div>
-{/snippet}
-
 {#snippet temSectionTitle(text: string)}
     <div class="section_title">
         <T type="s" color="var(--c-text-1)">{text}</T>
-    </div>
-{/snippet}
-
-{#snippet temSettingCommon()}
-    <div class="setting_con">
-        <div
-            class="common_list"
-            class:drag={commonSitesDragging}
-            use:dndzone={{
-                items: commonSites,
-                flipDurationMs: 200,
-                type: "settings-common",
-                zoneTabIndex: -1,
-                zoneItemTabIndex: -1,
-                dropTargetStyle: {},
-                dragDisabled: commonSitesLoading,
-            }}
-            onconsider={handleCommonSitesConsider}
-            onfinalize={handleCommonSitesFinalize}
-        >
-            {#if commonSitesLoading}
-                <div class="engine_loading">
-                    <G>
-                        <Icon name="Loading" color="var(--c-text)" />
-                    </G>
-                </div>
-            {:else if commonSites.length === 0}
-                {@render temEmptyItem()}
-            {:else}
-                {#each commonSites as site (site.id)}
-                    <div class="common_row" animate:flip={{ duration: 200 }}>
-                        <Button
-                            full
-                            align="c"
-                            fill
-                            onclick={() => openEditCommonSiteEditor(site)}
-                        >
-                            <G full align="c">
-                                <G full>
-                                    <BkmkIcon
-                                        imgUrl={site.url}
-                                        alt={site.title ?? site.url}
-                                        size="s"
-                                    />
-                                    <T nowrap>{site.title ?? t("nt_unnamed")}</T
-                                    >
-                                </G>
-                            </G>
-                        </Button>
-                    </div>
-                {/each}
-            {/if}
-        </div>
-        <G full>
-            <Button full onclick={openAddCommonSiteEditor}>
-                <G align="c">
-                    <Icon name="Plus" color="var(--c-text)" opacity={0.5} />
-                    <T type="s">{t("nt_add_pinned_title")}</T>
-                </G>
-            </Button>
-        </G>
     </div>
 {/snippet}
 
@@ -1201,112 +1015,6 @@
             <T type="s" color="var(--c-text-1)">{t("nt_settings_empty")}</T>
         </G>
     </div>
-{/snippet}
-
-{#snippet temSearchEngineGroups()}
-    {#each getGroupedSearchEngines() as group (group.id)}
-        {@const isExpanded = expandedCategoryIds.has(group.id)}
-        <div class="engine_group">
-            <Button full onclick={() => toggleCategoryExpanded(group.id)}>
-                <G full align="c">
-                    <Icon
-                        name={isExpanded ? "ChevronDown" : "ChevronRight"}
-                        color="var(--c-text-1)"
-                    />
-                    <T type="m" color="var(--c-text)" nowrap>{group.name}</T>
-                </G>
-                <G align="c">
-                    <T type="s" color="var(--c-text-2)" nowrap
-                        >{group.items.length}</T
-                    >
-                </G>
-            </Button>
-
-            {#if isExpanded}
-                <div
-                    class="engine_list_wrapper"
-                    class:engine_list_empty={!group.items.length}
-                    transition:slide={{ duration: 200 }}
-                >
-                    <div
-                        class="engine_list"
-                        use:dndzone={{
-                            items: group.items,
-                            flipDurationMs: 200,
-                            type: "settings-engines",
-                            zoneTabIndex: -1,
-                            zoneItemTabIndex: -1,
-                            dropTargetStyle: {},
-                            dragDisabled: settingEnginesSaving,
-                        }}
-                        onconsider={(e) =>
-                            handleSearchEngineGroupConsider(group.id, e)}
-                        onfinalize={(e) =>
-                            handleSearchEngineGroupFinalize(group.id, e)}
-                    >
-                        {#each group.items as engine (engine.id)}
-                            <div
-                                class="engine_row"
-                                class:disabled_engine={engine.enabled === false}
-                                animate:flip={{ duration: 200 }}
-                            >
-                                <Button
-                                    full
-                                    onclick={() =>
-                                        openEditSearchEngineEditor(engine)}
-                                    align="c"
-                                    fill
-                                >
-                                    <G full align="c">
-                                        <EngineIcon
-                                            alt={engine.title ?? "?"}
-                                            engineUrl={engine.engineUrl}
-                                        />
-                                        <T
-                                            nowrap
-                                            color={engine.enabled
-                                                ? "var(--c-text)"
-                                                : "var(--c-text-1)"}
-                                            >{engine.title ??
-                                                t("nt_unnamed")}</T
-                                        >
-                                    </G>
-                                    {#if !engine.enabled}
-                                        <G>
-                                            <T
-                                                type="s"
-                                                color="var(--c-text-2)"
-                                                nowrap
-                                                >{t(
-                                                    "nt_settings_search_disabled_tag",
-                                                )}</T
-                                            >
-                                        </G>
-                                    {/if}
-                                </Button>
-                            </div>
-                        {/each}
-                    </div>
-                    <Button
-                        onclick={() =>
-                            openAddSearchEngineEditorForCategory(group.id)}
-                    >
-                        <G align="c">
-                            <Icon
-                                name="Plus"
-                                color="var(--c-text)"
-                                opacity={0.5}
-                            />
-                            <T type="s">{t("nt_settings_search_add_engine")}</T>
-                        </G>
-                    </Button>
-                </div>
-            {/if}
-        </div>
-    {/each}
-    <G full>
-        <T type="s">{t("nt_settings_search_drag_reorder_or_move")}</T>
-    </G>
 {/snippet}
 
 {#snippet tembuttonItem(
@@ -1384,14 +1092,6 @@
 {/snippet}
 
 <style>
-    .categories_list {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        box-sizing: border-box;
-        padding: var(--gap);
-        gap: calc(var(--gap) * 2);
-    }
     .select_item {
         display: flex;
         flex-direction: column;
@@ -1406,66 +1106,6 @@
         box-sizing: border-box;
         padding: calc(var(--gap) * 1.5) var(--gap) 0;
     }
-    .engine_loading {
-        display: flex;
-        justify-content: center;
-        padding: var(--gap);
-    }
-    .engine_group {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        box-sizing: border-box;
-        gap: var(--gap);
-    }
-    .common_list {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        box-sizing: border-box;
-        padding: var(--gap);
-        gap: var(--gap);
-    }
-    .common_list.drag {
-        outline: var(--c-mask) 2px dashed;
-    }
-    .common_row {
-        width: 100%;
-        box-sizing: border-box;
-    }
-    .engine_list_wrapper {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        box-sizing: border-box;
-        gap: var(--gap);
-        border: 1px solid var(--c-border);
-        border-radius: var(--r1);
-        padding: var(--gap);
-    }
-    .engine_list_wrapper.engine_list_empty {
-        border: 1px dashed var(--c-border);
-        min-height: 40px;
-    }
-    .engine_list {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        box-sizing: border-box;
-        gap: var(--gap);
-        min-height: 40px;
-    }
-    .engine_row {
-        display: flex;
-        align-items: center;
-        width: 100%;
-        box-sizing: border-box;
-        border-radius: var(--r);
-    }
-    .disabled_engine {
-        filter: grayscale(1);
-    }
-
     .setting_con {
         width: 300px;
         display: flex;
