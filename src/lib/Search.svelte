@@ -23,10 +23,7 @@
         type BookmarkSubType,
         searchBookmarks,
     } from "@/lib/browser/bookmarks";
-    import {
-        type HistoryItem,
-        searchHistory,
-    } from "@/lib/browser/history";
+    import { type HistoryItem, searchHistory } from "@/lib/browser/history";
     import Button from "./components/Button.svelte";
     import BkmkIcon from "./BkmkIcon.svelte";
     import Icon from "./components/Icon.svelte";
@@ -63,6 +60,8 @@
     const defaultEngines = buildDefaultEngines();
 
     const ENGINE_CATEGORY_KEY = "nt_engine_category";
+    const SEARCH_KEYS_KEY = "nt_search_keys";
+    const MAX_SEARCH_KEYS = 10;
 
     function readSelectedCategoryId(): string | null {
         if (typeof localStorage === "undefined") return null;
@@ -75,6 +74,32 @@
         localStorage.setItem(ENGINE_CATEGORY_KEY, categoryId);
     }
 
+    function readSearchKeys(): string[] {
+        if (typeof localStorage === "undefined") return [];
+        try {
+            const value = localStorage.getItem(SEARCH_KEYS_KEY);
+            if (!value) return [];
+            const parsed = JSON.parse(value);
+            if (!Array.isArray(parsed)) return [];
+            return parsed
+                .map((item) =>
+                    typeof item === "string" ? item.trim() : "",
+                )
+                .filter(Boolean)
+                .slice(0, MAX_SEARCH_KEYS);
+        } catch {
+            return [];
+        }
+    }
+
+    function persistSearchKeys(keys: string[]) {
+        if (typeof localStorage === "undefined") return;
+        localStorage.setItem(
+            SEARCH_KEYS_KEY,
+            JSON.stringify(keys.slice(0, MAX_SEARCH_KEYS)),
+        );
+    }
+
     let engineCategories: EngineCategoryItem[] = $state([]);
     let selectedCategoryId = $state(readSelectedCategoryId() ?? "1");
     let enginesGroup: TabItem[] = $state([]);
@@ -83,10 +108,12 @@
     let bookmarksResults: SearchItem[] = $state([]);
     let historyResults: SearchItem[] = $state([]);
     let historyLoading = $state(false);
+    let searchKeys: string[] = $state(readSearchKeys());
 
     let searchEl: HTMLInputElement | undefined = $state();
     let engineEls: HTMLDivElement | undefined = $state();
     let listEls: HTMLDivElement | undefined = $state();
+    let searchPanelEl: HTMLDivElement | undefined = $state();
     let inputValue: string = $state("");
     let showMoreEngines = $state(false);
     let searchSeq = $state(0);
@@ -97,6 +124,17 @@
     let suppressNextEnter = $state(false);
     let searchAreaFocused = $state(false);
     let lastSearchScope = $state<string | null>(null);
+    let engineConfigReady = $state(false);
+    let showSearchKeys = $derived(
+        !showMoreEngines &&
+            searchAreaFocused &&
+            !inputValue.trim() &&
+            !bookmarksResults.length &&
+            !historyResults.length &&
+            !bookmarksLoading &&
+            !historyLoading &&
+            searchKeys.length > 0,
+    );
 
     const SEARCH_DEBOUNCE_MS = 200;
     let isComposing = $state(false);
@@ -207,6 +245,7 @@
             await ensureDefaultEngines(defaultEngines); //初始化把数据添加到Engines表里，有就不会添加
             await refreshEngineConfig();
             inputValue = backPageInitInputValue();
+            engineConfigReady = true;
         })();
 
         return () => {
@@ -391,6 +430,37 @@
         }
     }
 
+    function normalizeSearchKey(value: string) {
+        return value.trim();
+    }
+
+    function saveSearchKey(value: string) {
+        const next = normalizeSearchKey(value);
+        if (!next) return;
+        searchKeys = [
+            next,
+            ...searchKeys.filter((item) => item !== next),
+        ].slice(0, MAX_SEARCH_KEYS);
+        persistSearchKeys(searchKeys);
+    }
+
+    function removeSearchKey(value: string) {
+        searchKeys = searchKeys.filter((item) => item !== value);
+        persistSearchKeys(searchKeys);
+    }
+
+    function fillSearchKey(value: string) {
+        inputValue = value;
+        searchEl?.focus();
+        void searchInput(value);
+    }
+
+    function submitSearch() {
+        const keyword = normalizeSearchKey(inputValue);
+        if (!keyword) return;
+        saveSearchKey(keyword);
+    }
+
     function inputKey(e: KeyboardEvent) {
         const key = e.key;
         if (isComposing || e.isComposing) return;
@@ -428,6 +498,8 @@
                 "a.engine",
             ) as HTMLAnchorElement | null;
             const target = firstLink ?? firstContainer;
+            if (!target) return;
+            submitSearch();
             target?.focus();
             target?.click();
         }
@@ -476,14 +548,14 @@
 
     function handleInputBlur(e: FocusEvent) {
         const next = e.relatedTarget as Node | null;
-        if (next && listEls?.contains(next)) return;
+        if (next && searchPanelEl?.contains(next)) return;
         searchAreaFocused = false;
     }
 
     function handleListFocusOut(e: FocusEvent) {
         const next = e.relatedTarget as Node | null;
         if (next === searchEl) return;
-        if (next && listEls?.contains(next)) return;
+        if (next && searchPanelEl?.contains(next)) return;
         searchAreaFocused = false;
     }
 
@@ -520,7 +592,7 @@
 </script>
 
 <div class="search" class:hided_tab={enginesGroup.length <= 1}>
-    {#if enginesGroup.length > 1}
+    {#if engineConfigReady && enginesGroup.length > 1}
         <Tab
             tabs={enginesGroup}
             onclick={clickEngineGroup}
@@ -529,15 +601,22 @@
     {/if}
     <div
         class="search_g"
-        class:bg={searchAreaFocused &&
-            ((searchBookmarksEnabled &&
+        bind:this={searchPanelEl}
+        class:search_g_hidden={!engineConfigReady}
+        class:bg={showMoreEngines ||
+            (searchAreaFocused &&
+                (((searchBookmarksEnabled &&
                 (bookmarksResults.length || bookmarksLoading)) ||
                 (searchHistoryEnabled &&
-                    (historyResults.length || historyLoading)))}
+                    (historyResults.length || historyLoading))) ||
+                    showSearchKeys))}
         class:top0={enginesGroup.length <= 1}
     >
         {@render temInputGroup()}
-        {#if searchAreaFocused && ((searchBookmarksEnabled && (bookmarksResults.length || bookmarksLoading)) || (searchHistoryEnabled && (historyResults.length || historyLoading)))}
+        {#if !showMoreEngines && showSearchKeys}
+            {@render temSearchKeys()}
+        {/if}
+        {#if !showMoreEngines && searchAreaFocused && ((searchBookmarksEnabled && (bookmarksResults.length || bookmarksLoading)) || (searchHistoryEnabled && (historyResults.length || historyLoading)))}
             <div
                 class="list"
                 bind:this={listEls}
@@ -609,6 +688,7 @@
                             onclick={() => {
                                 inputValue = "";
                                 searchInput("");
+                                searchEl?.focus();
                             }}
                         >
                             <G>
@@ -629,6 +709,37 @@
     {#if showMoreEngines}
         {@render temMoreEngines()}
     {/if}
+{/snippet}
+
+{#snippet temSearchKeys()}
+    <div class="search_keys" transition:slide={{duration: 200}}>
+        {#each searchKeys as key (key)}
+            <div class="search_key">
+                <button
+                    type="button"
+                    class="search_key_main"
+                    onmousedown={(e) => e.preventDefault()}
+                    onclick={() => fillSearchKey(key)}
+                >
+                    <T type="s" nowrap>{key}</T>
+                </button>
+                <button
+                    type="button"
+                    class="search_key_remove"
+                    aria-label={`remove ${key}`}
+                    onmousedown={(e) => e.preventDefault()}
+                    onclick={() => removeSearchKey(key)}
+                >
+                    <Icon
+                        name="X"
+                        color="var(--c-text)"
+                        opacity={0.5}
+                        size={12}
+                    />
+                </button>
+            </div>
+        {/each}
+    </div>
 {/snippet}
 
 {#snippet temEngines()}
@@ -654,6 +765,7 @@
                     href={engine.engineUrl?.replace("%s", inputValue)}
                     target={newTabOpen ? "_blank" : "_self"}
                     rel={newTabOpen ? "noreferrer" : undefined}
+                    onclick={submitSearch}
                     animate:flip={{ duration: 200 }}
                 >
                     <EngineIcon
@@ -731,6 +843,48 @@
 {/snippet}
 
 <style>
+    .search_keys {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--gap);
+        width: 100%;
+        box-sizing: border-box;
+        padding:var(--gap);
+    }
+    .search_key {
+        display: inline-flex;
+        align-items: stretch;
+        border-radius: 999px;
+        background-color: var(--c-mask);
+    }
+    .search_key_main,
+    .search_key_remove {
+        border: none;
+        background: transparent;
+        color: var(--c-text);
+    }
+    .search_key_main {
+        display: inline-flex;
+        align-items: center;
+        padding: var(--gap) var(--gap) var(--gap) calc(var(--gap) * 2);
+        border-radius: 999px 0 0 999px;
+    }
+    .search_key_main:focus-visible,
+    .search_key_remove:focus-visible {
+        outline: solid 2px var(--c-text);
+    }
+    .search_key_main:active,
+    .search_key_remove:active {
+        background-color: var(--c-mask1);
+    }
+    .search_key_remove {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--gap) calc(var(--gap) * 2) var(--gap) var(--gap);
+        flex: 0 0 auto;
+        border-radius: 0 999px 999px 0;
+    }
     .input::-webkit-search-cancel-button {
         -webkit-appearance: none;
         appearance: none;
@@ -758,19 +912,16 @@
         display: flex;
         align-items: center;
         flex-direction: row;
-        overflow-x: auto;
-        overflow-y: hidden;
         flex: 0 0 auto;
-        max-width: 300px;
     }
     .w100 {
         width: 100%;
-        flex:none;
+        flex: none;
         max-width: none;
         box-sizing: border-box;
         justify-content: flex-end;
     }
-    .w100 .engines{
+    .w100 .engines {
         width: 100%;
     }
     .more_engines_M {
@@ -809,6 +960,9 @@
         z-index: 10;
         padding: var(--gap);
         border-radius: var(--r2);
+    }
+    .search_g_hidden {
+        visibility: hidden;
     }
     .top0 {
         top: 0;
@@ -938,7 +1092,7 @@
         pointer-events: none;
     }
     .drag {
-        outline: 2px var(--c-mask) dashed;
+        border: 2px var(--c-mask) dashed;
     }
     .engine {
         display: flex;
