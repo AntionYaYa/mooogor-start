@@ -1,39 +1,61 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import type { HistoryItem } from "@/lib/browser/history";
+  import { onMount, tick } from "svelte";
+  import {
+    deleteHistoryRange,
+    type HistoryItem,
+    type HistoryRange,
+  } from "@/lib/browser/history";
   import T from "./components/T.svelte";
   import G from "./components/G.svelte";
   import BkmkIcon from "./BkmkIcon.svelte";
   import Icon from "./components/Icon.svelte";
   import LinkContextMenu from "./LinkContextMenu.svelte";
   import Button from "./components/Button.svelte";
+  import ClearHistoryDialog from "./ClearHistoryDialog.svelte";
   import { addToPinneds } from "@/lib/utils/pinneds";
   import NoData from "./NoData.svelte";
   import { t } from "@/lib/utils/i18n";
 
+  type HistoryGroup = HistoryRange & { items: HistoryItem[] };
+
   interface Props {
     newTabOpen?: boolean;
+    clearRequestKey?: number;
+    onClearableChange?: (clearable: boolean) => void;
   }
 
-  let { newTabOpen = false }: Props = $props();
+  let {
+    newTabOpen = false,
+    clearRequestKey = 0,
+    onClearableChange,
+  }: Props = $props();
 
-  let tenMinHistory: HistoryItem[] = $state([]);
-  let oneHHistory: HistoryItem[] = $state([]);
-  let todayHistory: HistoryItem[] = $state([]);
-  let dayGroups: { label: string; items: HistoryItem[] }[] = $state([]);
+  let topGroups: HistoryGroup[] = $state([]);
+  let dayGroups: HistoryGroup[] = $state([]);
   let loadingMore = $state(false);
   let nextDayOffset = $state(1); // 1 = 昨天
   let hasMore = $state(true);
   let loadMoreTask: Promise<void> | null = null;
+  let showClearDialog = $state(false);
+  let handledClearRequestKey = $state(0);
+  let pageEl: HTMLElement | undefined = $state();
 
   let currentHistory: HistoryItem | undefined = $state();
   let showMenu = $state(false);
 
+  const allGroups = $derived([...topGroups, ...dayGroups]);
+  type ClearRangeOption = "1h" | "today" | "today-yesterday" | "all";
+  const clearRangeOptions = $derived.by(() => [
+    { key: "1h" as ClearRangeOption, label: t("nt_history_1h") },
+    { key: "today" as ClearRangeOption, label: t("nt_history_today") },
+    {
+      key: "today-yesterday" as ClearRangeOption,
+      label: t("nt_history_today_yesterday"),
+    },
+    { key: "all" as ClearRangeOption, label: t("nt_history_all_time") },
+  ]);
   const hasHistory = $derived.by(() => {
-    if (tenMinHistory.length || oneHHistory.length || todayHistory.length) {
-      return true;
-    }
-    return dayGroups.some((group) => group.items.length);
+    return allGroups.some((group) => group.items.length);
   });
   const showEmpty = $derived.by(() => !hasHistory && !loadingMore && !hasMore);
 
@@ -43,7 +65,7 @@
   const MINUTE = 60 * 1000;
   const HOUR = 60 * MINUTE;
   const DAY = 24 * HOUR;
-  const MAX_PER_DAY = 200;
+  const MAX_PER_DAY = 2000;
   const MAX_LOOKBACK_DAYS = 60;
 
   function startOfDay(ts: number) {
@@ -117,33 +139,70 @@
     const oneHourStart = now - 1 * HOUR;
     const todayStart = startOfDay(now);
 
-    const todayItems = await fetchRange(todayStart, now, MAX_PER_DAY);
-    const todayUnique = dedupeByUrl(todayItems);
+    const fetchedTodayItems = await fetchRange(todayStart, now, MAX_PER_DAY);
+    const todayUnique = dedupeByUrl(fetchedTodayItems);
 
-    tenMinHistory = todayUnique.filter(
-      (i) => (i.lastVisitTime ?? 0) >= tenMinStart,
-    );
-    oneHHistory = todayUnique.filter((i) => {
+    const recentItems = todayUnique.filter((i) => (i.lastVisitTime ?? 0) >= tenMinStart);
+    const oneHourItems = todayUnique.filter((i) => {
       const ts = i.lastVisitTime ?? 0;
       return ts >= oneHourStart && ts < tenMinStart;
     });
-    todayHistory = todayUnique.filter((i) => {
+    const todayItems = todayUnique.filter((i) => {
       const ts = i.lastVisitTime ?? 0;
       return ts >= todayStart && ts < oneHourStart;
     });
 
-    if (!todayUnique.length) {
+    const nextTopGroups: HistoryGroup[] = [];
+    if (recentItems.length) {
+      nextTopGroups.push({
+        key: "recent",
+        label: t("nt_history_recent"),
+        startTime: tenMinStart,
+        endTime: now,
+        count: recentItems.length,
+        items: recentItems,
+      });
+    }
+    if (oneHourItems.length) {
+      nextTopGroups.push({
+        key: "one-hour",
+        label: t("nt_history_1h"),
+        startTime: oneHourStart,
+        endTime: tenMinStart,
+        count: oneHourItems.length,
+        items: oneHourItems,
+      });
+    }
+    if (todayItems.length) {
+      nextTopGroups.push({
+        key: "today",
+        label: t("nt_history_today"),
+        startTime: todayStart,
+        endTime: oneHourStart,
+        count: todayItems.length,
+        items: todayItems,
+      });
+    }
+    topGroups = nextTopGroups;
+
+    // Ensure at least one older-day group is available after entering History.
+    // Relying solely on intersection callbacks can miss initial loads on tab switches.
+    if (!dayGroups.length && hasMore) {
       await loadMoreDays();
     }
   }
 
-  async function loadDay(offset: number) {
+  async function loadDay(offset: number): Promise<HistoryGroup> {
     const now = Date.now();
     const dayStart = startOfDay(now) - offset * DAY;
     const dayEnd = dayStart + DAY;
     const items = await fetchRange(dayStart, dayEnd, MAX_PER_DAY);
     return {
+      key: `day-${offset}`,
       label: formatDayLabel(dayStart, offset),
+      startTime: dayStart,
+      endTime: dayEnd,
+      count: dedupeByUrl(items).length,
       items: dedupeByUrl(items),
     };
   }
@@ -166,8 +225,39 @@
     }
   }
 
+  function isFirstScreenFilled() {
+    if (!pageEl) return true;
+    const scrollContainer = pageEl.closest(".tabs_contents");
+    if (!(scrollContainer instanceof HTMLElement)) return true;
+    return pageEl.scrollHeight > scrollContainer.clientHeight;
+  }
+
+  async function ensureFirstScreenFilled() {
+    let guard = 0;
+    const maxBatches = 8;
+    await tick();
+    while (hasMore && !loadingMore && !isFirstScreenFilled() && guard < maxBatches) {
+      await loadMoreDays();
+      await tick();
+      guard += 1;
+    }
+  }
+
   onMount(async () => {
+    handledClearRequestKey = clearRequestKey;
     await loadToday();
+    await ensureFirstScreenFilled();
+  });
+
+  $effect(() => {
+    onClearableChange?.(hasHistory);
+  });
+
+  $effect(() => {
+    if (clearRequestKey <= handledClearRequestKey) return;
+    if (!hasHistory) return;
+    handledClearRequestKey = clearRequestKey;
+    showClearDialog = true;
   });
 
   async function clickAddtoPinneds() {
@@ -187,23 +277,50 @@
     menuY = e.clientY;
     showMenu = true;
   }
+
+  async function reloadHistory() {
+    topGroups = [];
+    dayGroups = [];
+    nextDayOffset = 1;
+    hasMore = true;
+    showMenu = false;
+    currentHistory = undefined;
+    await loadToday();
+    await ensureFirstScreenFilled();
+  }
+
+  async function clearHistoryByPreset(key: string) {
+    const now = Date.now();
+    const todayStart = startOfDay(now);
+    let startTime = 0;
+    switch (key as ClearRangeOption) {
+      case "1h":
+        startTime = now - HOUR;
+        break;
+      case "today":
+        startTime = todayStart;
+        break;
+      case "today-yesterday":
+        startTime = todayStart - DAY;
+        break;
+      case "all":
+      default:
+        startTime = 0;
+        break;
+    }
+    await deleteHistoryRange({ startTime, endTime: now });
+
+    showClearDialog = false;
+    await reloadHistory();
+  }
 </script>
 
-<div class="page">
+<div class="page" bind:this={pageEl}>
   {#if showEmpty}
     <NoData iconName="History" title={t("nt_history_empty")} />
   {:else}
     <div class="history">
-      {#if tenMinHistory.length}
-        {@render temHistoryGroup(t("nt_history_recent"), tenMinHistory)}
-      {/if}
-      {#if oneHHistory.length}
-        {@render temHistoryGroup(t("nt_history_1h"), oneHHistory)}
-      {/if}
-      {#if todayHistory.length}
-        {@render temHistoryGroup(t("nt_history_today"), todayHistory)}
-      {/if}
-      {#each dayGroups as group}
+      {#each allGroups as group}
         {@render temHistoryGroup(group.label, group.items)}
       {/each}
       {#if hasMore}
@@ -230,6 +347,14 @@
       </G>
     </Button>
   </LinkContextMenu>
+{/if}
+
+{#if showClearDialog}
+  <ClearHistoryDialog
+    options={clearRangeOptions}
+    onclickClose={() => (showClearDialog = false)}
+    onConfirm={clearHistoryByPreset}
+  />
 {/if}
 
 {#snippet temHistoryGroup(title: string, items: HistoryItem[])}

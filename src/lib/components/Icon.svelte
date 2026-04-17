@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { SquareDashed, Settings2,X,Plus,ChevronDown,ChevronUp, ChevronRight,History,Bookmark,Sprout,Eye,Check,ArrowUpRight,Grid2x2,ChevronLeft,Rows3,GripHorizontal,RotateCcw,Minus,SquarePen,Folder,FolderOpen} from "@lucide/svelte";
-	export type IconName = "Loading" | "SquareDashed" | "Settings2"|'X'|"Plus"|'ChevronDown'|'ChevronUp'|'ChevronLeft'|'ChevronRight' |'History'|'Bookmark'|'Sprout'|'Eye'|'Check'|'ArrowUpRight'|'Grid2x2'|'Rows3'|'GripHorizontal'|'RotateCcw'|'Minus'|'SquarePen'|'Folder'|'FolderOpen';
+	import { SquareDashed, Settings2,X,Plus,ChevronDown,ChevronUp, ChevronRight,History,Bookmark,Sprout,Eye,Check,ArrowUpRight,Grid2x2,ChevronLeft,Rows3,GripHorizontal,RotateCcw,Minus,SquarePen,Folder,FolderOpen,Trash2} from "@lucide/svelte";
+	export type IconName = "Loading" | "SquareDashed" | "Settings2"|'X'|"Plus"|'ChevronDown'|'ChevronUp'|'ChevronLeft'|'ChevronRight' |'History'|'Bookmark'|'Sprout'|'Eye'|'Check'|'ArrowUpRight'|'Grid2x2'|'Rows3'|'GripHorizontal'|'RotateCcw'|'Minus'|'SquarePen'|'Folder'|'FolderOpen'|'Trash2';
 
 	interface Props {
 		name?: IconName;
@@ -78,6 +78,9 @@
 	{/if}
 	{#if name === "FolderOpen"}
 		<FolderOpen {size} {strokeWidth} />
+	{/if}
+	{#if name === "Trash2"}
+		<Trash2 {size} {strokeWidth} />
 	{/if}
 	{#if name === "Loading"}
 		<svg width="20" height="20" viewBox="0 0 20 20">

@@ -284,6 +284,12 @@
   "nt_history_empty": {
     "message": "No history yet"
   },
+  "nt_history_clear_title": {
+    "message": "Clear History"
+  },
+  "nt_history_clearing": {
+    "message": "Clearing..."
+  },
   "nt_history_recent": {
     "message": "Just now"
   },
@@ -292,6 +298,12 @@
   },
   "nt_history_today": {
     "message": "Today"
+  },
+  "nt_history_today_yesterday": {
+    "message": "Today and yesterday"
+  },
+  "nt_history_all_time": {
+    "message": "All time"
   },
   "nt_add_to_pinned": {
     "message": "Add to Favourites"

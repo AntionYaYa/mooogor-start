@@ -61,6 +61,8 @@
   let showAdd = $state(false);
   let showAbout = $state(false);
   let showSupport = $state(false);
+  let clearHistoryRequestKey = $state(0);
+  let historyClearable = $state(false);
   let effectiveNewTabOpen = $derived(
     userSettings.newTabOpen || currentTabPinned,
   );
@@ -477,6 +479,24 @@
                   {/if}
                 </G>
               </div>
+            {:else if selTab?.key === "2" && historyPermission}
+              <div in:fly={{ x: -50, duration: 300 }}>
+                <G align="c">
+                  <Button
+                    disabled={!historyClearable}
+                    onclick={() => (clearHistoryRequestKey += 1)}
+                    title={t("nt_history_clear_title")}
+                  >
+                    <G>
+                      <Icon
+                        name="Trash2"
+                        color="var(--c-text)"
+                        opacity={historyClearable ? 0.6 : 0.2}
+                      />
+                    </G>
+                  </Button>
+                </G>
+              </div>
             {/if}
           </div>
         </div>
@@ -591,7 +611,11 @@
       "history",
     )}
   {:else}
-    <History newTabOpen={effectiveNewTabOpen} />
+    <History
+      newTabOpen={effectiveNewTabOpen}
+      clearRequestKey={clearHistoryRequestKey}
+      onClearableChange={(clearable) => (historyClearable = clearable)}
+    />
   {/if}
 {/snippet}
 

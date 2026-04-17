@@ -284,6 +284,12 @@
   "nt_history_empty": {
     "message": "暫無歷史記錄"
   },
+  "nt_history_clear_title": {
+    "message": "清理歷史記錄"
+  },
+  "nt_history_clearing": {
+    "message": "清理中..."
+  },
   "nt_history_recent": {
     "message": "剛剛"
   },
@@ -292,6 +298,12 @@
   },
   "nt_history_today": {
     "message": "今天"
+  },
+  "nt_history_today_yesterday": {
+    "message": "今天和昨天"
+  },
+  "nt_history_all_time": {
+    "message": "所有時間"
   },
   "nt_add_to_pinned": {
     "message": "添加到常用"
