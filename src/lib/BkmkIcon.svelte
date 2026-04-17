@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
   import { getFavicon } from "../lib/DB/DB";
 
   const faviconBlobCache = new Map<string, Promise<Blob | undefined>>();

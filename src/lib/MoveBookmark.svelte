@@ -251,11 +251,13 @@
 </script>
 
 <Popup type="m" title={t("nt_move_bookmark_title")} {onclickClose}>
+<G>
   <div class="tree">
     {#each folderTree as folder (folder.id)}
       {@render folderNode(folder, 0)}
     {/each}
   </div>
+</G>
 
   <div class="actions">
     <Button fill onclick={() => void openCreateFolder()} r="r1">
@@ -282,7 +284,7 @@
     <div class="folder_row" style={`padding-left: ${depth * 16}px;`}>
       {#if folder.children?.length}
         <Button
-          r="r1"
+          r="r_o"
           onclick={() => toggleFolder(folder.id)}
         >
           <G>
@@ -323,6 +325,9 @@
             ondblclick={() => void startEditFolder(folder)}
           >
             <T nowrap>{folder.title || t("nt_unnamed")}</T>
+            {#if selectedFolderId === folder.id}
+              <Icon name='Check' color='var(--c-green)' opacity={0.6}/>
+            {/if}
           </div>
         {/if}
       </div>
@@ -370,6 +375,8 @@
     gap: var(--gap);
     box-sizing: border-box;
     padding: var(--gap);
+    background-color: var(--c-mask);
+    border-radius: var(--r1);
   }
   .folder_group,
   .folder_children {
@@ -379,8 +386,9 @@
     width: 100%;
   }
   .folder_row {
-    display: grid;
-    grid-template-columns: auto 1fr;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     gap: calc(var(--gap) / 2);
     width: 100%;
     box-sizing: border-box;
@@ -401,10 +409,14 @@
     box-sizing: border-box;
     min-width: 0;
     background-color: transparent;
-    border-radius: var(--r1);
+    border-radius: var(--r);
     padding: 0 var(--gap);
     cursor: default;
-    transition: background-color 0.15s ease-out;
+    /* transition: background-color 0.15s ease-out; */
+  }
+  .folder_entry:active{
+
+    background-color: var(--c-mask);
   }
   .folder_entry.selected {
     background-color: var(--c-bg1);
