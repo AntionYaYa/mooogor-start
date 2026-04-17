@@ -13,10 +13,9 @@
 
   interface Props {
     newTabOpen?: boolean;
-    onDarging?: (item: { url: string; title?: string } | null) => void;
   }
 
-  let { newTabOpen = false, onDarging }: Props = $props();
+  let { newTabOpen = false }: Props = $props();
 
   let tenMinHistory: HistoryItem[] = $state([]);
   let oneHHistory: HistoryItem[] = $state([]);
@@ -177,7 +176,6 @@
     if (!currentHistory.url) return;
     await addToPinneds(currentHistory.url, currentHistory.title);
     currentHistory = undefined;
-    onDarging?.(null);
   }
 
   function showContextMenu(e: MouseEvent, history: HistoryItem) {
@@ -188,18 +186,6 @@
     menuX = e.clientX;
     menuY = e.clientY;
     showMenu = true;
-  }
-
-  function dragStart(e: DragEvent, history: HistoryItem) {
-    currentHistory = history;
-    e.dataTransfer?.setData("text/plain", history.url ?? "");
-    if (history.url) {
-      onDarging?.({ url: history.url, title: history.title });
-    }
-  }
-
-  function dragEnd() {
-    onDarging?.(null);
   }
 </script>
 
@@ -261,9 +247,6 @@
     href={history.url}
     target={newTabOpen ? "_blank" : "_self"}
     rel={newTabOpen ? "noreferrer" : undefined}
-    draggable={!!history.url}
-    ondragstart={(e) => dragStart(e, history)}
-    ondragend={dragEnd}
     oncontextmenu={(e) => showContextMenu(e, history)}
     class:ctx={showMenu && currentHistory === history}
   >

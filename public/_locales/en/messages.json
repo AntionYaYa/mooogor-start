@@ -338,6 +338,30 @@
   "nt_cancel": {
     "message": "Cancel"
   },
+  "nt_confirm": {
+    "message": "Confirm"
+  },
+  "nt_confirm_manage_bookmarks_title": {
+    "message": "Open Bookmark Manager"
+  },
+  "nt_confirm_manage_history_title": {
+    "message": "Open History"
+  },
+  "nt_confirm_reset_search_engines_title": {
+    "message": "Reset Search Engines"
+  },
+  "nt_confirm_reset_common_sites_title": {
+    "message": "Reset Common Sites"
+  },
+  "nt_confirm_delete_search_category_title": {
+    "message": "Delete Search Category"
+  },
+  "nt_confirm_delete_bookmark_title": {
+    "message": "Delete Bookmark"
+  },
+  "nt_confirm_delete_bookmark_folder_title": {
+    "message": "Delete Folder"
+  },
   "nt_select_placeholder": {
     "message": "Select"
   },
@@ -373,6 +397,63 @@
   },
   "nt_drag_to_enable_sortable": {
     "message": "Drag here to enable (sortable)"
+  },
+  "nt_edit_bookmark_title": {
+    "message": "Edit bookmark"
+  },
+  "nt_edit_bookmark_folder_title": {
+    "message": "Edit folder"
+  },
+  "nt_delete_bookmark_confirm": {
+    "message": "Delete this bookmark?"
+  },
+  "nt_delete_bookmark_folder_confirm": {
+    "message": "Delete this folder and its bookmarks?"
+  },
+  "nt_drag_reorder_bookmarks": {
+    "message": "Drag to reorder"
+  },
+  "nt_move": {
+    "message": "Move"
+  },
+  "nt_move_bookmark_title": {
+    "message": "Move to folder"
+  },
+  "nt_expand": {
+    "message": "Expand"
+  },
+  "nt_collapse": {
+    "message": "Collapse"
+  },
+  "nt_settings_bookmarks_add_bookmark": {
+    "message": "Add bookmark"
+  },
+  "nt_settings_bookmarks_add_folder": {
+    "message": "Add folder"
+  },
+  "nt_settings_bookmarks_create_title": {
+    "message": "Add item"
+  },
+  "nt_settings_bookmarks_parent": {
+    "message": "Folder"
+  },
+  "nt_settings_bookmarks_root": {
+    "message": "All bookmarks"
+  },
+  "nt_settings_bookmarks_folder": {
+    "message": "Folder"
+  },
+  "nt_settings_bookmarks_empty": {
+    "message": "This folder is empty"
+  },
+  "nt_settings_bookmarks_title_required": {
+    "message": "Please enter a name"
+  },
+  "nt_settings_bookmarks_url_invalid": {
+    "message": "Please enter a valid URL"
+  },
+  "nt_settings_bookmarks_target_required": {
+    "message": "Please choose a target folder"
   },
   "nt_switch": {
     "message": "Toggle"

@@ -11,6 +11,7 @@
 		bg?: string;
 		skipTabFocus?: boolean;
 		disabled?: boolean;
+		title?: string;
 		onclick?: (event: MouseEvent) => void;
 	}
 
@@ -24,6 +25,7 @@
 		r,
 		disabled = false,
 		bg,
+		title,
 	}: Props = $props();
 </script>
 
@@ -34,6 +36,7 @@
 	class:full
 	{onclick}
 	{disabled}
+	{title}
 	tabindex={skipTabFocus ? -1 : undefined}
 >
 	{@render children()}

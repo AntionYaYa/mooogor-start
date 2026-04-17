@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import { flip } from "svelte/animate";
     import { dndzone } from "svelte-dnd-action";
     import type { DndEvent } from "svelte-dnd-action";
@@ -12,12 +12,10 @@
     import EditSearchEngine from "./EditSearchEngine.svelte";
     import ManageEngineCategories from "./ManageEngineCategories.svelte";
     import AddPinned from "./AddPinned.svelte";
+    import ConfirmDialog from "./ConfirmDialog.svelte";
     import SettingsCommonSitesSection from "@/lib/settings/SettingsCommonSitesSection.svelte";
     import SettingsSearchEnginesSection from "@/lib/settings/SettingsSearchEnginesSection.svelte";
-    import type {
-        OpenTab,
-        UserSettings,
-    } from "@/lib/utils/settings";
+    import type { OpenTab, UserSettings } from "@/lib/utils/settings";
     import type { Engine, EngineCategoryItem, WebSite } from "@/lib/DB/DB";
     import {
         addEngine,
@@ -135,7 +133,6 @@
         | "searchScope"
         | "searchEngines"
         | "common"
-        | "bookmarks"
         | "history"
         | "other";
     let settingPage = $state<SettingsPage>("root");
@@ -159,8 +156,33 @@
     let commonSitesDragging = $state(false);
     let showCommonEditor = $state(false);
     let editingCommonSite: WebSite | null = $state(null);
+    let confirmOptions = $state<{
+        title: string;
+        description: string;
+        confirmText?: string;
+        resolve: (value: boolean) => void;
+    } | null>(null);
     let persistEngineLayoutTimer: ReturnType<typeof setTimeout> | null =
         $state(null);
+    function requestConfirm(
+        title: string,
+        description: string,
+        confirmText?: string,
+    ) {
+        return new Promise<boolean>((resolve) => {
+            confirmOptions = {
+                title,
+                description,
+                confirmText,
+                resolve,
+            };
+        });
+    }
+
+    function closeConfirm(result: boolean) {
+        confirmOptions?.resolve(result);
+        confirmOptions = null;
+    }
 
     function openSettingPage(page: Exclude<SettingsPage, "root">) {
         pageDirection = 1;
@@ -184,7 +206,6 @@
             return t("nt_settings_search_engines_title");
         }
         if (settingPage === "common") return t("nt_tab_common");
-        if (settingPage === "bookmarks") return t("nt_tab_bookmarks");
         if (settingPage === "history") return t("nt_tab_history");
         if (settingPage === "other") return t("nt_settings_other_title");
         return t("nt_settings_title");
@@ -284,13 +305,30 @@
         void onOpenTab(tab);
     }
 
-    function openBookmarksManager() {
-        if (!confirm(t("nt_manage_bookmarks_confirm"))) return;
-        browser.tabs.update({ url: "chrome://bookmarks/" });
-    }
     function openHistoryManager() {
-        if (!confirm(t("nt_manage_history_confirm"))) return;
-        browser.tabs.update({ url: "chrome://history/" });
+        void (async () => {
+            if (
+                !(await requestConfirm(
+                    t("nt_confirm_manage_history_title"),
+                    t("nt_manage_history_confirm"),
+                ))
+            )
+                return;
+            browser.tabs.update({ url: "chrome://history/" });
+        })();
+    }
+
+    function openBookmarksManager() {
+        void (async () => {
+            if (
+                !(await requestConfirm(
+                    t("nt_confirm_manage_bookmarks_title"),
+                    t("nt_manage_bookmarks_confirm"),
+                ))
+            )
+                return;
+            browser.tabs.update({ url: "chrome://bookmarks/" });
+        })();
     }
 
     async function loadCommonSites() {
@@ -360,13 +398,19 @@
     function buildSearchEngineGroups(
         allEngines: Engine[] = getAllSearchSettingEngines(),
     ) {
-        return buildSearchEngineGroupsState(settingEngineCategories, allEngines);
+        return buildSearchEngineGroupsState(
+            settingEngineCategories,
+            allEngines,
+        );
     }
 
     function syncSearchSettingEnginesFromGroups(
         groups: Record<CategoryId, Engine[]> = settingEngineGroups,
     ) {
-        const nextState = splitSearchEnginesByEnabled(settingEngineCategories, groups);
+        const nextState = splitSearchEnginesByEnabled(
+            settingEngineCategories,
+            groups,
+        );
         settingEnabledEngines = nextState.enabledEngines;
         settingDisabledEngines = nextState.disabledEngines;
     }
@@ -546,8 +590,12 @@
         const category = settingEngineCategories.find((item) => item.id === id);
         if (!category) return;
         const engineCount = (settingEngineGroups[id] ?? []).length;
-        const msg = `${t("nt_delete")}「${category.name}」？\n${t("nt_settings_search_delete_category_confirm", String(engineCount))}`;
-        if (!confirm(msg)) return;
+        const title = `${t("nt_confirm_delete_search_category_title")}「${category.name}」`;
+        const description = t(
+            "nt_settings_search_delete_category_confirm",
+            String(engineCount),
+        );
+        if (!(await requestConfirm(title, description, t("nt_delete")))) return;
         settingEnginesSaving = true;
         try {
             await deleteEngineCategory(id);
@@ -569,7 +617,10 @@
             }));
             const nextGroups = buildSearchEngineGroupsState(
                 settingEngineCategories,
-                flattenSearchEngineGroups(settingEngineCategories, settingEngineGroups),
+                flattenSearchEngineGroups(
+                    settingEngineCategories,
+                    settingEngineGroups,
+                ),
             );
             settingEngineGroups = nextGroups;
             syncSearchSettingEnginesFromGroups(nextGroups);
@@ -645,11 +696,15 @@
         await removeSearchEngine(editingSearchEngine);
     }
 
-
     async function resetSearchEnginesToDefaultConfirm() {
         if (settingEnginesSaving) return;
-        const msg = t("nt_settings_search_reset_confirm");
-        if (!confirm(msg)) return;
+        if (
+            !(await requestConfirm(
+                t("nt_confirm_reset_search_engines_title"),
+                t("nt_settings_search_reset_confirm"),
+            ))
+        )
+            return;
         settingEnginesSaving = true;
         try {
             const defaultCategories = buildDefaultEngineCategories();
@@ -667,8 +722,13 @@
 
     async function resetCommonSitesToDefaultConfirm() {
         if (commonSitesLoading) return;
-        const msg = getResetCommonSitesConfirmMessage();
-        if (!confirm(msg)) return;
+        if (
+            !(await requestConfirm(
+                t("nt_confirm_reset_common_sites_title"),
+                getResetCommonSitesConfirmMessage(),
+            ))
+        )
+            return;
         commonSitesLoading = true;
         try {
             await resetCommonSitesToDefaultByLanguage(userSettings.language);
@@ -690,16 +750,14 @@
             handleEngineConfigUpdated,
         );
         window.addEventListener("websites-updated", handleWebSitesUpdated);
-        return () => {
-            window.removeEventListener(
-                "engine-config-updated",
-                handleEngineConfigUpdated,
-            );
-            window.removeEventListener(
-                "websites-updated",
-                handleWebSitesUpdated,
-            );
-        };
+    });
+
+    onDestroy(() => {
+        window.removeEventListener(
+            "engine-config-updated",
+            handleEngineConfigUpdated,
+        );
+        window.removeEventListener("websites-updated", handleWebSitesUpdated);
     });
 
     $effect(() => {
@@ -761,10 +819,10 @@
                             {@render temSettingSearchScope()}
                         {:else if settingPage === "searchEngines"}
                             <SettingsSearchEnginesSection
-                                settingEnginesLoading={settingEnginesLoading}
-                                settingEnginesLoaded={settingEnginesLoaded}
-                                settingEnginesSaving={settingEnginesSaving}
-                                expandedCategoryIds={expandedCategoryIds}
+                                {settingEnginesLoading}
+                                {settingEnginesLoaded}
+                                {settingEnginesSaving}
+                                {expandedCategoryIds}
                                 groups={getGroupedSearchEngines()}
                                 onOpenCategoryManager={openCategoryManager}
                                 onToggleCategoryExpanded={toggleCategoryExpanded}
@@ -783,8 +841,6 @@
                                 onAdd={openAddCommonSiteEditor}
                                 onEdit={openEditCommonSiteEditor}
                             />
-                        {:else if settingPage === "bookmarks"}
-                            {@render temSettingBookmarks()}
                         {:else if settingPage === "history"}
                             {@render temSettingHistory()}
                         {:else}
@@ -840,6 +896,16 @@
     />
 {/if}
 
+{#if confirmOptions}
+    <ConfirmDialog
+        title={confirmOptions.title}
+        description={confirmOptions.description}
+        confirmText={confirmOptions.confirmText}
+        onclickClose={() => closeConfirm(false)}
+        onConfirm={() => closeConfirm(true)}
+    />
+{/if}
+
 {#snippet temHeader()}
     <Button
         onclick={settingPage === "root" ? undefined : goBackSettingPage}
@@ -853,9 +919,9 @@
             />
         </G>
     </Button>
-    <G full>
-        <T type="m" align="c">{getSettingPageTitle()}</T>
-    </G>
+    <div class="title_center">
+        <T type="m" align="c" nowrap>{getSettingPageTitle()}</T>
+    </div>
     <Button
         onclick={settingPage === "searchEngines"
             ? resetSearchEnginesToDefaultConfirm
@@ -863,7 +929,8 @@
               ? resetCommonSitesToDefaultConfirm
               : undefined}
         skipTabFocus={!(
-            settingPage === "searchEngines" || settingPage === "common"
+            settingPage === "searchEngines" ||
+            settingPage === "common"
         )}
     >
         <G>
@@ -959,12 +1026,6 @@
 {#snippet temSectionTitle(text: string)}
     <div class="section_title">
         <T type="s" color="var(--c-text-1)">{text}</T>
-    </div>
-{/snippet}
-
-{#snippet temSettingBookmarks()}
-    <div class="setting_con">
-        {@render temEmptyItem()}
     </div>
 {/snippet}
 
@@ -1172,5 +1233,13 @@
         align-items: center;
         flex-wrap: nowrap;
         padding: var(--gap);
+        position: relative;
+        width: 290px;
+    }
+    .title_center{
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        box-sizing: border-box;
     }
 </style>

@@ -338,6 +338,30 @@
   "nt_cancel": {
     "message": "取消"
   },
+  "nt_confirm": {
+    "message": "確定"
+  },
+  "nt_confirm_manage_bookmarks_title": {
+    "message": "開啟書籤管理"
+  },
+  "nt_confirm_manage_history_title": {
+    "message": "開啟歷史記錄"
+  },
+  "nt_confirm_reset_search_engines_title": {
+    "message": "恢復預設搜尋引擎"
+  },
+  "nt_confirm_reset_common_sites_title": {
+    "message": "恢復預設常用網站"
+  },
+  "nt_confirm_delete_search_category_title": {
+    "message": "刪除搜尋分類"
+  },
+  "nt_confirm_delete_bookmark_title": {
+    "message": "刪除書籤"
+  },
+  "nt_confirm_delete_bookmark_folder_title": {
+    "message": "刪除資料夾"
+  },
   "nt_select_placeholder": {
     "message": "請選擇"
   },
@@ -373,6 +397,63 @@
   },
   "nt_drag_to_enable_sortable": {
     "message": "拖曳到這裡啟用（可排序）"
+  },
+  "nt_edit_bookmark_title": {
+    "message": "編輯書籤"
+  },
+  "nt_edit_bookmark_folder_title": {
+    "message": "編輯資料夾"
+  },
+  "nt_delete_bookmark_confirm": {
+    "message": "確定刪除這個書籤嗎？"
+  },
+  "nt_delete_bookmark_folder_confirm": {
+    "message": "確定刪除這個資料夾及其內部書籤嗎？"
+  },
+  "nt_drag_reorder_bookmarks": {
+    "message": "拖曳排序"
+  },
+  "nt_move": {
+    "message": "移動"
+  },
+  "nt_move_bookmark_title": {
+    "message": "移動到資料夾"
+  },
+  "nt_expand": {
+    "message": "展開"
+  },
+  "nt_collapse": {
+    "message": "收起"
+  },
+  "nt_settings_bookmarks_add_bookmark": {
+    "message": "新增書籤"
+  },
+  "nt_settings_bookmarks_add_folder": {
+    "message": "新增資料夾"
+  },
+  "nt_settings_bookmarks_create_title": {
+    "message": "新增內容"
+  },
+  "nt_settings_bookmarks_parent": {
+    "message": "所屬分組"
+  },
+  "nt_settings_bookmarks_root": {
+    "message": "全部書籤"
+  },
+  "nt_settings_bookmarks_folder": {
+    "message": "資料夾"
+  },
+  "nt_settings_bookmarks_empty": {
+    "message": "目前分組暫無書籤"
+  },
+  "nt_settings_bookmarks_title_required": {
+    "message": "請輸入名稱"
+  },
+  "nt_settings_bookmarks_url_invalid": {
+    "message": "請輸入有效網址"
+  },
+  "nt_settings_bookmarks_target_required": {
+    "message": "請選擇目標分組"
   },
   "nt_switch": {
     "message": "開關"

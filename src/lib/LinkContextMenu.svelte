@@ -11,10 +11,11 @@
     x?: number;
     y?: number;
     url: string;
+    showDefaultActions?: boolean;
     onClose: () => void;
   }
 
-  let { children, x, y, url, onClose }: Props = $props();
+  let { children, x, y, url, showDefaultActions = true, onClose }: Props = $props();
 
   function openNewTab() {
     if (!url) return;
@@ -45,28 +46,32 @@
 </script>
 
 <ContextMenu {x} {y} {onClose}>
-  <Button full onclick={openNewTab}>
-    <G>
-      <T>{t("nt_open_new_tab")}</T>
-    </G>
-  </Button>
-  <Button full onclick={openNewWindow}>
-    <G>
-      <T>{t("nt_open_new_window")}</T>
-    </G>
-  </Button>
-  <Button full onclick={openIncognitoWindow}>
-    <G>
-      <T>{t("nt_open_incognito")}</T>
-    </G>
-  </Button>
-  <Button full onclick={copyLink}>
-    <G>
-      <T>{t("nt_copy_link")}</T>
-    </G>
-  </Button>
+  {#if showDefaultActions}
+    <Button full onclick={openNewTab}>
+      <G>
+        <T>{t("nt_open_new_tab")}</T>
+      </G>
+    </Button>
+    <Button full onclick={openNewWindow}>
+      <G>
+        <T>{t("nt_open_new_window")}</T>
+      </G>
+    </Button>
+    <Button full onclick={openIncognitoWindow}>
+      <G>
+        <T>{t("nt_open_incognito")}</T>
+      </G>
+    </Button>
+    <Button full onclick={copyLink}>
+      <G>
+        <T>{t("nt_copy_link")}</T>
+      </G>
+    </Button>
+  {/if}
   {#if children}
+    {#if showDefaultActions}
     <Divider />
+    {/if}
     {@render children()}
   {/if}
 </ContextMenu>

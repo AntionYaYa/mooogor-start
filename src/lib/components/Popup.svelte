@@ -13,8 +13,9 @@
 		onclickClose: () => void;
 		shake?: boolean;
 		type: Type;
+		hideHeader?: boolean;
 	}
-	let { children, title, onclickClose, type }: Props = $props();
+	let { children, title, onclickClose, type, hideHeader = false }: Props = $props();
 
 	onMount(() => {
 		window.addEventListener("keydown", handleKeyDown);
@@ -33,14 +34,16 @@
 
 <div class="mask" transition:fade={{ duration: 200 }}>
 	<div class="pannel {type}" transition:fly={{ y: -50, duration: 200 }}>
-		<G full align="c">
-			<T>{title}</T>
-			<Button onclick={onclickClose}>
-				<G>
-					<Icon name="X" color="var(--c-text)" />
-				</G>
-			</Button>
-		</G>
+		{#if !hideHeader}
+			<G full align="c">
+				<T>{title}</T>
+				<Button onclick={onclickClose}>
+					<G>
+						<Icon name="X" color="var(--c-text)" />
+					</G>
+				</Button>
+			</G>
+		{/if}
 		<div class="content">
 			{@render children()}
 		</div>

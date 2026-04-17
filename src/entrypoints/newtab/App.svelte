@@ -13,11 +13,10 @@
   import Support from "@/lib/Support.svelte";
   import { hasPermission, requestPermission } from "@/lib/browser/permissions";
   import type { Permission } from "@/lib/browser/permissions";
-  import { getBookmarkChildren } from "@/lib/browser/bookmarks";
+  import { getBookmarkChildren, getBookmarks } from "@/lib/browser/bookmarks";
   import type { BookmarkNode } from "@/lib/browser/bookmarks";
   import { ensureDefaultWebSites, getAllWebSite } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
-  import { addToPinneds } from "@/lib/utils/pinneds";
   import { fly, slide } from "svelte/transition";
   import { onMount, tick } from "svelte";
   import Icon from "@/lib/components/Icon.svelte";
@@ -30,7 +29,6 @@
   import type { OpenTab, UserSettings } from "@/lib/utils/settings";
   import { getEffectiveLanguage, setLanguage, t } from "@/lib/utils/i18n";
   import { applyTheme } from "@/lib/utils/theme";
-  import DragToPinneds from "@/lib/DragToPinneds.svelte";
   import { buildDefaultWebSites } from "@/lib/config/defaultWebSites";
   import {
     buildNewTabTabs,
@@ -56,9 +54,6 @@
   let showNext = $state(false);
   let firstMount = $state(true);
   let i18nRenderKey = $state(0);
-
-  let darging = $state(false);
-  let draggingItem = $state<{ url: string; title?: string } | null>(null);
 
   let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
   let currentTabId: number | undefined = $state();
@@ -178,7 +173,11 @@
     const handleWebSitesUpdated = () => {
       void refreshPinnedsFromDb();
     };
+    const handleBookmarksUpdated = () => {
+      void refreshBookmarkViewFromSettings();
+    };
     window.addEventListener("websites-updated", handleWebSitesUpdated);
+    window.addEventListener("bookmarks-updated", handleBookmarksUpdated);
 
     browser.tabs.onActivated.addListener(handleTabActivated);
     browser.windows.onFocusChanged.addListener(handleWindowFocusChanged);
@@ -196,6 +195,7 @@
         handleOpenSearchEngines,
       );
       window.removeEventListener("websites-updated", handleWebSitesUpdated);
+      window.removeEventListener("bookmarks-updated", handleBookmarksUpdated);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   });
@@ -294,25 +294,50 @@
     }
   }
 
-  function handleDarging(item: { url: string; title?: string } | null) {
-    if (item) {
-      draggingItem = item;
-      darging = true;
-      return;
-    }
-    draggingItem = null;
-    darging = false;
-  }
-
-  async function handleDropToPinneds() {
-    if (!draggingItem?.url) return;
-    await addToPinneds(draggingItem.url, draggingItem.title);
-    draggingItem = null;
-    darging = false;
-  }
-
   async function refreshPinnedsFromDb() {
     allPinneds = await getAllWebSite();
+  }
+
+  async function refreshCurrentBookmarkNode() {
+    if (!currentNode) return;
+    const nextChildren = await getBookmarkChildren(currentNode.id);
+    currentNode = {
+      ...currentNode,
+      children: nextChildren,
+    };
+    historyStack = historyStack.map((node) =>
+      node.id === currentNode?.id ? currentNode : node,
+    );
+  }
+
+  function findBookmarkNodeById(node: BookmarkNode | undefined, id: string): BookmarkNode | undefined {
+    if (!node) return undefined;
+    if (node.id === id) return node;
+    for (const child of node.children ?? []) {
+      const found = findBookmarkNodeById(child as BookmarkNode, id);
+      if (found) return found as BookmarkNode;
+    }
+    return undefined;
+  }
+
+  async function refreshBookmarkViewFromSettings() {
+    if (!bookmarksPermission || !currentNode) return;
+    const [root] = await getBookmarks();
+    const nextCurrent = findBookmarkNodeById(root as BookmarkNode, currentNode.id);
+    const fallback = nextCurrent ?? root;
+    if (!fallback) return;
+    currentNode = fallback as BookmarkNode;
+    historyStack = historyStack
+      .map((node) => findBookmarkNodeById(root as BookmarkNode, node.id))
+      .filter((node): node is BookmarkNode => !!node);
+    if (!historyStack.length) {
+      historyStack = [fallback as BookmarkNode];
+    }
+    if (currentNode.folderType) {
+      tabs[1].name = currentNode.title;
+    } else if (historyStack.length <= 2) {
+      tabs[1].name = t("nt_tab_bookmarks");
+    }
   }
 
   async function handleSettingsOpenTab(tab: OpenTab) {
@@ -385,13 +410,12 @@
       <div class="top">
         {@render headBar()}
       </div>
-        <Search
-          newTabOpen={effectiveNewTabOpen}
-          searchBookmarks={userSettings.searchBookmarks}
-          searchHistory={userSettings.searchHistory}
-        />
+      <Search
+        newTabOpen={effectiveNewTabOpen}
+        searchBookmarks={userSettings.searchBookmarks}
+        searchHistory={userSettings.searchHistory}
+      />
       <div class="content">
-        <DragToPinneds active={darging} onDrop={handleDropToPinneds} />
         <div class="tabs">
           <div class="side side-left">
             {#if selTab?.key === "0"}
@@ -553,7 +577,7 @@
       bookmarkNode={currentNode}
       newTabOpen={effectiveNewTabOpen}
       onclickFolder={(bkmk) => clickFolder(bkmk)}
-      onDarging={handleDarging}
+      onChanged={refreshCurrentBookmarkNode}
     />
   {/if}
 {/snippet}
@@ -567,7 +591,7 @@
       "history",
     )}
   {:else}
-    <History newTabOpen={effectiveNewTabOpen} onDarging={handleDarging} />
+    <History newTabOpen={effectiveNewTabOpen} />
   {/if}
 {/snippet}
 
