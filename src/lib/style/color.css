@@ -52,7 +52,7 @@
     --c-mask1: rgba(0, 0, 0, 0.1);
     --c-mask: rgba(0, 0, 0, 0.05);
 
-    --c-card: rgba(255, 255, 255, 1);
+    --c-card: rgba(255, 255, 255, 0.5);
 
     --c-main: #22DD8E;
     --c-main-1: #00bfa9;

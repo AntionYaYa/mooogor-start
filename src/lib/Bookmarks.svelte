@@ -393,7 +393,7 @@
       </Button>
       <Button full onclick={() => void clickDeleteBookmark()}>
         <G>
-          <T>{t("nt_delete")}</T>
+          <T color='var(--c-red)'>{t("nt_delete")}</T>
         </G>
       </Button>
     {/if}
