@@ -9,7 +9,7 @@
     "message": "New Tab"
   },
   "nt_tab_common": {
-    "message": "Favourites"
+    "message": "Start"
   },
   "nt_tab_bookmarks": {
     "message": "Bookmarks"
@@ -30,7 +30,7 @@
     "message": "Authorize history access"
   },
   "nt_permission_desc_history": {
-    "message": "After authorizing, you can browse or search your history."
+    "message": "After authorizing, you can browse and search history, and use it to infer recent frequent sites."
   },
   "nt_authorize": {
     "message": "Authorize"
@@ -126,13 +126,13 @@
     "message": "Are you sure you want to restore search engines to their initial state? This will remove all custom search engines and categories, and cannot be undone."
   },
   "nt_settings_common_reset_confirm": {
-    "message": "Are you sure you want to restore favourites to their initial state? This will remove all custom favourites and cannot be undone."
+    "message": "Restore pinned shortcuts to their initial state? This will remove all custom pinned shortcuts and cannot be undone."
   },
   "nt_settings_websites_title": {
     "message": "Websites"
   },
   "nt_manage_common": {
-    "message": "Manage Favourites"
+    "message": "Manage Pinned Shortcuts"
   },
   "nt_manage_bookmarks": {
     "message": "Manage Bookmarks"
@@ -267,7 +267,7 @@
     "message": "English"
   },
   "nt_default_common": {
-    "message": "Favourites"
+    "message": "Start"
   },
   "nt_default_bookmark": {
     "message": "Bookmarks"
@@ -306,13 +306,34 @@
     "message": "All time"
   },
   "nt_add_to_pinned": {
-    "message": "Add to Favourites"
+    "message": "Pin to Start"
   },
   "nt_no_pinned": {
-    "message": "No Favourites sites yet"
+    "message": "No pinned shortcuts yet"
   },
   "nt_no_pinned_desc": {
-    "message": "Click + in the top-left to add favourites, or right-click in Bookmarks/History to add."
+    "message": "Click + in the top-left to add a pinned shortcut, or right-click in Bookmarks, History, or Smart Frequent Sites to pin one."
+  },
+  "nt_pinned_section": {
+    "message": "Pinned Shortcuts"
+  },
+  "nt_frequent_section": {
+    "message": "Smart Frequent Sites"
+  },
+  "nt_enable_frequent_sites": {
+    "message": "Enable Smart Frequent Sites"
+  },
+  "nt_frequent_permission_hint": {
+    "message": "Authorize history access to automatically show high-frequency sites from the last 30 days."
+  },
+  "nt_no_frequent_sites": {
+    "message": "No frequent sites from the last 30 days yet."
+  },
+  "nt_frequent_info_title": {
+    "message": "How Smart Frequent Sites Works"
+  },
+  "nt_frequent_info_desc": {
+    "message": "Smart Frequent Sites reads browsing history from the last 30 days and only counts http and https websites.\nPages from the same domain are merged into one shortcut, and already pinned shortcuts are filtered out.\nRanking mainly uses visit count, with recent visit time as a smaller boost, so high-frequency and recently used sites appear first."
   },
   "nt_no_bookmarks": {
     "message": "No bookmarks yet"
@@ -324,19 +345,19 @@
     "message": "Delete"
   },
   "nt_add_pinned_title": {
-    "message": "Add Favourites site"
+    "message": "Add Pinned Shortcut"
   },
   "nt_popup_open_newtab": {
     "message": "Open new tab"
   },
   "nt_popup_add_to_common": {
-    "message": "Add this site to Favourites"
+    "message": "Pin this site to Start"
   },
   "nt_popup_add": {
     "message": "Add"
   },
   "nt_edit_pinned_title": {
-    "message": "Edit Favourites site"
+    "message": "Edit Pinned Shortcut"
   },
   "nt_input_url": {
     "message": "*URL"
@@ -363,7 +384,7 @@
     "message": "Reset Search Engines"
   },
   "nt_confirm_reset_common_sites_title": {
-    "message": "Reset Common Sites"
+    "message": "Reset Pinned Shortcuts"
   },
   "nt_confirm_delete_search_category_title": {
     "message": "Delete Search Category"

@@ -30,7 +30,7 @@
     "message": "授權存取歷史記錄"
   },
   "nt_permission_desc_history": {
-    "message": "授權後可以瀏覽或搜尋歷史記錄。"
+    "message": "授權後可以瀏覽、搜尋歷史記錄，並用於智能推算最近常訪問的網站。"
   },
   "nt_authorize": {
     "message": "授權"
@@ -126,13 +126,13 @@
     "message": "確定要將搜尋引擎恢復至初始狀態嗎？此操作將清除所有自訂的搜尋引擎和分類，且無法復原。"
   },
   "nt_settings_common_reset_confirm": {
-    "message": "確定要將常用網站恢復至初始狀態嗎？此操作將清除所有自訂常用網站，且無法復原。"
+    "message": "確定要將固定入口恢復至初始狀態嗎？此操作將清除所有自訂固定入口，且無法復原。"
   },
   "nt_settings_websites_title": {
     "message": "網站"
   },
   "nt_manage_common": {
-    "message": "常用管理"
+    "message": "固定入口管理"
   },
   "nt_manage_bookmarks": {
     "message": "书签管理"
@@ -306,13 +306,34 @@
     "message": "所有時間"
   },
   "nt_add_to_pinned": {
-    "message": "添加到常用"
+    "message": "固定到常用"
   },
   "nt_no_pinned": {
-    "message": "還沒有常用網站哦～"
+    "message": "暫無固定入口"
   },
   "nt_no_pinned_desc": {
-    "message": "點擊左上角的+可以新增常用網站，或在書籤/歷史記錄裡右鍵新增。"
+    "message": "點擊左上角的+新增固定入口，也可以在書籤、歷史記錄或智能常訪問裡右鍵固定。"
+  },
+  "nt_pinned_section": {
+    "message": "固定入口"
+  },
+  "nt_frequent_section": {
+    "message": "智能常訪問"
+  },
+  "nt_enable_frequent_sites": {
+    "message": "開啟智能常訪問"
+  },
+  "nt_frequent_permission_hint": {
+    "message": "授權歷史記錄後，會根據最近 30 天自動顯示高頻網站。"
+  },
+  "nt_no_frequent_sites": {
+    "message": "最近 30 天暫無可顯示的常訪問網站。"
+  },
+  "nt_frequent_info_title": {
+    "message": "智能常訪問如何計算"
+  },
+  "nt_frequent_info_desc": {
+    "message": "智能常訪問會讀取最近 30 天的瀏覽歷史，只統計 http 和 https 網站。\n同一個網域會合併為一個入口，並過濾掉已經固定的入口。\n排序會優先考慮訪問次數，最近訪問時間會作為輔助權重，讓高頻且近期訪問的網站更靠前。"
   },
   "nt_no_bookmarks": {
     "message": "還沒有書籤哦～"
@@ -324,19 +345,19 @@
     "message": "刪除"
   },
   "nt_add_pinned_title": {
-    "message": "添加常用網站"
+    "message": "新增固定入口"
   },
   "nt_popup_open_newtab": {
     "message": "開啟新分頁"
   },
   "nt_popup_add_to_common": {
-    "message": "將此網站加入常用"
+    "message": "固定此網站到常用"
   },
   "nt_popup_add": {
     "message": "添加"
   },
   "nt_edit_pinned_title": {
-    "message": "編輯常用網站"
+    "message": "編輯固定入口"
   },
   "nt_input_url": {
     "message": "*網址"
@@ -363,7 +384,7 @@
     "message": "恢復預設搜尋引擎"
   },
   "nt_confirm_reset_common_sites_title": {
-    "message": "恢復預設常用網站"
+    "message": "恢復預設固定入口"
   },
   "nt_confirm_delete_search_category_title": {
     "message": "刪除搜尋分類"

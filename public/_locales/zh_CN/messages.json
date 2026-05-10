@@ -3,7 +3,7 @@
     "message": "Mooogor Start - 高效启动新标签页"
   },
   "extDescription": {
-    "message": "完全离线使用的超快、极简和实用的新标签页，能够让您更快的启动下一个工作流。例如打开常用网址、多搜索引擎搜索和恢复历史网站。"
+    "message": "完全离线使用的超快、极简和实用的新标签页，能够让您更快地启动下一个工作流。例如打开固定入口和智能常访问、多搜索引擎搜索、恢复历史网站。"
   },
   "nt_title": {
     "message": "新标签页"
@@ -30,7 +30,7 @@
     "message": "授权访问历史记录"
   },
   "nt_permission_desc_history": {
-    "message": "权限后可以浏览或者搜索历史记录。"
+    "message": "授权后可以浏览、搜索历史记录，并用于智能推算最近常访问的网站。"
   },
   "nt_authorize": {
     "message": "授权"
@@ -126,13 +126,13 @@
     "message": "确定要恢复搜索引擎到初始状态吗？此操作将清除所有自定义的搜索引擎和分类，且无法撤销。"
   },
   "nt_settings_common_reset_confirm": {
-    "message": "确定要恢复常用网站到初始状态吗？此操作将清除所有自定义常用网站，且无法撤销。"
+    "message": "确定要恢复固定入口到初始状态吗？此操作将清除所有自定义固定入口，且无法撤销。"
   },
   "nt_settings_websites_title": {
     "message": "网站"
   },
   "nt_manage_common": {
-    "message": "常用管理"
+    "message": "固定入口管理"
   },
   "nt_manage_bookmarks": {
     "message": "书签管理"
@@ -306,13 +306,34 @@
     "message": "所有时间"
   },
   "nt_add_to_pinned": {
-    "message": "添加到常用"
+    "message": "固定到常用"
   },
   "nt_no_pinned": {
-    "message": "没有常用网址哦～"
+    "message": "暂无固定入口"
   },
   "nt_no_pinned_desc": {
-    "message": "点击左上角的+可以添加常用网址，又或者在书签/历史记录里右键添加。"
+    "message": "点击左上角的+添加固定入口，也可以在书签、历史记录或智能常访问里右键固定。"
+  },
+  "nt_pinned_section": {
+    "message": "固定入口"
+  },
+  "nt_frequent_section": {
+    "message": "智能常访问"
+  },
+  "nt_enable_frequent_sites": {
+    "message": "开启智能常访问"
+  },
+  "nt_frequent_permission_hint": {
+    "message": "授权历史记录后，会根据最近 30 天自动显示高频网站。"
+  },
+  "nt_no_frequent_sites": {
+    "message": "最近 30 天暂无可显示的常访问网站。"
+  },
+  "nt_frequent_info_title": {
+    "message": "智能常访问如何计算"
+  },
+  "nt_frequent_info_desc": {
+    "message": "智能常访问会读取最近 30 天的浏览历史，只统计 http 和 https 网站。\n同一个域名会合并为一个入口，并过滤掉已经固定的入口。\n排序会优先考虑访问次数，最近访问时间会作为辅助权重，让高频且近期访问的网站更靠前。"
   },
   "nt_no_bookmarks": {
     "message": "没有书签哦～"
@@ -324,19 +345,19 @@
     "message": "删除"
   },
   "nt_add_pinned_title": {
-    "message": "添加常用网址"
+    "message": "添加固定入口"
   },
   "nt_popup_open_newtab": {
     "message": "打开新标签页"
   },
   "nt_popup_add_to_common": {
-    "message": "添加该网站到常用"
+    "message": "固定该网站到常用"
   },
   "nt_popup_add": {
     "message": "添加"
   },
   "nt_edit_pinned_title": {
-    "message": "编辑常用网址"
+    "message": "编辑固定入口"
   },
   "nt_input_url": {
     "message": "*网址"
@@ -363,7 +384,7 @@
     "message": "恢复默认搜索引擎"
   },
   "nt_confirm_reset_common_sites_title": {
-    "message": "恢复默认常用网站"
+    "message": "恢复默认固定入口"
   },
   "nt_confirm_delete_search_category_title": {
     "message": "删除搜索分类"

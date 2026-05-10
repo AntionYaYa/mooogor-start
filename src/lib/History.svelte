@@ -133,6 +133,23 @@
     return `${y}-${m}-${day}`;
   }
 
+  function padTime(value: number) {
+    return String(value).padStart(2, "0");
+  }
+
+  function formatHistoryTime(history: HistoryItem) {
+    const ts = history.lastVisitTime ?? 0;
+    if (!ts) return "";
+    const d = new Date(ts);
+    const hours = padTime(d.getHours());
+    const minutes = padTime(d.getMinutes());
+    return `${hours}:${minutes}`;
+  }
+
+  function getHistoryTitle(history: HistoryItem) {
+    return (history.title ?? "").trim() || history.url || t("nt_unnamed");
+  }
+
   async function loadToday() {
     const now = Date.now();
     const tenMinStart = now - 10 * MINUTE;
@@ -321,7 +338,7 @@
   {:else}
     <div class="history">
       {#each allGroups as group}
-        {@render temHistoryGroup(group.label, group.items)}
+        {@render temHistoryGroup(group)}
       {/each}
       {#if hasMore}
         <div class="more_trigger" use:infiniteScroll>
@@ -357,13 +374,15 @@
   />
 {/if}
 
-{#snippet temHistoryGroup(title: string, items: HistoryItem[])}
-  <G full vertical gap>
-    <T type="s">{title}</T>
-    {#each items as history}
+{#snippet temHistoryGroup(group: HistoryGroup)}
+  <div class="history_group">
+    <div class="history_group_title">
+      <T type="s">{group.label}</T>
+    </div>
+    {#each group.items as history}
       {@render temHistoryItem(history)}
     {/each}
-  </G>
+  </div>
 {/snippet}
 
 {#snippet temHistoryItem(history: HistoryItem)}
@@ -377,11 +396,10 @@
   >
     <G full align="c" gap>
       <BkmkIcon imgUrl={history.url} alt={history.title ?? ""} size="s" />
-      <T type="m" bold nowrap>{history.title}</T>
+      <T type="m" bold nowrap>{getHistoryTitle(history)}</T>
     </G>
     <G align="c">
-      <Icon name="Eye" color="var(--c-text)" opacity={0.6} size={16} />
-      <T type="s" nowrap>{history.visitCount}</T>
+      <T type="s" nowrap color="var(--c-text-1)">{formatHistoryTime(history)}</T>
     </G>
   </a>
 {/snippet}
@@ -399,6 +417,25 @@
     gap: var(--gap);
     width: 100%;
     box-sizing: border-box;
+  }
+  .history_group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .history_group_title {
+    position: sticky;
+    top: calc(var(--gap) * -1);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--gap);
+    backdrop-filter: var(--bg-blur);
+    border-radius: var(--r);
   }
   .item {
     display: flex;

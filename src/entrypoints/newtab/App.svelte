@@ -15,6 +15,8 @@
   import type { Permission } from "@/lib/browser/permissions";
   import { getBookmarkChildren, getBookmarks } from "@/lib/browser/bookmarks";
   import type { BookmarkNode } from "@/lib/browser/bookmarks";
+  import { getFrequentSites } from "@/lib/browser/history";
+  import type { FrequentSite } from "@/lib/browser/history";
   import { ensureDefaultWebSites, getAllWebSite } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import { fly, slide } from "svelte/transition";
@@ -38,6 +40,9 @@
 
   let showSetting = $state(false);
   let allPinneds: WebSite[] = $state([]);
+  let frequentSites: FrequentSite[] = $state([]);
+  let frequentSitesLoading = $state(false);
+  let frequentSitesRequestId = $state(0);
   type OpenSearchEnginesRequest = { id: number; categoryId?: string };
   let openSearchEnginesRequest = $state<OpenSearchEnginesRequest | null>(null);
 
@@ -46,6 +51,7 @@
   let historyStack: BookmarkNode[] = $state([]);
   $inspect(historyStack);
   let historyPermission = $state(false);
+  let commonListView = $state(true);
   let gridView = $state(false);
 
   let tabs: TabItem[] = $state(buildNewTabTabs());
@@ -66,6 +72,12 @@
   let effectiveNewTabOpen = $derived(
     userSettings.newTabOpen || currentTabPinned,
   );
+  let hasVisibleFrequentSites = $derived.by(() => {
+    const fixedDomains = new Set(
+      allPinneds.map((site) => site.domain.replace(/^www\./, "")),
+    );
+    return frequentSites.some((site) => !fixedDomains.has(site.domain));
+  });
 
   function isSameSettings(a: UserSettings, b: UserSettings) {
     return (
@@ -259,6 +271,9 @@
     const { rememberLast = true } = options;
     //书签选中情况下再点击回到顶层，
     if (tab.sel) {
+      if (tab.key === "0") {
+        await refreshCommonTab();
+      }
       if (tab.key === "1" && historyStack.length === 2) {
         tabs[1].name = t("nt_tab_bookmarks");
         goBack();
@@ -273,7 +288,7 @@
     }
 
     if (tab.key === "0") {
-      allPinneds = await getAllWebSite();
+      await refreshCommonTab();
       return;
     }
     if (tab.key === "1") {
@@ -298,6 +313,31 @@
 
   async function refreshPinnedsFromDb() {
     allPinneds = await getAllWebSite();
+  }
+
+  async function refreshCommonTab() {
+    allPinneds = await getAllWebSite();
+    historyPermission = await hasPermission("history");
+    if (!historyPermission) {
+      frequentSites = [];
+      frequentSitesLoading = false;
+      return;
+    }
+    await refreshFrequentSites();
+  }
+
+  async function refreshFrequentSites() {
+    const requestId = ++frequentSitesRequestId;
+    frequentSitesLoading = true;
+    try {
+      const sites = await getFrequentSites();
+      if (requestId !== frequentSitesRequestId) return;
+      frequentSites = sites;
+    } finally {
+      if (requestId === frequentSitesRequestId) {
+        frequentSitesLoading = false;
+      }
+    }
   }
 
   async function refreshCurrentBookmarkNode() {
@@ -457,7 +497,29 @@
             {/if}
           </div>
           <div class="side side-right">
-            {#if selTab?.key === "1" && historyStack.length > 0}
+            {#if selTab?.key === "0" && hasVisibleFrequentSites}
+              <div in:fly={{ x: -50, duration: 300 }}>
+                <G align="c">
+                  {#if commonListView}
+                    <Button onclick={() => (commonListView = false)} bg='var(--c-text)'>
+                      <G>
+                        <Icon name="Rows3" color="var(--c-bg)"/>
+                      </G>
+                    </Button>
+                  {:else}
+                    <Button onclick={() => (commonListView = true)}>
+                      <G>
+                        <Icon
+                          name="Rows3"
+                          color="var(--c-text)"
+                          opacity={0.6}
+                        />
+                      </G>
+                    </Button>
+                  {/if}
+                </G>
+              </div>
+            {:else if selTab?.key === "1" && historyStack.length > 0}
               <div in:fly={{ x: -50, duration: 300 }}>
                 <G align="c">
                   {#if gridView}
@@ -576,6 +638,8 @@
   <Pinneds
     {allPinneds}
     newTabOpen={effectiveNewTabOpen}
+    list={commonListView}
+    {frequentSites}
     {showAdd}
     onopenAdd={() => (showAdd = true)}
     oncloseAdd={() => (showAdd = false)}
