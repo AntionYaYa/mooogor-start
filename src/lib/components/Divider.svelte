@@ -1,12 +1,24 @@
 <script lang="ts">
-	import G from './G.svelte';
+	import G from "./G.svelte";
+
+	interface Props {
+		vertical?: boolean;
+	}
+
+	let { vertical = false }: Props = $props();
 </script>
 
-<G vertical full>
-<G vertical full>
-	<hr />
-</G>
-</G>
+{#if vertical}
+	<div class="v-container">
+		<div class="v"></div>
+	</div>
+{:else}
+	<G vertical full>
+		<G vertical full>
+			<hr />
+		</G>
+	</G>
+{/if}
 
 <style>
 	hr {
@@ -16,6 +28,20 @@
 		width: 100%;
 		box-sizing: border-box;
 		padding: 0;
-		user-select: none; 
+		user-select: none;
+	}
+	.v-container {
+		height: 20px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.v {
+		width: 1px;
+		height: 100%;
+		background: var(--c-border);
+		box-sizing: border-box;
+		user-select: none;
 	}
 </style>

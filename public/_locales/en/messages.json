@@ -116,8 +116,14 @@
   "nt_settings_search_history": {
     "message": "Search History"
   },
+  "nt_settings_search_remember_engine_category": {
+    "message": "Remember search engine category"
+  },
+  "nt_settings_search_remember_engine_category_tip": {
+    "message": "Keep the last selected category next time Quick Search opens"
+  },
   "nt_settings_search_engines_title": {
-    "message": "Search Engines"
+    "message": "Search Engine Management"
   },
   "nt_settings_search_reset_default": {
     "message": "Restore defaults"
@@ -128,11 +134,17 @@
   "nt_settings_common_reset_confirm": {
     "message": "Restore pinned shortcuts to their initial state? This will remove all custom pinned shortcuts and cannot be undone."
   },
+  "nt_confirm_delete_common_sites_title": {
+    "message": "Delete pinned shortcuts"
+  },
+  "nt_settings_common_delete_sites_confirm": {
+    "message": "Delete the selected $1 pinned shortcuts? This cannot be undone."
+  },
   "nt_settings_websites_title": {
     "message": "Websites"
   },
   "nt_manage_common": {
-    "message": "Manage Pinned Shortcuts"
+    "message": "Start"
   },
   "nt_manage_bookmarks": {
     "message": "Manage Bookmarks"
@@ -188,9 +200,6 @@
   "nt_settings_search_no_engines": {
     "message": "No search engines yet"
   },
-  "nt_settings_search_disabled_tag": {
-    "message": "Disabled"
-  },
   "nt_settings_search_add_engine": {
     "message": "Custom Search Engine"
   },
@@ -226,6 +235,15 @@
   },
   "nt_settings_search_drag_reorder_or_move": {
     "message": "Drag to reorder or move between categories."
+  },
+  "nt_settings_search_select_engine": {
+    "message": "Select search engine"
+  },
+  "nt_confirm_delete_search_engines_title": {
+    "message": "Delete search engines"
+  },
+  "nt_settings_search_delete_engines_confirm": {
+    "message": "Delete the selected $1 search engines? This cannot be undone."
   },
   "nt_engine_category_all": {
     "message": "General"

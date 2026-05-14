@@ -116,8 +116,14 @@
   "nt_settings_search_history": {
     "message": "搜尋歷史記錄"
   },
+  "nt_settings_search_remember_engine_category": {
+    "message": "記住搜尋引擎分類"
+  },
+  "nt_settings_search_remember_engine_category_tip": {
+    "message": "開啟後，下次開啟會保留上次切換的分類"
+  },
   "nt_settings_search_engines_title": {
-    "message": "搜尋引擎"
+    "message": "搜尋引擎管理"
   },
   "nt_settings_search_reset_default": {
     "message": "恢復預設"
@@ -128,11 +134,17 @@
   "nt_settings_common_reset_confirm": {
     "message": "確定要將固定入口恢復至初始狀態嗎？此操作將清除所有自訂固定入口，且無法復原。"
   },
+  "nt_confirm_delete_common_sites_title": {
+    "message": "刪除固定入口"
+  },
+  "nt_settings_common_delete_sites_confirm": {
+    "message": "確定要刪除已選的 $1 個固定入口嗎？此操作無法復原。"
+  },
   "nt_settings_websites_title": {
     "message": "網站"
   },
   "nt_manage_common": {
-    "message": "固定入口管理"
+    "message": "常用"
   },
   "nt_manage_bookmarks": {
     "message": "书签管理"
@@ -188,9 +200,6 @@
   "nt_settings_search_no_engines": {
     "message": "暫無搜尋引擎"
   },
-  "nt_settings_search_disabled_tag": {
-    "message": "已停用"
-  },
   "nt_settings_search_add_engine": {
     "message": "自訂搜尋引擎"
   },
@@ -226,6 +235,15 @@
   },
   "nt_settings_search_drag_reorder_or_move": {
     "message": "拖曳即可排序，也可拖曳到其他分類"
+  },
+  "nt_settings_search_select_engine": {
+    "message": "選擇搜尋引擎"
+  },
+  "nt_confirm_delete_search_engines_title": {
+    "message": "刪除搜尋引擎"
+  },
+  "nt_settings_search_delete_engines_confirm": {
+    "message": "確定要刪除已選的 $1 個搜尋引擎嗎？此操作無法復原。"
   },
   "nt_engine_category_all": {
     "message": "綜合"

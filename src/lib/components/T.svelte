@@ -8,12 +8,13 @@
 		nowrap?: boolean;
 		color?: string;
 		align?: alignType;
+		strike?: boolean;
 	}
-	let { children, type = "m", bold, nowrap, color, align }: Props = $props();
+	let { children, type = "m", bold, nowrap, color, align, strike }: Props = $props();
 </script>
 
 <p
-	class="{type} {bold ? 'bold' : ''} {nowrap ? 'nowrap' : ''} "
+	class="{type} {bold ? 'bold' : ''} {nowrap ? 'nowrap' : ''} {strike ? 'strike' : ''}"
 	style="color: {color}; text-align: {align === 'c' ? 'center' : align === 'r' ?'right': 'left'}"
 >
 	{@render children()}
@@ -57,5 +58,8 @@
 	}
 	.bold {
 		font-weight: var(--f-bold);
+	}
+	.strike {
+		text-decoration: line-through;
 	}
 </style>

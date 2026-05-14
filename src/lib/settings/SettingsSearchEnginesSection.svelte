@@ -11,6 +11,9 @@
     import Button from "@/lib/components/Button.svelte";
     import Icon from "@/lib/components/Icon.svelte";
     import EngineIcon from "@/lib/EngineIcon.svelte";
+    import Switch from "@/lib/components/Switch.svelte";
+    import Checkbox from "../components/Checkbox.svelte";
+    import Divider from "../components/Divider.svelte";
 
     type SearchEngineGroup = {
         id: string;
@@ -24,7 +27,10 @@
         settingEnginesSaving: boolean;
         expandedCategoryIds: Set<string>;
         groups: SearchEngineGroup[];
+        selectedEngineIds: Set<number>;
+        rememberSearchEngineCategory: boolean;
         onOpenCategoryManager: () => void;
+        onRememberSearchEngineCategoryChange: (value: boolean) => void;
         onToggleCategoryExpanded: (categoryId: string) => void;
         onConsiderGroup: (
             categoryId: CategoryId,
@@ -36,6 +42,7 @@
         ) => void;
         onEditEngine: (engine: Engine) => void;
         onAddEngineToCategory: (categoryId: string) => void;
+        onToggleEngineSelected: (engine: Engine) => void;
     }
 
     let {
@@ -44,16 +51,50 @@
         settingEnginesSaving,
         expandedCategoryIds,
         groups,
+        selectedEngineIds,
+        rememberSearchEngineCategory,
         onOpenCategoryManager,
+        onRememberSearchEngineCategoryChange,
         onToggleCategoryExpanded,
         onConsiderGroup,
         onFinalizeGroup,
         onEditEngine,
         onAddEngineToCategory,
+        onToggleEngineSelected,
     }: Props = $props();
+
+    function isEngineSelected(engine: Engine) {
+        return !!engine.id && selectedEngineIds.has(engine.id);
+    }
 </script>
 
 <div class="setting_con">
+    <div class="select_item">
+        <Button
+            full
+            align="c"
+            onclick={() =>
+                onRememberSearchEngineCategoryChange(
+                    !rememberSearchEngineCategory,
+                )}
+            fill
+            r="r1"
+        >
+            <G full align="c">
+                <G vertical full>
+                    <T>{t("nt_settings_search_remember_engine_category")}</T>
+                </G>
+                <G>
+                    <Switch turnOn={rememberSearchEngineCategory} />
+                </G>
+            </G>
+        </Button>
+        <G>
+            <T type="s"
+                >{t("nt_settings_search_remember_engine_category_tip")}</T
+            >
+        </G>
+    </div>
     <div class="select_item">
         <Button full align="c" onclick={onOpenCategoryManager} fill r="r1">
             <G full align="c">
@@ -81,13 +122,20 @@
             {#each groups as group (group.id)}
                 {@const isExpanded = expandedCategoryIds.has(group.id)}
                 <div class="engine_group">
-                    <Button full onclick={() => onToggleCategoryExpanded(group.id)}>
+                    <Button
+                        full
+                        onclick={() => onToggleCategoryExpanded(group.id)}
+                    >
                         <G full align="c">
                             <Icon
-                                name={isExpanded ? "ChevronDown" : "ChevronRight"}
+                                name={isExpanded
+                                    ? "ChevronDown"
+                                    : "ChevronRight"}
                                 color="var(--c-text-1)"
                             />
-                            <T type="m" color="var(--c-text)" nowrap>{group.name}</T>
+                            <T type="m" color="var(--c-text)" nowrap
+                                >{group.name}</T
+                            >
                         </G>
                         <G align="c">
                             <T type="s" color="var(--c-text-2)" nowrap
@@ -119,14 +167,17 @@
                                 {#each group.items as engine (engine.id)}
                                     <div
                                         class="engine_row"
-                                        class:disabled_engine={engine.enabled === false}
+                                        class:engine_selected={isEngineSelected(
+                                            engine,
+                                        )}
+                                        class:disabled_engine={engine.enabled ===
+                                            false}
                                         animate:flip={{ duration: 200 }}
                                     >
                                         <Button
                                             full
                                             onclick={() => onEditEngine(engine)}
                                             align="c"
-                                            fill
                                         >
                                             <G full align="c">
                                                 <EngineIcon
@@ -135,34 +186,42 @@
                                                 />
                                                 <T
                                                     nowrap
+                                                    strike={engine.enabled ===
+                                                        false}
                                                     color={engine.enabled
                                                         ? "var(--c-text)"
                                                         : "var(--c-text-1)"}
-                                                    >{engine.title ?? t("nt_unnamed")}</T
+                                                    >{engine.title ??
+                                                        t("nt_unnamed")}</T
                                                 >
                                             </G>
-                                            {#if !engine.enabled}
-                                                <G>
-                                                    <T
-                                                        type="s"
-                                                        color="var(--c-text-2)"
-                                                        nowrap
-                                                        >{t("nt_settings_search_disabled_tag")}</T
-                                                    >
-                                                </G>
-                                            {/if}
                                         </Button>
+                                        <Divider vertical />
+                                            <Checkbox
+                                                checked={isEngineSelected(
+                                                    engine,
+                                                )}
+                                                disabled={settingEnginesSaving}
+                                                onchange={() =>
+                                                    onToggleEngineSelected(
+                                                        engine,
+                                                    )}
+                                            />
                                     </div>
                                 {/each}
                             </div>
-                            <Button onclick={() => onAddEngineToCategory(group.id)}>
+                            <Button
+                                onclick={() => onAddEngineToCategory(group.id)}
+                            >
                                 <G align="c">
                                     <Icon
                                         name="Plus"
                                         color="var(--c-text)"
                                         opacity={0.5}
                                     />
-                                    <T type="s">{t("nt_settings_search_add_engine")}</T>
+                                    <T type="s"
+                                        >{t("nt_settings_search_add_engine")}</T
+                                    >
                                 </G>
                             </Button>
                         </div>
@@ -182,6 +241,7 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
+        position: relative;
     }
     .select_item {
         display: flex;
@@ -238,8 +298,10 @@
         width: 100%;
         box-sizing: border-box;
         border-radius: var(--r);
+        background-color: var(--c-mask);
     }
     .disabled_engine {
         filter: grayscale(1);
     }
+    
 </style>

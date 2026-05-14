@@ -41,12 +41,16 @@
         newTabOpen?: boolean;
         searchBookmarks?: boolean;
         searchHistory?: boolean;
+        rememberSearchEngineCategory?: boolean;
+        settingsReady?: boolean;
     }
 
     let {
         newTabOpen = false,
         searchBookmarks: searchBookmarksEnabled = true,
         searchHistory: searchHistoryEnabled = true,
+        rememberSearchEngineCategory = false,
+        settingsReady = true,
     }: Props = $props();
 
     interface SearchItem {
@@ -72,6 +76,11 @@
     function persistSelectedCategoryId(categoryId: string) {
         if (typeof localStorage === "undefined") return;
         localStorage.setItem(ENGINE_CATEGORY_KEY, categoryId);
+    }
+
+    function clearPersistedSelectedCategoryId() {
+        if (typeof localStorage === "undefined") return;
+        localStorage.removeItem(ENGINE_CATEGORY_KEY);
     }
 
     function readSearchKeys(): string[] {
@@ -101,7 +110,7 @@
     }
 
     let engineCategories: EngineCategoryItem[] = $state([]);
-    let selectedCategoryId = $state(readSelectedCategoryId() ?? "1");
+    let selectedCategoryId = $state("1");
     let enginesGroup: TabItem[] = $state([]);
     let enabledEngines: Engine[] = $state([]);
     let disabledEngines: Engine[] = $state([]);
@@ -125,6 +134,7 @@
     let searchAreaFocused = $state(false);
     let lastSearchScope = $state<string | null>(null);
     let engineConfigReady = $state(false);
+    let syncedRememberedCategory = $state(false);
     let showSearchKeys = $derived(
         !showMoreEngines &&
             searchAreaFocused &&
@@ -210,7 +220,13 @@
         if (!engineCategories.some((item) => item.id === selectedCategoryId)) {
             selectedCategoryId = engineCategories[0].id;
         }
-        persistSelectedCategoryId(selectedCategoryId);
+        if (settingsReady) {
+            if (rememberSearchEngineCategory) {
+                persistSelectedCategoryId(selectedCategoryId);
+            } else {
+                clearPersistedSelectedCategoryId();
+            }
+        }
         syncEnginesGroupTabs();
     }
 
@@ -258,9 +274,40 @@
 
     function clickEngineGroup(tab: TabItem) {
         selectedCategoryId = tab.key;
-        persistSelectedCategoryId(selectedCategoryId);
+        if (rememberSearchEngineCategory) {
+            persistSelectedCategoryId(selectedCategoryId);
+        }
         syncEnginesGroupTabs();
     }
+
+    $effect(() => {
+        if (!settingsReady) return;
+        if (rememberSearchEngineCategory) {
+            if (!syncedRememberedCategory) {
+                syncedRememberedCategory = true;
+                const rememberedCategoryId = readSelectedCategoryId();
+                if (
+                    rememberedCategoryId &&
+                    rememberedCategoryId !== selectedCategoryId
+                ) {
+                    selectedCategoryId = rememberedCategoryId;
+                    syncEnginesGroupTabs();
+                    return;
+                }
+            }
+            if (
+                engineCategories.length &&
+                !engineCategories.some((item) => item.id === selectedCategoryId)
+            ) {
+                selectedCategoryId = engineCategories[0].id;
+            }
+            persistSelectedCategoryId(selectedCategoryId);
+            syncEnginesGroupTabs();
+            return;
+        }
+        syncedRememberedCategory = false;
+        clearPersistedSelectedCategoryId();
+    });
 
     $effect(() => {
         const scope = `${searchBookmarksEnabled}-${searchHistoryEnabled}`;

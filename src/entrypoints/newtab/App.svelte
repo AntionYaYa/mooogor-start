@@ -59,6 +59,7 @@
   let selTab: TabItem | undefined = $state();
   let showNext = $state(false);
   let firstMount = $state(true);
+  let settingsLoaded = $state(false);
   let i18nRenderKey = $state(0);
 
   let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
@@ -86,6 +87,7 @@
       a.newTabOpen === b.newTabOpen &&
       a.searchBookmarks === b.searchBookmarks &&
       a.searchHistory === b.searchHistory &&
+      a.rememberSearchEngineCategory === b.rememberSearchEngineCategory &&
       a.language === b.language &&
       a.theme === b.theme
     );
@@ -131,6 +133,7 @@
 
   onMount(async () => {
     userSettings = await loadSettings();
+    settingsLoaded = true;
     applyTheme(userSettings.theme);
     const language = getEffectiveLanguage(userSettings.language);
     await ensureDefaultWebSites(buildDefaultWebSites(language));
@@ -456,6 +459,8 @@
         newTabOpen={effectiveNewTabOpen}
         searchBookmarks={userSettings.searchBookmarks}
         searchHistory={userSettings.searchHistory}
+        rememberSearchEngineCategory={userSettings.rememberSearchEngineCategory}
+        settingsReady={settingsLoaded}
       />
       <div class="content">
         <div class="tabs">

@@ -32,6 +32,7 @@
     import { t } from "@/lib/utils/i18n";
     import Icon from "./components/Icon.svelte";
     import Button from "./components/Button.svelte";
+    import Checkbox from "./components/Checkbox.svelte";
     import BkmkIcon from "./BkmkIcon.svelte";
     import EngineIcon from "./EngineIcon.svelte";
     import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
@@ -150,10 +151,14 @@
     let showCategoryManager = $state(false);
     let showSearchEngineEditor = $state(false);
     let editingSearchEngine: Engine | null = $state(null);
+    let selectedSearchEngineIds = $state<Set<number>>(new Set());
+    let searchEngineMoveMenuOpen = $state(false);
+    let searchEngineMoveActionEl: HTMLDivElement | undefined = $state();
     let commonSites: WebSite[] = $state([]);
     let commonSitesLoading = $state(false);
     let commonSitesRequestId = $state(0);
     let commonSitesDragging = $state(false);
+    let selectedCommonSiteIds = $state<Set<number>>(new Set());
     let showCommonEditor = $state(false);
     let editingCommonSite: WebSite | null = $state(null);
     let confirmOptions = $state<{
@@ -164,6 +169,170 @@
     } | null>(null);
     let persistEngineLayoutTimer: ReturnType<typeof setTimeout> | null =
         $state(null);
+    let selectableSearchEngineIds = $derived.by(() =>
+        settingEngineCategories.flatMap((category) =>
+            !expandedCategoryIds.has(category.id)
+                ? []
+                :
+            (settingEngineGroups[category.id] ?? []).flatMap((engine) =>
+                engine.id ? [engine.id] : [],
+            ),
+        ),
+    );
+    let selectedSearchEngineCount = $derived(selectedSearchEngineIds.size);
+    let allSearchEnginesSelected = $derived(
+        selectableSearchEngineIds.length > 0 &&
+            selectedSearchEngineIds.size === selectableSearchEngineIds.length,
+    );
+    let partlySearchEnginesSelected = $derived(
+        selectedSearchEngineCount > 0 && !allSearchEnginesSelected,
+    );
+    let selectableCommonSiteIds = $derived(
+        commonSites.flatMap((site) => (site.id ? [site.id] : [])),
+    );
+    let selectedCommonSiteCount = $derived(selectedCommonSiteIds.size);
+    let allCommonSitesSelected = $derived(
+        selectableCommonSiteIds.length > 0 &&
+            selectedCommonSiteIds.size === selectableCommonSiteIds.length,
+    );
+    let partlyCommonSitesSelected = $derived(
+        selectedCommonSiteCount > 0 && !allCommonSitesSelected,
+    );
+
+    function setSelectedSearchEngineIds(ids: Iterable<number>) {
+        selectedSearchEngineIds = new Set(ids);
+    }
+
+    function toggleSearchEngineSelected(engine: Engine) {
+        if (!engine.id || settingEnginesSaving) return;
+        const next = new Set(selectedSearchEngineIds);
+        if (next.has(engine.id)) {
+            next.delete(engine.id);
+        } else {
+            next.add(engine.id);
+        }
+        selectedSearchEngineIds = next;
+        if (next.size === 0) searchEngineMoveMenuOpen = false;
+    }
+
+    function toggleSelectAllSearchEngines() {
+        if (settingEnginesSaving) return;
+        if (allSearchEnginesSelected) {
+            setSelectedSearchEngineIds([]);
+            searchEngineMoveMenuOpen = false;
+            return;
+        }
+        setSelectedSearchEngineIds(selectableSearchEngineIds);
+    }
+
+    async function moveSelectedSearchEngines(categoryId: string) {
+        if (!selectedSearchEngineIds.size || settingEnginesSaving) return;
+        const engineIds = [...selectedSearchEngineIds];
+        searchEngineMoveMenuOpen = false;
+        if (await batchMoveSearchEngines(engineIds, categoryId)) {
+            setSelectedSearchEngineIds([]);
+        }
+    }
+
+    async function deleteSelectedSearchEngines() {
+        if (!selectedSearchEngineIds.size || settingEnginesSaving) return;
+        const engineIds = [...selectedSearchEngineIds];
+        if (await batchDeleteSearchEngines(engineIds)) {
+            setSelectedSearchEngineIds([]);
+            searchEngineMoveMenuOpen = false;
+        }
+    }
+
+    function handleSearchEngineMoveMouseDown(event: MouseEvent) {
+        if (!searchEngineMoveMenuOpen) return;
+        if (searchEngineMoveActionEl?.contains(event.target as Node)) return;
+        searchEngineMoveMenuOpen = false;
+    }
+
+    onMount(() => {
+        window.addEventListener("mousedown", handleSearchEngineMoveMouseDown);
+    });
+
+    onDestroy(() => {
+        window.removeEventListener(
+            "mousedown",
+            handleSearchEngineMoveMouseDown,
+        );
+    });
+
+    $effect(() => {
+        const validIds = new Set(selectableSearchEngineIds);
+        const nextIds = [...selectedSearchEngineIds].filter((id) =>
+            validIds.has(id),
+        );
+        if (nextIds.length !== selectedSearchEngineIds.size) {
+            selectedSearchEngineIds = new Set(nextIds);
+        }
+    });
+
+    $effect(() => {
+        if (selectedSearchEngineCount > 0) return;
+        searchEngineMoveMenuOpen = false;
+    });
+
+    function setSelectedCommonSiteIds(ids: Iterable<number>) {
+        selectedCommonSiteIds = new Set(ids);
+    }
+
+    function toggleCommonSiteSelected(site: WebSite) {
+        if (!site.id || commonSitesLoading) return;
+        const next = new Set(selectedCommonSiteIds);
+        if (next.has(site.id)) {
+            next.delete(site.id);
+        } else {
+            next.add(site.id);
+        }
+        selectedCommonSiteIds = next;
+    }
+
+    function toggleSelectAllCommonSites() {
+        if (commonSitesLoading) return;
+        if (allCommonSitesSelected) {
+            setSelectedCommonSiteIds([]);
+            return;
+        }
+        setSelectedCommonSiteIds(selectableCommonSiteIds);
+    }
+
+    async function deleteSelectedCommonSites() {
+        if (!selectedCommonSiteIds.size || commonSitesLoading) return;
+        const siteIds = [...selectedCommonSiteIds];
+        if (
+            !(await requestConfirm(
+                t("nt_confirm_delete_common_sites_title"),
+                t(
+                    "nt_settings_common_delete_sites_confirm",
+                    String(siteIds.length),
+                ),
+                t("nt_delete"),
+            ))
+        ) {
+            return;
+        }
+        commonSitesLoading = true;
+        try {
+            await Promise.all(siteIds.map((id) => deleteCommonSiteEntry(id)));
+            setSelectedCommonSiteIds([]);
+            await loadCommonSites();
+        } finally {
+            commonSitesLoading = false;
+        }
+    }
+
+    $effect(() => {
+        const validIds = new Set(selectableCommonSiteIds);
+        const nextIds = [...selectedCommonSiteIds].filter((id) =>
+            validIds.has(id),
+        );
+        if (nextIds.length !== selectedCommonSiteIds.size) {
+            selectedCommonSiteIds = new Set(nextIds);
+        }
+    });
     function requestConfirm(
         title: string,
         description: string,
@@ -294,6 +463,13 @@
 
     function setSearchHistory(value: boolean) {
         onchangeUserSettings({ ...userSettings, searchHistory: value });
+    }
+
+    function setRememberSearchEngineCategory(value: boolean) {
+        onchangeUserSettings({
+            ...userSettings,
+            rememberSearchEngineCategory: value,
+        });
     }
 
     function onswitchNewTabOpen(swith: boolean) {
@@ -475,6 +651,74 @@
     ) {
         setSearchEngineGroupItems(categoryId, e.detail.items);
         queuePersistSearchEngineLayout();
+    }
+
+    async function batchMoveSearchEngines(
+        engineIds: number[],
+        categoryId: string,
+    ): Promise<boolean> {
+        if (!engineIds.length || settingEnginesSaving) return false;
+        const targetCategory = settingEngineCategories.find(
+            (item) => item.id === categoryId,
+        );
+        if (!targetCategory) return false;
+        const selectedIds = new Set(engineIds);
+        const selectedEngines: Engine[] = [];
+        const nextGroups: Record<CategoryId, Engine[]> = {};
+        for (const category of settingEngineCategories) {
+            const items = settingEngineGroups[category.id] ?? [];
+            nextGroups[category.id] = [];
+            for (const engine of items) {
+                if (engine.id && selectedIds.has(engine.id)) {
+                    selectedEngines.push(engine);
+                    continue;
+                }
+                nextGroups[category.id].push(engine);
+            }
+        }
+        if (!selectedEngines.length) return false;
+        nextGroups[categoryId] = [
+            ...(nextGroups[categoryId] ?? []),
+            ...selectedEngines.map((engine) => ({
+                ...engine,
+                category: categoryId,
+            })),
+        ];
+        settingEngineGroups = nextGroups;
+        syncSearchSettingEnginesFromGroups(nextGroups);
+        if (persistEngineLayoutTimer) {
+            clearTimeout(persistEngineLayoutTimer);
+            persistEngineLayoutTimer = null;
+        }
+        await persistSearchEngineLayout();
+        return true;
+    }
+
+    async function batchDeleteSearchEngines(
+        engineIds: number[],
+    ): Promise<boolean> {
+        if (!engineIds.length || settingEnginesSaving) return false;
+        if (
+            !(await requestConfirm(
+                t("nt_confirm_delete_search_engines_title"),
+                t(
+                    "nt_settings_search_delete_engines_confirm",
+                    String(engineIds.length),
+                ),
+                t("nt_delete"),
+            ))
+        ) {
+            return false;
+        }
+        settingEnginesSaving = true;
+        try {
+            await Promise.all(engineIds.map((id) => deleteEngine(id)));
+            await loadSearchSettingEngines(true);
+            notifyEngineConfigUpdated();
+            return true;
+        } finally {
+            settingEnginesSaving = false;
+        }
     }
 
     function openCategoryManager() {
@@ -823,23 +1067,29 @@
                                 {settingEnginesLoaded}
                                 {settingEnginesSaving}
                                 {expandedCategoryIds}
+                                selectedEngineIds={selectedSearchEngineIds}
+                                rememberSearchEngineCategory={userSettings.rememberSearchEngineCategory}
                                 groups={getGroupedSearchEngines()}
                                 onOpenCategoryManager={openCategoryManager}
+                                onRememberSearchEngineCategoryChange={setRememberSearchEngineCategory}
                                 onToggleCategoryExpanded={toggleCategoryExpanded}
                                 onConsiderGroup={handleSearchEngineGroupConsider}
                                 onFinalizeGroup={handleSearchEngineGroupFinalize}
                                 onEditEngine={openEditSearchEngineEditor}
                                 onAddEngineToCategory={openAddSearchEngineEditorForCategory}
+                                onToggleEngineSelected={toggleSearchEngineSelected}
                             />
                         {:else if settingPage === "common"}
                             <SettingsCommonSitesSection
                                 {commonSites}
                                 {commonSitesLoading}
                                 {commonSitesDragging}
+                                selectedSiteIds={selectedCommonSiteIds}
                                 onConsider={handleCommonSitesConsider}
                                 onFinalize={handleCommonSitesFinalize}
                                 onAdd={openAddCommonSiteEditor}
                                 onEdit={openEditCommonSiteEditor}
+                                onToggleSelected={toggleCommonSiteSelected}
                             />
                         {:else if settingPage === "history"}
                             {@render temSettingHistory()}
@@ -849,6 +1099,11 @@
                     </div>
                 {/key}
             </div>
+            {#if settingPage === "searchEngines" && selectedSearchEngineCount > 0}
+                {@render temSearchEngineBatchToolbar()}
+            {:else if settingPage === "common" && selectedCommonSiteCount > 0}
+                {@render temCommonSitesBatchToolbar()}
+            {/if}
         </div>
     {/if}
 </div>
@@ -905,6 +1160,112 @@
         onConfirm={() => closeConfirm(true)}
     />
 {/if}
+
+{#snippet temSearchEngineBatchToolbar()}
+    <div class="batch_toolbar" transition:slide={{ duration: 180 }}>
+        <div
+            class="select_all"
+            class:select_all_disabled={settingEnginesSaving}
+            role="button"
+            tabindex="0"
+            onclick={toggleSelectAllSearchEngines}
+            onkeydown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                toggleSelectAllSearchEngines();
+            }}
+        >
+            <Checkbox
+                checked={allSearchEnginesSelected}
+                indeterminate={partlySearchEnginesSelected}
+                disabled={settingEnginesSaving}
+                skipTabFocus
+            />
+            <T type="s" nowrap>{selectedSearchEngineCount}</T>
+        </div>
+        <div class="move_action" bind:this={searchEngineMoveActionEl}>
+            <Button
+                onclick={() =>
+                    (searchEngineMoveMenuOpen = !searchEngineMoveMenuOpen)}
+                disabled={settingEnginesSaving}
+                fill
+            >
+                <G align="c">
+                    <Icon name="FolderOpen" color="var(--c-text)" />
+                    <T type="m">{t("nt_move")}</T>
+                </G>
+            </Button>
+            {#if searchEngineMoveMenuOpen}
+                <div class="move_menu" transition:slide={{ duration: 160 }}>
+                    <div class="scrool">
+                        {#each getGroupedSearchEngines() as group (group.id)}
+                            <button
+                                class="move_option"
+                                type="button"
+                                onclick={() =>
+                                    moveSelectedSearchEngines(group.id)}
+                            >
+                                <G full align="c">
+                                    <Icon
+                                        name="FolderOpen"
+                                        color="var(--c-text)"
+                                    />
+                                    <T type="m" color="var(--c-text)" nowrap>
+                                        {group.name}
+                                    </T>
+                                </G>
+                            </button>
+                        {/each}
+                    </div>
+                </div>
+            {/if}
+        </div>
+        <Button
+            onclick={deleteSelectedSearchEngines}
+            disabled={settingEnginesSaving}
+            fill
+        >
+            <G align="c">
+                <Icon name="Trash2" color="var(--c-red)" />
+            </G>
+        </Button>
+    </div>
+{/snippet}
+
+{#snippet temCommonSitesBatchToolbar()}
+    <div class="batch_toolbar" transition:slide={{ duration: 180 }}>
+        <div
+            class="select_all"
+            class:select_all_disabled={commonSitesLoading}
+            role="button"
+            tabindex="0"
+            onclick={toggleSelectAllCommonSites}
+            onkeydown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                toggleSelectAllCommonSites();
+            }}
+        >
+            <Checkbox
+                checked={allCommonSitesSelected}
+                indeterminate={partlyCommonSitesSelected}
+                disabled={commonSitesLoading}
+                skipTabFocus
+            />
+            <T type="s" nowrap>{selectedCommonSiteCount}</T>
+        </div>
+        <div class="batch_spacer"></div>
+        <Button
+            onclick={deleteSelectedCommonSites}
+            disabled={commonSitesLoading}
+            fill
+        >
+            <G align="c">
+                <Icon name="Trash2" color="var(--c-red)" />
+            </G>
+        </Button>
+    </div>
+{/snippet}
 
 {#snippet temHeader()}
     <Button
@@ -1177,7 +1538,8 @@
         display: grid;
         width: 300px;
         overflow: hidden;
-        height: 100%;
+        flex: 1;
+        min-height: 0;
         overflow-y: auto;
     }
     .setting_page {
@@ -1219,6 +1581,78 @@
         display: flex;
         flex-direction: column;
         padding: var(--gap) var(--gap) var(--gap) 0;
+        height: 100%;
+        box-sizing: border-box;
+    }
+    .batch_toolbar {
+        display: flex;
+        align-items: center;
+        width: 300px;
+        box-sizing: border-box;
+        padding: var(--gap);
+        gap: var(--gap);
+        background-color: var(--c-bg1);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+        z-index: 5;
+    }
+    .select_all {
+        display: flex;
+        align-items: center;
+        gap: var(--gap);
+        border: none;
+        background: none;
+        padding: 0;
+        cursor: pointer;
+    }
+    .select_all_disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .batch_spacer {
+        flex: 1;
+        min-width: 0;
+    }
+    .move_action {
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+    .move_menu {
+        position: absolute;
+        bottom: calc(100% + var(--gap) * 2);
+        display: flex;
+        flex-direction: column;
+        min-width: 148px;
+        max-width: 220px;
+        max-height: 300px;
+        padding: var(--gap);
+        box-sizing: border-box;
+        background-color: var(--c-bg1);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+        z-index: 6;
+    }
+    .scrool {
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        padding: var(--gap);
+    }
+    .move_option {
+        display: flex;
+        width: 100%;
+        border: none;
+        border-radius: var(--r);
+        padding: var(--gap);
+        background: none;
+        cursor: pointer;
+    }
+    .move_option:active {
+        background-color: var(--c-mask);
     }
     .layout {
         display: flex;

@@ -9,26 +9,36 @@
     import Button from "@/lib/components/Button.svelte";
     import Icon from "@/lib/components/Icon.svelte";
     import BkmkIcon from "@/lib/BkmkIcon.svelte";
+    import Checkbox from "@/lib/components/Checkbox.svelte";
+    import Divider from "../components/Divider.svelte";
 
     interface Props {
         commonSites: WebSite[];
         commonSitesLoading: boolean;
         commonSitesDragging: boolean;
+        selectedSiteIds: Set<number>;
         onConsider: (e: CustomEvent<DndEvent<WebSite>>) => void;
         onFinalize: (e: CustomEvent<DndEvent<WebSite>>) => void;
         onAdd: () => void;
         onEdit: (site: WebSite) => void;
+        onToggleSelected: (site: WebSite) => void;
     }
 
     let {
         commonSites,
         commonSitesLoading,
         commonSitesDragging,
+        selectedSiteIds,
         onConsider,
         onFinalize,
         onAdd,
         onEdit,
+        onToggleSelected,
     }: Props = $props();
+
+    function isSiteSelected(site: WebSite) {
+        return !!site.id && selectedSiteIds.has(site.id);
+    }
 </script>
 
 <div class="setting_con">
@@ -61,11 +71,14 @@
             </div>
         {:else}
             {#each commonSites as site (site.id)}
-                <div class="common_row" animate:flip={{ duration: 200 }}>
+                <div
+                    class="common_row"
+                    class:common_selected={isSiteSelected(site)}
+                    animate:flip={{ duration: 200 }}
+                >
                     <Button
                         full
                         align="c"
-                        fill
                         onclick={() => onEdit(site)}
                     >
                         <G full align="c">
@@ -79,6 +92,12 @@
                             </G>
                         </G>
                     </Button>
+                    <Divider vertical />
+                        <Checkbox
+                            checked={isSiteSelected(site)}
+                            disabled={commonSitesLoading}
+                            onchange={() => onToggleSelected(site)}
+                        />
                 </div>
             {/each}
         {/if}
@@ -124,7 +143,14 @@
         outline: var(--c-mask) 2px dashed;
     }
     .common_row {
+        display: flex;
+        align-items: center;
         width: 100%;
         box-sizing: border-box;
+        border-radius: var(--r);
+        background-color: var(--c-mask);
+    }
+    .common_selected {
+        background-color: var(--c-mask1);
     }
 </style>
