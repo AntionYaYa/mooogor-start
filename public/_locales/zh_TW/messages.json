@@ -98,6 +98,9 @@
   "nt_settings_other_title": {
     "message": "其他"
   },
+  "nt_settings_other_section_title": {
+    "message": "其他設定"
+  },
   "nt_settings_new_tab_open": {
     "message": "在新分頁開啟連結"
   },

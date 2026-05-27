@@ -98,6 +98,9 @@
   "nt_settings_other_title": {
     "message": "Other"
   },
+  "nt_settings_other_section_title": {
+    "message": "Other Settings"
+  },
   "nt_settings_new_tab_open": {
     "message": "Open links in a new tab"
   },

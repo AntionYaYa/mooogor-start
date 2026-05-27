@@ -11,7 +11,6 @@
     import Button from "@/lib/components/Button.svelte";
     import Icon from "@/lib/components/Icon.svelte";
     import EngineIcon from "@/lib/EngineIcon.svelte";
-    import Switch from "@/lib/components/Switch.svelte";
     import Checkbox from "../components/Checkbox.svelte";
     import Divider from "../components/Divider.svelte";
 
@@ -28,9 +27,7 @@
         expandedCategoryIds: Set<string>;
         groups: SearchEngineGroup[];
         selectedEngineIds: Set<number>;
-        rememberSearchEngineCategory: boolean;
         onOpenCategoryManager: () => void;
-        onRememberSearchEngineCategoryChange: (value: boolean) => void;
         onToggleCategoryExpanded: (categoryId: string) => void;
         onConsiderGroup: (
             categoryId: CategoryId,
@@ -52,9 +49,7 @@
         expandedCategoryIds,
         groups,
         selectedEngineIds,
-        rememberSearchEngineCategory,
         onOpenCategoryManager,
-        onRememberSearchEngineCategoryChange,
         onToggleCategoryExpanded,
         onConsiderGroup,
         onFinalizeGroup,
@@ -69,32 +64,6 @@
 </script>
 
 <div class="setting_con">
-    <div class="select_item">
-        <Button
-            full
-            align="c"
-            onclick={() =>
-                onRememberSearchEngineCategoryChange(
-                    !rememberSearchEngineCategory,
-                )}
-            fill
-            r="r1"
-        >
-            <G full align="c">
-                <G vertical full>
-                    <T>{t("nt_settings_search_remember_engine_category")}</T>
-                </G>
-                <G>
-                    <Switch turnOn={rememberSearchEngineCategory} />
-                </G>
-            </G>
-        </Button>
-        <G>
-            <T type="s"
-                >{t("nt_settings_search_remember_engine_category_tip")}</T
-            >
-        </G>
-    </div>
     <div class="select_item">
         <Button full align="c" onclick={onOpenCategoryManager} fill r="r1">
             <G full align="c">

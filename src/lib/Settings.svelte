@@ -137,6 +137,9 @@
         | "history"
         | "other";
     let settingPage = $state<SettingsPage>("root");
+    let searchSettingsExpanded = $state(true);
+    let websiteSettingsExpanded = $state(true);
+    let otherSettingsExpanded = $state(true);
     let pageDirection = $state<1 | -1>(1);
     let settingEnabledEngines: Engine[] = $state([]);
     let settingDisabledEngines: Engine[] = $state([]);
@@ -1068,10 +1071,8 @@
                                 {settingEnginesSaving}
                                 {expandedCategoryIds}
                                 selectedEngineIds={selectedSearchEngineIds}
-                                rememberSearchEngineCategory={userSettings.rememberSearchEngineCategory}
                                 groups={getGroupedSearchEngines()}
                                 onOpenCategoryManager={openCategoryManager}
-                                onRememberSearchEngineCategoryChange={setRememberSearchEngineCategory}
                                 onToggleCategoryExpanded={toggleCategoryExpanded}
                                 onConsiderGroup={handleSearchEngineGroupConsider}
                                 onFinalizeGroup={handleSearchEngineGroupFinalize}
@@ -1309,60 +1310,76 @@
 
 {#snippet temSettingRoot()}
     <div class="setting_con">
-        {@render temSectionTitle(t("nt_settings_search_title"))}
-        {@render temEntranceItem(t("nt_settings_search_scope"), () =>
-            openSettingPage("searchScope"),
+        {@render temCollapsibleSection(
+            t("nt_settings_search_title"),
+            searchSettingsExpanded,
+            () => (searchSettingsExpanded = !searchSettingsExpanded),
+            temSearchSettingsGroup,
         )}
-        {@render temEntranceItem(t("nt_settings_search_engines_title"), () =>
-            openSettingPage("searchEngines"),
+
+        <Divider />
+
+        {@render temCollapsibleSection(
+            t("nt_settings_websites_title"),
+            websiteSettingsExpanded,
+            () => (websiteSettingsExpanded = !websiteSettingsExpanded),
+            temWebsiteSettingsGroup,
         )}
 
         <Divider />
 
-        {@render temSectionTitle(t("nt_settings_websites_title"))}
-        {@render temEntranceItem(t("nt_manage_common"), () =>
-            openSettingPage("common"),
+        {@render temCollapsibleSection(
+            t("nt_settings_other_section_title"),
+            otherSettingsExpanded,
+            () => (otherSettingsExpanded = !otherSettingsExpanded),
+            temOtherSettingsGroup,
         )}
-        {@render tembuttonItem(
-            t("nt_manage_bookmarks"),
-            openBookmarksManager,
-            "",
-            true,
-        )}
-        {@render tembuttonItem(
-            t("nt_manage_history"),
-            openHistoryManager,
-            "",
-            true,
-        )}
-        {@render temselectItem(
-            t("nt_settings_default_open"),
-            openPosOptions,
-            setOpenPos,
-        )}
-        {@render temswithcItem(
-            t("nt_settings_link_open_title"),
-            t("nt_settings_new_tab_open"),
-            t("nt_settings_new_tab_tip"),
-            effectiveNewTabOpenSwitch,
-            onswitchNewTabOpen,
-            lockNewTabOpenSwitch,
-        )}
-
-        <Divider />
-        {@render temselectItem(t("nt_settings_theme"), themeOptions, setTheme)}
-        {@render temselectItem(
-            t("nt_settings_language"),
-            languageOptions,
-            setLanguage,
-        )}
-        {@render tembuttonItem(
-            t("nt_settings_about"),
-            onclickAbout,
-            t("nt_settings_other_title"),
-        )}
-        {@render tembuttonItem(t("nt_about_support_button"), onclickSupport)}
     </div>
+{/snippet}
+
+{#snippet temSearchSettingsGroup()}
+    {@render temEntranceItem(t("nt_settings_search_scope"), () =>
+        openSettingPage("searchScope"),
+    )}
+    {@render temEntranceItem(t("nt_settings_search_engines_title"), () =>
+        openSettingPage("searchEngines"),
+    )}
+    {@render temswithcItem(
+        undefined,
+        t("nt_settings_search_remember_engine_category"),
+        t("nt_settings_search_remember_engine_category_tip"),
+        userSettings.rememberSearchEngineCategory,
+        setRememberSearchEngineCategory,
+    )}
+{/snippet}
+
+{#snippet temWebsiteSettingsGroup()}
+    {@render temEntranceItem(t("nt_manage_common"), () =>
+        openSettingPage("common"),
+    )}
+    {@render tembuttonItem(t("nt_manage_bookmarks"), openBookmarksManager, "", true)}
+    {@render tembuttonItem(t("nt_manage_history"), openHistoryManager, "", true)}
+    {@render temselectItem(
+        t("nt_settings_default_open"),
+        openPosOptions,
+        setOpenPos,
+    )}
+    {@render temswithcItem(
+        t("nt_settings_link_open_title"),
+        t("nt_settings_new_tab_open"),
+        t("nt_settings_new_tab_tip"),
+        effectiveNewTabOpenSwitch,
+        onswitchNewTabOpen,
+        lockNewTabOpenSwitch,
+    )}
+{/snippet}
+
+{#snippet temOtherSettingsGroup()}
+    {@render temselectItem(t("nt_settings_theme"), themeOptions, setTheme)}
+    {@render temselectItem(t("nt_settings_language"), languageOptions, setLanguage)}
+    {@render temEntranceItem(t("nt_settings_other_title"), () =>
+        openSettingPage("other"),
+    )}
 {/snippet}
 
 {#snippet temSettingSearchScope()}
@@ -1387,6 +1404,35 @@
 {#snippet temSectionTitle(text: string)}
     <div class="section_title">
         <T type="s" color="var(--c-text-1)">{text}</T>
+    </div>
+{/snippet}
+
+{#snippet temCollapsibleSection(
+    title: string,
+    expanded: boolean,
+    onToggle: () => void,
+    content: any,
+)}
+    <div class="collapsible_section">
+        <Button full onclick={onToggle}>
+            <G full align="c">
+                <G full>
+                    <T type="s" color="var(--c-text-1)">{title}</T>
+                </G>
+                <G>
+                    <Icon
+                        name={expanded ? "ChevronDown" : "ChevronRight"}
+                        color="var(--c-text-1)"
+                        opacity={0.8}
+                    />
+                </G>
+            </G>
+        </Button>
+        {#if expanded}
+            <div class="collapsible_content" transition:slide={{ duration: 160 }}>
+                {@render content()}
+            </div>
+        {/if}
     </div>
 {/snippet}
 
@@ -1527,6 +1573,19 @@
         width: 100%;
         box-sizing: border-box;
         padding: calc(var(--gap) * 1.5) var(--gap) 0;
+    }
+    .collapsible_section {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        box-sizing: border-box;
+        padding: calc(var(--gap) * 1.5) var(--gap) 0;
+    }
+    .collapsible_content {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        box-sizing: border-box;
     }
     .setting_con {
         width: 300px;

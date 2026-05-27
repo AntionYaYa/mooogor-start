@@ -622,6 +622,14 @@
       </Button>
     </G>
     <G>
+      <Button
+        onclick={() => (showSupport = true)}
+        title={t("nt_about_support_button")}
+      >
+        <G>
+          <Icon name="Coffee" color="var(--c-text)" />
+        </G>
+      </Button>
       {#if showSetting}
         <Button onclick={() => (showSetting = !showSetting)} bg='var(--c-text)'>
           <G>
