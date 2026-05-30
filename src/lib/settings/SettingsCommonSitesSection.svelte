@@ -113,13 +113,6 @@
         flex-direction: column;
         align-items: flex-start;
     }
-    .select_item {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        box-sizing: border-box;
-        padding: var(--gap);
-    }
     .engine_loading {
         display: flex;
         justify-content: center;

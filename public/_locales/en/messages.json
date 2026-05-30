@@ -125,6 +125,12 @@
   "nt_settings_search_remember_engine_category_tip": {
     "message": "Keep the last selected category next time Quick Search opens"
   },
+  "nt_settings_search_inject_related": {
+    "message": "Inject into related pages"
+  },
+  "nt_settings_search_inject_related_tip": {
+    "message": "Show a Quick Search floating panel on matching search engine sites"
+  },
   "nt_settings_search_engines_title": {
     "message": "Search Engine Management"
   },

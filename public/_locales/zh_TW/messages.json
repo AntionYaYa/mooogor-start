@@ -125,6 +125,12 @@
   "nt_settings_search_remember_engine_category_tip": {
     "message": "開啟後，打開時會保留上次選擇的分類"
   },
+  "nt_settings_search_inject_related": {
+    "message": "注入到相關網頁"
+  },
+  "nt_settings_search_inject_related_tip": {
+    "message": "在符合搜尋引擎的網站中顯示快捷搜尋浮窗"
+  },
   "nt_settings_search_engines_title": {
     "message": "搜尋引擎管理"
   },

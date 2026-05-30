@@ -467,6 +467,13 @@
         });
     }
 
+    function setInjectRelatedSearch(value: boolean) {
+        onchangeUserSettings({
+            ...userSettings,
+            injectRelatedSearch: value,
+        });
+    }
+
     function onswitchNewTabOpen(swith: boolean) {
         if (lockNewTabOpenSwitch) return;
         setNewTabOpen(swith);
@@ -1339,6 +1346,13 @@
         t("nt_settings_search_remember_engine_category_tip"),
         userSettings.rememberSearchEngineCategory,
         setRememberSearchEngineCategory,
+    )}
+    {@render temswithcItem(
+        undefined,
+        t("nt_settings_search_inject_related"),
+        t("nt_settings_search_inject_related_tip"),
+        userSettings.injectRelatedSearch,
+        setInjectRelatedSearch,
     )}
     {@render temswithcItem(
         t("nt_settings_search_scope"),

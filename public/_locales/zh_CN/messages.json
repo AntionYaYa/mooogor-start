@@ -125,6 +125,12 @@
   "nt_settings_search_remember_engine_category_tip": {
     "message": "开启后，打开会保留上次选择的分类"
   },
+  "nt_settings_search_inject_related": {
+    "message": "注入到相关网页"
+  },
+  "nt_settings_search_inject_related_tip": {
+    "message": "在匹配搜索引擎的网站中显示快捷搜索浮窗"
+  },
   "nt_settings_search_engines_title": {
     "message": "搜索引擎管理"
   },

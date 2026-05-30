@@ -87,6 +87,7 @@
       a.searchBookmarks === b.searchBookmarks &&
       a.searchHistory === b.searchHistory &&
       a.rememberSearchEngineCategory === b.rememberSearchEngineCategory &&
+      a.injectRelatedSearch === b.injectRelatedSearch &&
       a.language === b.language &&
       a.theme === b.theme
     );

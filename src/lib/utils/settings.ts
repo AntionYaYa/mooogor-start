@@ -22,6 +22,7 @@ export type UserSettings = {
   searchBookmarks: boolean;
   searchHistory: boolean;
   rememberSearchEngineCategory: boolean;
+  injectRelatedSearch: boolean;
   language: AppLanguage;
   theme: AppTheme;
 };
@@ -33,6 +34,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   searchBookmarks: true,
   searchHistory: true,
   rememberSearchEngineCategory: false,
+  injectRelatedSearch: false,
   language: "auto",
   theme: "default",
 };
@@ -92,6 +94,8 @@ export async function loadSettings(): Promise<UserSettings> {
     rememberSearchEngineCategory:
       stored?.rememberSearchEngineCategory ??
       DEFAULT_SETTINGS.rememberSearchEngineCategory,
+    injectRelatedSearch:
+      stored?.injectRelatedSearch ?? DEFAULT_SETTINGS.injectRelatedSearch,
     language: isLanguage(stored?.language)
       ? stored.language
       : DEFAULT_SETTINGS.language,
