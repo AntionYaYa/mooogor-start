@@ -5,6 +5,7 @@
   import G from "@/lib/components/G.svelte";
   import Icon from "@/lib/components/Icon.svelte";
   import T from "@/lib/components/T.svelte";
+  import { resolveEngineByDomain } from "./relatedSearchEngineMatch";
 
   export type RelatedSearchEngine = {
     id?: number;
@@ -59,22 +60,16 @@
   const hasKeyword = $derived(!!keyword.trim());
   const showSearchShortcutTip = $derived(inputFocused && hasKeyword);
   const showSwitchShortcutTip = $derived(engineFocused);
-  const selectedStorageKey = $derived(
-    `mooogor-related-search-engine:${getEngineHost(data.matchedEngine)}`,
-  );
 
   onMount(() => {
     host = getHost();
     keyword = initialKeyword;
-    selectedEngineUrl = data.matchedEngine.engineUrl;
+    selectedEngineUrl = resolveEngineByDomain(
+      data.engines,
+      location.hostname,
+      data.matchedEngine,
+    ).engineUrl;
     restorePosition();
-    const savedEngineUrl = localStorage.getItem(selectedStorageKey);
-    if (
-      savedEngineUrl &&
-      data.engines.some((engine) => engine.engineUrl === savedEngineUrl)
-    ) {
-      selectedEngineUrl = savedEngineUrl;
-    }
     void syncInputWidth();
   });
 
@@ -91,7 +86,6 @@
 
   function selectEngine(engine: RelatedSearchEngine) {
     selectedEngineUrl = engine.engineUrl;
-    localStorage.setItem(selectedStorageKey, selectedEngineUrl);
   }
 
   function searchWithEngine(engine: RelatedSearchEngine) {
@@ -165,7 +159,11 @@
   function getSelectedEngine() {
     return (
       data.engines.find((engine) => engine.engineUrl === selectedEngineUrl) ??
-      data.engines[0]
+      resolveEngineByDomain(
+        data.engines,
+        location.hostname,
+        data.matchedEngine,
+      )
     );
   }
 
@@ -261,16 +259,6 @@
       };
     } catch {
       return null;
-    }
-  }
-
-  function getEngineHost(engine: Pick<RelatedSearchEngine, "engineUrl">) {
-    try {
-      return new URL(engine.engineUrl.replace("%s", "search")).hostname
-        .toLowerCase()
-        .replace(/^www\./, "");
-    } catch {
-      return "unknown";
     }
   }
 
