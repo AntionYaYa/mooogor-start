@@ -63,12 +63,6 @@
                     <Icon name="Loading" color="var(--c-text)" />
                 </G>
             </div>
-        {:else if commonSites.length === 0}
-            <div class="select_item">
-                <G>
-                    <T type="s" color="var(--c-text-1)">{t("nt_settings_empty")}</T>
-                </G>
-            </div>
         {:else}
             {#each commonSites as site (site.id)}
                 <div

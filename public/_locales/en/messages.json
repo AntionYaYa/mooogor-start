@@ -9,7 +9,7 @@
     "message": "New Tab"
   },
   "nt_tab_common": {
-    "message": "Start"
+    "message": "Common Sites"
   },
   "nt_tab_bookmarks": {
     "message": "Bookmarks"
@@ -99,7 +99,7 @@
     "message": "Other"
   },
   "nt_settings_other_section_title": {
-    "message": "Other Settings"
+    "message": "Other"
   },
   "nt_settings_new_tab_open": {
     "message": "Open links in a new tab"
@@ -120,7 +120,7 @@
     "message": "Search History"
   },
   "nt_settings_search_remember_engine_category": {
-    "message": "Remember search engine category"
+    "message": "Remember selected category"
   },
   "nt_settings_search_remember_engine_category_tip": {
     "message": "Keep the last selected category next time Quick Search opens"
@@ -135,19 +135,19 @@
     "message": "Are you sure you want to restore search engines to their initial state? This will remove all custom search engines and categories, and cannot be undone."
   },
   "nt_settings_common_reset_confirm": {
-    "message": "Restore pinned shortcuts to their initial state? This will remove all custom pinned shortcuts and cannot be undone."
+    "message": "Restore Common Sites to their initial state? This will remove all custom Common Sites and cannot be undone."
   },
   "nt_confirm_delete_common_sites_title": {
-    "message": "Delete pinned shortcuts"
+    "message": "Delete Common Sites"
   },
   "nt_settings_common_delete_sites_confirm": {
-    "message": "Delete the selected $1 pinned shortcuts? This cannot be undone."
+    "message": "Delete the selected $1 Common Sites? This cannot be undone."
   },
   "nt_settings_websites_title": {
     "message": "Websites"
   },
   "nt_manage_common": {
-    "message": "Start"
+    "message": "Common Sites"
   },
   "nt_manage_bookmarks": {
     "message": "Manage Bookmarks"
@@ -272,9 +272,6 @@
   "nt_settings_title": {
     "message": "Settings"
   },
-  "nt_settings_empty": {
-    "message": "No configurable items in this section yet."
-  },
   "nt_lang_auto": {
     "message": "Follow system"
   },
@@ -288,7 +285,7 @@
     "message": "English"
   },
   "nt_default_common": {
-    "message": "Start"
+    "message": "Common Sites"
   },
   "nt_default_bookmark": {
     "message": "Bookmarks"
@@ -327,22 +324,22 @@
     "message": "All time"
   },
   "nt_add_to_pinned": {
-    "message": "Pin to Start"
+    "message": "Add to Common Sites"
   },
   "nt_no_pinned": {
-    "message": "No pinned shortcuts yet"
+    "message": "No Common Sites yet"
   },
   "nt_no_pinned_desc": {
-    "message": "Click + in the top-left to add a pinned shortcut, or right-click in Bookmarks, History, or Smart Frequent Sites to pin one."
+    "message": "Click + in the top-left to add a Common Site, or right-click in Bookmarks, History, or Frequent Sites to add one."
   },
   "nt_pinned_section": {
-    "message": "Pinned Shortcuts"
+    "message": "Common Sites"
   },
   "nt_frequent_section": {
-    "message": "Smart Frequent Sites"
+    "message": "Frequent Sites"
   },
   "nt_enable_frequent_sites": {
-    "message": "Enable Smart Frequent Sites"
+    "message": "Enable Frequent Sites"
   },
   "nt_frequent_permission_hint": {
     "message": "Authorize history access to automatically show high-frequency sites from the last 30 days."
@@ -351,10 +348,10 @@
     "message": "No frequent sites from the last 30 days yet."
   },
   "nt_frequent_info_title": {
-    "message": "How Smart Frequent Sites Works"
+    "message": "How Frequent Sites Works"
   },
   "nt_frequent_info_desc": {
-    "message": "Smart Frequent Sites reads browsing history from the last 30 days and only counts http and https websites.\nPages from the same domain are merged into one shortcut, and already pinned shortcuts are filtered out.\nRanking mainly uses visit count, with recent visit time as a smaller boost, so high-frequency and recently used sites appear first."
+    "message": "Frequent Sites reads browsing history from the last 30 days and only counts http and https websites.\nPages from the same domain are merged into one shortcut, and sites already in Common Sites are filtered out.\nRanking mainly uses visit count, with recent visit time as a smaller boost, so high-frequency and recently used sites appear first."
   },
   "nt_no_bookmarks": {
     "message": "No bookmarks yet"
@@ -366,19 +363,19 @@
     "message": "Delete"
   },
   "nt_add_pinned_title": {
-    "message": "Add Pinned Shortcut"
+    "message": "Add Common Site"
   },
   "nt_popup_open_newtab": {
     "message": "Open new tab"
   },
   "nt_popup_add_to_common": {
-    "message": "Pin this site to Start"
+    "message": "Add this site to Common Sites"
   },
   "nt_popup_add": {
     "message": "Add"
   },
   "nt_edit_pinned_title": {
-    "message": "Edit Pinned Shortcut"
+    "message": "Edit Common Site"
   },
   "nt_input_url": {
     "message": "*URL"
@@ -405,7 +402,7 @@
     "message": "Reset Search Engines"
   },
   "nt_confirm_reset_common_sites_title": {
-    "message": "Reset Pinned Shortcuts"
+    "message": "Reset Common Sites"
   },
   "nt_confirm_delete_search_category_title": {
     "message": "Delete Search Category"

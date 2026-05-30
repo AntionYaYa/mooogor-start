@@ -9,7 +9,7 @@
     "message": "新分頁"
   },
   "nt_tab_common": {
-    "message": "常用"
+    "message": "常用網站"
   },
   "nt_tab_bookmarks": {
     "message": "書籤"
@@ -99,7 +99,7 @@
     "message": "其他"
   },
   "nt_settings_other_section_title": {
-    "message": "其他設定"
+    "message": "其他"
   },
   "nt_settings_new_tab_open": {
     "message": "在新分頁開啟連結"
@@ -120,10 +120,10 @@
     "message": "搜尋歷史記錄"
   },
   "nt_settings_search_remember_engine_category": {
-    "message": "記住搜尋引擎分類"
+    "message": "記住所選分類"
   },
   "nt_settings_search_remember_engine_category_tip": {
-    "message": "開啟後，下次開啟會保留上次切換的分類"
+    "message": "開啟後，打開時會保留上次選擇的分類"
   },
   "nt_settings_search_engines_title": {
     "message": "搜尋引擎管理"
@@ -135,19 +135,19 @@
     "message": "確定要將搜尋引擎恢復至初始狀態嗎？此操作將清除所有自訂的搜尋引擎和分類，且無法復原。"
   },
   "nt_settings_common_reset_confirm": {
-    "message": "確定要將固定入口恢復至初始狀態嗎？此操作將清除所有自訂固定入口，且無法復原。"
+    "message": "確定要將常用網站恢復至初始狀態嗎？此操作將清除所有自訂常用網站，且無法復原。"
   },
   "nt_confirm_delete_common_sites_title": {
-    "message": "刪除固定入口"
+    "message": "刪除常用網站"
   },
   "nt_settings_common_delete_sites_confirm": {
-    "message": "確定要刪除已選的 $1 個固定入口嗎？此操作無法復原。"
+    "message": "確定要刪除已選的 $1 個常用網站嗎？此操作無法復原。"
   },
   "nt_settings_websites_title": {
     "message": "網站"
   },
   "nt_manage_common": {
-    "message": "常用"
+    "message": "常用網站"
   },
   "nt_manage_bookmarks": {
     "message": "书签管理"
@@ -272,9 +272,6 @@
   "nt_settings_title": {
     "message": "設定"
   },
-  "nt_settings_empty": {
-    "message": "目前分類暫無可設定項目"
-  },
   "nt_lang_auto": {
     "message": "跟隨系統"
   },
@@ -288,7 +285,7 @@
     "message": "English"
   },
   "nt_default_common": {
-    "message": "常用"
+    "message": "常用網站"
   },
   "nt_default_bookmark": {
     "message": "書籤"
@@ -327,22 +324,22 @@
     "message": "所有時間"
   },
   "nt_add_to_pinned": {
-    "message": "固定到常用"
+    "message": "加入常用網站"
   },
   "nt_no_pinned": {
-    "message": "暫無固定入口"
+    "message": "暫無常用網站"
   },
   "nt_no_pinned_desc": {
-    "message": "點擊左上角的+新增固定入口，也可以在書籤、歷史記錄或智能常訪問裡右鍵固定。"
+    "message": "點擊左上角的+新增常用網站，也可以在書籤、歷史記錄或常用網站裡右鍵加入。"
   },
   "nt_pinned_section": {
-    "message": "固定入口"
+    "message": "常用網站"
   },
   "nt_frequent_section": {
-    "message": "智能常訪問"
+    "message": "常用網站"
   },
   "nt_enable_frequent_sites": {
-    "message": "開啟智能常訪問"
+    "message": "開啟常用網站"
   },
   "nt_frequent_permission_hint": {
     "message": "授權歷史記錄後，會根據最近 30 天自動顯示高頻網站。"
@@ -351,10 +348,10 @@
     "message": "最近 30 天暫無可顯示的常訪問網站。"
   },
   "nt_frequent_info_title": {
-    "message": "智能常訪問如何計算"
+    "message": "常用網站如何計算"
   },
   "nt_frequent_info_desc": {
-    "message": "智能常訪問會讀取最近 30 天的瀏覽歷史，只統計 http 和 https 網站。\n同一個網域會合併為一個入口，並過濾掉已經固定的入口。\n排序會優先考慮訪問次數，最近訪問時間會作為輔助權重，讓高頻且近期訪問的網站更靠前。"
+    "message": "常用網站會讀取最近 30 天的瀏覽歷史，只統計 http 和 https 網站。\n同一個網域會合併為一個入口，並過濾掉已經加入常用網站的網站。\n排序會優先考慮訪問次數，最近訪問時間會作為輔助權重，讓高頻且近期訪問的網站更靠前。"
   },
   "nt_no_bookmarks": {
     "message": "還沒有書籤哦～"
@@ -366,19 +363,19 @@
     "message": "刪除"
   },
   "nt_add_pinned_title": {
-    "message": "新增固定入口"
+    "message": "新增常用網站"
   },
   "nt_popup_open_newtab": {
     "message": "開啟新分頁"
   },
   "nt_popup_add_to_common": {
-    "message": "固定此網站到常用"
+    "message": "加入此網站到常用網站"
   },
   "nt_popup_add": {
     "message": "添加"
   },
   "nt_edit_pinned_title": {
-    "message": "編輯固定入口"
+    "message": "編輯常用網站"
   },
   "nt_input_url": {
     "message": "*網址"
@@ -405,7 +402,7 @@
     "message": "恢復預設搜尋引擎"
   },
   "nt_confirm_reset_common_sites_title": {
-    "message": "恢復預設固定入口"
+    "message": "恢復預設常用網站"
   },
   "nt_confirm_delete_search_category_title": {
     "message": "刪除搜尋分類"

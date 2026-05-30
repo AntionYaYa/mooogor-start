@@ -500,7 +500,6 @@
     margin: 0;
     border-radius: var(--r1);
     -webkit-user-drag: none;
-    background-color: var(--c-mask);
     flex: 1;
   }
   a.ctx {
@@ -519,8 +518,13 @@
     margin: 0;
     padding: var(--gap);
     border-radius: var(--r1);
-    background-color: var(--c-mask);
     cursor: default;
+  }
+  a:hover {
+    background-color: var(--c-mask);
+  }
+  .folder_card:hover {
+    background-color: var(--c-mask);
   }
   a:active,
   .folder_card:active {

@@ -49,7 +49,6 @@
   let bookmarksPermission = $state(false);
   let currentNode: BookmarkNode | undefined = $state();
   let historyStack: BookmarkNode[] = $state([]);
-  $inspect(historyStack);
   let historyPermission = $state(false);
   let commonListView = $state(true);
   let gridView = $state(false);

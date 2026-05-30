@@ -1,7 +1,5 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte";
-    import { flip } from "svelte/animate";
-    import { dndzone } from "svelte-dnd-action";
     import type { DndEvent } from "svelte-dnd-action";
     import { fly, slide } from "svelte/transition";
     import G from "./components/G.svelte";
@@ -31,10 +29,9 @@
     import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
     import { t } from "@/lib/utils/i18n";
     import Icon from "./components/Icon.svelte";
+    import type { IconName } from "@/lib/components/Icon.svelte";
     import Button from "./components/Button.svelte";
     import Checkbox from "./components/Checkbox.svelte";
-    import BkmkIcon from "./BkmkIcon.svelte";
-    import EngineIcon from "./EngineIcon.svelte";
     import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
     import {
         deleteCommonSiteEntry,
@@ -131,11 +128,9 @@
     let lockNewTabOpenSwitch = $derived(currentTabPinned);
     type SettingsPage =
         | "root"
-        | "searchScope"
         | "searchEngines"
         | "common"
-        | "history"
-        | "other";
+        | "history";
     let settingPage = $state<SettingsPage>("root");
     let searchSettingsExpanded = $state(true);
     let websiteSettingsExpanded = $state(true);
@@ -176,10 +171,9 @@
         settingEngineCategories.flatMap((category) =>
             !expandedCategoryIds.has(category.id)
                 ? []
-                :
-            (settingEngineGroups[category.id] ?? []).flatMap((engine) =>
-                engine.id ? [engine.id] : [],
-            ),
+                : (settingEngineGroups[category.id] ?? []).flatMap((engine) =>
+                      engine.id ? [engine.id] : [],
+                  ),
         ),
     );
     let selectedSearchEngineCount = $derived(selectedSearchEngineIds.size);
@@ -373,13 +367,11 @@
     }
 
     function getSettingPageTitle() {
-        if (settingPage === "searchScope") return t("nt_settings_search_scope");
         if (settingPage === "searchEngines") {
             return t("nt_settings_search_engines_title");
         }
         if (settingPage === "common") return t("nt_tab_common");
         if (settingPage === "history") return t("nt_tab_history");
-        if (settingPage === "other") return t("nt_settings_other_title");
         return t("nt_settings_title");
     }
 
@@ -1062,8 +1054,6 @@
                     >
                         {#if settingPage === "root"}
                             {@render temSettingRoot()}
-                        {:else if settingPage === "searchScope"}
-                            {@render temSettingSearchScope()}
                         {:else if settingPage === "searchEngines"}
                             <SettingsSearchEnginesSection
                                 {settingEnginesLoading}
@@ -1092,10 +1082,6 @@
                                 onEdit={openEditCommonSiteEditor}
                                 onToggleSelected={toggleCommonSiteSelected}
                             />
-                        {:else if settingPage === "history"}
-                            {@render temSettingHistory()}
-                        {:else}
-                            {@render temSettingOther()}
                         {/if}
                     </div>
                 {/key}
@@ -1291,8 +1277,7 @@
               ? resetCommonSitesToDefaultConfirm
               : undefined}
         skipTabFocus={!(
-            settingPage === "searchEngines" ||
-            settingPage === "common"
+            settingPage === "searchEngines" || settingPage === "common"
         )}
     >
         <G>
@@ -1312,24 +1297,31 @@
     <div class="setting_con">
         {@render temCollapsibleSection(
             t("nt_settings_search_title"),
+            'Search',
             searchSettingsExpanded,
             () => (searchSettingsExpanded = !searchSettingsExpanded),
             temSearchSettingsGroup,
         )}
-
-        <Divider />
+        <G full>
+            <Divider />
+        </G>
 
         {@render temCollapsibleSection(
             t("nt_settings_websites_title"),
+            'Globe',
             websiteSettingsExpanded,
             () => (websiteSettingsExpanded = !websiteSettingsExpanded),
             temWebsiteSettingsGroup,
         )}
 
-        <Divider />
+       <G full>
+            <Divider />
+        </G>
+
 
         {@render temCollapsibleSection(
             t("nt_settings_other_section_title"),
+            'Bolt',
             otherSettingsExpanded,
             () => (otherSettingsExpanded = !otherSettingsExpanded),
             temOtherSettingsGroup,
@@ -1338,9 +1330,6 @@
 {/snippet}
 
 {#snippet temSearchSettingsGroup()}
-    {@render temEntranceItem(t("nt_settings_search_scope"), () =>
-        openSettingPage("searchScope"),
-    )}
     {@render temEntranceItem(t("nt_settings_search_engines_title"), () =>
         openSettingPage("searchEngines"),
     )}
@@ -1351,14 +1340,38 @@
         userSettings.rememberSearchEngineCategory,
         setRememberSearchEngineCategory,
     )}
+    {@render temswithcItem(
+        t("nt_settings_search_scope"),
+        t("nt_settings_search_bookmarks"),
+        undefined,
+        userSettings.searchBookmarks,
+        setSearchBookmarks,
+    )}
+    {@render temswithcItem(
+        undefined,
+        t("nt_settings_search_history"),
+        undefined,
+        userSettings.searchHistory,
+        setSearchHistory,
+    )}
 {/snippet}
 
 {#snippet temWebsiteSettingsGroup()}
     {@render temEntranceItem(t("nt_manage_common"), () =>
         openSettingPage("common"),
     )}
-    {@render tembuttonItem(t("nt_manage_bookmarks"), openBookmarksManager, "", true)}
-    {@render tembuttonItem(t("nt_manage_history"), openHistoryManager, "", true)}
+    {@render tembuttonItem(
+        t("nt_manage_bookmarks"),
+        openBookmarksManager,
+        "",
+        true,
+    )}
+    {@render tembuttonItem(
+        t("nt_manage_history"),
+        openHistoryManager,
+        "",
+        true,
+    )}
     {@render temselectItem(
         t("nt_settings_default_open"),
         openPosOptions,
@@ -1376,82 +1389,58 @@
 
 {#snippet temOtherSettingsGroup()}
     {@render temselectItem(t("nt_settings_theme"), themeOptions, setTheme)}
-    {@render temselectItem(t("nt_settings_language"), languageOptions, setLanguage)}
-    {@render temEntranceItem(t("nt_settings_other_title"), () =>
-        openSettingPage("other"),
+    {@render temselectItem(
+        t("nt_settings_language"),
+        languageOptions,
+        setLanguage,
     )}
-{/snippet}
-
-{#snippet temSettingSearchScope()}
-    <div class="setting_con">
-        {@render temswithcItem(
-            t("nt_settings_search_scope"),
-            t("nt_settings_search_bookmarks"),
-            undefined,
-            userSettings.searchBookmarks,
-            setSearchBookmarks,
-        )}
-        {@render temswithcItem(
-            undefined,
-            t("nt_settings_search_history"),
-            undefined,
-            userSettings.searchHistory,
-            setSearchHistory,
-        )}
-    </div>
-{/snippet}
-
-{#snippet temSectionTitle(text: string)}
-    <div class="section_title">
-        <T type="s" color="var(--c-text-1)">{text}</T>
-    </div>
+    {@render tembuttonItem(
+        t("nt_settings_about"),
+        onclickAbout,
+        t("nt_settings_other_title"),
+    )}
+    {@render tembuttonItem(t("nt_about_support_button"), onclickSupport)}
 {/snippet}
 
 {#snippet temCollapsibleSection(
     title: string,
+    iconName: IconName,
     expanded: boolean,
     onToggle: () => void,
     content: any,
 )}
     <div class="collapsible_section">
+     <G full >
         <Button full onclick={onToggle}>
-            <G full align="c">
-                <G full>
-                    <T type="s" color="var(--c-text-1)">{title}</T>
+                <G full align="c">
+                    <Icon
+                        name={iconName}
+                        color="var(--c-text)"
+                        size={16}
+                        opacity={0.6}
+                    />
+                    <T type="m" color="var(--c-text-1)">{title}</T>
                 </G>
                 <G>
                     <Icon
                         name={expanded ? "ChevronDown" : "ChevronRight"}
-                        color="var(--c-text-1)"
-                        opacity={0.8}
+                        color="var(--c-text)"
+                        opacity={0.6}
                     />
                 </G>
-            </G>
         </Button>
+     </G>
         {#if expanded}
-            <div class="collapsible_content" transition:slide={{ duration: 160 }}>
+            <div
+                class="collapsible_content"
+                transition:slide={{ duration: 200 }}
+            >
                 {@render content()}
             </div>
         {/if}
     </div>
 {/snippet}
 
-{#snippet temSettingHistory()}
-    <div class="setting_con">
-        {@render temEmptyItem()}
-    </div>
-{/snippet}
-
-{#snippet temSettingOther()}
-    <div class="setting_con">
-        {@render tembuttonItem(
-            t("nt_settings_about"),
-            onclickAbout,
-            t("nt_settings_other_title"),
-        )}
-        {@render tembuttonItem(t("nt_about_support_button"), onclickSupport)}
-    </div>
-{/snippet}
 
 {#snippet temEntranceItem(text: string, onChange: () => void, title?: string)}
     <div class="select_item">
@@ -1477,13 +1466,6 @@
     </div>
 {/snippet}
 
-{#snippet temEmptyItem()}
-    <div class="select_item">
-        <G>
-            <T type="s" color="var(--c-text-1)">{t("nt_settings_empty")}</T>
-        </G>
-    </div>
-{/snippet}
 
 {#snippet tembuttonItem(
     text: string,
@@ -1568,18 +1550,12 @@
         padding: var(--gap);
         /* gap: var(--gap); */
     }
-    .section_title {
-        display: flex;
-        width: 100%;
-        box-sizing: border-box;
-        padding: calc(var(--gap) * 1.5) var(--gap) 0;
-    }
     .collapsible_section {
         display: flex;
         flex-direction: column;
         width: 100%;
         box-sizing: border-box;
-        padding: calc(var(--gap) * 1.5) var(--gap) 0;
+        padding: var(--gap);
     }
     .collapsible_content {
         display: flex;
@@ -1729,7 +1705,7 @@
         position: relative;
         width: 290px;
     }
-    .title_center{
+    .title_center {
         display: flex;
         flex-direction: column;
         width: 100%;

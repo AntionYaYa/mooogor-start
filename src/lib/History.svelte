@@ -39,6 +39,7 @@
   let showClearDialog = $state(false);
   let handledClearRequestKey = $state(0);
   let pageEl: HTMLElement | undefined = $state();
+  let stuckHistoryGroupKeys = $state<Set<string>>(new Set());
 
   let currentHistory: HistoryItem | undefined = $state();
   let showMenu = $state(false);
@@ -249,6 +250,54 @@
     return pageEl.scrollHeight > scrollContainer.clientHeight;
   }
 
+  function setHistoryGroupStuck(key: string, stuck: boolean) {
+    const next = new Set(stuckHistoryGroupKeys);
+    if (stuck) {
+      next.add(key);
+    } else {
+      next.delete(key);
+    }
+    stuckHistoryGroupKeys = next;
+  }
+
+  function trackStickyTitle(node: HTMLElement, key: string) {
+    const scrollContainer = pageEl?.closest(".tabs_contents");
+    const root = scrollContainer instanceof HTMLElement ? scrollContainer : window;
+    let groupKey = key;
+    let frame = 0;
+
+    const updateStuckState = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const groupRect = node.parentElement?.getBoundingClientRect();
+        const titleRect = node.getBoundingClientRect();
+        setHistoryGroupStuck(
+          groupKey,
+          !!groupRect && titleRect.top > groupRect.top + 0.5,
+        );
+      });
+    };
+
+    root.addEventListener("scroll", updateStuckState, { passive: true });
+    window.addEventListener("resize", updateStuckState);
+    updateStuckState();
+
+    return {
+      update(nextKey: string) {
+        if (nextKey === groupKey) return;
+        setHistoryGroupStuck(groupKey, false);
+        groupKey = nextKey;
+        updateStuckState();
+      },
+      destroy() {
+        cancelAnimationFrame(frame);
+        root.removeEventListener("scroll", updateStuckState);
+        window.removeEventListener("resize", updateStuckState);
+        setHistoryGroupStuck(groupKey, false);
+      },
+    };
+  }
+
   async function ensureFirstScreenFilled() {
     let guard = 0;
     const maxBatches = 8;
@@ -376,7 +425,11 @@
 
 {#snippet temHistoryGroup(group: HistoryGroup)}
   <div class="history_group">
-    <div class="history_group_title">
+    <div
+      class="history_group_title"
+      class:history_group_title_stuck={stuckHistoryGroupKeys.has(group.key)}
+      use:trackStickyTitle={group.key}
+    >
       <T type="s">{group.label}</T>
     </div>
     {#each group.items as history}
@@ -394,14 +447,14 @@
     oncontextmenu={(e) => showContextMenu(e, history)}
     class:ctx={showMenu && currentHistory === history}
   >
-    <G align="c">
-      <T type="s" nowrap color="var(--c-text-1)">{formatHistoryTime(history)}</T>
-    </G>
+  
     <G full align="c" gap>
       <BkmkIcon imgUrl={history.url} alt={history.title ?? ""} size="s" />
       <T type="m" bold nowrap>{getHistoryTitle(history)}</T>
     </G>
-  
+    <G align="c">
+      <T type="s" nowrap color="var(--c-text-1)">{formatHistoryTime(history)}</T>
+    </G>
   </a>
 {/snippet}
 
@@ -435,8 +488,12 @@
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
-    backdrop-filter: var(--bg-blur);
+    isolation: isolate;
     border-radius: var(--r);
+    transition: background-color 0.16s ease;
+  }
+  .history_group_title_stuck {
+    background-color: var(--c-bg1);
   }
   .item {
     display: flex;
@@ -448,6 +505,8 @@
     padding: var(--gap);
     border-radius: var(--r);
     cursor: default;
+  }
+  .item:hover {
     background-color: var(--c-mask);
   }
   .item.ctx {

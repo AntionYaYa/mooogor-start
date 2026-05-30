@@ -21,6 +21,7 @@
   import { t } from "@/lib/utils/i18n";
   import Icon from "./components/Icon.svelte";
   import Popup from "./components/Popup.svelte";
+  import Divider from "./components/Divider.svelte";
 
   interface Props {
     allPinneds: WebSite[] | [];
@@ -54,6 +55,8 @@
   let showPinnedMenu = $state(false);
   let showFrequentMenu = $state(false);
   let showFrequentInfo = $state(false);
+  let pageEl: HTMLElement | undefined = $state();
+  let frequentTitleStuck = $state(false);
 
   const fixedDomains = $derived.by(() => {
     return new Set(
@@ -62,9 +65,6 @@
   });
   const filteredFrequentSites = $derived.by(() => {
     return frequentSites.filter((site) => !fixedDomains.has(site.domain));
-  });
-  const hasAnySites = $derived.by(() => {
-    return allPinneds.length > 0 || filteredFrequentSites.length > 0;
   });
 
   function showContextMenu(e: MouseEvent, pinned: WebSite) {
@@ -146,14 +146,55 @@
     currentFrequent = undefined;
     onUpdate();
   }
+
+  function trackStickyFrequentTitle(node: HTMLElement) {
+    const scrollContainer = node.closest(".tabs_contents");
+    const root = scrollContainer instanceof HTMLElement ? scrollContainer : window;
+    let frame = 0;
+
+    const updateStuckState = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const sentinel = node.previousElementSibling;
+        if (!(sentinel instanceof HTMLElement)) {
+          frequentTitleStuck = false;
+          return;
+        }
+        const stickyTop = Number.parseFloat(getComputedStyle(node).top) || 0;
+        const rootTop =
+          scrollContainer instanceof HTMLElement
+            ? scrollContainer.getBoundingClientRect().top
+            : 0;
+        const scrollTop =
+          scrollContainer instanceof HTMLElement
+            ? scrollContainer.scrollTop
+            : window.scrollY;
+        const titleNormalTop =
+          sentinel.getBoundingClientRect().bottom - rootTop + scrollTop;
+        frequentTitleStuck = scrollTop > titleNormalTop - stickyTop + 0.5;
+      });
+    };
+
+    root.addEventListener("scroll", updateStuckState, { passive: true });
+    window.addEventListener("resize", updateStuckState);
+    updateStuckState();
+
+    return {
+      destroy() {
+        cancelAnimationFrame(frame);
+        root.removeEventListener("scroll", updateStuckState);
+        window.removeEventListener("resize", updateStuckState);
+        frequentTitleStuck = false;
+      },
+    };
+  }
 </script>
 
-<div class="page">
-  {#if hasAnySites}
+<div class="page" bind:this={pageEl}>
     {#if allPinneds.length}
       <section class="section">
         <div
-          class="content fixed_content grid {isdarging ? 'drag' : ''}"
+          class="content grid {isdarging ? 'drag' : ''}"
           use:dndzone={{
             items: allPinneds,
             flipDurationMs: 200,
@@ -186,68 +227,90 @@
           {/each}
         </div>
       </section>
-    {/if}
-
-    {#if filteredFrequentSites.length}
-      <section class="section">
-        <div class="section_head">
-          <T type="s" color="var(--c-text-1)">{t("nt_frequent_section")}</T>
-          <Button
-            onclick={() => (showFrequentInfo = true)}
-            title={t("nt_frequent_info_title")}
-          >
-            <G>
-              <Icon name="Info" color="var(--c-text)" opacity={0.6} size={16} />
-            </G>
-          </Button>
-        </div>
-        <div class="content {list ? 'list' : 'grid'}">
-          {#each filteredFrequentSites as site (site.domain)}
-            <div class="item" class:list_item={list}>
-              <a
-                href={site.url}
-                target={newTabOpen ? "_blank" : "_self"}
-                rel={newTabOpen ? "noreferrer" : undefined}
-                class:list_link={list}
-                class:ctx={showFrequentMenu &&
-                  currentFrequent?.domain === site.domain}
-                oncontextmenu={(e) => showFrequentContextMenu(e, site)}
-              >
-                {#if list}
-                  <G>
-                    <BkmkIcon imgUrl={site.url} alt={site.title} size="s" />
-                  </G>
-                  <G full align="c">
-                    <T nowrap type="m" bold>{site.title}</T>
-                  </G>
-                  <G align="c">
-                    <Icon
-                      name="Eye"
-                      color="var(--c-text)"
-                      opacity={0.6}
-                      size={16}
-                    />
-                    <T type="s" nowrap>{site.visitCount}</T>
-                  </G>
-                {:else}
-                  <BkmkIcon imgUrl={site.url} alt={site.title} size="l" />
-                {/if}
-              </a>
-              {#if !list}
-                <T nowrap align="c" type="s">{site.title}</T>
-              {/if}
-            </div>
-          {/each}
-        </div>
-      </section>
-    {/if}
-  {:else}
+        {:else}
     <NoData
       iconName="Sprout"
       title={t("nt_no_pinned")}
       text={t("nt_no_pinned_desc")}
     />
-  {/if}
+    {/if}
+
+    {#if filteredFrequentSites.length}
+      <section class="section">
+        <G full>
+          <Divider />
+        </G>
+        <div class="frequent_section_body">
+          <div class="frequent_title_sentinel"></div>
+          <div
+            class="frequent_section_title"
+            class:frequent_section_title_stuck={frequentTitleStuck}
+            use:trackStickyFrequentTitle
+          >
+            <G full>
+              <Icon
+                name="Sparkles"
+                color="var(--c-text)"
+                opacity={0.6}
+                size={16}
+              />
+              <T type="m" color="var(--c-text-1)">{t("nt_frequent_section")}</T>
+            </G>
+            <Button
+              onclick={() => (showFrequentInfo = true)}
+              title={t("nt_frequent_info_title")}
+            >
+              <G>
+                <Icon
+                  name="Info"
+                  color="var(--c-text)"
+                  opacity={0.6}
+                  size={16}
+                />
+              </G>
+            </Button>
+          </div>
+          <div class="content {list ? 'list' : 'grid'}">
+            {#each filteredFrequentSites as site (site.domain)}
+              <div class="item" class:list_item={list}>
+                <a
+                  href={site.url}
+                  target={newTabOpen ? "_blank" : "_self"}
+                  rel={newTabOpen ? "noreferrer" : undefined}
+                  class:list_link={list}
+                  class:ctx={showFrequentMenu &&
+                    currentFrequent?.domain === site.domain}
+                  oncontextmenu={(e) => showFrequentContextMenu(e, site)}
+                >
+                  {#if list}
+                    <G>
+                      <BkmkIcon imgUrl={site.url} alt={site.title} size="s" />
+                    </G>
+                    <G full align="c">
+                      <T nowrap type="m" bold>{site.title}</T>
+                    </G>
+                    <G align="c">
+                      <T type="s" nowrap>{site.visitCount}</T>
+                      <Icon
+                        name="Eye"
+                        color="var(--c-text)"
+                        opacity={0.6}
+                        size={16}
+                      />
+                    </G>
+                  {:else}
+                    <BkmkIcon imgUrl={site.url} alt={site.title} size="l" />
+                  {/if}
+                </a>
+                {#if !list}
+                  <T nowrap align="c" type="s">{site.title}</T>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        </div>
+      </section>
+    {/if}
 </div>
 
 {#if showAdd}
@@ -303,7 +366,9 @@
     onclickClose={() => (showFrequentInfo = false)}
   >
     <div class="info_body">
-      <T type="s">{t("nt_frequent_info_desc")}</T>
+      <T type="s" color="var(--c-text)">
+        {t("nt_frequent_info_desc")}
+      </T>
     </div>
   </Popup>
 {/if}
@@ -319,18 +384,8 @@
   .section {
     display: flex;
     flex-direction: column;
-    gap: var(--gap);
     width: 100%;
     box-sizing: border-box;
-  }
-  .section_head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--gap);
-    width: 100%;
-    box-sizing: border-box;
-    padding: 0 var(--gap);
   }
   .item {
     display: flex;
@@ -349,8 +404,33 @@
     box-sizing: border-box;
     border-radius: var(--r1);
   }
-  .fixed_content {
-    border: 2px solid var(--c-mask);
+  .frequent_section_body {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--gap);
+  }
+  .frequent_title_sentinel {
+    width: 100%;
+    height: 1px;
+    margin-bottom: -1px;
+    pointer-events: none;
+  }
+  .frequent_section_title {
+    position: sticky;
+    top: calc(var(--gap) * -1);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--gap);
+    border-radius: var(--r);
+    transition: background-color 0.16s ease;
+  }
+  .frequent_section_title_stuck {
+    background-color: var(--c-bg1);
   }
   .drag {
     border-style: dashed;
@@ -390,9 +470,10 @@
     align-items: center;
     padding: var(--gap);
     box-sizing: border-box;
+  }
+   a:hover {
     background-color: var(--c-mask);
   }
-
   a:focus-visible {
     outline: var(--c-text) 2px solid;
   }

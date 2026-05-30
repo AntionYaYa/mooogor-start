@@ -1,6 +1,66 @@
 <script lang="ts">
-	import { SquareDashed, Settings2,X,Plus,ChevronDown,ChevronUp, ChevronRight,History,Bookmark,Sprout,Eye,Check,ArrowUpRight,Grid2x2,ChevronLeft,Rows3,GripHorizontal,RotateCcw,Minus,SquarePen,Folder,FolderOpen,Trash2,Info,Coffee} from "@lucide/svelte";
-	export type IconName = "Loading" | "SquareDashed" | "Settings2"|'X'|"Plus"|'ChevronDown'|'ChevronUp'|'ChevronLeft'|'ChevronRight' |'History'|'Bookmark'|'Sprout'|'Eye'|'Check'|'ArrowUpRight'|'Grid2x2'|'Rows3'|'GripHorizontal'|'RotateCcw'|'Minus'|'SquarePen'|'Folder'|'FolderOpen'|'Trash2'|'Info'|'Coffee';
+	import {
+		SquareDashed,
+		Settings2,
+		X,
+		Plus,
+		ChevronDown,
+		ChevronUp,
+		ChevronRight,
+		History,
+		Bookmark,
+		Sprout,
+		Eye,
+		Check,
+		ArrowUpRight,
+		Grid2x2,
+		ChevronLeft,
+		Rows3,
+		GripHorizontal,
+		RotateCcw,
+		Minus,
+		SquarePen,
+		Folder,
+		FolderOpen,
+		Trash2,
+		Info,
+		Coffee,
+		Search,
+		Globe,
+		Bolt,
+		Sparkles,
+	} from "@lucide/svelte";
+	export type IconName =
+		| "Loading"
+		| "SquareDashed"
+		| "Settings2"
+		| "X"
+		| "Plus"
+		| "ChevronDown"
+		| "ChevronUp"
+		| "ChevronLeft"
+		| "ChevronRight"
+		| "History"
+		| "Bookmark"
+		| "Sprout"
+		| "Eye"
+		| "Check"
+		| "ArrowUpRight"
+		| "Grid2x2"
+		| "Rows3"
+		| "GripHorizontal"
+		| "RotateCcw"
+		| "Minus"
+		| "SquarePen"
+		| "Folder"
+		| "FolderOpen"
+		| "Trash2"
+		| "Info"
+		| "Search"
+		| "Globe"
+		| "Bolt"
+		| "Sparkles"
+		| "Coffee";
 
 	interface Props {
 		name?: IconName;
@@ -88,6 +148,18 @@
 	{#if name === "Coffee"}
 		<Coffee {size} {strokeWidth} />
 	{/if}
+	{#if name === "Search"}
+		<Search {size} {strokeWidth} />
+	{/if}
+	{#if name === "Globe"}
+		<Globe {size} {strokeWidth} />
+	{/if}
+	{#if name === "Bolt"}
+		<Bolt {size} {strokeWidth} />
+	{/if}
+	{#if name === "Sparkles"}
+		<Sparkles {size} {strokeWidth} />
+	{/if}
 	{#if name === "Loading"}
 		<svg width="20" height="20" viewBox="0 0 20 20">
 			<circle
@@ -117,7 +189,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding:calc(var(--gap) / 2) ;
+		padding: calc(var(--gap) / 2);
 		border-radius: var(--r-100);
 	}
 </style>
