@@ -103,11 +103,14 @@ async function fetchMessages(
   return (await response.json()) as MessageMap;
 }
 
-export async function setLanguage(language: AppLanguage): Promise<void> {
+async function setLanguageState(
+  language: AppLanguage,
+  persist: boolean,
+): Promise<void> {
   const requestSeq = ++languageRequestSeq;
   const nextLanguage = isLanguage(language) ? language : "auto";
   currentLanguage = nextLanguage;
-  if (typeof localStorage !== "undefined") {
+  if (persist && typeof localStorage !== "undefined") {
     localStorage.setItem(LANGUAGE_KEY, nextLanguage);
   }
   if (nextLanguage === "auto") {
@@ -131,6 +134,14 @@ export async function setLanguage(language: AppLanguage): Promise<void> {
   } catch {
     if (requestSeq !== languageRequestSeq) return;
   }
+}
+
+export async function setLanguage(language: AppLanguage): Promise<void> {
+  await setLanguageState(language, true);
+}
+
+export async function setRuntimeLanguage(language: AppLanguage): Promise<void> {
+  await setLanguageState(language, false);
 }
 
 export function getLanguage(): AppLanguage {

@@ -1,15 +1,15 @@
 <script lang="ts">
   import T from "./components/T.svelte";
   import { getDomainFromUrl, getFavicon } from "../lib/DB/DB";
-  import G from "./components/G.svelte";
 
 
   interface Props {
     alt: string;
     disabled?: boolean;
     engineUrl?: string;
+    src?: string;
   }
-  let { alt, disabled, engineUrl }: Props = $props();
+  let { alt, disabled, engineUrl, src }: Props = $props();
   let localSrc = $state<string | null>(null);
 
   function resolveEngineDomain(url?: string) {
@@ -22,6 +22,11 @@
   }
 
   $effect(() => {
+    if (src) {
+      localSrc = src;
+      return;
+    }
+
     const domain = resolveEngineDomain(engineUrl);
     if (!domain) {
       localSrc = null;

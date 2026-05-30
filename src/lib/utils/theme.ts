@@ -15,6 +15,10 @@ function resolveRandomTheme(): ResolvedTheme {
   return RANDOM_THEME_POOL[index] ?? "default";
 }
 
+export function resolveTheme(theme: AppTheme): ResolvedTheme {
+  return theme === "random" ? resolveRandomTheme() : theme;
+}
+
 function applyResolvedTheme(theme: ResolvedTheme): void {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
@@ -26,9 +30,5 @@ function applyResolvedTheme(theme: ResolvedTheme): void {
 }
 
 export function applyTheme(theme: AppTheme): void {
-  if (theme === "random") {
-    applyResolvedTheme(resolveRandomTheme());
-    return;
-  }
-  applyResolvedTheme(theme);
+  applyResolvedTheme(resolveTheme(theme));
 }

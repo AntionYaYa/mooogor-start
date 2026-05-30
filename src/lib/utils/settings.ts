@@ -77,9 +77,38 @@ function isTheme(value: unknown): value is AppTheme {
   return THEME_VALUES.includes(value as AppTheme);
 }
 
-export async function loadSettings(): Promise<UserSettings> {
+type StorageLike = {
+  get: (keys?: string | string[] | Record<string, unknown> | null) => Promise<Record<string, unknown>>;
+  set: (items: Record<string, unknown>) => Promise<void>;
+};
+
+function getExtensionStorage(): StorageLike | null {
+  const api = (
+    (globalThis as unknown as { browser?: { storage?: { local?: StorageLike } } }).browser ??
+    (globalThis as unknown as { chrome?: { storage?: { local?: StorageLike } } }).chrome
+  );
+  return api?.storage?.local ?? null;
+}
+
+async function loadStoredSettings(): Promise<Partial<UserSettings> | undefined> {
+  const storage = getExtensionStorage();
+  if (storage) {
+    try {
+      const stored = (await storage.get(SETTINGS_KEY))[SETTINGS_KEY];
+      if (stored && typeof stored === "object") {
+        return stored as Partial<UserSettings>;
+      }
+    } catch {
+      // Fall back to IndexedDB for older builds or restricted contexts.
+    }
+  }
+
   const row = await db.settings.get(SETTINGS_KEY);
-  const stored = row?.value as Partial<UserSettings> | undefined;
+  return row?.value as Partial<UserSettings> | undefined;
+}
+
+export async function loadSettings(): Promise<UserSettings> {
+  const stored = await loadStoredSettings();
   return {
     defaultOpen: isDefaultOpen(stored?.defaultOpen)
       ? stored.defaultOpen
@@ -104,5 +133,9 @@ export async function loadSettings(): Promise<UserSettings> {
 }
 
 export async function saveSettings(next: UserSettings): Promise<void> {
-  await db.settings.put({ key: SETTINGS_KEY, value: next });
+  const storage = getExtensionStorage();
+  await Promise.all([
+    db.settings.put({ key: SETTINGS_KEY, value: next }),
+    storage?.set({ [SETTINGS_KEY]: next }) ?? Promise.resolve(),
+  ]);
 }

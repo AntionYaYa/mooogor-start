@@ -222,6 +222,10 @@
 
     const languageChanged = userSettings.language !== next.language;
     const themeChanged = userSettings.theme !== next.theme;
+    const relatedSearchChanged =
+      languageChanged ||
+      themeChanged ||
+      userSettings.injectRelatedSearch !== next.injectRelatedSearch;
     userSettings = next;
     if (themeChanged) {
       applyTheme(next.theme);
@@ -230,9 +234,32 @@
       await Promise.all([saveSettings(next), setLanguage(next.language)]);
       updateTabLabels();
       i18nRenderKey += 1;
+      if (relatedSearchChanged) {
+        await refreshRelatedSearchPanels();
+      }
       return;
     }
     await saveSettings(next);
+    if (relatedSearchChanged) {
+      await refreshRelatedSearchPanels();
+    }
+  }
+
+  async function refreshRelatedSearchPanels() {
+    try {
+      const tabs = await browser.tabs.query({});
+      await Promise.allSettled(
+        tabs.map((tab) =>
+          typeof tab.id === "number"
+            ? browser.tabs.sendMessage(tab.id, {
+                type: "refreshRelatedSearchPanel",
+              })
+            : Promise.resolve(),
+        ),
+      );
+    } catch {
+      // Content pages will refresh naturally on navigation if tab messaging is unavailable.
+    }
   }
 
   function updateTabLabels() {

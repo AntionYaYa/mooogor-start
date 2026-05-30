@@ -131,6 +131,12 @@
   "nt_settings_search_inject_related_tip": {
     "message": "在符合搜尋引擎的網站中顯示快捷搜尋浮窗"
   },
+  "nt_related_search_shortcut_search": {
+    "message": "Shift + Enter 快捷搜尋"
+  },
+  "nt_related_search_shortcut_switch": {
+    "message": "按左/右鍵快捷切換"
+  },
   "nt_settings_search_engines_title": {
     "message": "搜尋引擎管理"
   },

@@ -64,6 +64,7 @@
     const defaultEngines = buildDefaultEngines();
 
     const ENGINE_CATEGORY_KEY = "nt_engine_category";
+    const SELECTED_ENGINE_KEY_PREFIX = "nt_selected_search_engine";
     const SEARCH_KEYS_KEY = "nt_search_keys";
     const MAX_SEARCH_KEYS = 10;
 
@@ -81,6 +82,23 @@
     function clearPersistedSelectedCategoryId() {
         if (typeof localStorage === "undefined") return;
         localStorage.removeItem(ENGINE_CATEGORY_KEY);
+    }
+
+    function getSelectedEngineStorageKey(categoryId = selectedCategoryId) {
+        return `${SELECTED_ENGINE_KEY_PREFIX}:${categoryId || "all"}`;
+    }
+
+    function readSelectedEngineUrl(categoryId = selectedCategoryId) {
+        if (typeof localStorage === "undefined") return "";
+        return localStorage.getItem(getSelectedEngineStorageKey(categoryId)) ?? "";
+    }
+
+    function persistSelectedEngineUrl(
+        engineUrl: string,
+        categoryId = selectedCategoryId,
+    ) {
+        if (typeof localStorage === "undefined") return;
+        localStorage.setItem(getSelectedEngineStorageKey(categoryId), engineUrl);
     }
 
     function readSearchKeys(): string[] {
@@ -130,7 +148,8 @@
     let bookmarksDebounceId: ReturnType<typeof setTimeout> | null = null;
     let historyDebounceId: ReturnType<typeof setTimeout> | null = null;
     let bookmarksLoading = $state(false);
-    let suppressNextEnter = $state(false);
+    let selectedEngineUrl = $state("");
+    let selectedEngineCategoryId = $state("");
     let searchAreaFocused = $state(false);
     let lastSearchScope = $state<string | null>(null);
     let engineConfigReady = $state(false);
@@ -182,8 +201,39 @@
               ),
     );
     let displayPlaceholderEngineTitle = $derived(
-        displayEnabledEngines[0]?.title,
+        getSelectedEngine()?.title ?? displayEnabledEngines[0]?.title,
     );
+
+    $effect(() => {
+        const categoryId = selectedCategoryId || "all";
+        if (!displayEnabledEngines.length) {
+            selectedEngineUrl = "";
+            selectedEngineCategoryId = categoryId;
+            return;
+        }
+        const savedEngineUrl = readSelectedEngineUrl(categoryId);
+        const savedEngine = displayEnabledEngines.find(
+            (engine) => engine.engineUrl === savedEngineUrl,
+        );
+        if (selectedEngineCategoryId !== categoryId) {
+            selectedEngineCategoryId = categoryId;
+            selectedEngineUrl =
+                savedEngine?.engineUrl ??
+                displayEnabledEngines[0]?.engineUrl ??
+                "";
+            return;
+        }
+        if (
+            selectedEngineUrl &&
+            displayEnabledEngines.some(
+                (engine) => engine.engineUrl === selectedEngineUrl,
+            )
+        ) {
+            return;
+        }
+        selectedEngineUrl =
+            savedEngine?.engineUrl ?? displayEnabledEngines[0]?.engineUrl ?? "";
+    });
 
     function openSearchEngineSettings() {
         if (typeof window === "undefined") return;
@@ -508,22 +558,75 @@
         saveSearchKey(keyword);
     }
 
+    function getSelectedEngine() {
+        return (
+            displayEnabledEngines.find(
+                (engine) => engine.engineUrl === selectedEngineUrl,
+            ) ?? displayEnabledEngines[0]
+        );
+    }
+
+    function selectEngine(engine: Engine) {
+        selectedEngineUrl = engine.engineUrl;
+        selectedEngineCategoryId = selectedCategoryId || "all";
+        persistSelectedEngineUrl(engine.engineUrl);
+    }
+
+    function getEngineLink(engineUrl: string) {
+        if (!engineEls) return null;
+        return engineEls.querySelector<HTMLAnchorElement>(
+            `.engine[data-engine-url="${CSS.escape(engineUrl)}"]`,
+        );
+    }
+
+    function getSelectedEngineLink() {
+        return selectedEngineUrl ? getEngineLink(selectedEngineUrl) : null;
+    }
+
+    function getEngineSearchUrl(engine: Engine) {
+        return engine.engineUrl.replace(
+            "%s",
+            encodeURIComponent(normalizeSearchKey(inputValue)),
+        );
+    }
+
+    function openEngineSearch(engine: Engine) {
+        const keyword = normalizeSearchKey(inputValue);
+        if (!keyword) {
+            searchEl?.focus();
+            return;
+        }
+        selectEngine(engine);
+        saveSearchKey(keyword);
+        const url = getEngineSearchUrl(engine);
+        if (newTabOpen) {
+            window.open(url, "_blank", "noreferrer");
+            return;
+        }
+        window.location.href = url;
+    }
+
+    function handleEngineClick(event: MouseEvent, engine: Engine) {
+        selectEngine(engine);
+        const keyword = normalizeSearchKey(inputValue);
+        if (!keyword) {
+            event.preventDefault();
+            searchEl?.focus();
+            return;
+        }
+        submitSearch();
+    }
+
     function inputKey(e: KeyboardEvent) {
         const key = e.key;
         if (isComposing || e.isComposing) return;
-        if (suppressNextEnter && key === "Enter") {
-            suppressNextEnter = false;
-            return;
-        }
-        if (suppressNextEnter && key !== "Enter") {
-            suppressNextEnter = false;
-        }
         if (key === "ArrowUp") {
             return;
         }
         if (key === "ArrowDown") {
             if (!bookmarksResults.length && !historyResults.length) return;
             e.preventDefault();
+            e.stopPropagation();
             const [first] = getResultEls();
             if (first) {
                 first.focus();
@@ -533,23 +636,50 @@
         }
         if (key === "Enter") {
             e.preventDefault();
-            const active = document.activeElement as HTMLElement | null;
-            if (active && listEls?.contains(active)) {
-                (active as HTMLAnchorElement).click();
+            e.stopPropagation();
+            const engine = getSelectedEngine();
+            if (!engine) return;
+            if (e.shiftKey) {
+                openEngineSearch(engine);
                 return;
             }
-            const firstContainer = engineEls?.children[0] as
-                | HTMLElement
-                | undefined;
-            const firstLink = firstContainer?.querySelector(
-                "a.engine",
-            ) as HTMLAnchorElement | null;
-            const target = firstLink ?? firstContainer;
-            if (!target) return;
-            submitSearch();
-            target?.focus();
-            target?.click();
+            getSelectedEngineLink()?.focus();
         }
+    }
+
+    function handleEngineKeydown(e: KeyboardEvent, engine: Engine) {
+        if (e.key === "Enter") {
+            e.stopPropagation();
+            return;
+        }
+        if (e.key === " ") {
+            e.preventDefault();
+            e.stopPropagation();
+            openEngineSearch(engine);
+            return;
+        }
+        if (e.key === "Backspace") {
+            e.preventDefault();
+            e.stopPropagation();
+            searchEl?.focus();
+            return;
+        }
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        const index = displayEnabledEngines.findIndex(
+            (item) => item.engineUrl === engine.engineUrl,
+        );
+        const nextIndex =
+            e.key === "ArrowLeft"
+                ? (index - 1 + displayEnabledEngines.length) %
+                  displayEnabledEngines.length
+                : (index + 1) % displayEnabledEngines.length;
+        const nextEngine = displayEnabledEngines[nextIndex];
+        if (!nextEngine) return;
+        selectEngine(nextEngine);
+        getEngineLink(nextEngine.engineUrl)?.focus();
     }
 
     function handleResultKeydown(e: KeyboardEvent) {
@@ -719,7 +849,6 @@
                         oncompositionstart={() => (isComposing = true)}
                         oncompositionend={(e) => {
                             isComposing = false;
-                            suppressNextEnter = true;
                             searchInput(
                                 (e.currentTarget as HTMLInputElement).value,
                             );
@@ -727,7 +856,7 @@
                         onfocus={handleInputFocus}
                         onblur={handleInputBlur}
                         oninput={() => searchInput(inputValue)}
-                        onkeyup={inputKey}
+                        onkeydown={inputKey}
                         autofocus
                     />
                     {#if inputValue.length}
@@ -801,25 +930,32 @@
                 flipDurationMs: 200,
                 type: "engines",
                 zoneTabIndex: -1,
+                zoneItemTabIndex: -1,
                 dropTargetStyle: {},
             }}
             onconsider={handleConsiderEnabled}
             onfinalize={handleFinalizeEnabled}
         >
             {#each displayEnabledEngines as engine (engine.id)}
-                <a
-                    class="engine"
-                    href={engine.engineUrl?.replace("%s", inputValue)}
-                    target={newTabOpen ? "_blank" : "_self"}
-                    rel={newTabOpen ? "noreferrer" : undefined}
-                    onclick={submitSearch}
-                    animate:flip={{ duration: 200 }}
-                >
-                    <EngineIcon
-                        alt={engine.title ?? ""}
-                        engineUrl={engine.engineUrl}
-                    />
-                </a>
+                <div class="engine_item" animate:flip={{ duration: 200 }}>
+                    <a
+                        class="engine"
+                        class:selected={engine.engineUrl === selectedEngineUrl}
+                        data-engine-url={engine.engineUrl}
+                        href={getEngineSearchUrl(engine)}
+                        target={newTabOpen ? "_blank" : "_self"}
+                        rel={newTabOpen ? "noreferrer" : undefined}
+                        onclick={(event) => handleEngineClick(event, engine)}
+                        onfocus={() => selectEngine(engine)}
+                        onkeydown={(event) =>
+                            handleEngineKeydown(event, engine)}
+                    >
+                        <EngineIcon
+                            alt={engine.title ?? ""}
+                            engineUrl={engine.engineUrl}
+                        />
+                    </a>
+                </div>
             {/each}
         </div>
         <Button onclick={clickEditeEngines}>
@@ -845,22 +981,25 @@
                 flipDurationMs: 200,
                 type: "engines",
                 zoneTabIndex: -1,
+                zoneItemTabIndex: -1,
                 dropTargetStyle: {},
             }}
             onconsider={handleConsiderDisabled}
             onfinalize={handleFinalizeDisabled}
         >
             {#each displayDisabledEngines as engine (engine.id)}
-                <button
-                    class="more_item"
-                    class:more_item_sel={engine.enabled}
-                    animate:flip={{ duration: 200 }}
-                >
-                    <EngineIcon
-                        alt={engine.title ?? ""}
-                        engineUrl={engine.engineUrl}
-                    />
-                </button>
+                <div class="engine_item" animate:flip={{ duration: 200 }}>
+                    <button
+                        class="more_item"
+                        class:more_item_sel={engine.enabled}
+                        type="button"
+                    >
+                        <EngineIcon
+                            alt={engine.title ?? ""}
+                            engineUrl={engine.engineUrl}
+                        />
+                    </button>
+                </div>
             {/each}
         </div>
         <Button onclick={openSearchEngineSettings}>
@@ -1141,6 +1280,10 @@
     .drag {
         border: 2px var(--c-mask) dashed;
     }
+    .engine_item {
+        display: flex;
+        flex: 0 0 auto;
+    }
     .engine {
         display: flex;
         border-radius: calc(var(--r) / 2 + 2px);
@@ -1149,8 +1292,12 @@
         min-width: 30px;
         flex: 0 0 auto;
     }
-    .engine:focus-visible {
+    .engine:focus {
         outline: 2px var(--c-text) solid;
+    }
+
+    .engine.selected {
+        outline: 2px var(--c-text-2) solid;
     }
 
     .item {

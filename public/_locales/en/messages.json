@@ -131,6 +131,12 @@
   "nt_settings_search_inject_related_tip": {
     "message": "Show a Quick Search floating panel on matching search engine sites"
   },
+  "nt_related_search_shortcut_search": {
+    "message": "Shift + Enter for quick search"
+  },
+  "nt_related_search_shortcut_switch": {
+    "message": "Press Left/Right to switch quickly"
+  },
   "nt_settings_search_engines_title": {
     "message": "Search Engine Management"
   },

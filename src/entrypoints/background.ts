@@ -6,16 +6,41 @@ import {
   getAllEnableEngine,
 } from "../lib/DB/DB";
 import type { Engine, Favicon } from "../lib/DB/DB";
+import type { AppLanguage } from "../lib/utils/settings";
 import { loadSettings } from "../lib/utils/settings";
+import { resolveTheme } from "../lib/utils/theme";
+import { getEffectiveLanguage } from "../lib/utils/i18n";
+import enMessages from "@@/public/_locales/en/messages.json";
+import zhCNMessages from "@@/public/_locales/zh_CN/messages.json";
+import zhTWMessages from "@@/public/_locales/zh_TW/messages.json";
 
 type RelatedSearchEngine = Pick<
   Engine,
   "id" | "title" | "engineUrl" | "faviconUrl" | "category" | "order"
->;
+> & {
+  iconUrl?: string;
+};
 
 type RelatedSearchPayload = {
   matchedEngine: RelatedSearchEngine;
   engines: RelatedSearchEngine[];
+  theme: ReturnType<typeof resolveTheme>;
+  language: AppLanguage;
+  texts: RelatedSearchTexts;
+};
+
+type RelatedSearchTexts = {
+  placeholder: string;
+  searchShortcutTip: string;
+  switchShortcutTip: string;
+};
+
+type MessageMap = Record<string, { message?: string }>;
+
+const localeMessages: Record<Exclude<AppLanguage, "auto">, MessageMap> = {
+  en: enMessages,
+  zh_CN: zhCNMessages,
+  zh_TW: zhTWMessages,
 };
 
 export default defineBackground(() => {
@@ -71,9 +96,63 @@ async function onGetRelatedSearchEngines(data?: {
   );
 
   return {
-    matchedEngine,
-    engines,
+    matchedEngine: await withInjectableIcon(matchedEngine),
+    engines: await Promise.all(engines.map(withInjectableIcon)),
+    theme: resolveTheme(settings.theme),
+    language: settings.language,
+    texts: getRelatedSearchTexts(settings.language),
   };
+}
+
+function getRelatedSearchTexts(language: AppLanguage): RelatedSearchTexts {
+  return {
+    placeholder: getLocaleMessage(language, "nt_search_placeholder_fallback"),
+    searchShortcutTip: getLocaleMessage(
+      language,
+      "nt_related_search_shortcut_search",
+    ),
+    switchShortcutTip: getLocaleMessage(
+      language,
+      "nt_related_search_shortcut_switch",
+    ),
+  };
+}
+
+function getLocaleMessage(language: AppLanguage, key: string) {
+  const effectiveLanguage = getEffectiveLanguage(language);
+  return localeMessages[effectiveLanguage][key]?.message ?? key;
+}
+
+async function withInjectableIcon(
+  engine: Engine,
+): Promise<RelatedSearchEngine> {
+  return {
+    ...engine,
+    iconUrl: await toInjectableIconUrl(engine.faviconUrl),
+  };
+}
+
+async function toInjectableIconUrl(url?: string) {
+  if (!url) return "";
+  if (url.startsWith("data:") || url.startsWith("http")) return url;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return "";
+    const blob = await response.blob();
+    return await blobToDataUrl(blob);
+  } catch {
+    return "";
+  }
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () =>
+      resolve(typeof reader.result === "string" ? reader.result : "");
+    reader.onerror = () => resolve("");
+    reader.readAsDataURL(blob);
+  });
 }
 
 async function onFavicon(data?: { url?: string; faviconUrl?: string }) {

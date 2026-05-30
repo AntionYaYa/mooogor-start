@@ -1,0 +1,560 @@
+<script lang="ts">
+  import { onMount, tick } from "svelte";
+  import EngineIcon from "@/lib/EngineIcon.svelte";
+  import Button from "@/lib/components/Button.svelte";
+  import G from "@/lib/components/G.svelte";
+  import Icon from "@/lib/components/Icon.svelte";
+  import T from "@/lib/components/T.svelte";
+
+  export type RelatedSearchEngine = {
+    id?: number;
+    title?: string;
+    engineUrl: string;
+    faviconUrl: string;
+    iconUrl?: string;
+    category?: string;
+    order?: number;
+  };
+
+  export type RelatedSearchPayload = {
+    matchedEngine: RelatedSearchEngine;
+    engines: RelatedSearchEngine[];
+    theme: "default" | "ocean" | "sunset" | "purple" | "yellow";
+    language: "auto" | "zh_CN" | "zh_TW" | "en";
+    texts: {
+      placeholder: string;
+      searchShortcutTip: string;
+      switchShortcutTip: string;
+    };
+  };
+
+  interface Props {
+    data: RelatedSearchPayload;
+    initialKeyword: string;
+    placeholder: string;
+    searchShortcutTip: string;
+    switchShortcutTip: string;
+    onClose: () => void;
+  }
+
+  let {
+    data,
+    initialKeyword,
+    placeholder,
+    searchShortcutTip,
+    switchShortcutTip,
+    onClose,
+  }: Props = $props();
+
+  let keyword = $state("");
+  let selectedEngineUrl = $state("");
+  let inputFocused = $state(false);
+  let engineFocused = $state(false);
+  let inputWidth = $state(62);
+  let host: HTMLElement | null = null;
+  let inputEl: HTMLInputElement | undefined = $state();
+  let measureEl: HTMLSpanElement | undefined = $state();
+
+  const active = $derived(inputFocused || engineFocused || !!keyword.trim());
+  const hasKeyword = $derived(!!keyword.trim());
+  const showSearchShortcutTip = $derived(inputFocused && hasKeyword);
+  const showSwitchShortcutTip = $derived(engineFocused);
+  const selectedStorageKey = $derived(
+    `mooogor-related-search-engine:${getEngineHost(data.matchedEngine)}`,
+  );
+
+  onMount(() => {
+    host = getHost();
+    keyword = initialKeyword;
+    selectedEngineUrl = data.matchedEngine.engineUrl;
+    restorePosition();
+    const savedEngineUrl = localStorage.getItem(selectedStorageKey);
+    if (
+      savedEngineUrl &&
+      data.engines.some((engine) => engine.engineUrl === savedEngineUrl)
+    ) {
+      selectedEngineUrl = savedEngineUrl;
+    }
+    void syncInputWidth();
+  });
+
+  async function syncInputWidth() {
+    await tick();
+    if (!measureEl) return;
+    measureEl.textContent = keyword || placeholder || "";
+    inputWidth = Math.max(62, Math.ceil(measureEl.scrollWidth) + 2);
+  }
+
+  function getHost() {
+    return inputEl?.closest<HTMLElement>("#mooogor-related-search") ?? null;
+  }
+
+  function selectEngine(engine: RelatedSearchEngine) {
+    selectedEngineUrl = engine.engineUrl;
+    localStorage.setItem(selectedStorageKey, selectedEngineUrl);
+  }
+
+  function searchWithEngine(engine: RelatedSearchEngine) {
+    const value = keyword.trim();
+    if (!value) {
+      inputEl?.focus();
+      return;
+    }
+    selectEngine(engine);
+    location.href = engine.engineUrl.replace("%s", encodeURIComponent(value));
+  }
+
+  function getEngineSearchUrl(engine: RelatedSearchEngine) {
+    return engine.engineUrl.replace("%s", encodeURIComponent(keyword.trim()));
+  }
+
+  function clickEngine(event: MouseEvent, engine: RelatedSearchEngine) {
+    selectEngine(engine);
+    if (keyword.trim()) return;
+    event.preventDefault();
+    inputEl?.focus();
+  }
+
+  function keyInput(event: KeyboardEvent) {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    event.stopPropagation();
+    const engine = getSelectedEngine();
+    if (!engine) return;
+    if (event.shiftKey) {
+      searchWithEngine(engine);
+      return;
+    }
+    getSelectedEngineButton()?.focus();
+  }
+
+  function keyEngine(event: KeyboardEvent, engine: RelatedSearchEngine) {
+    if (event.key === "Enter") {
+      event.stopPropagation();
+      return;
+    }
+    if (event.key === " ") {
+      event.preventDefault();
+      event.stopPropagation();
+      searchWithEngine(engine);
+      return;
+    }
+    if (event.key === "Backspace") {
+      event.preventDefault();
+      event.stopPropagation();
+      inputEl?.focus();
+      return;
+    }
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const index = data.engines.findIndex(
+      (item) => item.engineUrl === engine.engineUrl,
+    );
+    const nextIndex =
+      event.key === "ArrowLeft"
+        ? (index - 1 + data.engines.length) % data.engines.length
+        : (index + 1) % data.engines.length;
+    const nextEngine = data.engines[nextIndex];
+    if (!nextEngine) return;
+    selectEngine(nextEngine);
+    getEngineButton(nextEngine.engineUrl)?.focus();
+  }
+
+  function getSelectedEngine() {
+    return (
+      data.engines.find((engine) => engine.engineUrl === selectedEngineUrl) ??
+      data.engines[0]
+    );
+  }
+
+  function getSelectedEngineButton() {
+    return selectedEngineUrl ? getEngineButton(selectedEngineUrl) : null;
+  }
+
+  function getEngineButton(engineUrl: string) {
+    if (!host) return null;
+    return host.querySelector<HTMLAnchorElement>(
+      `.engine[data-engine-url="${CSS.escape(engineUrl)}"]`,
+    );
+  }
+
+  let startX = 0;
+  let startY = 0;
+  let startLeft = 0;
+  let startTop = 0;
+
+  function pointerDown(event: PointerEvent) {
+    if (event.button !== 0 || !host) return;
+    const rect = host.getBoundingClientRect();
+    startX = event.clientX;
+    startY = event.clientY;
+    startLeft = rect.left;
+    startTop = rect.top;
+    host.style.left = `${rect.left}px`;
+    host.style.top = `${rect.top}px`;
+    host.style.right = "auto";
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  }
+
+  function pointerMove(event: PointerEvent) {
+    const target = event.currentTarget as HTMLElement;
+    if (!target.hasPointerCapture(event.pointerId) || !host) return;
+    const rect = host.getBoundingClientRect();
+    const nextLeft = clamp(
+      startLeft + event.clientX - startX,
+      8,
+      window.innerWidth - rect.width - 8,
+    );
+    const nextTop = clamp(
+      startTop + event.clientY - startY,
+      8,
+      window.innerHeight - rect.height - 8,
+    );
+    host.style.left = `${nextLeft}px`;
+    host.style.top = `${nextTop}px`;
+  }
+
+  function pointerUp(event: PointerEvent) {
+    const target = event.currentTarget as HTMLElement;
+    if (!target.hasPointerCapture(event.pointerId) || !host) return;
+    target.releasePointerCapture(event.pointerId);
+    const rect = host.getBoundingClientRect();
+    localStorage.setItem(
+      getPositionStorageKey(),
+      JSON.stringify({ left: rect.left, top: rect.top }),
+    );
+  }
+
+  function restorePosition() {
+    if (!host) return;
+    const saved = readPanelPosition(getPositionStorageKey());
+    if (!saved) return;
+    host.style.left = `${saved.left}px`;
+    host.style.top = `${saved.top}px`;
+    host.style.right = "auto";
+  }
+
+  function getPositionStorageKey() {
+    return `mooogor-related-search-pos:${location.hostname}`;
+  }
+
+  function readPanelPosition(
+    key: string,
+  ): { left: number; top: number } | null {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key) ?? "null") as {
+        left?: number;
+        top?: number;
+      } | null;
+      if (
+        !parsed ||
+        typeof parsed.left !== "number" ||
+        typeof parsed.top !== "number"
+      ) {
+        return null;
+      }
+      return {
+        left: clamp(parsed.left, 8, window.innerWidth - 64),
+        top: clamp(parsed.top, 8, window.innerHeight - 64),
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  function getEngineHost(engine: Pick<RelatedSearchEngine, "engineUrl">) {
+    try {
+      return new URL(engine.engineUrl.replace("%s", "search")).hostname
+        .toLowerCase()
+        .replace(/^www\./, "");
+    } catch {
+      return "unknown";
+    }
+  }
+
+  function clamp(value: number, min: number, max: number) {
+    return Math.max(min, Math.min(max, value));
+  }
+</script>
+
+<div class="search">
+  <div class="close">
+    <Button onclick={onClose}>
+      <G>
+        <Icon name="X" color="var(--c-text)" opacity={0.6} size={12} />
+      </G>
+    </Button>
+  </div>
+  <div class="bg search_g">
+    <div class="search_box">
+      <button
+        class="drag"
+        type="button"
+        tabindex="-1"
+        aria-label="Drag"
+        onpointerdown={pointerDown}
+        onpointermove={pointerMove}
+        onpointerup={pointerUp}
+        onpointercancel={pointerUp}
+      >
+        <G>
+          <Icon
+            name="GripHorizontal"
+            color="var(--c-text)"
+            size={18}
+            opacity={0.6}
+          />
+        </G>
+      </button>
+      <div class="input_group_border">
+        <div class="input_group">
+          <div class="input_box">
+            <span bind:this={measureEl} class="measure"
+              >{keyword || placeholder}</span
+            >
+            <input
+              bind:this={inputEl}
+              bind:value={keyword}
+              class="input"
+              type="search"
+              {placeholder}
+              style:width={`${inputWidth}px`}
+              oninput={syncInputWidth}
+              onfocus={() => (inputFocused = true)}
+              onblur={() => (inputFocused = false)}
+              onkeydown={keyInput}
+            />
+          </div>
+          <div class="engines">
+            {#each data.engines as engine (engine.engineUrl)}
+              <a
+                class="engine"
+                class:selected={engine.engineUrl === selectedEngineUrl}
+                data-engine-url={engine.engineUrl}
+                href={getEngineSearchUrl(engine)}
+                title={engine.title ?? ""}
+                onfocus={() => {
+                  engineFocused = true;
+                  selectEngine(engine);
+                }}
+                onblur={() => (engineFocused = false)}
+                onkeydown={(event) => keyEngine(event, engine)}
+                onclick={(event) => clickEngine(event, engine)}
+              >
+                <EngineIcon
+                  alt={engine.title ?? "Search"}
+                  engineUrl={engine.engineUrl}
+                  src={engine.iconUrl}
+                />
+              </a>
+            {/each}
+          </div>
+        </div>
+      </div>
+    </div>
+    {#if showSearchShortcutTip}
+      {@render tip(searchShortcutTip)}
+    {/if}
+    {#if showSwitchShortcutTip}
+      {@render tip(switchShortcutTip)}
+    {/if}
+  </div>
+</div>
+
+{#snippet tip(tip: string)}
+  <T type="s" color="var(--c-text-1)">{tip}</T>
+{/snippet}
+
+<style>
+  :global(#mooogor-related-search) {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 2147483647;
+    color-scheme: light dark;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .search {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--c-text);
+    border: 0;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    border-radius: var(--r2);
+  }
+
+  .search:hover .close {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+    border-radius: var(--r-100);
+    background-color: var(--c-bg1);
+  }
+
+  .close {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    z-index: 2;
+    font-size: 15px;
+    line-height: 1;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.8);
+    transition:
+      opacity 0.16s ease,
+      transform 0.16s ease;
+  }
+
+  .search_g {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--gap);
+    width: max-content;
+    max-width: calc(100vw - 20px);
+    box-sizing: border-box;
+    padding: var(--gap);
+    border-radius: var(--r2);
+    background-color: var(--c-bg1);
+  }
+  .search_box {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
+    width: max-content;
+    box-sizing: border-box;
+  }
+  .drag {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    border: 0;
+    border-radius: var(--r1);
+    background: var(--c-bg1);
+    cursor: grab;
+    padding: 0;
+    user-select: none;
+  }
+
+  .drag:active {
+    background: var(--c-mask);
+    cursor: grabbing;
+  }
+  .input_group_border {
+    padding: 2px;
+    box-sizing: border-box;
+    border-radius: var(--r1);
+    background: var(--c-border);
+  }
+
+  .input_group_border:has(input:focus) {
+    background: linear-gradient(0deg, var(--c-main), var(--c-main-1));
+  }
+
+  .input_group {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
+    border-radius: calc(var(--r1) - 2px);
+    background-color: var(--c-bg1);
+    box-sizing: border-box;
+  }
+
+  .input_box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 62px;
+    max-width: min(320px, calc(100vw - 170px));
+  }
+
+  .measure {
+    position: absolute;
+    visibility: hidden;
+    white-space: pre;
+    font-size: var(--f-size-m);
+    font-family: inherit;
+    padding: var(--gap) calc(var(--gap) * 2);
+  }
+
+  .input {
+    width: 62px;
+    min-width: 62px;
+    max-width: min(320px, calc(100vw - 170px));
+    box-sizing: border-box;
+    border: 0;
+    border-radius: var(--r);
+    background: transparent;
+    color: var(--c-text);
+    outline: none;
+    padding: var(--gap) calc(var(--gap) * 2);
+    font: inherit;
+    font-size: var(--f-size-m);
+    height: 40px;
+    caret-color: var(--c-green);
+    transition: width 0.1s ease-out;
+  }
+
+  .input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+  }
+
+  .input::-moz-search-clear {
+    display: none;
+  }
+
+  .input::placeholder {
+    color: var(--c-text-2);
+  }
+
+  .engines {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--gap);
+    padding: var(--gap);
+    border-radius: var(--r);
+    min-height: 40px;
+    min-width: max-content;
+    width: max-content;
+    box-sizing: border-box;
+    flex-wrap: nowrap;
+  }
+
+  .engine {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: calc(var(--r) / 2 + 2px);
+    background: transparent;
+    cursor: default;
+    min-width: 30px;
+    min-height: 30px;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .engine:active {
+    background-color: var(--c-mask);
+  }
+
+  .engine.selected {
+    outline: 2px var(--c-text-2) solid;
+  }
+
+  .engine:focus-visible {
+    outline: 2px var(--c-text) solid;
+  }
+</style>
