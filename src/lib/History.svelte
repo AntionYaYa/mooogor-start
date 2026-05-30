@@ -394,13 +394,14 @@
     oncontextmenu={(e) => showContextMenu(e, history)}
     class:ctx={showMenu && currentHistory === history}
   >
+    <G align="c">
+      <T type="s" nowrap color="var(--c-text-1)">{formatHistoryTime(history)}</T>
+    </G>
     <G full align="c" gap>
       <BkmkIcon imgUrl={history.url} alt={history.title ?? ""} size="s" />
       <T type="m" bold nowrap>{getHistoryTitle(history)}</T>
     </G>
-    <G align="c">
-      <T type="s" nowrap color="var(--c-text-1)">{formatHistoryTime(history)}</T>
-    </G>
+  
   </a>
 {/snippet}
 

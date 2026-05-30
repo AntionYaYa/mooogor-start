@@ -621,7 +621,8 @@
       </G>
       </Button>
     </G>
-    <G>
+    <G gap>
+    
       <Button
         onclick={() => (showSupport = true)}
         title={t("nt_about_support_button")}

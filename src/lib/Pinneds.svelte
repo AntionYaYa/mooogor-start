@@ -175,7 +175,11 @@
                 class:ctx={showPinnedMenu && currentPinned?.id === pinned.id}
                 oncontextmenu={(e) => showContextMenu(e, pinned)}
               >
-                <BkmkIcon imgUrl={pinned.url} alt={pinned.title ?? ""} size="l" />
+                <BkmkIcon
+                  imgUrl={pinned.url}
+                  alt={pinned.title ?? ""}
+                  size="l"
+                />
               </a>
               <T nowrap align="c" type="s">{pinned.title}</T>
             </div>
@@ -187,15 +191,15 @@
     {#if filteredFrequentSites.length}
       <section class="section">
         <div class="section_head">
-            <T type="s" color="var(--c-text-1)">{t("nt_frequent_section")}</T>
-            <Button
-              onclick={() => (showFrequentInfo = true)}
-              title={t("nt_frequent_info_title")}
-            >
-              <G>
-                <Icon name="Info" color="var(--c-text)" opacity={0.6} size={16} />
-              </G>
-            </Button>
+          <T type="s" color="var(--c-text-1)">{t("nt_frequent_section")}</T>
+          <Button
+            onclick={() => (showFrequentInfo = true)}
+            title={t("nt_frequent_info_title")}
+          >
+            <G>
+              <Icon name="Info" color="var(--c-text)" opacity={0.6} size={16} />
+            </G>
+          </Button>
         </div>
         <div class="content {list ? 'list' : 'grid'}">
           {#each filteredFrequentSites as site (site.domain)}
@@ -205,18 +209,28 @@
                 target={newTabOpen ? "_blank" : "_self"}
                 rel={newTabOpen ? "noreferrer" : undefined}
                 class:list_link={list}
-                class:ctx={showFrequentMenu && currentFrequent?.domain === site.domain}
+                class:ctx={showFrequentMenu &&
+                  currentFrequent?.domain === site.domain}
                 oncontextmenu={(e) => showFrequentContextMenu(e, site)}
               >
-                <BkmkIcon imgUrl={site.url} alt={site.title} size={list ? "s" : "l"} />
                 {#if list}
+                  <G>
+                    <BkmkIcon imgUrl={site.url} alt={site.title} size="s" />
+                  </G>
                   <G full align="c">
                     <T nowrap type="m" bold>{site.title}</T>
                   </G>
                   <G align="c">
-                    <Icon name="Eye" color="var(--c-text)" opacity={0.6} size={16} />
+                    <Icon
+                      name="Eye"
+                      color="var(--c-text)"
+                      opacity={0.6}
+                      size={16}
+                    />
                     <T type="s" nowrap>{site.visitCount}</T>
                   </G>
+                {:else}
+                  <BkmkIcon imgUrl={site.url} alt={site.title} size="l" />
                 {/if}
               </a>
               {#if !list}
@@ -357,7 +371,6 @@
     width: 100%;
     flex-direction: row;
     align-items: center;
-    gap: var(--gap);
     border-radius: var(--r);
   }
   .info_body {
