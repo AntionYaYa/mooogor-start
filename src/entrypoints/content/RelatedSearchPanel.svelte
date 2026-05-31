@@ -6,6 +6,7 @@
   import Icon from "@/lib/components/Icon.svelte";
   import T from "@/lib/components/T.svelte";
   import { resolveEngineByDomain } from "./relatedSearchEngineMatch";
+  import { fly, slide } from "svelte/transition";
 
   export type RelatedSearchEngine = {
     id?: number;
@@ -159,11 +160,7 @@
   function getSelectedEngine() {
     return (
       data.engines.find((engine) => engine.engineUrl === selectedEngineUrl) ??
-      resolveEngineByDomain(
-        data.engines,
-        location.hostname,
-        data.matchedEngine,
-      )
+      resolveEngineByDomain(data.engines, location.hostname, data.matchedEngine)
     );
   }
 
@@ -343,16 +340,18 @@
       </div>
     </div>
     {#if showSearchShortcutTip}
-      {@render tip(searchShortcutTip)}
+        {@render tip(searchShortcutTip)}
     {/if}
     {#if showSwitchShortcutTip}
-      {@render tip(switchShortcutTip)}
+        {@render tip(switchShortcutTip)}
     {/if}
   </div>
 </div>
 
 {#snippet tip(tip: string)}
+<div class="tip" transition:slide={{ duration: 200 }}>
   <T type="s" color="var(--c-text-1)">{tip}</T>
+</div>
 {/snippet}
 
 <style>
@@ -377,7 +376,14 @@
     margin: 0;
     border-radius: var(--r2);
   }
-
+  .tip{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--gap);
+    width: 100%;
+    box-sizing: border-box;
+  }
   .search:hover .close {
     opacity: 1;
     pointer-events: auto;
@@ -405,13 +411,12 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--gap);
     width: max-content;
     max-width: calc(100vw - 20px);
     box-sizing: border-box;
-    padding: var(--gap);
+    
     border-radius: var(--r2);
-    background-color: var(--c-bg1);
+    background-color: var(--c-bg);
   }
   .search_box {
     display: flex;
@@ -419,6 +424,9 @@
     gap: var(--gap);
     width: max-content;
     box-sizing: border-box;
+     border-radius: var(--r2);
+     padding: var(--gap);
+    background-color: var(--c-bg1);
   }
   .drag {
     display: flex;
@@ -461,7 +469,7 @@
     position: relative;
     display: flex;
     align-items: center;
-    min-width: 62px;
+    min-width: 100px;
     max-width: min(320px, calc(100vw - 170px));
   }
 
