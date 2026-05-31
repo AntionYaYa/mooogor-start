@@ -401,23 +401,57 @@
         return [...otherEnabled, ...zoneResult];
     }
 
-    function handleConsiderEnabled(e: CustomEvent<DndEvent<Engine>>) {
-        enabledEngines = mergeEnabledFromZone(e.detail.items);
-    }
-
-    function handleConsiderDisabled(e: CustomEvent<DndEvent<Engine>>) {
-        disabledEngines = e.detail.items.map((item) => ({
+    function mergeDisabledFromZone(zoneItems: Engine[]): Engine[] {
+        const zoneResult = zoneItems.map((item) => ({
             ...item,
             enabled: false,
         }));
+
+        if (engineCategories.length <= 1) {
+            return zoneResult;
+        }
+
+        const otherDisabled = disabledEngines.filter(
+            (e) => normalizeEngineCategoryId(e.category) !== selectedCategoryId,
+        );
+
+        return [...otherDisabled, ...zoneResult];
+    }
+
+    function getZoneItemIds(zoneItems: Engine[]) {
+        return new Set(
+            zoneItems
+                .map((item) => item.id)
+                .filter((id): id is number => typeof id === "number"),
+        );
+    }
+
+    function syncFromEnabledZone(zoneItems: Engine[]) {
+        const zoneIds = getZoneItemIds(zoneItems);
+        enabledEngines = mergeEnabledFromZone(zoneItems);
+        if (!zoneIds.size) return;
+        disabledEngines = disabledEngines.filter(
+            (item) => !item.id || !zoneIds.has(item.id),
+        );
+    }
+
+    function syncFromDisabledZone(zoneItems: Engine[]) {
+        const zoneIds = getZoneItemIds(zoneItems);
+        disabledEngines = mergeDisabledFromZone(zoneItems);
+        if (!zoneIds.size) return;
+        enabledEngines = enabledEngines.filter(
+            (item) => !item.id || !zoneIds.has(item.id),
+        );
     }
 
     async function persistEnginesState() {
         const enabledWithIds = enabledEngines.filter(
             (i): i is Engine & { id: number } => !!i.id,
         );
+        const enabledIds = new Set(enabledWithIds.map((item) => item.id));
         const disabledWithIds = disabledEngines.filter(
-            (i): i is Engine & { id: number } => !!i.id,
+            (i): i is Engine & { id: number } =>
+                !!i.id && !enabledIds.has(i.id),
         );
         if (enabledWithIds.length || disabledWithIds.length) {
             await updateEnginesState(enabledWithIds, disabledWithIds);
@@ -427,16 +461,21 @@
         }
     }
 
+    function handleConsiderEnabled(e: CustomEvent<DndEvent<Engine>>) {
+        syncFromEnabledZone(e.detail.items);
+    }
+
+    function handleConsiderDisabled(e: CustomEvent<DndEvent<Engine>>) {
+        syncFromDisabledZone(e.detail.items);
+    }
+
     async function handleFinalizeEnabled(e: CustomEvent<DndEvent<Engine>>) {
-        enabledEngines = mergeEnabledFromZone(e.detail.items);
+        syncFromEnabledZone(e.detail.items);
         await persistEnginesState();
     }
 
     async function handleFinalizeDisabled(e: CustomEvent<DndEvent<Engine>>) {
-        disabledEngines = e.detail.items.map((item) => ({
-            ...item,
-            enabled: false,
-        }));
+        syncFromDisabledZone(e.detail.items);
         await persistEnginesState();
     }
 
@@ -943,6 +982,7 @@
                         class:selected={engine.engineUrl === selectedEngineUrl}
                         data-engine-url={engine.engineUrl}
                         href={getEngineSearchUrl(engine)}
+                        draggable="false"
                         target={newTabOpen ? "_blank" : "_self"}
                         rel={newTabOpen ? "noreferrer" : undefined}
                         onclick={(event) => handleEngineClick(event, engine)}
@@ -989,16 +1029,12 @@
         >
             {#each displayDisabledEngines as engine (engine.id)}
                 <div class="engine_item" animate:flip={{ duration: 200 }}>
-                    <button
-                        class="more_item"
-                        class:more_item_sel={engine.enabled}
-                        type="button"
-                    >
+                    <div class="more_item" role="presentation">
                         <EngineIcon
                             alt={engine.title ?? ""}
                             engineUrl={engine.engineUrl}
                         />
-                    </button>
+                    </div>
                 </div>
             {/each}
         </div>
@@ -1130,9 +1166,6 @@
         filter: grayscale();
         align-items: center;
         overflow: hidden;
-    }
-    .more_item_sel {
-        filter: grayscale(0);
     }
     .search_g {
         display: flex;

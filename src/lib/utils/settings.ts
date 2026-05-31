@@ -34,7 +34,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   searchBookmarks: true,
   searchHistory: true,
   rememberSearchEngineCategory: false,
-  injectRelatedSearch: false,
+  injectRelatedSearch: true,
   language: "auto",
   theme: "default",
 };
