@@ -20,10 +20,9 @@
     } from "@/lib/DB/DB";
     import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
     import {
-        type BookmarkSubType,
         searchBookmarks,
     } from "@/lib/browser/bookmarks";
-    import { type HistoryItem, searchHistory } from "@/lib/browser/history";
+    import { searchHistory } from "@/lib/browser/history";
     import Button from "./components/Button.svelte";
     import BkmkIcon from "./BkmkIcon.svelte";
     import Icon from "./components/Icon.svelte";
@@ -34,8 +33,23 @@
     import type { TabItem } from "./components/Tab.svelte";
     import EngineIcon from "./EngineIcon.svelte";
     import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
-
-    type ItemType = BookmarkSubType | "engine" | "todo" | "history";
+    import {
+        clearPersistedSelectedCategoryId,
+        MAX_SEARCH_KEYS,
+        normalizeSearchKey,
+        persistSearchKeys,
+        persistSelectedCategoryId,
+        persistSelectedEngineUrl,
+        readSearchKeys,
+        readSelectedCategoryId,
+        readSelectedEngineUrl,
+    } from "@/lib/search/searchStorage";
+    import {
+        mapBookmarkResults,
+        mapHistoryResults,
+        sortResults,
+        type SearchItem,
+    } from "@/lib/search/searchResults";
 
     interface Props {
         newTabOpen?: boolean;
@@ -53,79 +67,7 @@
         settingsReady = true,
     }: Props = $props();
 
-    interface SearchItem {
-        id: string;
-        type: ItemType;
-        title: string;
-        url?: string;
-        folderPath?: string;
-        iconUrl?: string;
-    }
     const defaultEngines = buildDefaultEngines();
-
-    const ENGINE_CATEGORY_KEY = "nt_engine_category";
-    const SELECTED_ENGINE_KEY_PREFIX = "nt_selected_search_engine";
-    const SEARCH_KEYS_KEY = "nt_search_keys";
-    const MAX_SEARCH_KEYS = 10;
-
-    function readSelectedCategoryId(): string | null {
-        if (typeof localStorage === "undefined") return null;
-        const value = localStorage.getItem(ENGINE_CATEGORY_KEY);
-        return value ? value : null;
-    }
-
-    function persistSelectedCategoryId(categoryId: string) {
-        if (typeof localStorage === "undefined") return;
-        localStorage.setItem(ENGINE_CATEGORY_KEY, categoryId);
-    }
-
-    function clearPersistedSelectedCategoryId() {
-        if (typeof localStorage === "undefined") return;
-        localStorage.removeItem(ENGINE_CATEGORY_KEY);
-    }
-
-    function getSelectedEngineStorageKey(categoryId = selectedCategoryId) {
-        return `${SELECTED_ENGINE_KEY_PREFIX}:${categoryId || "all"}`;
-    }
-
-    function readSelectedEngineUrl(categoryId = selectedCategoryId) {
-        if (typeof localStorage === "undefined") return "";
-        return localStorage.getItem(getSelectedEngineStorageKey(categoryId)) ?? "";
-    }
-
-    function persistSelectedEngineUrl(
-        engineUrl: string,
-        categoryId = selectedCategoryId,
-    ) {
-        if (typeof localStorage === "undefined") return;
-        localStorage.setItem(getSelectedEngineStorageKey(categoryId), engineUrl);
-    }
-
-    function readSearchKeys(): string[] {
-        if (typeof localStorage === "undefined") return [];
-        try {
-            const value = localStorage.getItem(SEARCH_KEYS_KEY);
-            if (!value) return [];
-            const parsed = JSON.parse(value);
-            if (!Array.isArray(parsed)) return [];
-            return parsed
-                .map((item) =>
-                    typeof item === "string" ? item.trim() : "",
-                )
-                .filter(Boolean)
-                .slice(0, MAX_SEARCH_KEYS);
-        } catch {
-            return [];
-        }
-    }
-
-    function persistSearchKeys(keys: string[]) {
-        if (typeof localStorage === "undefined") return;
-        localStorage.setItem(
-            SEARCH_KEYS_KEY,
-            JSON.stringify(keys.slice(0, MAX_SEARCH_KEYS)),
-        );
-    }
 
     let engineCategories: EngineCategoryItem[] = $state([]);
     let selectedCategoryId = $state("1");
@@ -515,14 +457,7 @@
                     const results = await searchBookmarks(bookmarkQuery, 200);
                     if (seq !== searchSeq) return;
                     bookmarksResults = sortResults(
-                        results
-                            .filter((item) => !!item.url)
-                            .map((item) => ({
-                                id: item.id,
-                                type: "other" as BookmarkSubType,
-                                title: getDisplayTitle(item.title, item.url),
-                                url: item.url,
-                            })),
+                        mapBookmarkResults(results, t("nt_unnamed")),
                         bookmarkQuery,
                     );
                 } catch {
@@ -550,7 +485,7 @@
                     const results = await searchHistory(query);
                     if (hSeq !== historySeq) return;
                     historyResults = sortResults(
-                        mapHistoryResults(results),
+                        mapHistoryResults(results, t("nt_unnamed")),
                         query,
                     );
                 } catch {
@@ -564,10 +499,6 @@
             historyResults = [];
             historyLoading = false;
         }
-    }
-
-    function normalizeSearchKey(value: string) {
-        return value.trim();
     }
 
     function saveSearchKey(value: string) {
@@ -606,9 +537,10 @@
     }
 
     function selectEngine(engine: Engine) {
+        const categoryId = selectedCategoryId || "all";
         selectedEngineUrl = engine.engineUrl;
-        selectedEngineCategoryId = selectedCategoryId || "all";
-        persistSelectedEngineUrl(engine.engineUrl);
+        selectedEngineCategoryId = categoryId;
+        persistSelectedEngineUrl(engine.engineUrl, categoryId);
     }
 
     function getEngineLink(engineUrl: string) {
@@ -775,36 +707,6 @@
         searchAreaFocused = false;
     }
 
-    function mapHistoryResults(items: HistoryItem[]): SearchItem[] {
-        return items
-            .filter((item) => !!item.url)
-            .map((item) => ({
-                id: String(item.id ?? item.url ?? item.lastVisitTime ?? ""),
-                type: "history" as const,
-                title: getDisplayTitle(item.title, item.url),
-                url: item.url,
-            }));
-    }
-
-    function getDisplayTitle(title?: string | null, url?: string | null) {
-        const trimmed = title?.trim();
-        if (trimmed) return trimmed;
-        return url ?? t("nt_unnamed");
-    }
-
-    function sortResults(items: SearchItem[], query: string) {
-        const needle = query.trim().toLowerCase();
-        if (!needle) return items;
-        const score = (item: SearchItem) => {
-            const title = item.title.toLowerCase();
-            const url = item.url?.toLowerCase() ?? "";
-            if (title.startsWith(needle)) return 3;
-            if (title.includes(needle)) return 2;
-            if (url.includes(needle)) return 1;
-            return 0;
-        };
-        return [...items].sort((a, b) => score(b) - score(a));
-    }
 </script>
 
 <div class="search" class:hided_tab={enginesGroup.length <= 1}>

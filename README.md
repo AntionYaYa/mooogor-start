@@ -1,7 +1,16 @@
-# WXT + Svelte
+# Mooogor Start
 
-This template should help get you started developing with Svelte in WXT.
+Mooogor Start is a fast, offline-first browser new tab extension for common sites, multi-engine search, bookmarks, and history.
 
-## Recommended IDE Setup
+## Development
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+```bash
+pnpm install
+pnpm dev
+```
+
+Build the extension:
+
+```bash
+pnpm build
+```

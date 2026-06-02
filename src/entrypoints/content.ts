@@ -18,7 +18,6 @@ export default defineContentScript({
 let pageHidden = false;
 let relatedSearchHost: HTMLDivElement | null = null;
 let relatedSearchApp: Record<string, unknown> | null = null;
-let lastRelatedSearchUrl = location.href;
 
 /**
  * 设置生命周期监听，处理 BFCache (往返缓存)
@@ -37,12 +36,6 @@ function setupListeners() {
       init();
     }
   });
-
-  window.setInterval(() => {
-    if (pageHidden || location.href === lastRelatedSearchUrl) return;
-    lastRelatedSearchUrl = location.href;
-    void initRelatedSearchPanel();
-  }, 500);
 
   browser.runtime.onMessage.addListener((message) => {
     if (!message || typeof message !== "object") return;
@@ -113,7 +106,6 @@ async function init() {
 }
 
 async function initRelatedSearchPanel() {
-  lastRelatedSearchUrl = location.href;
   const related = await safeSendMessage<RelatedSearchPayload>({
     type: "getRelatedSearchEngines",
     payload: { url: location.href },
