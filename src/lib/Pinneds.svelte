@@ -22,6 +22,8 @@
   import Icon from "./components/Icon.svelte";
   import Popup from "./components/Popup.svelte";
   import Divider from "./components/Divider.svelte";
+  import Checkbox from "./components/Checkbox.svelte";
+  import { slide } from "svelte/transition";
 
   interface Props {
     allPinneds: WebSite[] | [];
@@ -51,6 +53,9 @@
 
   let menuX = $state(0);
   let menuY = $state(0);
+
+  let multiSelectMode = $state(false);
+  let selectedIds = $state<Set<number | string>>(new Set());
 
   let showPinnedMenu = $state(false);
   let showFrequentMenu = $state(false);
@@ -147,9 +152,63 @@
     onUpdate();
   }
 
+  function enterMultiSelect() {
+    showPinnedMenu = false;
+    multiSelectMode = true;
+    selectedIds = new Set();
+  }
+
+  function exitMultiSelect() {
+    multiSelectMode = false;
+    selectedIds = new Set();
+  }
+
+  function toggleSelect(pinned: WebSite) {
+    const id = pinned.id ?? pinned.url;
+    const next = new Set(selectedIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    selectedIds = next;
+  }
+
+  function isSelected(pinned: WebSite) {
+    const id = pinned.id ?? pinned.url;
+    return selectedIds.has(id);
+  }
+
+  const selectedCount = $derived(selectedIds.size);
+  const allSelected = $derived(
+    multiSelectMode &&
+      allPinneds.length > 0 &&
+      selectedCount === allPinneds.length,
+  );
+
+  function toggleSelectAll() {
+    if (allSelected) {
+      selectedIds = new Set();
+    } else {
+      selectedIds = new Set(allPinneds.map((p) => p.id ?? p.url));
+    }
+  }
+
+  async function deleteSelected() {
+    for (const pinned of allPinneds) {
+      const id = pinned.id ?? pinned.url;
+      if (selectedIds.has(id) && pinned.id) {
+        await deleteWebSite(pinned.id);
+      }
+    }
+    selectedIds = new Set();
+    onUpdate();
+  }
+
   function trackStickyFrequentTitle(node: HTMLElement) {
     const scrollContainer = node.closest(".tabs_contents");
-    const root = scrollContainer instanceof HTMLElement ? scrollContainer : window;
+    const root =
+      scrollContainer instanceof HTMLElement ? scrollContainer : window;
     let frame = 0;
 
     const updateStuckState = () => {
@@ -191,29 +250,52 @@
 </script>
 
 <div class="page" bind:this={pageEl}>
-    {#if allPinneds.length}
-      <section class="section">
-        <div
-          class="content grid {isdarging ? 'drag' : ''}"
-          use:dndzone={{
-            items: allPinneds,
-            flipDurationMs: 200,
-            type: "pinneds",
-            dropTargetStyle: {},
-            zoneTabIndex: -1,
-            zoneItemTabIndex: -1,
-            transformDraggedElement: (e) => draggedel(e),
-          }}
-          onconsider={handleConsider}
-          onfinalize={handleFinalize}
-        >
-          {#each allPinneds as pinned (pinned.id)}
-            <div class="item" animate:flip={{ duration: 200 }}>
+  {#if allPinneds.length}
+    <section class="section">
+      <div
+        class="content grid {isdarging ? 'drag' : ''} {multiSelectMode
+          ? 'multi_select'
+          : ''}"
+        use:dndzone={{
+          items: allPinneds,
+          flipDurationMs: 200,
+          type: "pinneds",
+          dropTargetStyle: {},
+          zoneTabIndex: -1,
+          zoneItemTabIndex: -1,
+          transformDraggedElement: (e) => draggedel(e),
+          dragDisabled: multiSelectMode,
+          dropFromOthersDisabled: multiSelectMode,
+        }}
+        onconsider={handleConsider}
+        onfinalize={handleFinalize}
+      >
+        {#each allPinneds as pinned (pinned.id)}
+          <div
+            class="item"
+            class:drag_ctx={showPinnedMenu && currentPinned?.id === pinned.id}
+            animate:flip={{ duration: 200 }}
+          >
+            {#if multiSelectMode}
+                <Button
+                  onclick={() => toggleSelect(pinned)}
+                  sel={multiSelectMode && isSelected(pinned)}
+                  r='r1'
+                >
+                <G>
+                  <BkmkIcon
+                    imgUrl={pinned.url}
+                    alt={pinned.title ?? ""}
+                    size="l"
+                  />
+                </G>
+                </Button>
+                <T nowrap align="c" type="s">{pinned.title}</T>
+            {:else}
               <a
                 href={pinned.url}
                 target={newTabOpen ? "_blank" : "_self"}
                 rel={newTabOpen ? "noreferrer" : undefined}
-                class:ctx={showPinnedMenu && currentPinned?.id === pinned.id}
                 oncontextmenu={(e) => showContextMenu(e, pinned)}
               >
                 <BkmkIcon
@@ -223,95 +305,123 @@
                 />
               </a>
               <T nowrap align="c" type="s">{pinned.title}</T>
-            </div>
-          {/each}
-        </div>
-      </section>
-        {:else}
+            {/if}
+          </div>
+        {/each}
+      </div>
+    </section>
+  {:else}
     <NoData
       iconName="Sprout"
       title={t("nt_no_pinned")}
       text={t("nt_no_pinned_desc")}
     />
-    {/if}
+  {/if}
 
-    {#if filteredFrequentSites.length}
-      <section class="section">
-        <G full>
-          <Divider />
-        </G>
-        <div class="frequent_section_body">
-          <div class="frequent_title_sentinel"></div>
-          <div
-            class="frequent_section_title"
-            class:frequent_section_title_stuck={frequentTitleStuck}
-            use:trackStickyFrequentTitle
+  {#if filteredFrequentSites.length}
+    <section class="section">
+      <G full>
+        <Divider />
+      </G>
+      <div class="frequent_section_body">
+        <div class="frequent_title_sentinel"></div>
+        <div
+          class="frequent_section_title"
+          class:frequent_section_title_stuck={frequentTitleStuck}
+          use:trackStickyFrequentTitle
+        >
+          <G full>
+            <Icon
+              name="Sparkles"
+              color="var(--c-text)"
+              opacity={0.6}
+              size={16}
+            />
+            <T type="m" color="var(--c-text-1)">{t("nt_frequent_section")}</T>
+          </G>
+          <Button
+            onclick={() => (showFrequentInfo = true)}
+            title={t("nt_frequent_info_title")}
           >
-            <G full>
-              <Icon
-                name="Sparkles"
-                color="var(--c-text)"
-                opacity={0.6}
-                size={16}
-              />
-              <T type="m" color="var(--c-text-1)">{t("nt_frequent_section")}</T>
+            <G>
+              <Icon name="Info" color="var(--c-text)" opacity={0.6} size={16} />
             </G>
-            <Button
-              onclick={() => (showFrequentInfo = true)}
-              title={t("nt_frequent_info_title")}
-            >
-              <G>
-                <Icon
-                  name="Info"
-                  color="var(--c-text)"
-                  opacity={0.6}
-                  size={16}
-                />
-              </G>
-            </Button>
-          </div>
-          <div class="content {list ? 'list' : 'grid'}">
-            {#each filteredFrequentSites as site (site.domain)}
-              <div class="item" class:list_item={list}>
-                <a
-                  href={site.url}
-                  target={newTabOpen ? "_blank" : "_self"}
-                  rel={newTabOpen ? "noreferrer" : undefined}
-                  class:list_link={list}
-                  class:ctx={showFrequentMenu &&
-                    currentFrequent?.domain === site.domain}
-                  oncontextmenu={(e) => showFrequentContextMenu(e, site)}
-                >
-                  {#if list}
-                    <G>
-                      <BkmkIcon imgUrl={site.url} alt={site.title} size="s" />
-                    </G>
-                    <G full align="c">
-                      <T nowrap type="m" bold>{site.title}</T>
-                    </G>
-                    <G align="c">
-                      <T type="s" nowrap>{site.visitCount}</T>
-                      <Icon
-                        name="Eye"
-                        color="var(--c-text)"
-                        opacity={0.6}
-                        size={16}
-                      />
-                    </G>
-                  {:else}
-                    <BkmkIcon imgUrl={site.url} alt={site.title} size="l" />
-                  {/if}
-                </a>
-                {#if !list}
-                  <T nowrap align="c" type="s">{site.title}</T>
-                {/if}
-              </div>
-            {/each}
-          </div>
+          </Button>
         </div>
-      </section>
-    {/if}
+        <div class="content {list ? 'list' : 'grid'}">
+          {#each filteredFrequentSites as site (site.domain)}
+            <div class="item" class:list_item={list}>
+              <a
+                href={site.url}
+                target={newTabOpen ? "_blank" : "_self"}
+                rel={newTabOpen ? "noreferrer" : undefined}
+                class:list_link={list}
+                class:ctx={showFrequentMenu &&
+                  currentFrequent?.domain === site.domain}
+                oncontextmenu={(e) => showFrequentContextMenu(e, site)}
+              >
+                {#if list}
+                  <G>
+                    <BkmkIcon imgUrl={site.url} alt={site.title} size="s" />
+                  </G>
+                  <G full align="c">
+                    <T nowrap type="m" bold>{site.title}</T>
+                  </G>
+                  <G align="c">
+                    <T type="s" nowrap>{site.visitCount}</T>
+                    <Icon
+                      name="Eye"
+                      color="var(--c-text)"
+                      opacity={0.6}
+                      size={16}
+                    />
+                  </G>
+                {:else}
+                  <BkmkIcon imgUrl={site.url} alt={site.title} size="l" />
+                {/if}
+              </a>
+              {#if !list}
+                <T nowrap align="c" type="s">{site.title}</T>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      </div>
+    </section>
+  {/if}
 </div>
+
+{#if multiSelectMode}
+  <div class="batch_bar" transition:slide={{ duration: 180 }}>
+    <div class="batch_inner">
+      <Button fill onclick={exitMultiSelect}>
+        <G>
+          <T>{t("nt_done")}</T>
+        </G>
+      </Button>
+      <div class="batch_spacer"></div>
+      <div
+        class="select_all"
+        role="button"
+        tabindex="0"
+        onclick={toggleSelectAll}
+        onkeydown={(e) => {
+          if (e.key !== "Enter" && e.key !== " ") return;
+          e.preventDefault();
+          toggleSelectAll();
+        }}
+      >
+        <Checkbox checked={allSelected} skipTabFocus />
+        <T type="s" nowrap>{selectedCount}</T>
+      </div>
+      <Button onclick={deleteSelected} disabled={selectedCount === 0} fill>
+        <G align="c">
+          <Icon name="Trash2" color="var(--c-red)" />
+        </G>
+      </Button>
+    </div>
+  </div>
+{/if}
 
 {#if showAdd}
   <AddPinned
@@ -331,6 +441,11 @@
     url={currentPinned.url}
     onClose={() => (showPinnedMenu = false)}
   >
+    <Button full onclick={enterMultiSelect}>
+      <G>
+        <T>{t("nt_multi_select")}</T>
+      </G>
+    </Button>
     <Button full onclick={clickEditWebSite}>
       <G>
         <T>{t("nt_edit")}</T>
@@ -393,9 +508,9 @@
     align-items: center;
     box-sizing: border-box;
     border-radius: var(--r);
-    cursor: default !important;
     gap: var(--gap);
     padding: var(--gap);
+    position: relative;
   }
   .content {
     gap: var(--gap);
@@ -471,7 +586,7 @@
     padding: var(--gap);
     box-sizing: border-box;
   }
-   a:hover {
+  a:hover {
     background-color: var(--c-mask);
   }
   a:focus-visible {
@@ -487,5 +602,67 @@
   }
   a.ctx {
     outline: 2px var(--c-text) solid;
+  }
+
+  .multi_select {
+    outline: var(--c-mask) 2px dashed;
+  }
+
+  .item_selectable {
+    cursor: pointer !important;
+    position: relative;
+    background-color: var(--c-mask);
+  }
+  .item.selected {
+    background-color: var(--c-mask1);
+  }
+
+  .select_icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+  }
+
+  .drag_ctx {
+    outline: 2px var(--c-text) solid;
+  }
+
+  .batch_bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    padding: var(--gap);
+    pointer-events: none;
+    z-index: 20;
+  }
+  .batch_inner {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
+    padding: var(--gap);
+    background-color: var(--c-bg1);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    pointer-events: auto;
+    max-width: 400px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .batch_spacer {
+    flex: 1;
+    min-width: 0;
+  }
+  .select_all {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
   }
 </style>

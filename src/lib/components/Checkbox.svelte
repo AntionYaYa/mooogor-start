@@ -22,15 +22,15 @@
 
 <Button skipTabFocus {disabled} onclick={onchange}>
 	<G>
-	<G>
-		<span class="box" class:bg={checked || indeterminate}>
-			{#if indeterminate}
-				<Icon name="Minus" color="var(--c-bg)" size={16} />
-			{:else if checked}
-				<Icon name="Check" color="var(--c-bg)" size={16} />
-			{/if}
-		</span>
-	</G>
+		<G>
+			<span class="box" class:bg={checked || indeterminate}>
+				{#if indeterminate}
+					<Icon name="Minus" color="var(--c-bg)" size={16} />
+				{:else if checked}
+					<Icon name="Check" color="var(--c-bg)" size={16} />
+				{/if}
+			</span>
+		</G>
 	</G>
 </Button>
 

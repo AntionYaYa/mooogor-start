@@ -6,6 +6,7 @@
 		children: any;
 		fill?: boolean;
 		full?: boolean;
+		sel?: boolean;
 		align?: Align;
 		r?: R;
 		bg?: string;
@@ -19,6 +20,7 @@
 		children,
 		fill = false,
 		full = false,
+		sel = false,
 		onclick,
 		skipTabFocus,
 		align,
@@ -34,6 +36,7 @@
 	style="background-color: {bg};"
 	class:fill
 	class:full
+	class:sel
 	{onclick}
 	{disabled}
 	{title}
@@ -43,6 +46,7 @@
 </button>
 
 <style>
+
 	.btn {
 		display: flex;
 		border: none;
@@ -91,5 +95,9 @@
 	}
 	.r3 {
 		border-radius: var(--r3);
+	}
+	.sel{
+		outline: 2px solid var(--c-main);
+		background-color: var(--c-main-3);
 	}
 </style>
