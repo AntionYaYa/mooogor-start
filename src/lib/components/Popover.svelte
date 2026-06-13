@@ -24,11 +24,11 @@
 	}
 
 	onMount(() => {
-		window.addEventListener("mousedown", handleMouseDown);
+		window.addEventListener("mousedown", handleMouseDown, true);
 	});
 
 	onDestroy(() => {
-		window.removeEventListener("mousedown", handleMouseDown);
+		window.removeEventListener("mousedown", handleMouseDown, true);
 	});
 </script>
 

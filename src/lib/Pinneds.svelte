@@ -433,7 +433,7 @@
     background-color: var(--c-bg1);
   }
   .drag {
-    border-style: dashed;
+    outline: var(--c-mask) 2px dashed;
   }
   .grid {
     display: grid;
