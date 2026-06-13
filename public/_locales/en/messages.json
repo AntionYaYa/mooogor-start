@@ -544,8 +544,5 @@
   },
   "nt_multi_select": {
     "message": "Multi-select"
-  },
-  "nt_done": {
-    "message": "Done"
   }
 }

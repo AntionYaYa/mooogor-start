@@ -11,6 +11,7 @@
     import ManageEngineCategories from "./ManageEngineCategories.svelte";
     import AddPinned from "./AddPinned.svelte";
     import ConfirmDialog from "./ConfirmDialog.svelte";
+    import BatchToolbar from "./components/BatchToolbar.svelte";
     import SettingsCommonSitesSection from "@/lib/settings/SettingsCommonSitesSection.svelte";
     import SettingsSearchEnginesSection from "@/lib/settings/SettingsSearchEnginesSection.svelte";
     import type { OpenTab, UserSettings } from "@/lib/utils/settings";
@@ -1095,7 +1096,7 @@
             </div>
             {#if settingPage === "searchEngines" && selectedSearchEngineCount > 0}
                 {@render temSearchEngineBatchToolbar()}
-            {:else if settingPage === "common" && selectedCommonSiteCount > 0}
+            {:else if settingPage === "common"}
                 {@render temCommonSitesBatchToolbar()}
             {/if}
         </div>
@@ -1227,38 +1228,15 @@
 {/snippet}
 
 {#snippet temCommonSitesBatchToolbar()}
-    <div class="batch_toolbar" transition:slide={{ duration: 180 }}>
-        <div
-            class="select_all"
-            class:select_all_disabled={commonSitesLoading}
-            role="button"
-            tabindex="0"
-            onclick={toggleSelectAllCommonSites}
-            onkeydown={(event) => {
-                if (event.key !== "Enter" && event.key !== " ") return;
-                event.preventDefault();
-                toggleSelectAllCommonSites();
-            }}
-        >
-            <Checkbox
-                checked={allCommonSitesSelected}
-                indeterminate={partlyCommonSitesSelected}
-                disabled={commonSitesLoading}
-                skipTabFocus
-            />
-            <T type="s" nowrap>{selectedCommonSiteCount}</T>
-        </div>
-        <div class="batch_spacer"></div>
-        <Button
-            onclick={deleteSelectedCommonSites}
-            disabled={commonSitesLoading}
-            fill
-        >
-            <G align="c">
-                <Icon name="Trash2" color="var(--c-red)" />
-            </G>
-        </Button>
-    </div>
+    <BatchToolbar
+        show={selectedCommonSiteCount > 0}
+        count={selectedCommonSiteCount}
+        allSelected={allCommonSitesSelected}
+        indeterminate={partlyCommonSitesSelected}
+        disabled={commonSitesLoading}
+        onselectall={toggleSelectAllCommonSites}
+        ondelete={deleteSelectedCommonSites}
+    />
 {/snippet}
 
 {#snippet temHeader()}

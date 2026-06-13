@@ -22,8 +22,8 @@
   import Icon from "./components/Icon.svelte";
   import Popup from "./components/Popup.svelte";
   import Divider from "./components/Divider.svelte";
-  import Checkbox from "./components/Checkbox.svelte";
-  import { slide } from "svelte/transition";
+  import BatchToolbar from "./components/BatchToolbar.svelte";
+  import { tick, onMount, onDestroy } from "svelte";
 
   interface Props {
     allPinneds: WebSite[] | [];
@@ -152,16 +152,36 @@
     onUpdate();
   }
 
-  function enterMultiSelect() {
+  async function enterMultiSelect() {
     showPinnedMenu = false;
     multiSelectMode = true;
-    selectedIds = new Set();
+    const id = currentPinned?.id ?? currentPinned?.url;
+    selectedIds = id != null ? new Set([id]) : new Set();
+    await tick();
+    const selectedBtn = pageEl?.querySelector(
+      ".item .sel",
+    ) as HTMLElement | null;
+    selectedBtn?.focus();
   }
 
-  function exitMultiSelect() {
+  function clearSelection() {
     multiSelectMode = false;
     selectedIds = new Set();
   }
+
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key === "Escape" && multiSelectMode) {
+      clearSelection();
+    }
+  }
+
+  onMount(() => {
+    window.addEventListener("keydown", handleKeyDown);
+  });
+
+  onDestroy(() => {
+    window.removeEventListener("keydown", handleKeyDown);
+  });
 
   function toggleSelect(pinned: WebSite) {
     const id = pinned.id ?? pinned.url;
@@ -170,6 +190,9 @@
       next.delete(id);
     } else {
       next.add(id);
+    }
+    if (next.size === 0) {
+      multiSelectMode = false;
     }
     selectedIds = next;
   }
@@ -189,6 +212,7 @@
   function toggleSelectAll() {
     if (allSelected) {
       selectedIds = new Set();
+      multiSelectMode = false;
     } else {
       selectedIds = new Set(allPinneds.map((p) => p.id ?? p.url));
     }
@@ -202,6 +226,7 @@
       }
     }
     selectedIds = new Set();
+    multiSelectMode = false;
     onUpdate();
   }
 
@@ -271,17 +296,13 @@
         onfinalize={handleFinalize}
       >
         {#each allPinneds as pinned (pinned.id)}
-          <div
-            class="item"
-            class:drag_ctx={showPinnedMenu && currentPinned?.id === pinned.id}
-            animate:flip={{ duration: 200 }}
-          >
+          <div class="item" animate:flip={{ duration: 200 }}>
             {#if multiSelectMode}
-                <Button
-                  onclick={() => toggleSelect(pinned)}
-                  sel={multiSelectMode && isSelected(pinned)}
-                  r='r1'
-                >
+              <Button
+                onclick={() => toggleSelect(pinned)}
+                sel={multiSelectMode && isSelected(pinned)}
+                r="r1"
+              >
                 <G>
                   <BkmkIcon
                     imgUrl={pinned.url}
@@ -289,8 +310,8 @@
                     size="l"
                   />
                 </G>
-                </Button>
-                <T nowrap align="c" type="s">{pinned.title}</T>
+              </Button>
+              <T nowrap align="c" type="s">{pinned.title}</T>
             {:else}
               <a
                 href={pinned.url}
@@ -308,6 +329,25 @@
             {/if}
           </div>
         {/each}
+        {#if multiSelectMode}
+          <div class="clear_btn_wrapper">
+            <Button onclick={clearSelection} r="r1">
+              <G>
+                <Icon name="X" color="var(--c-main)" />
+              </G>
+            </Button>
+          </div>
+        {/if}
+        <div class="batch_bar_container">
+          <BatchToolbar
+            show={multiSelectMode}
+            count={selectedCount}
+            {allSelected}
+            showDeleteText
+            onselectall={toggleSelectAll}
+            ondelete={deleteSelected}
+          />
+        </div>
       </div>
     </section>
   {:else}
@@ -390,38 +430,6 @@
     </section>
   {/if}
 </div>
-
-{#if multiSelectMode}
-  <div class="batch_bar" transition:slide={{ duration: 180 }}>
-    <div class="batch_inner">
-      <Button fill onclick={exitMultiSelect}>
-        <G>
-          <T>{t("nt_done")}</T>
-        </G>
-      </Button>
-      <div class="batch_spacer"></div>
-      <div
-        class="select_all"
-        role="button"
-        tabindex="0"
-        onclick={toggleSelectAll}
-        onkeydown={(e) => {
-          if (e.key !== "Enter" && e.key !== " ") return;
-          e.preventDefault();
-          toggleSelectAll();
-        }}
-      >
-        <Checkbox checked={allSelected} skipTabFocus />
-        <T type="s" nowrap>{selectedCount}</T>
-      </div>
-      <Button onclick={deleteSelected} disabled={selectedCount === 0} fill>
-        <G align="c">
-          <Icon name="Trash2" color="var(--c-red)" />
-        </G>
-      </Button>
-    </div>
-  </div>
-{/if}
 
 {#if showAdd}
   <AddPinned
@@ -511,6 +519,7 @@
     gap: var(--gap);
     padding: var(--gap);
     position: relative;
+    cursor: default !important;
   }
   .content {
     gap: var(--gap);
@@ -605,32 +614,25 @@
   }
 
   .multi_select {
-    outline: var(--c-mask) 2px dashed;
-  }
-
-  .item_selectable {
-    cursor: pointer !important;
+    outline: var(--c-main-3) 2px solid;
     position: relative;
-    background-color: var(--c-mask);
-  }
-  .item.selected {
-    background-color: var(--c-mask1);
   }
 
-  .select_icon {
+  .clear_btn_wrapper {
     position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 2;
-  }
-
-  .drag_ctx {
-    outline: 2px var(--c-text) solid;
-  }
-
-  .batch_bar {
-    position: fixed;
     bottom: 0;
+    right: 0;
+    z-index: 5;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    background-color: var(--c-main-3);
+    border-radius: var(--r1) 0 var(--r1) 0;
+  }
+
+  .batch_bar_container {
+    position: fixed;
+    bottom: 20px;
     left: 0;
     right: 0;
     display: flex;
@@ -638,31 +640,5 @@
     padding: var(--gap);
     pointer-events: none;
     z-index: 20;
-  }
-  .batch_inner {
-    display: flex;
-    align-items: center;
-    gap: var(--gap);
-    padding: var(--gap);
-    background-color: var(--c-bg1);
-    border-radius: var(--r);
-    box-shadow: var(--shadow);
-    pointer-events: auto;
-    max-width: 400px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  .batch_spacer {
-    flex: 1;
-    min-width: 0;
-  }
-  .select_all {
-    display: flex;
-    align-items: center;
-    gap: var(--gap);
-    border: none;
-    background: none;
-    padding: 0;
-    cursor: pointer;
   }
 </style>
