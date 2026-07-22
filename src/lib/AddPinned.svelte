@@ -16,7 +16,7 @@
     urlValue?: string;
     titleValue?: string;
     onSave: (newWebSite: WebSite) => void | Promise<void>;
-    onDelete?: () => void | Promise<void>;
+    onDelete?: () => boolean | void | Promise<boolean | void>;
     onclickClose: () => void;
   }
 
@@ -59,8 +59,8 @@
 
   async function clickDelete() {
     if (!onDelete) return;
-    await onDelete();
-    onclickClose();
+    const deleted = await onDelete();
+    if (deleted !== false) onclickClose();
   }
 </script>
 
@@ -89,6 +89,16 @@
   </G>
   {#if isEdit && onDelete}
     <div class="actions">
+      <Button fill r="r1" onclick={() => void clickDelete()}>
+        <G align="c">
+          <G>
+            <T align="c" color="var(--c-red)">{t("nt_delete")}</T>
+          </G>
+        </G>
+      </Button>
+      <Button fill r="r1" onclick={onclickClose}>
+        <G><G><T align="c">{t("nt_cancel")}</T></G></G>
+      </Button>
       <Button bg="var(--c-text)" onclick={() => void clickSave()} r="r1">
         <G full>
           <G full>
@@ -96,24 +106,20 @@
           </G>
         </G>
       </Button>
-      <Button fill r="r1" onclick={() => void clickDelete()}>
-        <G align="c">
-          <G>
-            <T align="c">{t("nt_delete")}</T>
-          </G>
-        </G>
-      </Button>
     </div>
   {:else}
-    <G full>
-      <Button bg="var(--c-text)" onclick={() => void clickSave()} full r="r1">
+    <div class="actions">
+      <Button fill r="r1" onclick={onclickClose}>
+        <G><G><T align="c">{t("nt_cancel")}</T></G></G>
+      </Button>
+      <Button bg="var(--c-text)" onclick={() => void clickSave()} r="r1">
         <G full>
           <G full>
             <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
           </G>
         </G>
       </Button>
-    </G>
+    </div>
   {/if}
 </Popup>
 
@@ -122,10 +128,10 @@
     display: flex;
     align-items: center;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: var(--gap);
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
-    flex-direction: row-reverse;
   }
 </style>

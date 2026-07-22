@@ -23,7 +23,7 @@
       category: string;
       enabled: boolean;
     }) => void | Promise<void>;
-    onDelete?: () => void | Promise<void>;
+    onDelete?: () => boolean | void | Promise<boolean | void>;
     onclickClose: () => void;
   }
 
@@ -98,8 +98,8 @@
 
   async function clickDelete() {
     if (!onDelete) return;
-    await onDelete();
-    onclickClose();
+    const deleted = await onDelete();
+    if (deleted !== false) onclickClose();
   }
 </script>
 
@@ -151,6 +151,18 @@
   </G>
 
   <div>
+    {#if isEdit && onDelete}
+      <Button fill r="r1" onclick={() => void clickDelete()}>
+        <G align="c">
+          <G>
+            <T align="c" color="var(--c-red)">{t("nt_delete")}</T>
+          </G>
+        </G>
+      </Button>
+    {/if}
+    <Button fill r="r1" onclick={onclickClose}>
+      <G><G><T align="c">{t("nt_cancel")}</T></G></G>
+    </Button>
     <Button onclick={() => void clickSave()} bg="var(--c-text)" r="r1">
       <G>
         <G full>
@@ -158,15 +170,6 @@
         </G>
       </G>
     </Button>
-    {#if isEdit && onDelete}
-      <Button fill r="r1" onclick={() => void clickDelete()}>
-        <G align="c">
-          <G>
-            <T align="c">{t("nt_delete")}</T>
-          </G>
-        </G>
-      </Button>
-    {/if}
   </div>
 </Popup>
 
@@ -175,10 +178,10 @@
     display: flex;
     align-items: center;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: var(--gap);
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
-    flex-direction: row-reverse;
   }
 </style>

@@ -304,9 +304,14 @@
       if (tab.key === "0") {
         await refreshCommonTab();
       }
-      if (tab.key === "1" && historyStack.length === 2) {
-        tabs[1].name = t("nt_tab_bookmarks");
+      if (tab.key === "1" && historyStack.length > 1) {
         goBack();
+        if (currentNode) {
+          tabs[1].name =
+            currentNode.url || currentNode.id === "0"
+              ? t("nt_tab_bookmarks")
+              : currentNode.title;
+        }
       }
       return;
     }
@@ -405,9 +410,9 @@
     if (!historyStack.length) {
       historyStack = [fallback as BookmarkNode];
     }
-    if (currentNode.folderType) {
+    if (!currentNode.url && currentNode.title) {
       tabs[1].name = currentNode.title;
-    } else if (historyStack.length <= 2) {
+    } else {
       tabs[1].name = t("nt_tab_bookmarks");
     }
   }
@@ -449,9 +454,7 @@
           children: await getBookmarkChildren(bkmk.id),
         };
     bkmk = node;
-    if (bkmk.folderType) {
-      tabs[1].name = bkmk.title;
-    }
+    tabs[1].name = bkmk.title;
     historyStack.push(bkmk);
     currentNode = bkmk;
   }
@@ -520,13 +523,7 @@
             {/if}
           </div>
           <div class="center">
-            {#if historyStack.length <= 2}
-              <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
-            {:else}
-              <T nowrap align="c"
-                >{historyStack[historyStack.length - 1].title}</T
-              >
-            {/if}
+            <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
           </div>
           <div class="side side-right">
             {#if selTab?.key === "0" && hasVisibleFrequentSites}

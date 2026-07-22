@@ -14,8 +14,10 @@
     indeterminate?: boolean;
     disabled?: boolean;
     showDeleteText?: boolean;
+    showMoveText?: boolean;
     onselectall: () => void;
     ondelete: () => void;
+    onmove?: () => void;
   }
 
   let {
@@ -25,8 +27,10 @@
     indeterminate = false,
     disabled = false,
     showDeleteText = false,
+    showMoveText = false,
     onselectall,
     ondelete,
+    onmove,
   }: Props = $props();
 </script>
 
@@ -42,6 +46,16 @@
       />
       <T type="s" nowrap>{count}</T>
       <div class="batch_spacer"></div>
+      {#if onmove}
+        <Button onclick={onmove} disabled={count === 0 || disabled} fill>
+          <G align="c">
+            <Icon name="FolderOpen" color="var(--c-text)" />
+            {#if showMoveText}
+              <T nowrap>{t("nt_move")}</T>
+            {/if}
+          </G>
+        </Button>
+      {/if}
       <Button onclick={ondelete} disabled={count === 0 || disabled} fill>
         <G align="c">
           <Icon name="Trash2" color="var(--c-red)" />

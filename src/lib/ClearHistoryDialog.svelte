@@ -56,6 +56,13 @@
     </div>
     </G>
     <div class="actions">
+      <Button fill r="r1" onclick={onclickClose}>
+        <G align="c">
+          <G>
+            <T align="c">{t("nt_cancel")}</T>
+          </G>
+        </G>
+      </Button>
       <Button
         bg="var(--c-text)"
         disabled={!canConfirm}
@@ -67,13 +74,6 @@
             <T align="c" color="var(--c-bg)">
               {submitting ? t("nt_history_clearing") : t("nt_confirm")}
             </T>
-          </G>
-        </G>
-      </Button>
-      <Button fill r="r1" onclick={onclickClose}>
-        <G align="c">
-          <G>
-            <T align="c">{t("nt_cancel")}</T>
           </G>
         </G>
       </Button>
@@ -111,10 +111,10 @@
   .actions {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: var(--gap);
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
-    flex-direction: row-reverse;
   }
 </style>

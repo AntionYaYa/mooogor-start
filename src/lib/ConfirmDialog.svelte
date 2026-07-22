@@ -22,6 +22,8 @@
     onclickClose,
     onConfirm,
   }: Props = $props();
+
+  let danger = $derived(confirmText === t("nt_delete"));
 </script>
 
 <Popup type="s" title="" hideHeader {onclickClose}>
@@ -34,17 +36,21 @@
     </G>
   </div>
   <div class="actions">
-    <Button bg="var(--c-text)" onclick={() => void onConfirm()} r="r1">
-      <G full>
-        <G full>
-          <T align="c" color="var(--c-bg)">{confirmText}</T>
-        </G>
-      </G>
-    </Button>
     <Button fill r="r1" onclick={onclickClose}>
       <G align="c">
         <G>
           <T align="c">{cancelText}</T>
+        </G>
+      </G>
+    </Button>
+    <Button
+      bg={danger ? "var(--c-red)" : "var(--c-text)"}
+      onclick={() => void onConfirm()}
+      r="r1"
+    >
+      <G full>
+        <G full>
+          <T align="c" color="var(--c-bg)">{confirmText}</T>
         </G>
       </G>
     </Button>
@@ -61,10 +67,10 @@
   .actions {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: var(--gap);
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
-    flex-direction: row-reverse;
   }
 </style>

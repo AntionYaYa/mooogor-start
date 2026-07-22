@@ -547,9 +547,19 @@
     }
 
     async function removeEditingCommonSite() {
-        if (!editingCommonSite?.id) return;
+        if (!editingCommonSite?.id) return false;
+        if (
+            !(await requestConfirm(
+                t("nt_confirm_delete_common_sites_title"),
+                t("nt_settings_common_delete_sites_confirm", "1"),
+                t("nt_delete"),
+            ))
+        ) {
+            return false;
+        }
         await deleteCommonSiteEntry(editingCommonSite.id);
         await loadCommonSites();
+        return true;
     }
 
     function handleCommonSitesConsider(e: CustomEvent<DndEvent<WebSite>>) {
@@ -939,8 +949,18 @@
     }
 
     async function removeEditingSearchEngine() {
-        if (!editingSearchEngine) return;
+        if (!editingSearchEngine) return false;
+        if (
+            !(await requestConfirm(
+                t("nt_confirm_delete_search_engines_title"),
+                t("nt_settings_search_delete_engines_confirm", "1"),
+                t("nt_delete"),
+            ))
+        ) {
+            return false;
+        }
         await removeSearchEngine(editingSearchEngine);
+        return true;
     }
 
     async function resetSearchEnginesToDefaultConfirm() {

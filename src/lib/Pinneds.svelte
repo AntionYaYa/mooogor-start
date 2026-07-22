@@ -23,6 +23,7 @@
   import Popup from "./components/Popup.svelte";
   import Divider from "./components/Divider.svelte";
   import BatchToolbar from "./components/BatchToolbar.svelte";
+  import ConfirmDialog from "./ConfirmDialog.svelte";
   import { tick, onMount, onDestroy } from "svelte";
 
   interface Props {
@@ -56,12 +57,18 @@
 
   let multiSelectMode = $state(false);
   let selectedIds = $state<Set<number | string>>(new Set());
+  let lastClickedIndex = $state(-1);
 
   let showPinnedMenu = $state(false);
   let showFrequentMenu = $state(false);
   let showFrequentInfo = $state(false);
   let pageEl: HTMLElement | undefined = $state();
   let frequentTitleStuck = $state(false);
+  let confirmOptions = $state<{
+    title: string;
+    description: string;
+    resolve: (value: boolean) => void;
+  } | null>(null);
 
   const fixedDomains = $derived.by(() => {
     return new Set(
@@ -94,6 +101,17 @@
     menuY = e.clientY;
     showPinnedMenu = false;
     showFrequentMenu = true;
+  }
+
+  function requestConfirm(title: string, description: string) {
+    return new Promise<boolean>((resolve) => {
+      confirmOptions = { title, description, resolve };
+    });
+  }
+
+  function closeConfirm(result: boolean) {
+    confirmOptions?.resolve(result);
+    confirmOptions = null;
   }
 
   function draggedel(el: HTMLElement | undefined) {
@@ -137,11 +155,19 @@
     oncloseAdd();
   }
   async function clickDeleteWebSite() {
-    if (currentPinned?.id) {
-      await deleteWebSite(currentPinned.id);
+    if (!currentPinned?.id) return false;
+    if (
+      !(await requestConfirm(
+        t("nt_confirm_delete_common_sites_title"),
+        t("nt_settings_common_delete_sites_confirm", "1"),
+      ))
+    ) {
+      return false;
     }
+    await deleteWebSite(currentPinned.id);
     onUpdate();
     showPinnedMenu = false;
+    return true;
   }
 
   async function clickAddFrequentToPinned() {
@@ -157,6 +183,10 @@
     multiSelectMode = true;
     const id = currentPinned?.id ?? currentPinned?.url;
     selectedIds = id != null ? new Set([id]) : new Set();
+    lastClickedIndex =
+      currentPinned && id != null
+        ? allPinneds.findIndex((p) => (p.id ?? p.url) === id)
+        : -1;
     await tick();
     const selectedBtn = pageEl?.querySelector(
       ".item .sel",
@@ -182,6 +212,23 @@
   onDestroy(() => {
     window.removeEventListener("keydown", handleKeyDown);
   });
+
+  function handleItemClick(_e: MouseEvent, pinned: WebSite, index: number) {
+    if (_e.shiftKey && lastClickedIndex >= 0) {
+      _e.preventDefault();
+      const start = Math.min(lastClickedIndex, index);
+      const end = Math.max(lastClickedIndex, index);
+      const next = new Set<number | string>();
+      for (let i = start; i <= end; i++) {
+        const id = allPinneds[i].id ?? allPinneds[i].url;
+        next.add(id);
+      }
+      selectedIds = next;
+    } else {
+      toggleSelect(pinned);
+      lastClickedIndex = index;
+    }
+  }
 
   function toggleSelect(pinned: WebSite) {
     const id = pinned.id ?? pinned.url;
@@ -219,6 +266,15 @@
   }
 
   async function deleteSelected() {
+    if (!selectedCount) return;
+    if (
+      !(await requestConfirm(
+        t("nt_confirm_delete_common_sites_title"),
+        t("nt_settings_common_delete_sites_confirm", String(selectedCount)),
+      ))
+    ) {
+      return;
+    }
     for (const pinned of allPinneds) {
       const id = pinned.id ?? pinned.url;
       if (selectedIds.has(id) && pinned.id) {
@@ -295,11 +351,11 @@
         onconsider={handleConsider}
         onfinalize={handleFinalize}
       >
-        {#each allPinneds as pinned (pinned.id)}
+        {#each allPinneds as pinned, i (pinned.id)}
           <div class="item" animate:flip={{ duration: 200 }}>
             {#if multiSelectMode}
               <Button
-                onclick={() => toggleSelect(pinned)}
+                onclick={(e) => handleItemClick(e, pinned, i)}
                 sel={multiSelectMode && isSelected(pinned)}
                 r="r1"
               >
@@ -459,12 +515,22 @@
         <T>{t("nt_edit")}</T>
       </G>
     </Button>
-    <Button full onclick={clickDeleteWebSite}>
+    <Button full onclick={() => void clickDeleteWebSite()}>
       <G>
-        <T>{t("nt_delete")}</T>
+        <T color="var(--c-red)">{t("nt_delete")}</T>
       </G>
     </Button>
   </LinkContextMenu>
+{/if}
+
+{#if confirmOptions}
+  <ConfirmDialog
+    title={confirmOptions.title}
+    description={confirmOptions.description}
+    confirmText={t("nt_delete")}
+    onclickClose={() => closeConfirm(false)}
+    onConfirm={() => closeConfirm(true)}
+  />
 {/if}
 
 {#if showFrequentMenu && currentFrequent}
@@ -616,6 +682,7 @@
   .multi_select {
     outline: var(--c-main-3) 2px solid;
     position: relative;
+    user-select: none;
   }
 
   .clear_btn_wrapper {

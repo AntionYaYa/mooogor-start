@@ -25,6 +25,22 @@
 
 	onMount(() => {
 		window.addEventListener("mousedown", handleMouseDown, true);
+		requestAnimationFrame(() => {
+			if (!menuEl) return;
+			const fullHeight = menuEl.scrollHeight;
+			const fullWidth = menuEl.scrollWidth;
+			const vw = window.innerWidth;
+			const vh = window.innerHeight;
+			const gap = 8;
+			let ax = x;
+			let ay = y;
+			if (ax + fullWidth > vw - gap) ax = Math.max(gap, vw - fullWidth - gap);
+			if (ay + fullHeight > vh - gap) ay = Math.max(gap, vh - fullHeight - gap);
+			ax = Math.max(gap, ax);
+			ay = Math.max(gap, ay);
+			if (ax !== x) menuEl.style.left = `${ax}px`;
+			if (ay !== y) menuEl.style.top = `${ay}px`;
+		});
 	});
 
 	onDestroy(() => {

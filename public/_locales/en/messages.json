@@ -470,6 +470,15 @@
   "nt_delete_bookmark_confirm": {
     "message": "Delete this bookmark?"
   },
+  "nt_delete_bookmarks_confirm": {
+    "message": "Delete the selected $1 bookmarks? This cannot be undone."
+  },
+  "nt_batch_bookmarks_action_failed_title": {
+    "message": "Batch action incomplete"
+  },
+  "nt_batch_bookmarks_action_failed": {
+    "message": "$1 bookmark actions failed. Completed actions have been refreshed; you can retry the remaining bookmarks."
+  },
   "nt_delete_bookmark_folder_confirm": {
     "message": "Delete this folder and its bookmarks?"
   },

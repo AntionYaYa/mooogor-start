@@ -470,6 +470,15 @@
   "nt_delete_bookmark_confirm": {
     "message": "确定删除这个书签吗？"
   },
+  "nt_delete_bookmarks_confirm": {
+    "message": "确定删除已选的 $1 个书签吗？此操作无法撤销。"
+  },
+  "nt_batch_bookmarks_action_failed_title": {
+    "message": "批量操作未完全完成"
+  },
+  "nt_batch_bookmarks_action_failed": {
+    "message": "有 $1 个书签操作失败。已完成的操作已刷新，您可以重试其余书签。"
+  },
   "nt_delete_bookmark_folder_confirm": {
     "message": "确定删除这个文件夹及其内部书签吗？"
   },
