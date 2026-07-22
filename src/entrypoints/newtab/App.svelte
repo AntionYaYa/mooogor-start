@@ -72,13 +72,6 @@
   let effectiveNewTabOpen = $derived(
     userSettings.newTabOpen || currentTabPinned,
   );
-  let hasVisibleFrequentSites = $derived.by(() => {
-    const fixedDomains = new Set(
-      allPinneds.map((site) => site.domain.replace(/^www\./, "")),
-    );
-    return frequentSites.some((site) => !fixedDomains.has(site.domain));
-  });
-
   function isSameSettings(a: UserSettings, b: UserSettings) {
     return (
       a.defaultOpen === b.defaultOpen &&
@@ -526,29 +519,7 @@
             <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
           </div>
           <div class="side side-right">
-            {#if selTab?.key === "0" && hasVisibleFrequentSites}
-              <div in:fly={{ x: -50, duration: 300 }}>
-                <G align="c">
-                  {#if commonListView}
-                    <Button onclick={() => (commonListView = false)} bg='var(--c-text)'>
-                      <G>
-                        <Icon name="Rows3" color="var(--c-bg)"/>
-                      </G>
-                    </Button>
-                  {:else}
-                    <Button onclick={() => (commonListView = true)}>
-                      <G>
-                        <Icon
-                          name="Rows3"
-                          color="var(--c-text)"
-                          opacity={0.6}
-                        />
-                      </G>
-                    </Button>
-                  {/if}
-                </G>
-              </div>
-            {:else if selTab?.key === "1" && historyStack.length > 0}
+            {#if selTab?.key === "1" && historyStack.length > 0}
               <div in:fly={{ x: -50, duration: 300 }}>
                 <G align="c">
                   {#if gridView}
@@ -580,7 +551,7 @@
                   >
                     <G>
                       <Icon
-                        name="Trash2"
+                        name="BrushCleaning"
                         color="var(--c-text)"
                         opacity={historyClearable ? 0.6 : 0.2}
                       />
@@ -682,6 +653,7 @@
     onopenAdd={() => (showAdd = true)}
     oncloseAdd={() => (showAdd = false)}
     onUpdate={(items) => clickUpdatePinneds(items)}
+    onToggleList={() => (commonListView = !commonListView)}
   />
 {/snippet}
 
@@ -821,6 +793,7 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
+    height: 100%;
     box-sizing: border-box;
     padding: var(--gap);
   }

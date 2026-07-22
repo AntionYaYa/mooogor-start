@@ -35,6 +35,7 @@
     onopenAdd: () => void;
     oncloseAdd: () => void;
     onUpdate: (items?: WebSite[]) => void;
+    onToggleList: () => void;
   }
 
   let {
@@ -46,6 +47,7 @@
     onopenAdd,
     oncloseAdd,
     onUpdate,
+    onToggleList,
   }: Props = $props();
   let isdarging = $state(false);
   let currentPinned: WebSite | undefined = $state();
@@ -426,23 +428,39 @@
           class:frequent_section_title_stuck={frequentTitleStuck}
           use:trackStickyFrequentTitle
         >
-          <G full>
+          <div class="frequent_title_main">
             <Icon
               name="Sparkles"
               color="var(--c-text)"
               opacity={0.6}
               size={16}
             />
-            <T type="m" color="var(--c-text-1)">{t("nt_frequent_section")}</T>
-          </G>
-          <Button
-            onclick={() => (showFrequentInfo = true)}
-            title={t("nt_frequent_info_title")}
-          >
-            <G>
-              <Icon name="Info" color="var(--c-text)" opacity={0.6} size={16} />
-            </G>
-          </Button>
+            <T type="m" color="var(--c-text-1)">
+              {t("nt_frequent_section")}
+            </T>
+            <Button
+              onclick={() => (showFrequentInfo = true)}
+              title={t("nt_frequent_info_title")}
+            >
+              <G>
+                <Icon
+                  name="Info"
+                  color="var(--c-text)"
+                  opacity={0.6}
+                  size={16}
+                />
+              </G>
+            </Button>
+          </div>
+          {#if list}
+            <Button onclick={onToggleList}>
+              <G><Icon name="Grid2x2" color="var(--c-text)" opacity={0.6} /></G>
+            </Button>
+          {:else}
+            <Button onclick={onToggleList} bg="var(--c-text)">
+              <G><Icon name="Grid2x2" color="var(--c-bg)" /></G>
+            </Button>
+          {/if}
         </div>
         <div class="content {list ? 'list' : 'grid'}">
           {#each filteredFrequentSites as site (site.domain)}
@@ -618,6 +636,13 @@
     padding: var(--gap);
     border-radius: var(--r);
     transition: background-color 0.16s ease;
+  }
+  .frequent_title_main {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 0;
+    flex: 1;
   }
   .frequent_section_title_stuck {
     background-color: var(--c-bg1);

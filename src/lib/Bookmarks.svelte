@@ -481,19 +481,19 @@
           </Button>
         </div>
       {/if}
-      <div class="batch_bar_container">
-        <BatchToolbar
-          show={multiSelectMode}
-          count={selectedCount}
-          {allSelected}
-          showDeleteText
-          showMoveText
-          disabled={batchActionLoading}
-          onselectall={toggleSelectAll}
-          ondelete={deleteSelected}
-          onmove={openBatchMove}
-        />
-      </div>
+    </div>
+    <div class="batch_bar_container">
+      <BatchToolbar
+        show={multiSelectMode}
+        count={selectedCount}
+        {allSelected}
+        showDeleteText
+        showMoveText
+        disabled={batchActionLoading}
+        onselectall={toggleSelectAll}
+        ondelete={deleteSelected}
+        onmove={openBatchMove}
+      />
     </div>
   {:else}
     <NoData iconName='Bookmark' title={t("nt_no_bookmarks")} />
@@ -731,6 +731,8 @@
     flex-direction: column;
     width: 100%;
     align-items: center;
+    height: 100%;
+    position: relative;
   }
 
   .multi_select {
@@ -752,10 +754,10 @@
   }
 
   .batch_bar_container {
-    position: fixed;
+    position: absolute;
     bottom: 20px;
-    left: 0;
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     justify-content: center;
     padding: var(--gap);

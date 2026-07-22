@@ -23,6 +23,7 @@
 		Folder,
 		FolderOpen,
 		Trash2,
+		BrushCleaning,
 		Info,
 		Coffee,
 		Search,
@@ -55,6 +56,7 @@
 		| "Folder"
 		| "FolderOpen"
 		| "Trash2"
+		| "BrushCleaning"
 		| "Info"
 		| "Search"
 		| "Globe"
@@ -141,6 +143,9 @@
 	{/if}
 	{#if name === "Trash2"}
 		<Trash2 {size} {strokeWidth} />
+	{/if}
+	{#if name === "BrushCleaning"}
+		<BrushCleaning {size} {strokeWidth} />
 	{/if}
 	{#if name === "Info"}
 		<Info {size} {strokeWidth} />
