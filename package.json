@@ -2,7 +2,7 @@
   "name": "mooogor-start",
   "description": "A fast, offline-first new tab launcher with common sites, multi-engine search, bookmarks, and history.",
   "private": true,
-  "version": "1.5.1",
+  "version": "1.6.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",

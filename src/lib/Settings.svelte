@@ -1656,10 +1656,6 @@
         opacity: 0.5;
         cursor: not-allowed;
     }
-    .batch_spacer {
-        flex: 1;
-        min-width: 0;
-    }
     .move_action {
         position: relative;
         width: 100%;
