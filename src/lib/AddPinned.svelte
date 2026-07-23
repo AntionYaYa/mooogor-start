@@ -88,7 +88,7 @@
     />
   </G>
   {#if isEdit && onDelete}
-    <div class="actions">
+    <div class="actions has_delete">
       <Button fill r="r1" onclick={() => void clickDelete()}>
         <G align="c">
           <G>
@@ -96,16 +96,18 @@
           </G>
         </G>
       </Button>
-      <Button fill r="r1" onclick={onclickClose}>
-        <G><G><T align="c">{t("nt_cancel")}</T></G></G>
-      </Button>
-      <Button bg="var(--c-text)" onclick={() => void clickSave()} r="r1">
-        <G full>
+      <div class="actions_right">
+        <Button fill r="r1" onclick={onclickClose}>
+          <G><G><T align="c">{t("nt_cancel")}</T></G></G>
+        </Button>
+        <Button bg="var(--c-text)" onclick={() => void clickSave()} r="r1">
           <G full>
-            <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
+            <G full>
+              <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
+            </G>
           </G>
-        </G>
-      </Button>
+        </Button>
+      </div>
     </div>
   {:else}
     <div class="actions">
@@ -133,5 +135,13 @@
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
+  }
+  .actions.has_delete {
+    justify-content: space-between;
+  }
+  .actions_right {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
   }
 </style>

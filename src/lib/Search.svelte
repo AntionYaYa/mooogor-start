@@ -895,6 +895,7 @@
                         <EngineIcon
                             alt={engine.title ?? ""}
                             engineUrl={engine.engineUrl}
+                            src={engine.faviconUrl}
                         />
                     </a>
                 </div>
@@ -935,6 +936,7 @@
                         <EngineIcon
                             alt={engine.title ?? ""}
                             engineUrl={engine.engineUrl}
+                            src={engine.faviconUrl}
                         />
                     </div>
                 </div>

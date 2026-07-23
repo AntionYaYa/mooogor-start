@@ -1,4 +1,4 @@
-import { db } from "@/lib/DB/DB";
+import { getStoredConfig, updateStoredConfig } from "@/lib/DB/configStorage";
 
 export type AppLanguage =
   | "auto"
@@ -78,8 +78,9 @@ function isTheme(value: unknown): value is AppTheme {
 }
 
 async function loadStoredSettings(): Promise<Partial<UserSettings> | undefined> {
-  const row = await db.settings.get(SETTINGS_KEY);
-  return row?.value as Partial<UserSettings> | undefined;
+  return (await getStoredConfig()).metadata[SETTINGS_KEY] as
+    | Partial<UserSettings>
+    | undefined;
 }
 
 export async function loadSettings(): Promise<UserSettings> {
@@ -108,5 +109,7 @@ export async function loadSettings(): Promise<UserSettings> {
 }
 
 export async function saveSettings(next: UserSettings): Promise<void> {
-  await db.settings.put({ key: SETTINGS_KEY, value: next });
+  await updateStoredConfig((config) => {
+    config.metadata[SETTINGS_KEY] = next;
+  });
 }

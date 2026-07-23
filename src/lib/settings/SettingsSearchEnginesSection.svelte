@@ -152,6 +152,7 @@
                                                 <EngineIcon
                                                     alt={engine.title ?? "?"}
                                                     engineUrl={engine.engineUrl}
+                                                    src={engine.faviconUrl}
                                                 />
                                                 <T
                                                     nowrap

@@ -38,3 +38,7 @@ export const websiteLogoMap: Record<string, string> = {
   "www.zhihu.com": logo("知乎.jpg"),
   "x.com": logo("X.jpg"),
 };
+
+export function getBuiltInWebsiteLogo(domain: string): string | undefined {
+  return websiteLogoMap[domain.toLowerCase()];
+}

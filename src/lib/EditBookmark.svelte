@@ -81,16 +81,18 @@
         </G>
       </G>
     </Button>
-    <Button fill r="r1" onclick={onclickClose}>
-      <G><G><T align="c">{t("nt_cancel")}</T></G></G>
-    </Button>
-    <Button bg="var(--c-text)" onclick={() => void clickSave()} r="r1">
-      <G full>
+    <div class="actions_right">
+      <Button fill r="r1" onclick={onclickClose}>
+        <G><G><T align="c">{t("nt_cancel")}</T></G></G>
+      </Button>
+      <Button bg="var(--c-text)" onclick={() => void clickSave()} r="r1">
         <G full>
-          <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
+          <G full>
+            <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
+          </G>
         </G>
-      </G>
-    </Button>
+      </Button>
+    </div>
   </div>
 </Popup>
 
@@ -98,10 +100,15 @@
   .actions {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: var(--gap);
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
+  }
+  .actions_right {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
   }
 </style>

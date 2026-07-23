@@ -150,7 +150,7 @@
     </G>
   </G>
 
-  <div>
+  <div class:has_delete={isEdit && !!onDelete} class="actions">
     {#if isEdit && onDelete}
       <Button fill r="r1" onclick={() => void clickDelete()}>
         <G align="c">
@@ -160,21 +160,23 @@
         </G>
       </Button>
     {/if}
-    <Button fill r="r1" onclick={onclickClose}>
-      <G><G><T align="c">{t("nt_cancel")}</T></G></G>
-    </Button>
-    <Button onclick={() => void clickSave()} bg="var(--c-text)" r="r1">
-      <G>
-        <G full>
-          <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
+    <div class="actions_right">
+      <Button fill r="r1" onclick={onclickClose}>
+        <G><G><T align="c">{t("nt_cancel")}</T></G></G>
+      </Button>
+      <Button onclick={() => void clickSave()} bg="var(--c-text)" r="r1">
+        <G>
+          <G full>
+            <T align="c" color="var(--c-bg)">{t("nt_save")}</T>
+          </G>
         </G>
-      </G>
-    </Button>
+      </Button>
+    </div>
   </div>
 </Popup>
 
 <style>
-  div {
+  .actions {
     display: flex;
     align-items: center;
     flex-direction: row;
@@ -183,5 +185,13 @@
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
+  }
+  .actions.has_delete {
+    justify-content: space-between;
+  }
+  .actions_right {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
   }
 </style>

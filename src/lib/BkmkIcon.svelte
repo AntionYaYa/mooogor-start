@@ -25,6 +25,7 @@
 
 <script lang="ts">
   import { getDomainFromUrl } from "../lib/DB/DB";
+  import { getBuiltInWebsiteLogo } from "./DB/websiteLogos";
   import Folder from "./components/svg/Folder.svelte";
 
   type Size = "xl" | "l" | "s";
@@ -40,6 +41,15 @@
   let localSrc = $state<string | null>(null);
   let localResolved = $state(false);
 
+  let builtInSrc = $derived.by(() => {
+    if (!imgUrl) return undefined;
+    try {
+      return getBuiltInWebsiteLogo(getDomainFromUrl(imgUrl));
+    } catch {
+      return undefined;
+    }
+  });
+
   function getChromeFavicon(url: string, size: number = 128): string {
     return `chrome-extension://${browser.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(url)}&size=${size}`;
   }
@@ -48,6 +58,11 @@
     if (folderIcon || !imgUrl) {
       localSrc = null;
       localResolved = false;
+      return;
+    }
+    if (builtInSrc) {
+      localSrc = builtInSrc;
+      localResolved = true;
       return;
     }
     let domain: string | undefined;
