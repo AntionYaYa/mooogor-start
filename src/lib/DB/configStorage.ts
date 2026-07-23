@@ -2,6 +2,13 @@ import { db } from "./database";
 import type { Engine, EngineCategoryItem, WebSite } from "./database";
 
 export const CONFIG_STORAGE_KEY = "mooogor.config.v1";
+const CONFIG_STORAGE_KEYS = {
+  websites: "mooogor.websites.v1",
+  engines: "mooogor.engines.v1",
+  engineCategories: "mooogor.engine-categories.v1",
+  metadata: "mooogor.metadata.v1",
+  migration: "mooogor.config-migration.v1",
+} as const;
 
 export type StoredConfig = {
   schemaVersion: 1;
@@ -20,11 +27,11 @@ let migrationPromise: Promise<void> | null = null;
 let writeQueue = Promise.resolve();
 
 type ExtensionStorageArea = {
-  get(keys: string): Promise<Record<string, unknown>>;
+  get(keys: string | string[]): Promise<Record<string, unknown>>;
   set(items: Record<string, unknown>): Promise<void>;
 };
 
-function getExtensionStorage() {
+export function getExtensionStorage() {
   const extensionGlobal = globalThis as typeof globalThis & {
     browser?: { storage?: { local?: ExtensionStorageArea } };
     chrome?: { storage?: { local?: ExtensionStorageArea } };
@@ -51,12 +58,62 @@ function isStoredConfig(value: unknown): value is StoredConfig {
   );
 }
 
+function isMigration(value: unknown): value is StoredConfig["migration"] {
+  if (!value || typeof value !== "object") return false;
+  const migration = value as Partial<StoredConfig["migration"]>;
+  return (
+    migration.status === "completed" &&
+    (migration.source === "dexie-v2" || migration.source === "fresh") &&
+    typeof migration.completedAt === "number"
+  );
+}
+
+function isConfigParts(value: Record<string, unknown>) {
+  return (
+    Array.isArray(value[CONFIG_STORAGE_KEYS.websites]) &&
+    Array.isArray(value[CONFIG_STORAGE_KEYS.engines]) &&
+    Array.isArray(value[CONFIG_STORAGE_KEYS.engineCategories]) &&
+    !!value[CONFIG_STORAGE_KEYS.metadata] &&
+    isMigration(value[CONFIG_STORAGE_KEYS.migration])
+  );
+}
+
+function toStoredConfig(value: Record<string, unknown>): StoredConfig {
+  return {
+    schemaVersion: 1,
+    migration: value[CONFIG_STORAGE_KEYS.migration] as StoredConfig["migration"],
+    websites: value[CONFIG_STORAGE_KEYS.websites] as WebSite[],
+    engines: value[CONFIG_STORAGE_KEYS.engines] as Engine[],
+    engineCategories: value[CONFIG_STORAGE_KEYS.engineCategories] as EngineCategoryItem[],
+    metadata: value[CONFIG_STORAGE_KEYS.metadata] as Record<string, unknown>,
+  };
+}
+
+function toStorageParts(config: StoredConfig): Record<string, unknown> {
+  return {
+    [CONFIG_STORAGE_KEYS.websites]: config.websites,
+    [CONFIG_STORAGE_KEYS.engines]: config.engines,
+    [CONFIG_STORAGE_KEYS.engineCategories]: config.engineCategories,
+    [CONFIG_STORAGE_KEYS.metadata]: config.metadata,
+    [CONFIG_STORAGE_KEYS.migration]: config.migration,
+  };
+}
+
+async function readConfigParts(): Promise<StoredConfig | null> {
+  const value = await getExtensionStorage().get(Object.values(CONFIG_STORAGE_KEYS));
+  return isConfigParts(value) ? toStoredConfig(value) : null;
+}
+
 async function migrateFromDexie(): Promise<StoredConfig> {
   const storage = getExtensionStorage();
-  const existing = (await storage.get(CONFIG_STORAGE_KEY))[
-    CONFIG_STORAGE_KEY
-  ];
-  if (isStoredConfig(existing)) return existing;
+  const splitConfig = await readConfigParts();
+  if (splitConfig) return splitConfig;
+
+  const legacyConfig = (await storage.get(CONFIG_STORAGE_KEY))[CONFIG_STORAGE_KEY];
+  if (isStoredConfig(legacyConfig)) {
+    await storage.set(toStorageParts(legacyConfig));
+    return legacyConfig;
+  }
 
   const [websites, engines, engineCategories, settings] = await Promise.all([
     db.webSites.toArray(),
@@ -77,15 +134,14 @@ async function migrateFromDexie(): Promise<StoredConfig> {
     metadata: Object.fromEntries(settings.map((row) => [row.key, row.value])),
   };
 
-  await storage.set({ [CONFIG_STORAGE_KEY]: data });
-  const written = (await storage.get(CONFIG_STORAGE_KEY))[
-    CONFIG_STORAGE_KEY
-  ];
+  await storage.set(toStorageParts(data));
+  const written = await readConfigParts();
   if (
     !isStoredConfig(written) ||
-    written.websites.length !== websites.length ||
-    written.engines.length !== engines.length ||
-    written.engineCategories.length !== engineCategories.length
+    JSON.stringify(written.websites) !== JSON.stringify(websites) ||
+    JSON.stringify(written.engines) !== JSON.stringify(engines) ||
+    JSON.stringify(written.engineCategories) !== JSON.stringify(engineCategories) ||
+    JSON.stringify(written.metadata) !== JSON.stringify(data.metadata)
   ) {
     throw new Error("Configuration migration validation failed");
   }
@@ -99,11 +155,9 @@ async function ensureMigration(): Promise<void> {
 
 export async function getStoredConfig(): Promise<StoredConfig> {
   await ensureMigration();
-  const config = (await getExtensionStorage().get(CONFIG_STORAGE_KEY))[
-    CONFIG_STORAGE_KEY
-  ];
+  const config = await readConfigParts();
 
-  if (isStoredConfig(config)) return config;
+  if (config) return config;
 
   // 存储被外部清除或写入了无效值时，重新执行迁移，而不是继续使用旧快照。
   migrationPromise = null;
@@ -118,7 +172,17 @@ export async function updateStoredConfig<T>(
     const current = await getStoredConfig();
     const next: StoredConfig = structuredClone(current);
     const result = await mutate(next);
-    await getExtensionStorage().set({ [CONFIG_STORAGE_KEY]: next });
+    const changed: Record<string, unknown> = {};
+    const currentParts = toStorageParts(current);
+    const nextParts = toStorageParts(next);
+    for (const [key, value] of Object.entries(nextParts)) {
+      if (JSON.stringify(value) !== JSON.stringify(currentParts[key])) {
+        changed[key] = value;
+      }
+    }
+    if (Object.keys(changed).length) {
+      await getExtensionStorage().set(changed);
+    }
     return result;
   });
   writeQueue = task.then(

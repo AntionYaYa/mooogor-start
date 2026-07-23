@@ -11,7 +11,6 @@ type MessageValue = {
 
 type MessageMap = Record<string, MessageValue>;
 
-const LANGUAGE_KEY = "nt_language";
 const LANGUAGE_VALUES = [
   "auto",
   "zh_CN",
@@ -19,18 +18,12 @@ const LANGUAGE_VALUES = [
   "en",
 ] as const;
 
-let currentLanguage: AppLanguage = readLanguagePreference();
+let currentLanguage: AppLanguage = "auto";
 let currentMessages: MessageMap | null = readInitialMessages();
 let languageRequestSeq = 0;
 
 function isLanguage(value: unknown): value is AppLanguage {
   return LANGUAGE_VALUES.includes(value as AppLanguage);
-}
-
-function readLanguagePreference(): AppLanguage {
-  if (typeof localStorage === "undefined") return "auto";
-  const value = localStorage.getItem(LANGUAGE_KEY);
-  return isLanguage(value) ? value : "auto";
 }
 
 function getI18nApi() {
@@ -105,14 +98,10 @@ async function fetchMessages(
 
 async function setLanguageState(
   language: AppLanguage,
-  persist: boolean,
 ): Promise<void> {
   const requestSeq = ++languageRequestSeq;
   const nextLanguage = isLanguage(language) ? language : "auto";
   currentLanguage = nextLanguage;
-  if (persist && typeof localStorage !== "undefined") {
-    localStorage.setItem(LANGUAGE_KEY, nextLanguage);
-  }
   if (nextLanguage === "auto") {
     const autoLanguage = resolveAutoLanguage();
     if (requestSeq !== languageRequestSeq) return;
@@ -137,11 +126,11 @@ async function setLanguageState(
 }
 
 export async function setLanguage(language: AppLanguage): Promise<void> {
-  await setLanguageState(language, true);
+  await setLanguageState(language);
 }
 
 export async function setRuntimeLanguage(language: AppLanguage): Promise<void> {
-  await setLanguageState(language, false);
+  await setLanguageState(language);
 }
 
 export function getLanguage(): AppLanguage {

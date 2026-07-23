@@ -6,6 +6,7 @@
   import Icon from "@/lib/components/Icon.svelte";
   import T from "@/lib/components/T.svelte";
   import { resolveEngineByDomain } from "./relatedSearchEngineMatch";
+  import { getExtensionStorage } from "@/lib/DB/configStorage";
   import { fly, slide } from "svelte/transition";
 
   export type RelatedSearchEngine = {
@@ -70,7 +71,7 @@
       location.hostname,
       data.matchedEngine,
     ).engineUrl;
-    restorePosition();
+    void restorePosition();
     void syncInputWidth();
   });
 
@@ -216,15 +217,18 @@
     if (!target.hasPointerCapture(event.pointerId) || !host) return;
     target.releasePointerCapture(event.pointerId);
     const rect = host.getBoundingClientRect();
-    localStorage.setItem(
-      getPositionStorageKey(),
-      JSON.stringify({ left: rect.left, top: rect.top }),
-    );
+    void getExtensionStorage().set({
+      [getPositionStorageKey()]: { left: rect.left, top: rect.top },
+    });
   }
 
-  function restorePosition() {
+  async function restorePosition() {
     if (!host) return;
-    const saved = readPanelPosition(getPositionStorageKey());
+    const saved = readPanelPosition(
+      (await getExtensionStorage().get(getPositionStorageKey()))[
+        getPositionStorageKey()
+      ],
+    );
     if (!saved) return;
     host.style.left = `${saved.left}px`;
     host.style.top = `${saved.top}px`;
@@ -232,31 +236,23 @@
   }
 
   function getPositionStorageKey() {
-    return `mooogor-related-search-pos:${location.hostname}`;
+    return `mooogor.related-search-position.v1:${location.hostname}`;
   }
 
   function readPanelPosition(
-    key: string,
+    value: unknown,
   ): { left: number; top: number } | null {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(key) ?? "null") as {
-        left?: number;
-        top?: number;
-      } | null;
-      if (
-        !parsed ||
-        typeof parsed.left !== "number" ||
-        typeof parsed.top !== "number"
-      ) {
-        return null;
-      }
-      return {
-        left: clamp(parsed.left, 8, window.innerWidth - 64),
-        top: clamp(parsed.top, 8, window.innerHeight - 64),
-      };
-    } catch {
+    if (!value || typeof value !== "object") {
       return null;
     }
+    const parsed = value as { left?: unknown; top?: unknown };
+    if (typeof parsed.left !== "number" || typeof parsed.top !== "number") {
+      return null;
+    }
+    return {
+      left: clamp(parsed.left, 8, window.innerWidth - 64),
+      top: clamp(parsed.top, 8, window.innerHeight - 64),
+    };
   }
 
   function clamp(value: number, min: number, max: number) {

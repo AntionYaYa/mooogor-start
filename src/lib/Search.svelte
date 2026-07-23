@@ -35,6 +35,7 @@
     import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
     import {
         clearPersistedSelectedCategoryId,
+        hydrateSearchStorage,
         MAX_SEARCH_KEYS,
         normalizeSearchKey,
         persistSearchKeys,
@@ -250,6 +251,8 @@
         );
 
         void (async () => {
+            await hydrateSearchStorage();
+            searchKeys = readSearchKeys();
             await ensureDefaultEngines(defaultEngines); //初始化把数据添加到Engines表里，有就不会添加
             await refreshEngineConfig();
             inputValue = backPageInitInputValue();
