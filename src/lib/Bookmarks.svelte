@@ -832,7 +832,6 @@
     margin: 0;
     border-radius: var(--r1);
     -webkit-user-drag: none;
-    flex: 1;
   }
   a.ctx {
     outline: 2px var(--c-text) solid;
