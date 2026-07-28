@@ -70,28 +70,24 @@
                     class:common_selected={isSiteSelected(site)}
                     animate:flip={{ duration: 200 }}
                 >
-                    <Button
-                        full
-                        align="c"
-                        onclick={() => onEdit(site)}
-                    >
-                        <G full align="c">
-                            <G full>
+                    <Button full align="c" onclick={() => onEdit(site)}>
+                        <G full>
+                            <G full align="c">
                                 <BkmkIcon
                                     imgUrl={site.url}
                                     alt={site.title ?? site.url}
-                                    size="s"
+                                    size="m"
                                 />
                                 <T nowrap>{site.title ?? t("nt_unnamed")}</T>
                             </G>
                         </G>
                     </Button>
                     <Divider vertical />
-                        <Checkbox
-                            checked={isSiteSelected(site)}
-                            disabled={commonSitesLoading}
-                            onchange={() => onToggleSelected(site)}
-                        />
+                    <Checkbox
+                        checked={isSiteSelected(site)}
+                        disabled={commonSitesLoading}
+                        onchange={() => onToggleSelected(site)}
+                    />
                 </div>
             {/each}
         {/if}
