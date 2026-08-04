@@ -50,7 +50,7 @@
     >
       <G full>
         <G full>
-          <T align="c" color="var(--c-bg)">{confirmText}</T>
+          <T align="c" color={danger ? "#fff" : "var(--c-bg)"}>{confirmText}</T>
         </G>
       </G>
     </Button>

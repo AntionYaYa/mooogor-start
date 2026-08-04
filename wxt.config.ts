@@ -37,6 +37,11 @@ export default defineConfig({
       // 3. 约束混淆器行为，确保生产压缩（Minify）时不会反向还原特殊多字节符号。
       minify: 'esbuild',
       cssMinify: 'esbuild',
+      // 4. 禁用 Vite 的 modulepreload，避免在 newtab/popup 扩展页中注入
+      //    <link rel="modulepreload">，从而消除 Chrome 151+ 回归导致的
+      //    "cross-world extension resource mismatch" 控制台警告。
+      //    该警告由 Chromium issue #540906914 引起，待 Chrome 修复后可移除此项。
+      modulePreload: false,
     }
   }),
 });

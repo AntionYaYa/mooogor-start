@@ -299,12 +299,6 @@
       }
       if (tab.key === "1" && historyStack.length > 1) {
         goBack();
-        if (currentNode) {
-          tabs[1].name =
-            currentNode.url || currentNode.id === "0"
-              ? t("nt_tab_bookmarks")
-              : currentNode.title;
-        }
       }
       return;
     }
@@ -452,10 +446,18 @@
     currentNode = bkmk;
   }
 
+  function updateBookmarkTabName(node: BookmarkNode) {
+    tabs[1].name =
+      node.url || node.id === "0"
+        ? t("nt_tab_bookmarks")
+        : node.title;
+  }
+
   function goBack() {
     if (historyStack.length <= 1) return;
     historyStack.pop()!;
     currentNode = historyStack[historyStack.length - 1];
+    if (currentNode) updateBookmarkTabName(currentNode);
   }
 </script>
 
