@@ -30,7 +30,7 @@
     "message": "Authorize history access"
   },
   "nt_permission_desc_history": {
-    "message": "After authorizing, you can browse and search history, and use it to infer recent frequent sites."
+    "message": "After granting permission, you can browse and search your browsing history, which is also used to identify your frequently visited sites."
   },
   "nt_authorize": {
     "message": "Authorize"
@@ -348,7 +348,7 @@
     "message": "Common Sites"
   },
   "nt_frequent_section": {
-    "message": "Frequent Sites"
+    "message": "Frequently Visited"
   },
   "nt_enable_frequent_sites": {
     "message": "Enable Frequent Sites"
@@ -360,10 +360,10 @@
     "message": "No frequent sites from the last 30 days yet."
   },
   "nt_frequent_info_title": {
-    "message": "How Frequent Sites Works"
+    "message": "How are Frequently Visited sites determined?"
   },
   "nt_frequent_info_desc": {
-    "message": "Frequent Sites reads browsing history from the last 30 days and only counts http and https websites.\nPages from the same domain are merged into one shortcut, and sites already in Common Sites are filtered out.\nRanking mainly uses visit count, with recent visit time as a smaller boost, so high-frequency and recently used sites appear first."
+    "message": "Frequently Visited reads your browsing history from the last 30 days and only includes HTTP and HTTPS websites.\nPages from the same domain are merged into a single site, and sites already added to Common Sites are excluded."
   },
   "nt_no_bookmarks": {
     "message": "No bookmarks yet"

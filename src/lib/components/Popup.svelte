@@ -17,6 +17,8 @@
 	}
 	let { children, title, onclickClose, type, hideHeader = false }: Props = $props();
 
+	let isZooming = $state(false);
+
 	onMount(() => {
 		window.addEventListener("keydown", handleKeyDown);
 	});
@@ -30,10 +32,35 @@
 			onclickClose();
 		}
 	}
+
+	function handleMaskClick(event: MouseEvent) {
+		// 只在点击遮罩（弹窗外部）时触发
+		if (event.target !== event.currentTarget) return;
+		triggerZoom();
+	}
+
+	function triggerZoom() {
+		isZooming = false;
+		requestAnimationFrame(() => {
+			requestAnimationFrame(() => {
+				isZooming = true;
+			});
+		});
+	}
 </script>
 
-<div class="mask" transition:fade={{ duration: 200 }}>
-	<div class="pannel {type}" transition:fly={{ y: -50, duration: 200 }}>
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+	class="mask"
+	transition:fade={{ duration: 200 }}
+	onclick={handleMaskClick}
+>
+	<div
+		class="panel {type}"
+		class:zooming={isZooming}
+		transition:fly={{ y: -50, duration: 200 }}
+	>
 		{#if !hideHeader}
 			<G full align="c">
 				<T>{title}</T>
@@ -68,7 +95,7 @@
 	.l {
 		max-width: 600px;
 	}
-	.pannel {
+	.panel {
 		width: 100%;
 		max-height: 100vh;
 		background-color: var(--c-bg);
@@ -77,6 +104,20 @@
 		flex-direction: column;
 		align-items: center;
 		border-radius: calc(var(--r) * 2);
+	}
+	.panel.zooming {
+		animation: zoom 0.2s ease-in-out;
+	}
+	@keyframes zoom {
+		0% {
+			transform: scale(1);
+		}
+		40% {
+			transform: scale(1.06);
+		}
+		100% {
+			transform: scale(1);
+		}
 	}
 	.mask {
 		position: fixed;

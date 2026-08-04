@@ -30,7 +30,7 @@
     "message": "授权访问历史记录"
   },
   "nt_permission_desc_history": {
-    "message": "授权后可以浏览、搜索历史记录，并用于智能推算最近常访问的网站。"
+    "message": "授权后可以浏览、搜索历史记录，并用于推算最近常访问的网站。"
   },
   "nt_authorize": {
     "message": "授权"
@@ -348,7 +348,7 @@
     "message": "常用网站"
   },
   "nt_frequent_section": {
-    "message": "常用网站"
+    "message": "经常访问网站"
   },
   "nt_enable_frequent_sites": {
     "message": "开启常用网站"
@@ -360,10 +360,10 @@
     "message": "最近 30 天暂无可显示的常访问网站。"
   },
   "nt_frequent_info_title": {
-    "message": "常用网站如何计算"
+    "message": "常访问网站如何生成？"
   },
   "nt_frequent_info_desc": {
-    "message": "常用网站会读取最近 30 天的浏览历史，只统计 http 和 https 网站。\n同一个域名会合并为一个入口，并过滤掉已经添加到常用网站的网站。\n排序会优先考虑访问次数，最近访问时间会作为辅助权重，让高频且近期访问的网站更靠前。"
+    "message": "常访问网站会读取最近 30 天的浏览历史，只统计 HTTP 和 HTTPS 网站。\n同一域名会合并为一个网站，并过滤掉已添加到常用网站的网站。"
   },
   "nt_no_bookmarks": {
     "message": "没有书签哦～"

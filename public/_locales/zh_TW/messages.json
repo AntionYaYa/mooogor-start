@@ -30,7 +30,7 @@
     "message": "授權存取歷史記錄"
   },
   "nt_permission_desc_history": {
-    "message": "授權後可以瀏覽、搜尋歷史記錄，並用於智能推算最近常訪問的網站。"
+    "message": "授權後即可瀏覽、搜尋歷史紀錄，並用於推算最近常造訪的網站。"
   },
   "nt_authorize": {
     "message": "授權"
@@ -348,7 +348,7 @@
     "message": "常用網站"
   },
   "nt_frequent_section": {
-    "message": "常用網站"
+    "message": "常造訪"
   },
   "nt_enable_frequent_sites": {
     "message": "開啟常用網站"
@@ -360,10 +360,10 @@
     "message": "最近 30 天暫無可顯示的常訪問網站。"
   },
   "nt_frequent_info_title": {
-    "message": "常用網站如何計算"
+    "message": "常造訪網站如何產生？"
   },
   "nt_frequent_info_desc": {
-    "message": "常用網站會讀取最近 30 天的瀏覽歷史，只統計 http 和 https 網站。\n同一個網域會合併為一個入口，並過濾掉已經加入常用網站的網站。\n排序會優先考慮訪問次數，最近訪問時間會作為輔助權重，讓高頻且近期訪問的網站更靠前。"
+    "message": "常造訪的網站會讀取最近 30 天的瀏覽紀錄，僅統計 HTTP 和 HTTPS 網站。\n相同網域會合併為一個網站，並排除已新增至常用網站的網站。"
   },
   "nt_no_bookmarks": {
     "message": "還沒有書籤哦～"
