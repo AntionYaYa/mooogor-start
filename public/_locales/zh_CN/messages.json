@@ -62,17 +62,8 @@
   "nt_settings_default_open": {
     "message": "默认打开："
   },
-  "nt_settings_feedback": {
-    "message": "建议反馈"
-  },
   "nt_settings_about": {
     "message": "关于"
-  },
-  "nt_settings_version": {
-    "message": "版本"
-  },
-  "nt_support_scan_tip": {
-    "message": "扫码支持"
   },
   "nt_support_way_wechat": {
     "message": "微信"
@@ -140,9 +131,6 @@
   "nt_settings_search_engines_title": {
     "message": "搜索引擎管理"
   },
-  "nt_settings_search_reset_default": {
-    "message": "恢复默认"
-  },
   "nt_settings_search_reset_confirm": {
     "message": "确定要恢复搜索引擎到初始状态吗？此操作将清除所有自定义的搜索引擎和分类，且无法撤销。"
   },
@@ -182,39 +170,6 @@
   "nt_settings_search_category_add_placeholder": {
     "message": "新增分类名称"
   },
-  "nt_settings_search_add_category": {
-    "message": "新增分类"
-  },
-  "nt_settings_search_edit_category": {
-    "message": "编辑分类"
-  },
-  "nt_settings_search_category_name_required": {
-    "message": "请输入分类名称"
-  },
-  "nt_settings_search_enabled_engines": {
-    "message": "已启用引擎"
-  },
-  "nt_settings_search_disabled_engines": {
-    "message": "已禁用引擎"
-  },
-  "nt_settings_search_reload_engines": {
-    "message": "刷新"
-  },
-  "nt_settings_search_enable": {
-    "message": "启用"
-  },
-  "nt_settings_search_disable": {
-    "message": "禁用"
-  },
-  "nt_settings_search_no_enabled_engines": {
-    "message": "暂无已启用引擎"
-  },
-  "nt_settings_search_no_disabled_engines": {
-    "message": "暂无已禁用引擎"
-  },
-  "nt_settings_search_no_engines": {
-    "message": "暂无搜索引擎"
-  },
   "nt_settings_search_add_engine": {
     "message": "自定义搜索引擎"
   },
@@ -251,9 +206,6 @@
   "nt_settings_search_drag_reorder_or_move": {
     "message": "拖拽排序，也可拖拽到其他分类。"
   },
-  "nt_settings_search_select_engine": {
-    "message": "选择搜索引擎"
-  },
   "nt_confirm_delete_search_engines_title": {
     "message": "删除搜索引擎"
   },
@@ -278,23 +230,11 @@
   "nt_engine_category_music": {
     "message": "音乐"
   },
-  "nt_engine_category_fallback": {
-    "message": "未分类"
-  },
   "nt_settings_title": {
     "message": "设置"
   },
   "nt_lang_auto": {
     "message": "跟随系统"
-  },
-  "nt_lang_zh_cn": {
-    "message": "简体中文"
-  },
-  "nt_lang_zh_tw": {
-    "message": "繁体中文"
-  },
-  "nt_lang_en": {
-    "message": "English"
   },
   "nt_default_common": {
     "message": "常用网站"
@@ -344,20 +284,8 @@
   "nt_no_pinned_desc": {
     "message": "点击左上角的+添加常用网站，也可以在书签、历史记录或常用网站里右键添加。"
   },
-  "nt_pinned_section": {
-    "message": "常用网站"
-  },
   "nt_frequent_section": {
     "message": "经常访问网站"
-  },
-  "nt_enable_frequent_sites": {
-    "message": "开启常用网站"
-  },
-  "nt_frequent_permission_hint": {
-    "message": "授权历史记录后，会根据最近 30 天自动显示高频网站。"
-  },
-  "nt_no_frequent_sites": {
-    "message": "最近 30 天暂无可显示的常访问网站。"
   },
   "nt_frequent_info_title": {
     "message": "常访问网站如何生成？"
@@ -482,50 +410,14 @@
   "nt_delete_bookmark_folder_confirm": {
     "message": "确定删除这个文件夹及其内部书签吗？"
   },
-  "nt_drag_reorder_bookmarks": {
-    "message": "拖拽排序"
-  },
   "nt_move": {
     "message": "移动"
   },
   "nt_move_bookmark_title": {
     "message": "移动到文件夹"
   },
-  "nt_expand": {
-    "message": "展开"
-  },
-  "nt_collapse": {
-    "message": "收起"
-  },
-  "nt_settings_bookmarks_add_bookmark": {
-    "message": "新增书签"
-  },
   "nt_settings_bookmarks_add_folder": {
     "message": "新增文件夹"
-  },
-  "nt_settings_bookmarks_create_title": {
-    "message": "新增内容"
-  },
-  "nt_settings_bookmarks_parent": {
-    "message": "所属分组"
-  },
-  "nt_settings_bookmarks_root": {
-    "message": "全部书签"
-  },
-  "nt_settings_bookmarks_folder": {
-    "message": "文件夹"
-  },
-  "nt_settings_bookmarks_empty": {
-    "message": "当前分组暂无书签"
-  },
-  "nt_settings_bookmarks_title_required": {
-    "message": "请输入名称"
-  },
-  "nt_settings_bookmarks_url_invalid": {
-    "message": "请输入有效的网址"
-  },
-  "nt_settings_bookmarks_target_required": {
-    "message": "请选择目标分组"
   },
   "nt_switch": {
     "message": "开关"

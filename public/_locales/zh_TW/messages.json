@@ -62,17 +62,8 @@
   "nt_settings_default_open": {
     "message": "預設開啟："
   },
-  "nt_settings_feedback": {
-    "message": "建議回饋"
-  },
   "nt_settings_about": {
     "message": "關於"
-  },
-  "nt_settings_version": {
-    "message": "版本"
-  },
-  "nt_support_scan_tip": {
-    "message": "掃碼支持"
   },
   "nt_support_way_wechat": {
     "message": "微信"
@@ -140,9 +131,6 @@
   "nt_settings_search_engines_title": {
     "message": "搜尋引擎管理"
   },
-  "nt_settings_search_reset_default": {
-    "message": "恢復預設"
-  },
   "nt_settings_search_reset_confirm": {
     "message": "確定要將搜尋引擎恢復至初始狀態嗎？此操作將清除所有自訂的搜尋引擎和分類，且無法復原。"
   },
@@ -182,39 +170,6 @@
   "nt_settings_search_category_add_placeholder": {
     "message": "新增分類名稱"
   },
-  "nt_settings_search_add_category": {
-    "message": "新增分類"
-  },
-  "nt_settings_search_edit_category": {
-    "message": "編輯分類"
-  },
-  "nt_settings_search_category_name_required": {
-    "message": "請輸入分類名稱"
-  },
-  "nt_settings_search_enabled_engines": {
-    "message": "已啟用引擎"
-  },
-  "nt_settings_search_disabled_engines": {
-    "message": "已停用引擎"
-  },
-  "nt_settings_search_reload_engines": {
-    "message": "重新整理"
-  },
-  "nt_settings_search_enable": {
-    "message": "啟用"
-  },
-  "nt_settings_search_disable": {
-    "message": "停用"
-  },
-  "nt_settings_search_no_enabled_engines": {
-    "message": "暫無已啟用引擎"
-  },
-  "nt_settings_search_no_disabled_engines": {
-    "message": "暫無已停用引擎"
-  },
-  "nt_settings_search_no_engines": {
-    "message": "暫無搜尋引擎"
-  },
   "nt_settings_search_add_engine": {
     "message": "自訂搜尋引擎"
   },
@@ -251,9 +206,6 @@
   "nt_settings_search_drag_reorder_or_move": {
     "message": "拖曳即可排序，也可拖曳到其他分類"
   },
-  "nt_settings_search_select_engine": {
-    "message": "選擇搜尋引擎"
-  },
   "nt_confirm_delete_search_engines_title": {
     "message": "刪除搜尋引擎"
   },
@@ -278,23 +230,11 @@
   "nt_engine_category_music": {
     "message": "音樂"
   },
-  "nt_engine_category_fallback": {
-    "message": "未分類"
-  },
   "nt_settings_title": {
     "message": "設定"
   },
   "nt_lang_auto": {
     "message": "跟隨系統"
-  },
-  "nt_lang_zh_cn": {
-    "message": "簡體中文"
-  },
-  "nt_lang_zh_tw": {
-    "message": "繁體中文"
-  },
-  "nt_lang_en": {
-    "message": "English"
   },
   "nt_default_common": {
     "message": "常用網站"
@@ -344,20 +284,8 @@
   "nt_no_pinned_desc": {
     "message": "點擊左上角的+新增常用網站，也可以在書籤、歷史記錄或常用網站裡右鍵加入。"
   },
-  "nt_pinned_section": {
-    "message": "常用網站"
-  },
   "nt_frequent_section": {
     "message": "常造訪"
-  },
-  "nt_enable_frequent_sites": {
-    "message": "開啟常用網站"
-  },
-  "nt_frequent_permission_hint": {
-    "message": "授權歷史記錄後，會根據最近 30 天自動顯示高頻網站。"
-  },
-  "nt_no_frequent_sites": {
-    "message": "最近 30 天暫無可顯示的常訪問網站。"
   },
   "nt_frequent_info_title": {
     "message": "常造訪網站如何產生？"
@@ -482,50 +410,14 @@
   "nt_delete_bookmark_folder_confirm": {
     "message": "確定刪除這個資料夾及其內部書籤嗎？"
   },
-  "nt_drag_reorder_bookmarks": {
-    "message": "拖曳排序"
-  },
   "nt_move": {
     "message": "移動"
   },
   "nt_move_bookmark_title": {
     "message": "移動到資料夾"
   },
-  "nt_expand": {
-    "message": "展開"
-  },
-  "nt_collapse": {
-    "message": "收起"
-  },
-  "nt_settings_bookmarks_add_bookmark": {
-    "message": "新增書籤"
-  },
   "nt_settings_bookmarks_add_folder": {
     "message": "新增資料夾"
-  },
-  "nt_settings_bookmarks_create_title": {
-    "message": "新增內容"
-  },
-  "nt_settings_bookmarks_parent": {
-    "message": "所屬分組"
-  },
-  "nt_settings_bookmarks_root": {
-    "message": "全部書籤"
-  },
-  "nt_settings_bookmarks_folder": {
-    "message": "資料夾"
-  },
-  "nt_settings_bookmarks_empty": {
-    "message": "目前分組暫無書籤"
-  },
-  "nt_settings_bookmarks_title_required": {
-    "message": "請輸入名稱"
-  },
-  "nt_settings_bookmarks_url_invalid": {
-    "message": "請輸入有效網址"
-  },
-  "nt_settings_bookmarks_target_required": {
-    "message": "請選擇目標分組"
   },
   "nt_switch": {
     "message": "開關"

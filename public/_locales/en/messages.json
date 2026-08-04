@@ -62,17 +62,8 @@
   "nt_settings_default_open": {
     "message": "Open by default:"
   },
-  "nt_settings_feedback": {
-    "message": "Feedback"
-  },
   "nt_settings_about": {
     "message": "About"
-  },
-  "nt_settings_version": {
-    "message": "Version"
-  },
-  "nt_support_scan_tip": {
-    "message": "scan to support"
   },
   "nt_support_way_wechat": {
     "message": "WeChat"
@@ -140,9 +131,6 @@
   "nt_settings_search_engines_title": {
     "message": "Search Engine Management"
   },
-  "nt_settings_search_reset_default": {
-    "message": "Restore defaults"
-  },
   "nt_settings_search_reset_confirm": {
     "message": "Are you sure you want to restore search engines to their initial state? This will remove all custom search engines and categories, and cannot be undone."
   },
@@ -182,39 +170,6 @@
   "nt_settings_search_category_add_placeholder": {
     "message": "New category name"
   },
-  "nt_settings_search_add_category": {
-    "message": "Add Category"
-  },
-  "nt_settings_search_edit_category": {
-    "message": "Edit Category"
-  },
-  "nt_settings_search_category_name_required": {
-    "message": "Enter a category name"
-  },
-  "nt_settings_search_enabled_engines": {
-    "message": "Enabled Engines"
-  },
-  "nt_settings_search_disabled_engines": {
-    "message": "Disabled Engines"
-  },
-  "nt_settings_search_reload_engines": {
-    "message": "Refresh"
-  },
-  "nt_settings_search_enable": {
-    "message": "Enable"
-  },
-  "nt_settings_search_disable": {
-    "message": "Disable"
-  },
-  "nt_settings_search_no_enabled_engines": {
-    "message": "No enabled engines"
-  },
-  "nt_settings_search_no_disabled_engines": {
-    "message": "No disabled engines"
-  },
-  "nt_settings_search_no_engines": {
-    "message": "No search engines yet"
-  },
   "nt_settings_search_add_engine": {
     "message": "Custom Search Engine"
   },
@@ -251,9 +206,6 @@
   "nt_settings_search_drag_reorder_or_move": {
     "message": "Drag to reorder or move between categories."
   },
-  "nt_settings_search_select_engine": {
-    "message": "Select search engine"
-  },
   "nt_confirm_delete_search_engines_title": {
     "message": "Delete search engines"
   },
@@ -278,23 +230,11 @@
   "nt_engine_category_music": {
     "message": "Music"
   },
-  "nt_engine_category_fallback": {
-    "message": "Uncategorized"
-  },
   "nt_settings_title": {
     "message": "Settings"
   },
   "nt_lang_auto": {
     "message": "Follow system"
-  },
-  "nt_lang_zh_cn": {
-    "message": "Simplified Chinese"
-  },
-  "nt_lang_zh_tw": {
-    "message": "Traditional Chinese"
-  },
-  "nt_lang_en": {
-    "message": "English"
   },
   "nt_default_common": {
     "message": "Common Sites"
@@ -344,20 +284,8 @@
   "nt_no_pinned_desc": {
     "message": "Click + in the top-left to add a Common Site, or right-click in Bookmarks, History, or Frequent Sites to add one."
   },
-  "nt_pinned_section": {
-    "message": "Common Sites"
-  },
   "nt_frequent_section": {
     "message": "Frequently Visited"
-  },
-  "nt_enable_frequent_sites": {
-    "message": "Enable Frequent Sites"
-  },
-  "nt_frequent_permission_hint": {
-    "message": "Authorize history access to automatically show high-frequency sites from the last 30 days."
-  },
-  "nt_no_frequent_sites": {
-    "message": "No frequent sites from the last 30 days yet."
   },
   "nt_frequent_info_title": {
     "message": "How are Frequently Visited sites determined?"
@@ -482,50 +410,14 @@
   "nt_delete_bookmark_folder_confirm": {
     "message": "Delete this folder and its bookmarks?"
   },
-  "nt_drag_reorder_bookmarks": {
-    "message": "Drag to reorder"
-  },
   "nt_move": {
     "message": "Move"
   },
   "nt_move_bookmark_title": {
     "message": "Move to folder"
   },
-  "nt_expand": {
-    "message": "Expand"
-  },
-  "nt_collapse": {
-    "message": "Collapse"
-  },
-  "nt_settings_bookmarks_add_bookmark": {
-    "message": "Add bookmark"
-  },
   "nt_settings_bookmarks_add_folder": {
     "message": "Add folder"
-  },
-  "nt_settings_bookmarks_create_title": {
-    "message": "Add item"
-  },
-  "nt_settings_bookmarks_parent": {
-    "message": "Folder"
-  },
-  "nt_settings_bookmarks_root": {
-    "message": "All bookmarks"
-  },
-  "nt_settings_bookmarks_folder": {
-    "message": "Folder"
-  },
-  "nt_settings_bookmarks_empty": {
-    "message": "This folder is empty"
-  },
-  "nt_settings_bookmarks_title_required": {
-    "message": "Please enter a name"
-  },
-  "nt_settings_bookmarks_url_invalid": {
-    "message": "Please enter a valid URL"
-  },
-  "nt_settings_bookmarks_target_required": {
-    "message": "Please choose a target folder"
   },
   "nt_switch": {
     "message": "Toggle"
