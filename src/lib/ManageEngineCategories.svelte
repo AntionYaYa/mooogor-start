@@ -14,7 +14,7 @@
     categories: EngineCategoryItem[];
     saving?: boolean;
     lockedIds?: string[];
-    onAdd: (name: string) => void | Promise<void>;
+    onAdd: (name: string) => void | Promise<string | void>;
     onRename: (id: string, name: string) => void | Promise<void>;
     onDelete: (id: string) => void | Promise<void>;
     onReorder: (
@@ -38,16 +38,15 @@
     return lockedIds.includes(id);
   }
 
-  let draftCategories: EngineCategoryItem[] = $state([]);
-  let draftNameMap: Record<string, string> = $state({});
+  // svelte-ignore state_referenced_locally -- 弹窗每次打开会重新挂载，drafts 只从 prop 初始化一次，后续由本地增删改镜像保持同步
+  let draftCategories: EngineCategoryItem[] = $state(
+    categories.map((item) => ({ ...item })),
+  );
+  // svelte-ignore state_referenced_locally -- 同上，名称以本地 draftNameMap 为准
+  let draftNameMap: Record<string, string> = $state(
+    Object.fromEntries(categories.map((item) => [item.id, item.name])),
+  );
   let newCategoryName = $state("");
-
-  $effect(() => {
-    draftCategories = categories.map((item) => ({ ...item }));
-    draftNameMap = Object.fromEntries(
-      categories.map((item) => [item.id, item.name]),
-    );
-  });
 
   function setDraftName(id: string, value: string) {
     draftNameMap = {
@@ -71,8 +70,23 @@
     if (!nextName) {
       return;
     }
-    await onAdd(nextName);
+    const newId = await onAdd(nextName);
+    if (newId) {
+      draftCategories = [
+        ...draftCategories,
+        { id: newId, name: nextName } as EngineCategoryItem,
+      ];
+      draftNameMap = { ...draftNameMap, [newId]: nextName };
+    }
     newCategoryName = "";
+  }
+
+  async function handleDeleteCategory(id: string) {
+    await onDelete(id);
+    draftCategories = draftCategories.filter((item) => item.id !== id);
+    const next = { ...draftNameMap };
+    delete next[id];
+    draftNameMap = next;
   }
 
   function handleCategoryKeydown(e: KeyboardEvent) {
@@ -99,6 +113,7 @@
         )
         .map((item, index) => ({
           ...item,
+          name: draftNameMap[item.id] ?? item.name,
           order: index,
         })),
     );
@@ -139,7 +154,7 @@
             onkeydown={handleCategoryKeydown}
           />
           <Button
-            onclick={() => void onDelete(category.id)}
+            onclick={() => void handleDeleteCategory(category.id)}
             disabled={
               saving || categories.length <= 1 || isLockedCategory(category.id)
             }

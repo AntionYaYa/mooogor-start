@@ -73,6 +73,7 @@
 	.full {
 		width: 100%;
 		box-sizing: border-box;
+		min-width: 0;
 	}
 	.c {
 		justify-content: center;

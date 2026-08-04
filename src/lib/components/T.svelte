@@ -39,6 +39,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		min-width: 0;
 	}
 	.xl {
 		color: var(--c-text);

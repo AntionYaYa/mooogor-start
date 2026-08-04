@@ -11,22 +11,15 @@
 		duration = 800,
 	}: Props = $props();
 
-	let isShaking = $state(false);
 	let shakeDuration = $derived(`${duration}ms`);
-
-	$effect(() => {
-		if (shake) {
-			isShaking = true;
-			const timer = setTimeout(() => {
-				isShaking = false;
-				shake = false; // 重置shake状态
-			}, duration);
-			return () => clearTimeout(timer);
-		}
-	});
 </script>
 
-<div class="shake-wrapper" class:shaking={isShaking} style="--shake-duration: {shakeDuration}">
+<div
+	class="shake-wrapper"
+	class:shaking={shake}
+	style="--shake-duration: {shakeDuration}"
+	onanimationend={() => (shake = false)}
+>
 	{@render children()}
 </div>
 

@@ -36,7 +36,6 @@
   let nextDayOffset = $state(1); // 1 = 昨天
   let hasMore = $state(true);
   let loadMoreTask: Promise<void> | null = null;
-  let showClearDialog = $state(false);
   let handledClearRequestKey = $state(0);
   let pageEl: HTMLElement | undefined = $state();
   let stuckHistoryGroupKeys = $state<Set<string>>(new Set());
@@ -202,6 +201,7 @@
       });
     }
     topGroups = nextTopGroups;
+    notifyClearable();
 
     // Ensure at least one older-day group is available after entering History.
     // Relying solely on intersection callbacks can miss initial loads on tab switches.
@@ -234,10 +234,12 @@
         nextDayOffset += 1;
         if (group.items.length) {
           dayGroups = [...dayGroups, group];
+          notifyClearable();
           return;
         }
       }
       hasMore = false;
+      notifyClearable();
     } finally {
       loadingMore = false;
     }
@@ -315,16 +317,13 @@
     await ensureFirstScreenFilled();
   });
 
-  $effect(() => {
+  function notifyClearable() {
     onClearableChange?.(hasHistory);
-  });
+  }
 
-  $effect(() => {
-    if (clearRequestKey <= handledClearRequestKey) return;
-    if (!hasHistory) return;
+  function closeClearDialog() {
     handledClearRequestKey = clearRequestKey;
-    showClearDialog = true;
-  });
+  }
 
   async function clickAddtoPinneds() {
     showMenu = false;
@@ -376,7 +375,7 @@
     }
     await deleteHistoryRange({ startTime, endTime: now });
 
-    showClearDialog = false;
+    closeClearDialog();
     await reloadHistory();
   }
 </script>
@@ -415,10 +414,10 @@
   </LinkContextMenu>
 {/if}
 
-{#if showClearDialog}
+{#if clearRequestKey > handledClearRequestKey && hasHistory}
   <ClearHistoryDialog
     options={clearRangeOptions}
-    onclickClose={() => (showClearDialog = false)}
+    onclickClose={closeClearDialog}
     onConfirm={clearHistoryByPreset}
   />
 {/if}

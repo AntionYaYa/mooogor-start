@@ -14,14 +14,11 @@
 
   let { options, onclickClose, onConfirm }: Props = $props();
 
-  let selectedKey = $state<string>("");
+  // svelte-ignore state_referenced_locally -- 弹窗每次打开都会重新挂载，直接以 options 初始化默认选中项
+  let selectedKey = $state<string>(options[0]?.key ?? "");
   let submitting = $state(false);
 
   const canConfirm = $derived(!!selectedKey && !submitting);
-
-  $effect(() => {
-    selectedKey = options[0]?.key ?? "";
-  });
 
   function selectKey(key: string) {
     selectedKey = key;

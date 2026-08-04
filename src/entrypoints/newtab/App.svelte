@@ -43,8 +43,6 @@
   let frequentSites: FrequentSite[] = $state([]);
   let frequentSitesLoading = $state(false);
   let frequentSitesRequestId = $state(0);
-  type OpenSearchEnginesRequest = { id: number; categoryId?: string };
-  let openSearchEnginesRequest = $state<OpenSearchEnginesRequest | null>(null);
 
   let bookmarksPermission = $state(false);
   let currentNode: BookmarkNode | undefined = $state();
@@ -166,14 +164,8 @@
         void refreshCurrentTabPinnedState();
       }
     };
-    const handleOpenSearchEngines = (event: Event) => {
-      const detail = (event as CustomEvent<{ categoryId?: string }>).detail;
+    const handleOpenSearchEngines = () => {
       showSetting = true;
-      const nextId = (openSearchEnginesRequest?.id ?? 0) + 1;
-      openSearchEnginesRequest = {
-        id: nextId,
-        categoryId: detail?.categoryId,
-      };
     };
     window.addEventListener(
       "open-settings-search-engines",
@@ -209,6 +201,26 @@
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   });
+
+  function toggleSettings() {
+    showSetting = !showSetting;
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(
+      new CustomEvent("settings-visibility-changed", {
+        detail: { visible: showSetting },
+      }),
+    );
+  }
+
+  function closeSettings() {
+    showSetting = false;
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(
+      new CustomEvent("settings-visibility-changed", {
+        detail: { visible: false },
+      }),
+    );
+  }
 
   async function handleUserSettingsChange(next: UserSettings) {
     if (isSameSettings(userSettings, next)) return;
@@ -409,7 +421,7 @@
     const targetTab = tabs[targetIndex];
     if (!targetTab) return;
     await clickTab(targetTab, targetIndex);
-    showSetting = false;
+    closeSettings();
   }
 
   function updateSelTab(tab: TabItem) {
@@ -475,7 +487,6 @@
       onclickAbout={() => (showAbout = true)}
       onclickSupport={() => (showSupport = true)}
       onOpenTab={handleSettingsOpenTab}
-      {openSearchEnginesRequest}
     >
       <div class="top">
         {@render headBar()}
@@ -629,13 +640,13 @@
         </G>
       </Button>
       {#if showSetting}
-        <Button onclick={() => (showSetting = !showSetting)} bg='var(--c-text)'>
+        <Button onclick={toggleSettings} bg='var(--c-text)'>
           <G>
           <Icon name="Settings2" color="var(--c-bg)" />
         </G>
         </Button>
       {:else}
-        <Button onclick={() => (showSetting = !showSetting)}>
+        <Button onclick={toggleSettings}>
           <G>
             <Icon name="Settings2" color="var(--c-text)" />
           </G>
@@ -668,13 +679,15 @@
       "bookmarks",
     )}
   {:else if currentNode}
-    <Bookmarks
-      list={gridView}
-      bookmarkNode={currentNode}
-      newTabOpen={effectiveNewTabOpen}
-      onclickFolder={(bkmk) => clickFolder(bkmk)}
-      onChanged={refreshCurrentBookmarkNode}
-    />
+    {#key currentNode.id}
+      <Bookmarks
+        list={gridView}
+        bookmarkNode={currentNode}
+        newTabOpen={effectiveNewTabOpen}
+        onclickFolder={(bkmk) => clickFolder(bkmk)}
+        onChanged={refreshCurrentBookmarkNode}
+      />
+    {/key}
   {/if}
 {/snippet}
 

@@ -55,7 +55,6 @@
         resolveMissingCategoryId as resolveMissingSearchCategoryId,
         splitSearchEnginesByEnabled,
     } from "@/lib/settings/searchEngines";
-    type OpenSearchEnginesRequest = { id: number; categoryId?: string | null };
     interface Props {
         children: any;
         showSetting: boolean;
@@ -65,7 +64,6 @@
         onclickSupport: () => void;
         onOpenTab: (tab: OpenTab) => void | Promise<void>;
         currentTabPinned?: boolean;
-        openSearchEnginesRequest?: OpenSearchEnginesRequest | null;
     }
     let {
         children,
@@ -76,7 +74,6 @@
         onclickSupport,
         onOpenTab,
         currentTabPinned = false,
-        openSearchEnginesRequest = null,
     }: Props = $props();
 
     const openPosBase = [
@@ -146,7 +143,6 @@
     let settingEnginesSaving = $state(false);
     let expandedCategoryIds = $state<Set<string>>(new Set());
     let pendingExpandCategoryId = $state<string | null>(null);
-    let lastOpenSearchEnginesRequestId = $state(0);
     let showCategoryManager = $state(false);
     let showSearchEngineEditor = $state(false);
     let editingSearchEngine: Engine | null = $state(null);
@@ -258,7 +254,7 @@
         );
     });
 
-    $effect(() => {
+    function pruneSearchEngineSelection() {
         const validIds = new Set(selectableSearchEngineIds);
         const nextIds = [...selectedSearchEngineIds].filter((id) =>
             validIds.has(id),
@@ -266,12 +262,10 @@
         if (nextIds.length !== selectedSearchEngineIds.size) {
             selectedSearchEngineIds = new Set(nextIds);
         }
-    });
-
-    $effect(() => {
-        if (selectedSearchEngineCount > 0) return;
-        searchEngineMoveMenuOpen = false;
-    });
+        if (selectedSearchEngineIds.size === 0) {
+            searchEngineMoveMenuOpen = false;
+        }
+    }
 
     function setSelectedCommonSiteIds(ids: Iterable<number>) {
         selectedCommonSiteIds = new Set(ids);
@@ -322,7 +316,7 @@
         }
     }
 
-    $effect(() => {
+    function pruneCommonSiteSelection() {
         const validIds = new Set(selectableCommonSiteIds);
         const nextIds = [...selectedCommonSiteIds].filter((id) =>
             validIds.has(id),
@@ -330,7 +324,7 @@
         if (nextIds.length !== selectedCommonSiteIds.size) {
             selectedCommonSiteIds = new Set(nextIds);
         }
-    });
+    }
     function requestConfirm(
         title: string,
         description: string,
@@ -353,6 +347,13 @@
 
     function openSettingPage(page: Exclude<SettingsPage, "root">) {
         pageDirection = 1;
+        if (page !== "searchEngines") {
+            closeCategoryManager();
+            closeSearchEngineEditor();
+        }
+        if (page !== "common") {
+            closeCommonEditor();
+        }
         settingPage = page;
         if (page === "searchEngines") {
             void loadSearchSettingEngines(true);
@@ -364,6 +365,9 @@
 
     function goBackSettingPage() {
         pageDirection = -1;
+        closeCategoryManager();
+        closeSearchEngineEditor();
+        closeCommonEditor();
         settingPage = "root";
     }
 
@@ -518,6 +522,7 @@
             const items = await fetchCommonSites();
             if (requestId !== commonSitesRequestId) return;
             commonSites = items;
+            pruneCommonSiteSelection();
             commonSitesDragging = false;
         } finally {
             if (requestId === commonSitesRequestId) {
@@ -790,6 +795,7 @@
                 expandedCategoryIds = new Set([nextState.categories[0].id]);
             }
             settingEnginesLoaded = true;
+            pruneSearchEngineSelection();
         } finally {
             settingEnginesLoading = false;
         }
@@ -802,6 +808,7 @@
         } else {
             expandedCategoryIds.add(categoryId);
         }
+        pruneSearchEngineSelection();
     }
 
     function getAllSearchSettingEngines() {
@@ -1005,11 +1012,21 @@
         }
     }
 
-    $effect(() => {
-        if (!showSetting && settingPage !== "root") {
-            settingPage = "root";
-        }
-    });
+    function handleSettingsVisibility(event: Event) {
+        const visible = (event as CustomEvent<{ visible: boolean }>).detail
+            ?.visible;
+        if (visible !== false) return;
+        closeCategoryManager();
+        closeSearchEngineEditor();
+        closeCommonEditor();
+        settingPage = "root";
+    }
+
+    function handleOpenSearchEngines(event: Event) {
+        const detail = (event as CustomEvent<{ categoryId?: string }>).detail;
+        pendingExpandCategoryId = detail?.categoryId ?? null;
+        openSettingPage("searchEngines");
+    }
 
     onMount(() => {
         window.addEventListener(
@@ -1017,6 +1034,14 @@
             handleEngineConfigUpdated,
         );
         window.addEventListener("websites-updated", handleWebSitesUpdated);
+        window.addEventListener(
+            "settings-visibility-changed",
+            handleSettingsVisibility,
+        );
+        window.addEventListener(
+            "open-settings-search-engines",
+            handleOpenSearchEngines,
+        );
     });
 
     onDestroy(() => {
@@ -1025,34 +1050,14 @@
             handleEngineConfigUpdated,
         );
         window.removeEventListener("websites-updated", handleWebSitesUpdated);
-    });
-
-    $effect(() => {
-        if (!showSetting) return;
-        if (!openSearchEnginesRequest) return;
-        if (openSearchEnginesRequest.id === lastOpenSearchEnginesRequestId)
-            return;
-        lastOpenSearchEnginesRequestId = openSearchEnginesRequest.id;
-        pendingExpandCategoryId = openSearchEnginesRequest.categoryId ?? null;
-        openSettingPage("searchEngines");
-    });
-
-    $effect(() => {
-        if (showSetting && settingPage === "searchEngines") return;
-        closeCategoryManager();
-        closeSearchEngineEditor();
-    });
-
-    $effect(() => {
-        if (showSetting && settingPage === "common") return;
-        closeCommonEditor();
-    });
-
-    $effect(() => {
-        if (!showSetting) return;
-        if (settingPage !== "searchEngines") return;
-        if (settingEnginesLoaded || settingEnginesLoading) return;
-        void loadSearchSettingEngines();
+        window.removeEventListener(
+            "settings-visibility-changed",
+            handleSettingsVisibility,
+        );
+        window.removeEventListener(
+            "open-settings-search-engines",
+            handleOpenSearchEngines,
+        );
     });
 </script>
 
@@ -1128,9 +1133,7 @@
         categories={settingEngineCategories}
         saving={settingEnginesSaving}
         lockedIds={[FALLBACK_ENGINE_CATEGORY_ID]}
-        onAdd={async (name) => {
-            await addSearchCategory(name);
-        }}
+        onAdd={(name) => addSearchCategory(name)}
         onRename={renameSearchCategoryById}
         onDelete={deleteSearchCategoryById}
         onReorder={reorderSearchCategories}

@@ -41,7 +41,8 @@
     onChanged,
   }: Props = $props();
   let currentBkmk: BookmarkNode | undefined = $state();
-  let items = $state<BookmarkNode[]>([]);
+  // svelte-ignore state_referenced_locally -- 父级通过 {#key currentNode.id} 在切换目录时重挂本组件，items 只需初始化一次
+  let items = $state<BookmarkNode[]>([...(bookmarkNode.children ?? [])]);
 
   let showMenu = $state(false);
   let showEdit = $state(false);
@@ -66,10 +67,6 @@
   let lastClickedIndex = $state(-1);
   let batchActionLoading = $state(false);
   let batchErrorMessage = $state("");
-
-  $effect(() => {
-    items = [...(bookmarkNode.children ?? [])];
-  });
 
   function notifyBookmarksUpdated() {
     if (typeof window === "undefined") return;
@@ -98,6 +95,7 @@
 
   async function refreshCurrentFolder() {
     items = await getBookmarkChildren(bookmarkNode.id);
+    pruneSelection();
     await onChanged?.();
     notifyBookmarksUpdated();
   }
@@ -420,7 +418,7 @@
     }
   }
 
-  $effect(() => {
+  function pruneSelection() {
     const validIds = new Set(
       items
         .filter((bkmk) => !isProtectedRootFolder(bkmk))
@@ -431,7 +429,7 @@
       selectedIds = new Set(nextIds);
       if (!nextIds.length && !batchActionLoading) multiSelectMode = false;
     }
-  });
+  }
 
 </script>
 

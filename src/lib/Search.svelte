@@ -147,7 +147,7 @@
         getSelectedEngine()?.title ?? displayEnabledEngines[0]?.title,
     );
 
-    $effect(() => {
+    function syncSelectedEngine() {
         const categoryId = selectedCategoryId || "all";
         if (!displayEnabledEngines.length) {
             selectedEngineUrl = "";
@@ -176,7 +176,7 @@
         }
         selectedEngineUrl =
             savedEngine?.engineUrl ?? displayEnabledEngines[0]?.engineUrl ?? "";
-    });
+    }
 
     function openSearchEngineSettings() {
         if (typeof window === "undefined") return;
@@ -239,6 +239,7 @@
         if (showMoreEngines) {
             await loadDisabledEnginesFromDb();
         }
+        syncSelectedEngine();
     }
 
     onMount(() => {
@@ -273,6 +274,7 @@
             persistSelectedCategoryId(selectedCategoryId);
         }
         syncEnginesGroupTabs();
+        syncSelectedEngine();
     }
 
     $effect(() => {

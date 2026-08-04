@@ -78,7 +78,7 @@
                                     alt={site.title ?? site.url}
                                     size="m"
                                 />
-                                <T nowrap>{site.title ?? t("nt_unnamed")}</T>
+                                <T nowrap >{site.title ?? t("nt_unnamed")}</T>
                             </G>
                         </G>
                     </Button>
