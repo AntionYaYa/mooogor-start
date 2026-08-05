@@ -1,10 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import {
-    deleteHistoryRange,
-    type HistoryItem,
-    type HistoryRange,
-  } from "@/lib/browser/history";
+  import type { HistoryItem, HistoryRange } from "@/lib/browser/history";
   import T from "./components/T.svelte";
   import G from "./components/G.svelte";
   import BkmkIcon from "./BkmkIcon.svelte";
@@ -80,13 +76,10 @@
     maxResults: number,
   ): Promise<HistoryItem[]> {
     if (endTime <= startTime) return [];
-    const items = await browser.history.search({
-      text: "",
-      startTime,
-      endTime,
-      maxResults,
-    });
-    return items;
+    return (await browser.runtime.sendMessage({
+      type: "getHistoryItems",
+      payload: { startTime, endTime, maxResults },
+    })) as HistoryItem[];
   }
 
   function dedupeByUrl(items: HistoryItem[]) {
@@ -373,7 +366,10 @@
         startTime = 0;
         break;
     }
-    await deleteHistoryRange({ startTime, endTime: now });
+    await browser.runtime.sendMessage({
+      type: "deleteHistoryRange",
+      payload: { startTime, endTime: now },
+    });
 
     closeClearDialog();
     await reloadHistory();

@@ -1,6 +1,5 @@
 import type { Engine, EngineCategory, EngineCategoryItem } from "./database";
 import { updateStoredConfig } from "./configStorage";
-import { ensureEngineFavicons } from "./favicons";
 
 const normalizeCategory = (category?: string): EngineCategory => category?.trim() || "1";
 
@@ -16,5 +15,4 @@ export async function resetSearchEnginesToDefault(
       order: index, createAt: now, updateAt: now,
     }));
   });
-  await ensureEngineFavicons(defaultEngines);
 }

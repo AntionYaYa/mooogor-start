@@ -1,5 +1,6 @@
 import {
   saveFavicon,
+  getFavicon,
   getDomainFromUrl,
   getWebSite,
   getEngine,
@@ -10,6 +11,24 @@ import type { AppLanguage } from "../lib/utils/settings";
 import { loadSettings } from "../lib/utils/settings";
 import { resolveTheme } from "../lib/utils/theme";
 import { getEffectiveLanguage } from "../lib/utils/i18n";
+import {
+  initializeFreshStoredConfig,
+  initializeStoredConfig,
+} from "../lib/DB/configMigration";
+import {
+  ensureDefaultEngineCategories,
+  ensureDefaultEngines,
+  ensureDefaultWebSites,
+} from "../lib/DB/DB";
+import { buildDefaultWebSites } from "../lib/config/defaultWebSites";
+import { buildDefaultEngines } from "../lib/DB/defaultEnginesFactory";
+import { buildDefaultEngineCategories } from "../lib/config/engineCategories";
+import {
+  deleteHistoryRange,
+  getFrequentSites,
+  getHistoryItems,
+  searchHistory,
+} from "../lib/browser/history";
 import enMessages from "@@/public/_locales/en/messages.json";
 import zhCNMessages from "@@/public/_locales/zh_CN/messages.json";
 import zhTWMessages from "@@/public/_locales/zh_TW/messages.json";
@@ -43,13 +62,63 @@ const localeMessages: Record<Exclude<AppLanguage, "auto">, MessageMap> = {
   zh_TW: zhTWMessages,
 };
 
+let configurationReadyPromise: Promise<void> | null = null;
+
+function prepareConfiguration(isFreshInstall = false): Promise<void> {
+  configurationReadyPromise ??= (async () => {
+    if (isFreshInstall) {
+      await initializeFreshStoredConfig();
+    } else {
+      await initializeStoredConfig();
+    }
+    const language = getEffectiveLanguage("auto");
+    await ensureDefaultWebSites(buildDefaultWebSites(language));
+    await ensureDefaultEngineCategories(buildDefaultEngineCategories());
+    await ensureDefaultEngines(buildDefaultEngines(language));
+  })().catch((error) => {
+    configurationReadyPromise = null;
+    throw error;
+  });
+  return configurationReadyPromise;
+}
+
 export default defineBackground(() => {
+  browser.runtime.onInstalled.addListener((details) => {
+    void prepareConfiguration(details.reason === "install").catch((error) => {
+      // A new-tab page can ask the service worker to retry if initialization
+      // was interrupted during the install or update lifecycle event.
+      console.error("Failed to initialize Mooogor configuration", error);
+    });
+  });
+
   browser.runtime.onMessage.addListener((message) => {
     if (!message || typeof message !== "object") return;
     const { type, payload } = message as {
       type?: string;
-      payload?: { url?: string; faviconUrl?: string };
+      payload?: {
+        url?: string;
+        faviconUrl?: string;
+        domain?: string;
+        query?: string;
+        startTime?: number;
+        endTime?: number;
+        maxResults?: number;
+      };
     };
+    if (type === "ensureConfigReady") return prepareConfiguration();
+    if (type === "getFrequentSites") return getFrequentSites();
+    if (type === "getHistoryItems") return getHistoryItems(payload);
+    if (type === "searchHistory") {
+      return searchHistory(payload?.query ?? "", payload?.maxResults);
+    }
+    if (type === "deleteHistoryRange") {
+      if (payload?.startTime == null || payload.endTime == null) return;
+      return deleteHistoryRange({
+        startTime: payload.startTime,
+        endTime: payload.endTime,
+      });
+    }
+    if (type === "getFaviconData") return onGetFaviconData(payload);
     if (type === "saveFavicon") return onFavicon(payload);
     if (type === "shouldStoreFavicon") return onShouldStoreFavicon(payload);
     if (type === "getRelatedSearchEngines") {
@@ -168,6 +237,13 @@ async function onFavicon(data?: { url?: string; faviconUrl?: string }) {
   };
   await saveFavicon(newFavicon);
 
+}
+
+async function onGetFaviconData(data?: { domain?: string }) {
+  if (!data?.domain) return null;
+  const favicon = await getFavicon(data.domain);
+  if (!favicon?.blob) return null;
+  return { dataUrl: await blobToDataUrl(favicon.blob) };
 }
 
 async function onShouldStoreFavicon(data?: { url?: string }) {

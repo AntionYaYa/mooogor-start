@@ -23,11 +23,20 @@ export interface HistoryRange {
   count: number;
 }
 
-export async function getHistoryItems(maxResults = 100): Promise<HistoryItem[]> {
+export interface HistoryItemsOptions {
+  startTime?: number;
+  endTime?: number;
+  maxResults?: number;
+}
+
+export async function getHistoryItems(
+  options: HistoryItemsOptions = {},
+): Promise<HistoryItem[]> {
   return await browser.history.search({
     text: "",
-    startTime: 0,
-    maxResults,
+    startTime: options.startTime ?? 0,
+    endTime: options.endTime,
+    maxResults: options.maxResults ?? 100,
   });
 }
 

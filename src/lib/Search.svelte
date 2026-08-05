@@ -10,19 +10,16 @@
         EngineCategoryItem,
     } from "@/lib/DB/DB";
     import {
-        ensureDefaultEngines,
-        ensureDefaultEngineCategories,
         FALLBACK_ENGINE_CATEGORY_ID,
         getEnabledEngines,
         getDisabledEngines,
         getEngineCategories,
         updateEnginesState,
     } from "@/lib/DB/DB";
-    import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
     import {
         searchBookmarks,
     } from "@/lib/browser/bookmarks";
-    import { searchHistory } from "@/lib/browser/history";
+    import type { HistoryItem } from "@/lib/browser/history";
     import Button from "./components/Button.svelte";
     import BkmkIcon from "./BkmkIcon.svelte";
     import Icon from "./components/Icon.svelte";
@@ -32,7 +29,6 @@
     import Tab from "./components/Tab.svelte";
     import type { TabItem } from "./components/Tab.svelte";
     import EngineIcon from "./EngineIcon.svelte";
-    import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
     import {
         clearPersistedSelectedCategoryId,
         hydrateSearchStorage,
@@ -67,8 +63,6 @@
         rememberSearchEngineCategory = false,
         settingsReady = true,
     }: Props = $props();
-
-    const defaultEngines = buildDefaultEngines();
 
     let engineCategories: EngineCategoryItem[] = $state([]);
     let selectedCategoryId = $state("1");
@@ -197,7 +191,6 @@
     }
 
     async function loadEngineCategoriesFromDb() {
-        await ensureDefaultEngineCategories(buildDefaultEngineCategories());
         const categories = await getEngineCategories();
         const visibleCategories = categories.filter(
             (item) => item.id !== FALLBACK_ENGINE_CATEGORY_ID,
@@ -254,7 +247,6 @@
         void (async () => {
             await hydrateSearchStorage();
             searchKeys = readSearchKeys();
-            await ensureDefaultEngines(defaultEngines); //初始化把数据添加到Engines表里，有就不会添加
             await refreshEngineConfig();
             inputValue = backPageInitInputValue();
             engineConfigReady = true;
@@ -487,7 +479,10 @@
             historyDebounceId = setTimeout(async () => {
                 if (hSeq !== historySeq) return;
                 try {
-                    const results = await searchHistory(query);
+                    const results = (await browser.runtime.sendMessage({
+                        type: "searchHistory",
+                        payload: { query },
+                    })) as HistoryItem[];
                     if (hSeq !== historySeq) return;
                     historyResults = sortResults(
                         mapHistoryResults(results, t("nt_unnamed")),

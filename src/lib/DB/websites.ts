@@ -1,6 +1,5 @@
 import type { WebSite } from "./database";
 import { getStoredConfig, updateStoredConfig } from "./configStorage";
-import { ensureWebSiteFavicons } from "./websiteFavicons";
 
 const WEBSITES_SEEDED_KEY = "websites_seeded_v1";
 const WEBSITES_UPDATED_EVENT = "websites-updated";
@@ -94,7 +93,6 @@ export async function ensureDefaultWebSites(defaults: Omit<WebSite, "id">[]) {
     }
     config.metadata[WEBSITES_SEEDED_KEY] = true;
   });
-  await ensureWebSiteFavicons(defaults);
 }
 
 export async function resetWebSitesToDefault(defaults: Omit<WebSite, "id">[]) {
@@ -109,6 +107,5 @@ export async function resetWebSitesToDefault(defaults: Omit<WebSite, "id">[]) {
     }));
     config.metadata[WEBSITES_SEEDED_KEY] = true;
   });
-  await ensureWebSiteFavicons(defaults);
   notifyWebSitesUpdated();
 }

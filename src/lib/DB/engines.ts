@@ -1,6 +1,5 @@
 import type { Engine, EngineCategory } from "./database";
 import { getStoredConfig, updateStoredConfig } from "./configStorage";
-import { ensureEngineFavicons } from "./favicons";
 
 function normalizeEngineCategory(category?: string): EngineCategory {
   return category?.trim() || "1";
@@ -131,7 +130,6 @@ export async function ensureDefaultEngines(defaults: Omit<Engine, "id">[]) {
       enabled: engine.enabled ?? true, order: index, createAt: now, updateAt: now,
     }));
   });
-  await ensureEngineFavicons(defaults);
 }
 
 export async function clearAllEngines() {
@@ -146,5 +144,4 @@ export async function resetEnginesToDefault(defaults: Omit<Engine, "id">[]) {
       enabled: engine.enabled ?? true, order: index, createAt: now, updateAt: now,
     }));
   });
-  await ensureEngineFavicons(defaults);
 }

@@ -1,31 +1,33 @@
 <script module lang="ts">
-  import { getFavicon } from "../lib/DB/DB";
+  import { browser } from "wxt/browser";
 
-  const faviconBlobCache = new Map<string, Promise<Blob | undefined>>();
+  const faviconDataCache = new Map<string, Promise<string | undefined>>();
 
-  function getCachedFaviconBlob(domain: string): Promise<Blob | undefined> {
-    const cached = faviconBlobCache.get(domain);
+  function getCachedFaviconData(domain: string): Promise<string | undefined> {
+    const cached = faviconDataCache.get(domain);
     if (cached) return cached;
-    const pending = getFavicon(domain)
-      .then((record) => {
-        const blob = record?.blob;
-        if (!blob) {
-          faviconBlobCache.delete(domain);
+    const pending = browser.runtime.sendMessage({
+      type: "getFaviconData",
+      payload: { domain },
+    })
+      .then((response) => {
+        const dataUrl = (response as { dataUrl?: string } | null)?.dataUrl;
+        if (!dataUrl) {
+          faviconDataCache.delete(domain);
         }
-        return blob;
+        return dataUrl;
       })
       .catch(() => {
-        faviconBlobCache.delete(domain);
+        faviconDataCache.delete(domain);
         return undefined;
       });
-    faviconBlobCache.set(domain, pending);
+    faviconDataCache.set(domain, pending);
     return pending;
   }
 </script>
 
 <script lang="ts">
-  import { browser } from "wxt/browser";
-  import { getDomainFromUrl } from "../lib/DB/DB";
+  import { getDomainFromUrl } from "../lib/DB/utils";
   import { getBuiltInWebsiteLogo } from "./DB/websiteLogos";
   import Folder from "./components/svg/Folder.svelte";
 
@@ -90,13 +92,11 @@
     localSrc = null;
     localResolved = false;
     let cancelled = false;
-    let objectUrl: string | null = null;
     void (async () => {
-      const blob = await getCachedFaviconBlob(domain);
+      const dataUrl = await getCachedFaviconData(domain);
       if (cancelled) return;
-      if (blob) {
-        objectUrl = URL.createObjectURL(blob);
-        localSrc = objectUrl;
+      if (dataUrl) {
+        localSrc = dataUrl;
       } else {
         localSrc = null;
       }
@@ -104,7 +104,6 @@
     })();
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   });
 </script>

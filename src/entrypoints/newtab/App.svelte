@@ -15,9 +15,8 @@
   import type { Permission } from "@/lib/browser/permissions";
   import { getBookmarkChildren, getBookmarks } from "@/lib/browser/bookmarks";
   import type { BookmarkNode } from "@/lib/browser/bookmarks";
-  import { getFrequentSites } from "@/lib/browser/history";
   import type { FrequentSite } from "@/lib/browser/history";
-  import { ensureDefaultWebSites, getAllWebSite } from "@/lib/DB/DB";
+  import { getAllWebSite } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import { fly, slide } from "svelte/transition";
   import { onMount, tick } from "svelte";
@@ -29,9 +28,8 @@
     DEFAULT_SETTINGS,
   } from "@/lib/utils/settings";
   import type { OpenTab, UserSettings } from "@/lib/utils/settings";
-  import { getEffectiveLanguage, setLanguage, t } from "@/lib/utils/i18n";
+  import { setLanguage, t } from "@/lib/utils/i18n";
   import { applyTheme } from "@/lib/utils/theme";
-  import { buildDefaultWebSites } from "@/lib/config/defaultWebSites";
   import {
     buildNewTabTabs,
     openTabToIndex,
@@ -43,6 +41,8 @@
   let frequentSites: FrequentSite[] = $state([]);
   let frequentSitesLoading = $state(false);
   let frequentSitesRequestId = $state(0);
+  let frequentSitesIdleCallbackId: number | undefined;
+  let frequentSitesTimerId: number | undefined;
 
   let bookmarksPermission = $state(false);
   let currentNode: BookmarkNode | undefined = $state();
@@ -57,6 +57,7 @@
   let showNext = $state(false);
   let firstMount = $state(true);
   let settingsLoaded = $state(false);
+  let initializationFailed = $state(false);
   let i18nRenderKey = $state(0);
 
   let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
@@ -122,25 +123,38 @@
     }
   }
 
-  onMount(async () => {
-    userSettings = await loadSettings();
-    settingsLoaded = true;
-    applyTheme(userSettings.theme);
-    const language = getEffectiveLanguage(userSettings.language);
-    await ensureDefaultWebSites(buildDefaultWebSites(language));
-    await refreshCurrentTabPinnedState();
-    await setLanguage(userSettings.language);
-    updateTabLabels();
-    i18nRenderKey += 1;
-    const startOpenTab: OpenTab =
-      userSettings.defaultOpen === "last"
-        ? userSettings.lastOpenTab
-        : userSettings.defaultOpen;
-    const defaultIndex = openTabToIndex(startOpenTab);
-    clickTab(tabs[defaultIndex], defaultIndex, { rememberLast: false });
-    await tick();
-    firstMount = false;
+  onMount(() => {
+    void initializePage();
   });
+
+  async function initializePage() {
+    try {
+      await browser.runtime.sendMessage({ type: "ensureConfigReady" });
+      userSettings = await loadSettings();
+      applyTheme(userSettings.theme);
+      await refreshCurrentTabPinnedState();
+      await setLanguage(userSettings.language);
+      settingsLoaded = true;
+      updateTabLabels();
+      i18nRenderKey += 1;
+      const startOpenTab: OpenTab =
+        userSettings.defaultOpen === "last"
+          ? userSettings.lastOpenTab
+          : userSettings.defaultOpen;
+      const defaultIndex = openTabToIndex(startOpenTab);
+      await clickTab(tabs[defaultIndex], defaultIndex, { rememberLast: false });
+    } catch (error) {
+      // Keep an extension-page failure from leaving Edge with a blank new tab.
+      console.error("Failed to initialize Mooogor new tab", error);
+      initializationFailed = true;
+      settingsLoaded = true;
+      updateTabLabels();
+      updateSelTab(tabs[0]);
+    } finally {
+      await tick();
+      firstMount = false;
+    }
+  }
 
   onMount(() => {
     browser.tabs.onUpdated.addListener(handleCurrentTabUpdated);
@@ -199,6 +213,7 @@
       window.removeEventListener("websites-updated", handleWebSitesUpdated);
       window.removeEventListener("bookmarks-updated", handleBookmarksUpdated);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      cancelFrequentSitesRefresh();
     };
   });
 
@@ -353,20 +368,62 @@
     allPinneds = await getAllWebSite();
     historyPermission = await hasPermission("history");
     if (!historyPermission) {
+      cancelFrequentSitesRefresh();
       frequentSites = [];
       frequentSitesLoading = false;
       return;
     }
-    await refreshFrequentSites();
+    scheduleFrequentSitesRefresh();
+  }
+
+  function cancelFrequentSitesRefresh() {
+    const idleWindow = window as Window & {
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (typeof frequentSitesIdleCallbackId === "number") {
+      idleWindow.cancelIdleCallback?.(frequentSitesIdleCallbackId);
+      frequentSitesIdleCallbackId = undefined;
+    }
+    if (frequentSitesTimerId) {
+      clearTimeout(frequentSitesTimerId);
+      frequentSitesTimerId = undefined;
+    }
+    frequentSitesRequestId += 1;
+  }
+
+  function scheduleFrequentSitesRefresh() {
+    cancelFrequentSitesRefresh();
+    frequentSitesLoading = true;
+    const run = () => {
+      frequentSitesIdleCallbackId = undefined;
+      frequentSitesTimerId = undefined;
+      void refreshFrequentSites();
+    };
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+    };
+    if (idleWindow.requestIdleCallback) {
+      frequentSitesIdleCallbackId = idleWindow.requestIdleCallback(run, {
+        timeout: 1_200,
+      });
+      return;
+    }
+    frequentSitesTimerId = window.setTimeout(run, 0);
   }
 
   async function refreshFrequentSites() {
     const requestId = ++frequentSitesRequestId;
     frequentSitesLoading = true;
     try {
-      const sites = await getFrequentSites();
+      const sites = await browser.runtime.sendMessage({
+        type: "getFrequentSites",
+      }) as FrequentSite[];
       if (requestId !== frequentSitesRequestId) return;
       frequentSites = sites;
+    } catch {
+      if (requestId === frequentSitesRequestId) {
+        frequentSites = [];
+      }
     } finally {
       if (requestId === frequentSitesRequestId) {
         frequentSitesLoading = false;
@@ -491,13 +548,15 @@
       <div class="top">
         {@render headBar()}
       </div>
-      <Search
-        newTabOpen={effectiveNewTabOpen}
-        searchBookmarks={userSettings.searchBookmarks}
-        searchHistory={userSettings.searchHistory}
-        rememberSearchEngineCategory={userSettings.rememberSearchEngineCategory}
-        settingsReady={settingsLoaded}
-      />
+      {#if settingsLoaded && !initializationFailed}
+        <Search
+          newTabOpen={effectiveNewTabOpen}
+          searchBookmarks={userSettings.searchBookmarks}
+          searchHistory={userSettings.searchHistory}
+          rememberSearchEngineCategory={userSettings.rememberSearchEngineCategory}
+          settingsReady={true}
+        />
+      {/if}
       <div class="content">
         <div class="tabs">
           <div class="side side-left">

@@ -1,6 +1,7 @@
 <script lang="ts">
   import T from "./components/T.svelte";
-  import { getDomainFromUrl, getFavicon } from "../lib/DB/DB";
+  import { browser } from "wxt/browser";
+  import { getDomainFromUrl } from "../lib/DB/utils";
 
 
   interface Props {
@@ -34,20 +35,20 @@
     }
     localSrc = null;
     let cancelled = false;
-    let objectUrl: string | null = null;
     void (async () => {
-      const record = await getFavicon(domain);
+      const response = await browser.runtime.sendMessage({
+        type: "getFaviconData",
+        payload: { domain },
+      }) as { dataUrl?: string } | null;
       if (cancelled) return;
-      if (!record?.blob) {
+      if (!response?.dataUrl) {
         localSrc = null;
         return;
       }
-      objectUrl = URL.createObjectURL(record.blob);
-      localSrc = objectUrl;
+      localSrc = response.dataUrl;
     })();
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   });
 </script>
