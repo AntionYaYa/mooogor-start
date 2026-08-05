@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from "wxt/browser";
   import Button from "./components/Button.svelte";
   import G from "./components/G.svelte";
   import Popup from "./components/Popup.svelte";
@@ -10,23 +11,8 @@
     onclickSupport: () => void;
   }
 
-  type ExtensionRuntime = {
-    runtime?: {
-      getManifest?: () => {
-        version?: string;
-      };
-    };
-  };
-
   let { onclickClose, onclickSupport }: Props = $props();
-  const extensionApi = globalThis as typeof globalThis & {
-    browser?: ExtensionRuntime;
-    chrome?: ExtensionRuntime;
-  };
-  const appVersion =
-    extensionApi.browser?.runtime?.getManifest?.().version ??
-    extensionApi.chrome?.runtime?.getManifest?.().version ??
-    '0.0.0';
+  const appVersion = browser.runtime.getManifest().version ?? '0.0.0';
 </script>
 
 <Popup title={t("nt_settings_about")} {onclickClose} type="l">

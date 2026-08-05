@@ -497,6 +497,10 @@
                 ))
             )
                 return;
+            if (import.meta.env.FIREFOX) {
+                await onOpenTab("history");
+                return;
+            }
             browser.tabs.update({ url: "chrome://history/" });
         })();
     }
@@ -510,6 +514,10 @@
                 ))
             )
                 return;
+            if (import.meta.env.FIREFOX) {
+                await onOpenTab("bookmark");
+                return;
+            }
             browser.tabs.update({ url: "chrome://bookmarks/" });
         })();
     }

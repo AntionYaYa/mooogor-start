@@ -1,4 +1,5 @@
 import type { AppLanguage } from "@/lib/utils/settings";
+import { browser } from "wxt/browser";
 
 type I18nLike = {
   getMessage?: (key: string, substitutions?: string | string[]) => string;
@@ -27,10 +28,7 @@ function isLanguage(value: unknown): value is AppLanguage {
 }
 
 function getI18nApi() {
-  return (
-    (globalThis as unknown as { browser?: { i18n?: I18nLike } }).browser ??
-    (globalThis as unknown as { chrome?: { i18n?: I18nLike } }).chrome
-  );
+  return browser as { i18n?: I18nLike };
 }
 
 function resolveAutoLanguage(): Exclude<AppLanguage, "auto"> {
@@ -62,10 +60,9 @@ function readInitialMessages(): MessageMap | null {
 }
 
 function getRuntimeApi() {
-  return (
-    (globalThis as unknown as { browser?: { runtime?: { getURL?: (path: string) => string } } }).browser ??
-    (globalThis as unknown as { chrome?: { runtime?: { getURL?: (path: string) => string } } }).chrome
-  );
+  return browser as typeof browser & {
+    runtime: { getURL: (path: string) => string };
+  };
 }
 
 function applySubstitutions(

@@ -1,5 +1,6 @@
 import { db } from "./database";
 import type { Engine, EngineCategoryItem, WebSite } from "./database";
+import { browser } from "wxt/browser";
 
 export const CONFIG_STORAGE_KEY = "mooogor.config.v1";
 const CONFIG_STORAGE_KEYS = {
@@ -33,17 +34,7 @@ type ExtensionStorageArea = {
 };
 
 export function getExtensionStorage() {
-  const extensionGlobal = globalThis as typeof globalThis & {
-    browser?: { storage?: { local?: ExtensionStorageArea } };
-    chrome?: { storage?: { local?: ExtensionStorageArea } };
-  };
-  const storage =
-    extensionGlobal.browser?.storage?.local ??
-    extensionGlobal.chrome?.storage?.local;
-  if (!storage) {
-    throw new Error("Extension storage API is unavailable");
-  }
-  return storage;
+  return browser.storage.local as ExtensionStorageArea;
 }
 
 function isStoredConfig(value: unknown): value is StoredConfig {

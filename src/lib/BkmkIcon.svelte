@@ -24,6 +24,7 @@
 </script>
 
 <script lang="ts">
+  import { browser } from "wxt/browser";
   import { getDomainFromUrl } from "../lib/DB/DB";
   import { getBuiltInWebsiteLogo } from "./DB/websiteLogos";
   import Folder from "./components/svg/Folder.svelte";
@@ -50,8 +51,18 @@
     }
   });
 
-  function getChromeFavicon(url: string, size: number = 128): string {
-    return `chrome-extension://${browser.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(url)}&size=${size}`;
+  function getBrowserFavicon(url: string, size: number = 128): string {
+    if (import.meta.env.FIREFOX) {
+      try {
+        return new URL("/favicon.ico", url).href;
+      } catch {
+        return "";
+      }
+    }
+    const getURL = browser.runtime.getURL as (path: string) => string;
+    return getURL(
+      `/_favicon/?pageUrl=${encodeURIComponent(url)}&size=${size}`,
+    );
   }
 
   $effect(() => {
@@ -106,7 +117,7 @@
       {#if localSrc}
         <img src={localSrc} {alt} draggable="false" />
       {:else}
-        <img src={getChromeFavicon(imgUrl)} {alt} draggable="false" />
+        <img src={getBrowserFavicon(imgUrl)} {alt} draggable="false" />
       {/if}
     {/if}
   {/if}
