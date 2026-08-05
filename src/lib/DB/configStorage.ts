@@ -138,12 +138,31 @@ function validateMigratedConfig(
   }
 }
 
+async function removeMigratedSources(storage: ExtensionStorageArea): Promise<void> {
+  await db.transaction(
+    "rw",
+    db.webSites,
+    db.engines,
+    db.engineCategories,
+    db.settings,
+    async () => {
+      await Promise.all([
+        db.webSites.clear(),
+        db.engines.clear(),
+        db.engineCategories.clear(),
+        db.settings.clear(),
+      ]);
+    },
+  );
+  await storage.remove(CONFIG_STORAGE_KEY);
+}
+
 async function migrateFromDexie(): Promise<StoredConfig> {
   const storage = getExtensionStorage();
   const splitConfig = await readConfigParts();
   if (splitConfig) {
-    // 拆分存储已经可用后移除旧快照，避免部分数据异常时回滚到过期配置。
-    await storage.remove(CONFIG_STORAGE_KEY);
+    // 拆分存储已经可用后移除旧数据源，避免以后回滚到过期配置。
+    await removeMigratedSources(storage);
     return splitConfig;
   }
 
@@ -152,7 +171,7 @@ async function migrateFromDexie(): Promise<StoredConfig> {
     await storage.set(toStorageParts(legacyConfig));
     const written = await readConfigParts();
     validateMigratedConfig(written, legacyConfig);
-    await storage.remove(CONFIG_STORAGE_KEY);
+    await removeMigratedSources(storage);
     return written;
   }
 
@@ -178,6 +197,7 @@ async function migrateFromDexie(): Promise<StoredConfig> {
   await storage.set(toStorageParts(data));
   const written = await readConfigParts();
   validateMigratedConfig(written, data);
+  await removeMigratedSources(storage);
   return written;
 }
 
