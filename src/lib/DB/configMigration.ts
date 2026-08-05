@@ -5,6 +5,7 @@ import {
   getExtensionStorage,
   isStoredConfig,
   readStoredConfig,
+  stableStringify,
   type StoredConfig,
   writeStoredConfig,
 } from "./configStorage";
@@ -26,7 +27,7 @@ async function validateStoredConfig(expected: StoredConfig): Promise<StoredConfi
   const written = await readStoredConfig();
   if (!written) throw new Error("Configuration migration validation failed");
   for (const key of ["websites", "engines", "engineCategories", "metadata"] as const) {
-    if (JSON.stringify(written[key]) !== JSON.stringify(expected[key])) {
+    if (stableStringify(written[key]) !== stableStringify(expected[key])) {
       throw new Error(`Configuration migration validation failed: ${key}`);
     }
   }

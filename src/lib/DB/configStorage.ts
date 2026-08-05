@@ -102,7 +102,7 @@ export async function writeStoredConfig(config: StoredConfig): Promise<void> {
   await getExtensionStorage().set(toStorageParts(config));
 }
 
-function stableStringify(value: unknown): string | undefined {
+export function stableStringify(value: unknown): string | undefined {
   return JSON.stringify(value, (_key, nestedValue) => {
     if (!isRecord(nestedValue)) return nestedValue;
     return Object.fromEntries(
