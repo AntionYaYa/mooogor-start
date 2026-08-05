@@ -29,6 +29,7 @@ let writeQueue = Promise.resolve();
 type ExtensionStorageArea = {
   get(keys: string | string[]): Promise<Record<string, unknown>>;
   set(items: Record<string, unknown>): Promise<void>;
+  remove(keys: string | string[]): Promise<void>;
 };
 
 export function getExtensionStorage() {
@@ -50,12 +51,16 @@ function isStoredConfig(value: unknown): value is StoredConfig {
   const data = value as Partial<StoredConfig>;
   return (
     data.schemaVersion === 1 &&
-    data.migration?.status === "completed" &&
+    isMigration(data.migration) &&
     Array.isArray(data.websites) &&
     Array.isArray(data.engines) &&
     Array.isArray(data.engineCategories) &&
-    !!data.metadata
+    isRecord(data.metadata)
   );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
 function isMigration(value: unknown): value is StoredConfig["migration"] {
@@ -73,7 +78,7 @@ function isConfigParts(value: Record<string, unknown>) {
     Array.isArray(value[CONFIG_STORAGE_KEYS.websites]) &&
     Array.isArray(value[CONFIG_STORAGE_KEYS.engines]) &&
     Array.isArray(value[CONFIG_STORAGE_KEYS.engineCategories]) &&
-    !!value[CONFIG_STORAGE_KEYS.metadata] &&
+    isRecord(value[CONFIG_STORAGE_KEYS.metadata]) &&
     isMigration(value[CONFIG_STORAGE_KEYS.migration])
   );
 }
@@ -104,15 +109,51 @@ async function readConfigParts(): Promise<StoredConfig | null> {
   return isConfigParts(value) ? toStoredConfig(value) : null;
 }
 
+function stableStringify(value: unknown): string | undefined {
+  return JSON.stringify(value, (_key, nestedValue) => {
+    if (!isRecord(nestedValue)) return nestedValue;
+    return Object.fromEntries(
+      Object.keys(nestedValue)
+        .sort()
+        .map((key) => [key, nestedValue[key]]),
+    );
+  });
+}
+
+function validateMigratedConfig(
+  written: StoredConfig | null,
+  expected: Pick<StoredConfig, "websites" | "engines" | "engineCategories" | "metadata">,
+): asserts written is StoredConfig {
+  if (!written) {
+    throw new Error("Configuration migration validation failed: invalid stored structure");
+  }
+
+  const mismatchedParts = (
+    ["websites", "engines", "engineCategories", "metadata"] as const
+  ).filter((key) => stableStringify(written[key]) !== stableStringify(expected[key]));
+  if (mismatchedParts.length) {
+    throw new Error(
+      `Configuration migration validation failed: ${mismatchedParts.join(", ")}`,
+    );
+  }
+}
+
 async function migrateFromDexie(): Promise<StoredConfig> {
   const storage = getExtensionStorage();
   const splitConfig = await readConfigParts();
-  if (splitConfig) return splitConfig;
+  if (splitConfig) {
+    // 拆分存储已经可用后移除旧快照，避免部分数据异常时回滚到过期配置。
+    await storage.remove(CONFIG_STORAGE_KEY);
+    return splitConfig;
+  }
 
   const legacyConfig = (await storage.get(CONFIG_STORAGE_KEY))[CONFIG_STORAGE_KEY];
   if (isStoredConfig(legacyConfig)) {
     await storage.set(toStorageParts(legacyConfig));
-    return legacyConfig;
+    const written = await readConfigParts();
+    validateMigratedConfig(written, legacyConfig);
+    await storage.remove(CONFIG_STORAGE_KEY);
+    return written;
   }
 
   const [websites, engines, engineCategories, settings] = await Promise.all([
@@ -136,21 +177,19 @@ async function migrateFromDexie(): Promise<StoredConfig> {
 
   await storage.set(toStorageParts(data));
   const written = await readConfigParts();
-  if (
-    !isStoredConfig(written) ||
-    JSON.stringify(written.websites) !== JSON.stringify(websites) ||
-    JSON.stringify(written.engines) !== JSON.stringify(engines) ||
-    JSON.stringify(written.engineCategories) !== JSON.stringify(engineCategories) ||
-    JSON.stringify(written.metadata) !== JSON.stringify(data.metadata)
-  ) {
-    throw new Error("Configuration migration validation failed");
-  }
+  validateMigratedConfig(written, data);
   return written;
 }
 
 async function ensureMigration(): Promise<void> {
   migrationPromise ??= migrateFromDexie().then(() => undefined);
-  await migrationPromise;
+  try {
+    await migrationPromise;
+  } catch (error) {
+    // 存储或 IndexedDB 的瞬时错误不应让当前页面永久缓存失败状态。
+    migrationPromise = null;
+    throw error;
+  }
 }
 
 export async function getStoredConfig(): Promise<StoredConfig> {
@@ -162,7 +201,11 @@ export async function getStoredConfig(): Promise<StoredConfig> {
   // 存储被外部清除或写入了无效值时，重新执行迁移，而不是继续使用旧快照。
   migrationPromise = null;
   await ensureMigration();
-  return await getStoredConfig();
+  const recovered = await readConfigParts();
+  if (!recovered) {
+    throw new Error("Configuration migration completed without valid stored data");
+  }
+  return recovered;
 }
 
 export async function updateStoredConfig<T>(
@@ -176,7 +219,7 @@ export async function updateStoredConfig<T>(
     const currentParts = toStorageParts(current);
     const nextParts = toStorageParts(next);
     for (const [key, value] of Object.entries(nextParts)) {
-      if (JSON.stringify(value) !== JSON.stringify(currentParts[key])) {
+      if (stableStringify(value) !== stableStringify(currentParts[key])) {
         changed[key] = value;
       }
     }
