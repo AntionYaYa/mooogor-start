@@ -11,15 +11,6 @@ import type { AppLanguage } from "../lib/utils/settings";
 import { loadSettings } from "../lib/utils/settings";
 import { resolveTheme } from "../lib/utils/theme";
 import { getEffectiveLanguage } from "../lib/utils/i18n";
-import { initializeStoredConfig } from "../lib/DB/configStorage";
-import {
-  ensureDefaultEngineCategories,
-  ensureDefaultEngines,
-  ensureDefaultWebSites,
-} from "../lib/DB/DB";
-import { buildDefaultWebSites } from "../lib/config/defaultWebSites";
-import { buildDefaultEngines } from "../lib/DB/defaultEnginesFactory";
-import { buildDefaultEngineCategories } from "../lib/config/engineCategories";
 import {
   deleteHistoryRange,
   getFrequentSites,
@@ -59,31 +50,7 @@ const localeMessages: Record<Exclude<AppLanguage, "auto">, MessageMap> = {
   zh_TW: zhTWMessages,
 };
 
-let configurationReadyPromise: Promise<void> | null = null;
-
-function prepareConfiguration(): Promise<void> {
-  configurationReadyPromise ??= (async () => {
-    await initializeStoredConfig();
-    const language = getEffectiveLanguage("auto");
-    await ensureDefaultWebSites(buildDefaultWebSites(language));
-    await ensureDefaultEngineCategories(buildDefaultEngineCategories());
-    await ensureDefaultEngines(buildDefaultEngines(language));
-  })().catch((error) => {
-    configurationReadyPromise = null;
-    throw error;
-  });
-  return configurationReadyPromise;
-}
-
 export default defineBackground(() => {
-  browser.runtime.onInstalled.addListener(() => {
-    void prepareConfiguration().catch((error) => {
-      // A new-tab page can ask the service worker to retry if initialization
-      // was interrupted during the install or update lifecycle event.
-      console.error("Failed to initialize Mooogor configuration", error);
-    });
-  });
-
   browser.runtime.onMessage.addListener((message) => {
     if (!message || typeof message !== "object") return;
     const { type, payload } = message as {
@@ -98,7 +65,6 @@ export default defineBackground(() => {
         maxResults?: number;
       };
     };
-    if (type === "ensureConfigReady") return prepareConfiguration();
     if (type === "getFrequentSites") return getFrequentSites();
     if (type === "getHistoryItems") return getHistoryItems(payload);
     if (type === "searchHistory") {

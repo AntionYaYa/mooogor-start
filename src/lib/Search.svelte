@@ -10,12 +10,16 @@
         EngineCategoryItem,
     } from "@/lib/DB/DB";
     import {
+        ensureDefaultEngines,
+        ensureDefaultEngineCategories,
         FALLBACK_ENGINE_CATEGORY_ID,
         getEnabledEngines,
         getDisabledEngines,
         getEngineCategories,
         updateEnginesState,
     } from "@/lib/DB/DB";
+    import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
+    import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
     import {
         searchBookmarks,
     } from "@/lib/browser/bookmarks";
@@ -247,6 +251,8 @@
         void (async () => {
             await hydrateSearchStorage();
             searchKeys = readSearchKeys();
+            await ensureDefaultEngineCategories(buildDefaultEngineCategories());
+            await ensureDefaultEngines(buildDefaultEngines());
             await refreshEngineConfig();
             inputValue = backPageInitInputValue();
             engineConfigReady = true;

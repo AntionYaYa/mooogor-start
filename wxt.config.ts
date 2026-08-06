@@ -22,7 +22,6 @@ export default defineConfig({
     permissions: [
       "activeTab",
       "favicon",
-      "storage",
     ],
   },
   vite: () => ({

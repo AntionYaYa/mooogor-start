@@ -16,7 +16,7 @@
   import { getBookmarkChildren, getBookmarks } from "@/lib/browser/bookmarks";
   import type { BookmarkNode } from "@/lib/browser/bookmarks";
   import type { FrequentSite } from "@/lib/browser/history";
-  import { getAllWebSite } from "@/lib/DB/DB";
+  import { ensureDefaultWebSites, getAllWebSite } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import { fly, slide } from "svelte/transition";
   import { onMount, tick } from "svelte";
@@ -28,8 +28,9 @@
     DEFAULT_SETTINGS,
   } from "@/lib/utils/settings";
   import type { OpenTab, UserSettings } from "@/lib/utils/settings";
-  import { setLanguage, t } from "@/lib/utils/i18n";
+  import { getEffectiveLanguage, setLanguage, t } from "@/lib/utils/i18n";
   import { applyTheme } from "@/lib/utils/theme";
+  import { buildDefaultWebSites } from "@/lib/config/defaultWebSites";
   import {
     buildNewTabTabs,
     openTabToIndex,
@@ -57,7 +58,6 @@
   let showNext = $state(false);
   let firstMount = $state(true);
   let settingsLoaded = $state(false);
-  let initializationFailed = $state(false);
   let i18nRenderKey = $state(0);
 
   let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
@@ -128,32 +128,23 @@
   });
 
   async function initializePage() {
-    try {
-      await browser.runtime.sendMessage({ type: "ensureConfigReady" });
-      userSettings = await loadSettings();
-      applyTheme(userSettings.theme);
-      await refreshCurrentTabPinnedState();
-      await setLanguage(userSettings.language);
-      settingsLoaded = true;
-      updateTabLabels();
-      i18nRenderKey += 1;
-      const startOpenTab: OpenTab =
-        userSettings.defaultOpen === "last"
-          ? userSettings.lastOpenTab
-          : userSettings.defaultOpen;
-      const defaultIndex = openTabToIndex(startOpenTab);
-      await clickTab(tabs[defaultIndex], defaultIndex, { rememberLast: false });
-    } catch (error) {
-      // Keep an extension-page failure from leaving Edge with a blank new tab.
-      console.error("Failed to initialize Mooogor new tab", error);
-      initializationFailed = true;
-      settingsLoaded = true;
-      updateTabLabels();
-      updateSelTab(tabs[0]);
-    } finally {
-      await tick();
-      firstMount = false;
-    }
+    userSettings = await loadSettings();
+    applyTheme(userSettings.theme);
+    const language = getEffectiveLanguage(userSettings.language);
+    await ensureDefaultWebSites(buildDefaultWebSites(language));
+    await refreshCurrentTabPinnedState();
+    await setLanguage(userSettings.language);
+    settingsLoaded = true;
+    updateTabLabels();
+    i18nRenderKey += 1;
+    const startOpenTab: OpenTab =
+      userSettings.defaultOpen === "last"
+        ? userSettings.lastOpenTab
+        : userSettings.defaultOpen;
+    const defaultIndex = openTabToIndex(startOpenTab);
+    await clickTab(tabs[defaultIndex], defaultIndex, { rememberLast: false });
+    await tick();
+    firstMount = false;
   }
 
   onMount(() => {
@@ -548,7 +539,7 @@
       <div class="top">
         {@render headBar()}
       </div>
-      {#if settingsLoaded && !initializationFailed}
+      {#if settingsLoaded}
         <Search
           newTabOpen={effectiveNewTabOpen}
           searchBookmarks={userSettings.searchBookmarks}

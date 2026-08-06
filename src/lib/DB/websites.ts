@@ -1,5 +1,5 @@
+import { db } from "./database";
 import type { WebSite } from "./database";
-import { getStoredConfig, updateStoredConfig } from "./configStorage";
 
 const WEBSITES_SEEDED_KEY = "websites_seeded_v1";
 const WEBSITES_UPDATED_EVENT = "websites-updated";
@@ -9,103 +9,91 @@ function notifyWebSitesUpdated() {
   window.dispatchEvent(new CustomEvent(WEBSITES_UPDATED_EVENT));
 }
 
-function nextId(items: WebSite[]) {
-  return Math.max(0, ...items.map((item) => item.id ?? 0)) + 1;
-}
-
 export async function addWebSite(webSite: Omit<WebSite, "id">) {
-  const id = await updateStoredConfig((config) => {
-    const now = Date.now();
-    const id = nextId(config.websites);
-    config.websites.push({
-      ...webSite,
-      id,
-      order: webSite.order ?? config.websites.length,
-      createAt: now,
-      updateAt: now,
-    });
-    return id;
+  const now = Date.now();
+  const count = await db.webSites.count();
+  const id = await db.webSites.add({
+    ...webSite,
+    order: webSite.order ?? count,
+    createAt: now,
+    updateAt: now,
   });
   notifyWebSitesUpdated();
   return id;
 }
 
 export async function updateWebSite(webSite: WebSite & { id: number }) {
-  const result = await updateStoredConfig((config) => {
-    const index = config.websites.findIndex((item) => item.id === webSite.id);
-    const existing = config.websites[index];
-    const next = {
-      ...webSite,
-      order: webSite.order ?? existing?.order,
-      createAt: existing?.createAt ?? webSite.createAt ?? Date.now(),
-      updateAt: Date.now(),
-    };
-    if (index >= 0) config.websites[index] = next;
-    else config.websites.push(next);
-    return webSite.id;
+  const now = Date.now();
+  const existing = await db.webSites.get(webSite.id);
+  const result = await db.webSites.put({
+    ...webSite,
+    order: webSite.order ?? existing?.order,
+    createAt: existing?.createAt ?? webSite.createAt ?? now,
+    updateAt: now,
   });
   notifyWebSitesUpdated();
   return result;
 }
 
 export async function deleteWebSite(id: number) {
-  await updateStoredConfig((config) => {
-    config.websites = config.websites.filter((item) => item.id !== id);
-  });
+  const result = await db.webSites.delete(id);
   notifyWebSitesUpdated();
-  return id;
+  return result;
 }
 
 export async function getAllWebSite(): Promise<WebSite[]> {
-  const config = await getStoredConfig();
-  return [...config.websites].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  return await db.webSites.orderBy("order").toArray();
 }
 
 export async function getWebSite(domain: string): Promise<WebSite | undefined> {
-  return (await getStoredConfig()).websites.find((item) => item.domain === domain);
+  return await db.webSites.where("domain").equals(domain).first();
 }
 
 export async function updateWebSitesOrder(items: (WebSite & { id: number })[]) {
-  await updateStoredConfig((config) => {
-    const orderById = new Map(items.map((item, index) => [item.id, index]));
-    const now = Date.now();
-    config.websites = config.websites.map((item) =>
-      item.id && orderById.has(item.id)
-        ? { ...item, order: orderById.get(item.id), updateAt: now }
-        : item,
-    );
+  const now = Date.now();
+  await db.transaction("rw", db.webSites, async () => {
+    for (let i = 0; i < items.length; i++) {
+      await db.webSites.update(items[i].id, { order: i, updateAt: now });
+    }
   });
   notifyWebSitesUpdated();
 }
 
 export async function ensureDefaultWebSites(defaults: Omit<WebSite, "id">[]) {
-  await updateStoredConfig((config) => {
-    if (config.metadata[WEBSITES_SEEDED_KEY] === true) return;
-    if (!config.websites.length) {
+  await db.transaction("rw", db.settings, db.webSites, async () => {
+    const seeded = await db.settings.get(WEBSITES_SEEDED_KEY);
+    if (seeded?.value === true) return;
+
+    if ((await db.webSites.count()) === 0 && defaults.length > 0) {
       const now = Date.now();
-      config.websites = defaults.map((site, index) => ({
-        ...site,
-        id: index + 1,
-        order: site.order ?? index,
-        createAt: now,
-        updateAt: now,
-      }));
+      await db.webSites.bulkAdd(
+        defaults.map((site, index) => ({
+          ...site,
+          order: site.order ?? index,
+          createAt: now,
+          updateAt: now,
+        })),
+      );
     }
-    config.metadata[WEBSITES_SEEDED_KEY] = true;
+    await db.settings.put({ key: WEBSITES_SEEDED_KEY, value: true });
   });
 }
 
 export async function resetWebSitesToDefault(defaults: Omit<WebSite, "id">[]) {
-  await updateStoredConfig((config) => {
+  await db.transaction("rw", db.settings, db.webSites, async () => {
+    await db.webSites.clear();
     const now = Date.now();
-    config.websites = defaults.map((site, index) => ({
-      ...site,
-      id: index + 1,
-      order: index,
-      createAt: now,
-      updateAt: now,
-    }));
-    config.metadata[WEBSITES_SEEDED_KEY] = true;
+    if (defaults.length) {
+      await db.webSites.bulkAdd(
+        defaults.map((site, index) => ({
+          ...site,
+          order: index,
+          createAt: now,
+          updateAt: now,
+        })),
+      );
+    }
+    await db.settings.put({ key: WEBSITES_SEEDED_KEY, value: true });
   });
   notifyWebSitesUpdated();
 }

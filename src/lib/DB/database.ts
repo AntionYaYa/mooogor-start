@@ -41,3 +41,51 @@ export interface SettingRow {
   key: string;
   value: unknown;
 }
+
+export const db = new Dexie("Mooogor") as Dexie & {
+  favicons: EntityTable<Favicon, "domain">;
+  webSites: EntityTable<WebSite, "id">;
+  engines: EntityTable<Engine, "id">;
+  engineCategories: EntityTable<EngineCategoryItem, "id">;
+  settings: EntityTable<SettingRow, "key">;
+};
+
+db.version(1).stores({
+  favicons: "domain",
+  webSites: "++id,domain",
+  engines: "++id,domain",
+  settings: "key",
+});
+
+db.version(2)
+  .stores({
+    favicons: "domain",
+    webSites: "++id,domain,order",
+    engines: "++id,domain,category,enabled,order",
+    engineCategories: "id,order",
+    settings: "key",
+  })
+  .upgrade(async (tx) => {
+    const table = tx.table("webSites");
+    const items = await table.toArray();
+    if (!items.length) return;
+
+    let maxOrder = -1;
+    for (const item of items) {
+      const order = (item as WebSite).order;
+      if (typeof order === "number" && Number.isFinite(order) && order > maxOrder) {
+        maxOrder = order;
+      }
+    }
+
+    let nextOrder = maxOrder + 1;
+    const updates = items.flatMap((item) => {
+      const order = (item as WebSite).order;
+      if (typeof order === "number" && Number.isFinite(order)) return [];
+      return [{ ...item, order: nextOrder++ }];
+    });
+
+    if (updates.length) await table.bulkPut(updates);
+  });
+import Dexie from "dexie";
+import type { EntityTable } from "dexie";

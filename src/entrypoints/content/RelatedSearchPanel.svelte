@@ -6,7 +6,6 @@
   import Icon from "@/lib/components/Icon.svelte";
   import T from "@/lib/components/T.svelte";
   import { resolveEngineByDomain } from "./relatedSearchEngineMatch";
-  import { getExtensionStorage } from "@/lib/DB/configStorage";
   import { fly, slide } from "svelte/transition";
 
   export type RelatedSearchEngine = {
@@ -217,18 +216,15 @@
     if (!target.hasPointerCapture(event.pointerId) || !host) return;
     target.releasePointerCapture(event.pointerId);
     const rect = host.getBoundingClientRect();
-    void getExtensionStorage().set({
-      [getPositionStorageKey()]: { left: rect.left, top: rect.top },
-    });
+    localStorage.setItem(
+      getPositionStorageKey(),
+      JSON.stringify({ left: rect.left, top: rect.top }),
+    );
   }
 
-  async function restorePosition() {
+  function restorePosition() {
     if (!host) return;
-    const saved = readPanelPosition(
-      (await getExtensionStorage().get(getPositionStorageKey()))[
-        getPositionStorageKey()
-      ],
-    );
+    const saved = readPanelPosition(localStorage.getItem(getPositionStorageKey()));
     if (!saved) return;
     host.style.left = `${saved.left}px`;
     host.style.top = `${saved.top}px`;
@@ -236,23 +232,22 @@
   }
 
   function getPositionStorageKey() {
-    return `mooogor.related-search-position.v1:${location.hostname}`;
+    return `mooogor-related-search-pos:${location.hostname}`;
   }
 
-  function readPanelPosition(
-    value: unknown,
-  ): { left: number; top: number } | null {
-    if (!value || typeof value !== "object") {
+  function readPanelPosition(value: string | null): { left: number; top: number } | null {
+    try {
+      const parsed = JSON.parse(value ?? "null") as { left?: unknown; top?: unknown } | null;
+      if (!parsed || typeof parsed.left !== "number" || typeof parsed.top !== "number") {
+        return null;
+      }
+      return {
+        left: clamp(parsed.left, 8, window.innerWidth - 64),
+        top: clamp(parsed.top, 8, window.innerHeight - 64),
+      };
+    } catch {
       return null;
     }
-    const parsed = value as { left?: unknown; top?: unknown };
-    if (typeof parsed.left !== "number" || typeof parsed.top !== "number") {
-      return null;
-    }
-    return {
-      left: clamp(parsed.left, 8, window.innerWidth - 64),
-      top: clamp(parsed.top, 8, window.innerHeight - 64),
-    };
   }
 
   function clamp(value: number, min: number, max: number) {

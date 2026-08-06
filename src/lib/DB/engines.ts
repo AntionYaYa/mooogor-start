@@ -1,147 +1,144 @@
+import { db } from "./database";
 import type { Engine, EngineCategory } from "./database";
-import { getStoredConfig, updateStoredConfig } from "./configStorage";
 
 function normalizeEngineCategory(category?: string): EngineCategory {
   return category?.trim() || "1";
 }
 
-function nextId(items: Engine[]) {
-  return Math.max(0, ...items.map((item) => item.id ?? 0)) + 1;
-}
-
-const byOrder = (a: Engine, b: Engine) => (a.order ?? 999999) - (b.order ?? 999999);
-
 export async function addEngine(engine: Omit<Engine, "id">) {
-  return await updateStoredConfig((config) => {
-    const now = Date.now();
-    const id = nextId(config.engines);
-    config.engines.push({
-      ...engine,
-      id,
-      category: normalizeEngineCategory(engine.category),
-      enabled: engine.enabled ?? true,
-      order: engine.order ?? config.engines.length,
-      createAt: now,
-      updateAt: now,
-    });
-    return id;
+  const now = Date.now();
+  const count = await db.engines.count();
+  return await db.engines.add({
+    ...engine,
+    category: normalizeEngineCategory(engine.category),
+    enabled: engine.enabled ?? true,
+    order: engine.order ?? count,
+    createAt: now,
+    updateAt: now,
   });
 }
 
 export async function updateEngine(engine: Engine & { id: number }) {
-  return await updateStoredConfig((config) => {
-    const index = config.engines.findIndex((item) => item.id === engine.id);
-    const existing = config.engines[index];
-    const next: Engine = {
-      ...engine,
-      category: normalizeEngineCategory(engine.category ?? existing?.category),
-      enabled: typeof engine.enabled === "boolean" ? engine.enabled : existing?.enabled ?? true,
-      createAt: existing?.createAt ?? engine.createAt ?? Date.now(),
-      updateAt: Date.now(),
-    };
-    if (index >= 0) config.engines[index] = next;
-    else config.engines.push(next);
-    return engine.id;
+  const now = Date.now();
+  const existing = await db.engines.get(engine.id);
+  return await db.engines.put({
+    ...engine,
+    category: normalizeEngineCategory(engine.category ?? existing?.category),
+    enabled: typeof engine.enabled === "boolean" ? engine.enabled : existing?.enabled ?? true,
+    createAt: existing?.createAt ?? engine.createAt ?? now,
+    updateAt: now,
   });
 }
 
 export async function deleteEngine(id: number) {
-  await updateStoredConfig((config) => {
-    config.engines = config.engines.filter((item) => item.id !== id);
-  });
-  return id;
+  return await db.engines.delete(id);
 }
 
-export async function getEnabledEngines() {
-  return (await getStoredConfig()).engines.filter((item) => item.enabled !== false).sort(byOrder);
+export async function getEnabledEngines(): Promise<Engine[]> {
+  return await db.engines.filter((engine) => engine.enabled !== false).sortBy("order");
 }
 
-export async function getDisabledEngines() {
-  return (await getStoredConfig()).engines.filter((item) => item.enabled === false).sort(byOrder);
+export async function getDisabledEngines(): Promise<Engine[]> {
+  return await db.engines.filter((engine) => engine.enabled === false).sortBy("order");
 }
 
-export async function getAllEnableEngine() {
-  return (await getStoredConfig()).engines.filter((item) => item.enabled !== false).sort(byOrder);
+export async function getAllEnableEngine(): Promise<Engine[]> {
+  const engines = await db.engines.toArray();
+  return engines
+    .filter((engine) => engine.enabled !== false)
+    .sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999));
 }
 
-export async function getEngine(domain: string) {
-  return (await getStoredConfig()).engines.find((item) => {
-    try {
-      return new URL(item.engineUrl.replace("%s", "search")).hostname === domain;
-    } catch {
-      return false;
+export async function getEngine(domain: string): Promise<Engine | undefined> {
+  return await db.engines.where("domain").equals(domain).first();
+}
+
+export async function updateEnginesOrder(items: (Engine & { id: number })[]) {
+  const now = Date.now();
+  await db.transaction("rw", db.engines, async () => {
+    for (let i = 0; i < items.length; i++) {
+      await db.engines.update(items[i].id, { order: i, updateAt: now });
     }
   });
 }
 
-export async function updateEnginesOrder(items: (Engine & { id: number })[]) {
-  await updateEnginesLayout(items);
-}
-
 export async function updateEnginesLayout(items: (Engine & { id: number })[]) {
-  await updateStoredConfig((config) => {
-    const byId = new Map(items.map((item, index) => [item.id, { item, index }]));
-    const now = Date.now();
-    config.engines = config.engines.map((engine) => {
-      const next = engine.id ? byId.get(engine.id) : undefined;
-      return next
-        ? {
-            ...engine,
-            order: next.index,
-            category: normalizeEngineCategory(next.item.category),
-            enabled: next.item.enabled !== false,
-            updateAt: now,
-          }
-        : engine;
-    });
+  const now = Date.now();
+  await db.transaction("rw", db.engines, async () => {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      await db.engines.update(item.id, {
+        order: i,
+        category: normalizeEngineCategory(item.category),
+        enabled: item.enabled !== false,
+        updateAt: now,
+      });
+    }
   });
 }
 
-export async function updateEnginesState(enabledItems: (Engine & { id: number })[], disabledItems: (Engine & { id: number })[]) {
-  await updateStoredConfig((config) => {
-    const enabled = new Map(enabledItems.map((item, index) => [item.id, index]));
-    const disabled = new Map(disabledItems.map((item, index) => [item.id, index]));
-    const now = Date.now();
-    config.engines = config.engines.map((engine) => {
-      if (!engine.id) return engine;
-      if (enabled.has(engine.id)) return { ...engine, enabled: true, order: enabled.get(engine.id), updateAt: now };
-      if (disabled.has(engine.id)) return { ...engine, enabled: false, order: disabled.get(engine.id), updateAt: now };
-      return engine;
-    });
+export async function updateEnginesState(
+  enabledItems: (Engine & { id: number })[],
+  disabledItems: (Engine & { id: number })[],
+) {
+  const now = Date.now();
+  await db.transaction("rw", db.engines, async () => {
+    for (let i = 0; i < enabledItems.length; i++) {
+      await db.engines.update(enabledItems[i].id, {
+        order: i,
+        enabled: true,
+        updateAt: now,
+      });
+    }
+    for (let i = 0; i < disabledItems.length; i++) {
+      await db.engines.update(disabledItems[i].id, {
+        order: i,
+        enabled: false,
+        updateAt: now,
+      });
+    }
   });
 }
 
 export async function updateEngineCategory(id: number, category: EngineCategory) {
-  await updateStoredConfig((config) => {
-    const engine = config.engines.find((item) => item.id === id);
-    if (engine) {
-      engine.category = normalizeEngineCategory(category);
-      engine.updateAt = Date.now();
-    }
+  await db.engines.update(id, {
+    category: normalizeEngineCategory(category),
+    updateAt: Date.now(),
   });
 }
 
 export async function ensureDefaultEngines(defaults: Omit<Engine, "id">[]) {
-  await updateStoredConfig((config) => {
-    if (config.engines.length) return;
-    const now = Date.now();
-    config.engines = defaults.map((engine, index) => ({
-      ...engine, id: index + 1, category: normalizeEngineCategory(engine.category),
-      enabled: engine.enabled ?? true, order: index, createAt: now, updateAt: now,
-    }));
-  });
+  if ((await db.engines.count()) !== 0) return;
+  const now = Date.now();
+  await db.engines.bulkAdd(
+    defaults.map((engine, index) => ({
+      ...engine,
+      category: normalizeEngineCategory(engine.category),
+      enabled: engine.enabled ?? true,
+      order: index,
+      createAt: now,
+      updateAt: now,
+    })),
+  );
 }
 
 export async function clearAllEngines() {
-  await updateStoredConfig((config) => { config.engines = []; });
+  await db.engines.clear();
 }
 
 export async function resetEnginesToDefault(defaults: Omit<Engine, "id">[]) {
-  await updateStoredConfig((config) => {
+  await db.transaction("rw", db.engines, async () => {
+    await db.engines.clear();
     const now = Date.now();
-    config.engines = defaults.map((engine, index) => ({
-      ...engine, id: index + 1, category: normalizeEngineCategory(engine.category),
-      enabled: engine.enabled ?? true, order: index, createAt: now, updateAt: now,
-    }));
+    await db.engines.bulkAdd(
+      defaults.map((engine, index) => ({
+        ...engine,
+        category: normalizeEngineCategory(engine.category),
+        enabled: engine.enabled ?? true,
+        order: index,
+        createAt: now,
+        updateAt: now,
+      })),
+    );
   });
 }
