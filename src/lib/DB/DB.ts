@@ -1,4 +1,3 @@
-export { db } from "./database";
 export { getDomainFromUrl } from "./utils";
 
 export type { Favicon } from "./database";

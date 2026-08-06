@@ -1,22 +1,15 @@
 import type { Engine, EngineCategoryItem, WebSite } from "./database";
 import { browser } from "wxt/browser";
 
-export const CONFIG_STORAGE_KEY = "mooogor.config.v1";
 const CONFIG_STORAGE_KEYS = {
   websites: "mooogor.websites.v1",
   engines: "mooogor.engines.v1",
   engineCategories: "mooogor.engine-categories.v1",
   metadata: "mooogor.metadata.v1",
-  migration: "mooogor.config-migration.v1",
 } as const;
 
 export type StoredConfig = {
   schemaVersion: 1;
-  migration: {
-    status: "completed";
-    source: "dexie-v2" | "fresh";
-    completedAt: number;
-  };
   websites: WebSite[];
   engines: Engine[];
   engineCategories: EngineCategoryItem[];
@@ -26,10 +19,10 @@ export type StoredConfig = {
 type ExtensionStorageArea = {
   get(keys: string | string[]): Promise<Record<string, unknown>>;
   set(items: Record<string, unknown>): Promise<void>;
-  remove(keys: string | string[]): Promise<void>;
 };
 
 let writeQueue = Promise.resolve();
+let initializationPromise: Promise<void> | null = null;
 
 export function getExtensionStorage() {
   return browser.storage.local as ExtensionStorageArea;
@@ -39,22 +32,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-function isMigration(value: unknown): value is StoredConfig["migration"] {
-  if (!value || typeof value !== "object") return false;
-  const migration = value as Partial<StoredConfig["migration"]>;
-  return (
-    migration.status === "completed" &&
-    (migration.source === "dexie-v2" || migration.source === "fresh") &&
-    typeof migration.completedAt === "number"
-  );
-}
-
 export function isStoredConfig(value: unknown): value is StoredConfig {
   if (!value || typeof value !== "object") return false;
   const data = value as Partial<StoredConfig>;
   return (
     data.schemaVersion === 1 &&
-    isMigration(data.migration) &&
     Array.isArray(data.websites) &&
     Array.isArray(data.engines) &&
     Array.isArray(data.engineCategories) &&
@@ -67,15 +49,13 @@ function isConfigParts(value: Record<string, unknown>) {
     Array.isArray(value[CONFIG_STORAGE_KEYS.websites]) &&
     Array.isArray(value[CONFIG_STORAGE_KEYS.engines]) &&
     Array.isArray(value[CONFIG_STORAGE_KEYS.engineCategories]) &&
-    isRecord(value[CONFIG_STORAGE_KEYS.metadata]) &&
-    isMigration(value[CONFIG_STORAGE_KEYS.migration])
+    isRecord(value[CONFIG_STORAGE_KEYS.metadata])
   );
 }
 
 function toStoredConfig(value: Record<string, unknown>): StoredConfig {
   return {
     schemaVersion: 1,
-    migration: value[CONFIG_STORAGE_KEYS.migration] as StoredConfig["migration"],
     websites: value[CONFIG_STORAGE_KEYS.websites] as WebSite[],
     engines: value[CONFIG_STORAGE_KEYS.engines] as Engine[],
     engineCategories: value[CONFIG_STORAGE_KEYS.engineCategories] as EngineCategoryItem[],
@@ -89,7 +69,6 @@ export function toStorageParts(config: StoredConfig): Record<string, unknown> {
     [CONFIG_STORAGE_KEYS.engines]: config.engines,
     [CONFIG_STORAGE_KEYS.engineCategories]: config.engineCategories,
     [CONFIG_STORAGE_KEYS.metadata]: config.metadata,
-    [CONFIG_STORAGE_KEYS.migration]: config.migration,
   };
 }
 
@@ -100,6 +79,26 @@ export async function readStoredConfig(): Promise<StoredConfig | null> {
 
 export async function writeStoredConfig(config: StoredConfig): Promise<void> {
   await getExtensionStorage().set(toStorageParts(config));
+}
+
+export async function initializeStoredConfig(): Promise<void> {
+  initializationPromise ??= (async () => {
+    if (await readStoredConfig()) return;
+    await writeStoredConfig({
+      schemaVersion: 1,
+      websites: [],
+      engines: [],
+      engineCategories: [],
+      metadata: {},
+    });
+    if (!(await readStoredConfig())) {
+      throw new Error("Failed to initialize extension configuration");
+    }
+  })().catch((error) => {
+    initializationPromise = null;
+    throw error;
+  });
+  await initializationPromise;
 }
 
 export function stableStringify(value: unknown): string | undefined {

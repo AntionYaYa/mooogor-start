@@ -11,10 +11,7 @@ import type { AppLanguage } from "../lib/utils/settings";
 import { loadSettings } from "../lib/utils/settings";
 import { resolveTheme } from "../lib/utils/theme";
 import { getEffectiveLanguage } from "../lib/utils/i18n";
-import {
-  initializeFreshStoredConfig,
-  initializeStoredConfig,
-} from "../lib/DB/configMigration";
+import { initializeStoredConfig } from "../lib/DB/configStorage";
 import {
   ensureDefaultEngineCategories,
   ensureDefaultEngines,
@@ -64,13 +61,9 @@ const localeMessages: Record<Exclude<AppLanguage, "auto">, MessageMap> = {
 
 let configurationReadyPromise: Promise<void> | null = null;
 
-function prepareConfiguration(isFreshInstall = false): Promise<void> {
+function prepareConfiguration(): Promise<void> {
   configurationReadyPromise ??= (async () => {
-    if (isFreshInstall) {
-      await initializeFreshStoredConfig();
-    } else {
-      await initializeStoredConfig();
-    }
+    await initializeStoredConfig();
     const language = getEffectiveLanguage("auto");
     await ensureDefaultWebSites(buildDefaultWebSites(language));
     await ensureDefaultEngineCategories(buildDefaultEngineCategories());
@@ -83,8 +76,8 @@ function prepareConfiguration(isFreshInstall = false): Promise<void> {
 }
 
 export default defineBackground(() => {
-  browser.runtime.onInstalled.addListener((details) => {
-    void prepareConfiguration(details.reason === "install").catch((error) => {
+  browser.runtime.onInstalled.addListener(() => {
+    void prepareConfiguration().catch((error) => {
       // A new-tab page can ask the service worker to retry if initialization
       // was interrupted during the install or update lifecycle event.
       console.error("Failed to initialize Mooogor configuration", error);
@@ -229,14 +222,13 @@ async function onFavicon(data?: { url?: string; faviconUrl?: string }) {
   const shouldStore = await shouldStoreFavicon(data.url);
   if (!shouldStore) return;
   const domain = getDomainFromUrl(data.url);
-  const blob: Blob | undefined = await urlToBlob(data.faviconUrl);
+  const blob = await urlToBlob(data.faviconUrl);
   const newFavicon: Favicon = {
     domain,
     faviconUrl: data.faviconUrl,
     blob,
   };
   await saveFavicon(newFavicon);
-
 }
 
 async function onGetFaviconData(data?: { domain?: string }) {
@@ -285,8 +277,7 @@ async function urlToBlob(url: string): Promise<Blob | undefined> {
   if (!url) return undefined;
   const response = await fetch(url, { mode: "cors" });
   if (!response.ok) throw new Error(`Failed to fetch ${url}: ${response.status}`);
-  const blob = await response.blob();
-  return blob;
+  return await response.blob();
 }
 
 // browser.contextMenus.onClicked.addListener((info, tab) => {
