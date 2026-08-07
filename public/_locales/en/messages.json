@@ -445,5 +445,32 @@
   },
   "nt_multi_select": {
     "message": "Multi-select"
+  },
+  "nt_websites_load_failed": {
+    "message": "Couldn't load common sites"
+  },
+  "nt_websites_load_failed_desc": {
+    "message": "Your common sites are temporarily unavailable. A new tab will retry automatically."
+  },
+  "nt_settings_common_load_failed_desc": {
+    "message": "Local common-site data couldn't be read. You can restore the defaults."
+  },
+  "nt_search_engines_load_failed": {
+    "message": "Couldn't load search engines"
+  },
+  "nt_search_engines_load_failed_desc": {
+    "message": "Local search-engine data couldn't be read. You can restore the defaults."
+  },
+  "nt_config_load_failed": {
+    "message": "Couldn't load configuration"
+  },
+  "nt_config_load_failed_desc": {
+    "message": "The complete configuration is unavailable. You can keep using limited features or reset all configuration to repair it."
+  },
+  "nt_config_reset_all": {
+    "message": "Reset all configuration"
+  },
+  "nt_config_reset_all_confirm": {
+    "message": "Reset all configuration? This permanently removes custom common sites, search engines, categories, and preferences. Bookmarks, history, and cached icons won't be deleted."
   }
 }

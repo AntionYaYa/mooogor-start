@@ -140,6 +140,8 @@
     let settingEngineGroups: Record<CategoryId, Engine[]> = $state({});
     let settingEnginesLoading = $state(false);
     let settingEnginesLoaded = $state(false);
+    let settingEnginesError = $state(false);
+    let settingEnginesRequestId = 0;
     let settingEnginesSaving = $state(false);
     let expandedCategoryIds = $state<Set<string>>(new Set());
     let pendingExpandCategoryId = $state<string | null>(null);
@@ -151,6 +153,7 @@
     let searchEngineMoveActionEl: HTMLDivElement | undefined = $state();
     let commonSites: WebSite[] = $state([]);
     let commonSitesLoading = $state(false);
+    let commonSitesError = $state(false);
     let commonSitesRequestId = $state(0);
     let commonSitesDragging = $state(false);
     let selectedCommonSiteIds = $state<Set<number>>(new Set());
@@ -526,12 +529,18 @@
         commonSitesRequestId += 1;
         const requestId = commonSitesRequestId;
         commonSitesLoading = true;
+        commonSitesError = false;
         try {
             const items = await fetchCommonSites();
             if (requestId !== commonSitesRequestId) return;
             commonSites = items;
             pruneCommonSiteSelection();
             commonSitesDragging = false;
+        } catch (error) {
+            if (requestId !== commonSitesRequestId) return;
+            commonSites = [];
+            commonSitesError = true;
+            console.error("[Mooogor Settings]", "common-sites:load-failed", error);
         } finally {
             if (requestId === commonSitesRequestId) {
                 commonSitesLoading = false;
@@ -791,9 +800,12 @@
             clearTimeout(persistEngineLayoutTimer);
             persistEngineLayoutTimer = null;
         }
+        const requestId = ++settingEnginesRequestId;
         settingEnginesLoading = true;
+        settingEnginesError = false;
         try {
             const nextState = await loadSearchEngineSettings();
+            if (requestId !== settingEnginesRequestId) return;
             settingEngineCategories = nextState.categories;
             settingEnabledEngines = nextState.enabledEngines;
             settingDisabledEngines = nextState.disabledEngines;
@@ -804,8 +816,15 @@
             }
             settingEnginesLoaded = true;
             pruneSearchEngineSelection();
+        } catch (error) {
+            if (requestId !== settingEnginesRequestId) return;
+            settingEnginesLoaded = false;
+            settingEnginesError = true;
+            console.error("[Mooogor Settings]", "search-engines:load-failed", error);
         } finally {
-            settingEnginesLoading = false;
+            if (requestId === settingEnginesRequestId) {
+                settingEnginesLoading = false;
+            }
         }
     }
 
@@ -997,6 +1016,9 @@
             );
             await loadSearchSettingEngines(true);
             notifyEngineConfigUpdated();
+        } catch (error) {
+            settingEnginesError = true;
+            console.error("[Mooogor Settings]", "search-engines:reset-failed", error);
         } finally {
             settingEnginesSaving = false;
         }
@@ -1015,6 +1037,9 @@
         try {
             await resetCommonSitesToDefaultByLanguage(userSettings.language);
             await loadCommonSites();
+        } catch (error) {
+            commonSitesError = true;
+            console.error("[Mooogor Settings]", "common-sites:reset-failed", error);
         } finally {
             commonSitesLoading = false;
         }
@@ -1099,6 +1124,7 @@
                             <SettingsSearchEnginesSection
                                 {settingEnginesLoading}
                                 {settingEnginesLoaded}
+                                {settingEnginesError}
                                 {settingEnginesSaving}
                                 {expandedCategoryIds}
                                 selectedEngineIds={selectedSearchEngineIds}
@@ -1110,11 +1136,13 @@
                                 onEditEngine={openEditSearchEngineEditor}
                                 onAddEngineToCategory={openAddSearchEngineEditorForCategory}
                                 onToggleEngineSelected={toggleSearchEngineSelected}
+                                onReset={resetSearchEnginesToDefaultConfirm}
                             />
                         {:else if settingPage === "common"}
                             <SettingsCommonSitesSection
                                 {commonSites}
                                 {commonSitesLoading}
+                                {commonSitesError}
                                 {commonSitesDragging}
                                 selectedSiteIds={selectedCommonSiteIds}
                                 onConsider={handleCommonSitesConsider}
@@ -1122,6 +1150,7 @@
                                 onAdd={openAddCommonSiteEditor}
                                 onEdit={openEditCommonSiteEditor}
                                 onToggleSelected={toggleCommonSiteSelected}
+                                onReset={resetCommonSitesToDefaultConfirm}
                             />
                         {/if}
                     </div>

@@ -15,6 +15,7 @@
     interface Props {
         commonSites: WebSite[];
         commonSitesLoading: boolean;
+        commonSitesError: boolean;
         commonSitesDragging: boolean;
         selectedSiteIds: Set<number>;
         onConsider: (e: CustomEvent<DndEvent<WebSite>>) => void;
@@ -22,11 +23,13 @@
         onAdd: () => void;
         onEdit: (site: WebSite) => void;
         onToggleSelected: (site: WebSite) => void;
+        onReset: () => void | Promise<void>;
     }
 
     let {
         commonSites,
         commonSitesLoading,
+        commonSitesError,
         commonSitesDragging,
         selectedSiteIds,
         onConsider,
@@ -34,6 +37,7 @@
         onAdd,
         onEdit,
         onToggleSelected,
+        onReset,
     }: Props = $props();
 
     function isSiteSelected(site: WebSite) {
@@ -58,10 +62,25 @@
         onfinalize={onFinalize}
     >
         {#if commonSitesLoading}
-            <div class="engine_loading">
-                <G>
-                    <Icon name="Loading" color="var(--c-text)" />
-                </G>
+            <div class="settings_skeleton" aria-hidden="true">
+                {#each Array.from({ length: 6 }) as _}
+                    <div class="skeleton_row skeleton_shimmer">
+                        <div class="skeleton_icon"></div>
+                        <div class="skeleton_text"></div>
+                    </div>
+                {/each}
+            </div>
+        {:else if commonSitesError}
+            <div class="error_state" role="alert">
+                <Icon name="Info" color="var(--c-text)" opacity={0.6} size={28} />
+                <T align="c" bold>{t("nt_websites_load_failed")}</T>
+                <T align="c" type="s">{t("nt_settings_common_load_failed_desc")}</T>
+                <Button onclick={() => void onReset()} bg="var(--c-text)">
+                    <G align="c">
+                        <Icon name="RotateCcw" color="var(--c-bg)" size={16} />
+                        <T color="var(--c-bg)">{t("nt_confirm_reset_common_sites_title")}</T>
+                    </G>
+                </Button>
             </div>
         {:else}
             {#each commonSites as site (site.id)}
@@ -92,6 +111,7 @@
             {/each}
         {/if}
     </div>
+    {#if !commonSitesLoading && !commonSitesError}
     <G full>
         <Button full onclick={onAdd}>
             <G align="c">
@@ -100,6 +120,7 @@
             </G>
         </Button>
     </G>
+    {/if}
 </div>
 
 <style>
@@ -109,10 +130,53 @@
         flex-direction: column;
         align-items: flex-start;
     }
-    .engine_loading {
+    .settings_skeleton,
+    .error_state {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        width: 100%;
+        box-sizing: border-box;
+        gap: var(--gap);
+    }
+    .error_state {
+        align-items: center;
+        padding: calc(var(--gap) * 3) var(--gap);
+    }
+    .skeleton_row {
+        display: flex;
+        align-items: center;
+        gap: var(--gap);
+        height: 48px;
         padding: var(--gap);
+        border-radius: var(--r);
+        background: var(--c-mask);
+        box-sizing: border-box;
+        position: relative;
+        overflow: hidden;
+    }
+    .skeleton_icon {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--r);
+        background: var(--c-mask1);
+    }
+    .skeleton_text {
+        width: 55%;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--c-mask1);
+    }
+    .skeleton_shimmer::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        transform: translateX(-100%);
+        background: linear-gradient(90deg, transparent, var(--c-card), transparent);
+        animation: settings-shimmer 1.25s ease-in-out infinite;
+    }
+    @keyframes settings-shimmer { to { transform: translateX(100%); } }
+    @media (prefers-reduced-motion: reduce) {
+        .skeleton_shimmer::after { animation: none; }
     }
     .common_list {
         display: flex;

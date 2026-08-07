@@ -445,5 +445,32 @@
   },
   "nt_multi_select": {
     "message": "多选"
+  },
+  "nt_websites_load_failed": {
+    "message": "常用网站加载失败"
+  },
+  "nt_websites_load_failed_desc": {
+    "message": "暂时无法读取你的常用网站，新开标签页时会自动重试。"
+  },
+  "nt_settings_common_load_failed_desc": {
+    "message": "本地常用网站数据无法读取，你可以恢复默认数据。"
+  },
+  "nt_search_engines_load_failed": {
+    "message": "搜索引擎加载失败"
+  },
+  "nt_search_engines_load_failed_desc": {
+    "message": "本地搜索引擎数据无法读取，你可以恢复默认数据。"
+  },
+  "nt_config_load_failed": {
+    "message": "配置加载失败"
+  },
+  "nt_config_load_failed_desc": {
+    "message": "完整配置无法读取。你仍可使用有限功能，或重置全部配置进行修复。"
+  },
+  "nt_config_reset_all": {
+    "message": "重置全部配置"
+  },
+  "nt_config_reset_all_confirm": {
+    "message": "确定要重置全部配置吗？这会清除自定义常用网站、搜索引擎、分类和偏好设置，且无法撤销。收藏夹、历史记录和已缓存图标不会被删除。"
   }
 }

@@ -63,38 +63,78 @@ const localeMessages: Record<Exclude<AppLanguage, "auto">, MessageMap> = {
 };
 
 let configurationReadyPromise: Promise<void> | null = null;
+const CONFIG_LOG_PREFIX = "[Mooogor Config]";
+type ConfigurationTrigger = "install" | "update" | "ensureConfigReady";
 
-function prepareConfiguration(isFreshInstall = false): Promise<void> {
-  configurationReadyPromise ??= (async () => {
+function prepareConfiguration(
+  isFreshInstall = false,
+  trigger: ConfigurationTrigger = "ensureConfigReady",
+): Promise<void> {
+  console.info(CONFIG_LOG_PREFIX, "request", {
+    trigger,
+    isFreshInstall,
+    reusedPromise: configurationReadyPromise !== null,
+  });
+  if (configurationReadyPromise) return configurationReadyPromise;
+
+  const startedAt = Date.now();
+  configurationReadyPromise = (async () => {
+    console.info(CONFIG_LOG_PREFIX, "initialization:start", { trigger });
     if (isFreshInstall) {
+      console.info(CONFIG_LOG_PREFIX, "configuration:fresh-install:start");
       await initializeFreshStoredConfig();
     } else {
+      console.info(CONFIG_LOG_PREFIX, "configuration:migration-check:start");
       await initializeStoredConfig();
     }
+    console.info(CONFIG_LOG_PREFIX, "configuration:ready");
     const language = getEffectiveLanguage("auto");
+    console.info(CONFIG_LOG_PREFIX, "defaults:websites:start", { language });
     await ensureDefaultWebSites(buildDefaultWebSites(language));
+    console.info(CONFIG_LOG_PREFIX, "defaults:websites:ready");
+    console.info(CONFIG_LOG_PREFIX, "defaults:engine-categories:start");
     await ensureDefaultEngineCategories(buildDefaultEngineCategories());
+    console.info(CONFIG_LOG_PREFIX, "defaults:engine-categories:ready");
+    console.info(CONFIG_LOG_PREFIX, "defaults:engines:start", { language });
     await ensureDefaultEngines(buildDefaultEngines(language));
+    console.info(CONFIG_LOG_PREFIX, "defaults:engines:ready");
+    console.info(CONFIG_LOG_PREFIX, "initialization:success", {
+      trigger,
+      durationMs: Date.now() - startedAt,
+    });
   })().catch((error) => {
     configurationReadyPromise = null;
+    console.error(CONFIG_LOG_PREFIX, "initialization:failed", {
+      trigger,
+      durationMs: Date.now() - startedAt,
+      error,
+    });
     throw error;
   });
   return configurationReadyPromise;
 }
 
 export default defineBackground(() => {
+  console.info(CONFIG_LOG_PREFIX, "service-worker:ready");
   browser.runtime.onInstalled.addListener((details) => {
-    void prepareConfiguration(details.reason === "install").catch((error) => {
+    const isFreshInstall = details.reason === "install";
+    const trigger: ConfigurationTrigger = isFreshInstall ? "install" : "update";
+    console.info(CONFIG_LOG_PREFIX, "onInstalled", {
+      reason: details.reason,
+      previousVersion: details.previousVersion,
+    });
+    void prepareConfiguration(isFreshInstall, trigger).catch((error) => {
       // A new-tab page can ask the service worker to retry if initialization
       // was interrupted during the install or update lifecycle event.
       console.error("Failed to initialize Mooogor configuration", error);
     });
   });
 
-  browser.runtime.onMessage.addListener((message) => {
+  browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!message || typeof message !== "object") return;
-    const { type, payload } = message as {
+    const { type, payload, requestId } = message as {
       type?: string;
+      requestId?: string;
       payload?: {
         url?: string;
         faviconUrl?: string;
@@ -105,7 +145,29 @@ export default defineBackground(() => {
         maxResults?: number;
       };
     };
-    if (type === "ensureConfigReady") return prepareConfiguration();
+    if (type === "ensureConfigReady") {
+      console.info(CONFIG_LOG_PREFIX, "message:ensureConfigReady", { requestId });
+      void prepareConfiguration(false, "ensureConfigReady").then(
+        () => {
+          console.info(CONFIG_LOG_PREFIX, "message:ensureConfigReady:success", {
+            requestId,
+          });
+          sendResponse({ ok: true, requestId });
+        },
+        (error) => {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          console.error(CONFIG_LOG_PREFIX, "message:ensureConfigReady:failed", {
+            requestId,
+            error,
+          });
+          sendResponse({ ok: false, requestId, error: errorMessage });
+        },
+      );
+      // Keep the response channel open on Chromium versions that do not support
+      // returning a Promise directly from an onMessage listener.
+      return true;
+    }
     if (type === "getFrequentSites") return getFrequentSites();
     if (type === "getHistoryItems") return getHistoryItems(payload);
     if (type === "searchHistory") {

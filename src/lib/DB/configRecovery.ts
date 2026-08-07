@@ -1,0 +1,54 @@
+import { buildDefaultWebSites } from "@/lib/config/defaultWebSites";
+import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
+import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
+import { readStoredConfig, writeStoredConfig, type StoredConfig } from "./configStorage";
+import { DEFAULT_SETTINGS, type AppLanguage } from "@/lib/utils/settings";
+import { getEffectiveLanguage } from "@/lib/utils/i18n";
+
+export async function resetConfigurationToDefaults(
+  language: AppLanguage = "auto",
+): Promise<void> {
+  const now = Date.now();
+  const effectiveLanguage = getEffectiveLanguage(language);
+  const websites = buildDefaultWebSites(effectiveLanguage).map((site, index) => ({
+    ...site,
+    id: index + 1,
+    order: index,
+    createAt: now,
+    updateAt: now,
+  }));
+  const engines = buildDefaultEngines(language).map((engine, index) => ({
+    ...engine,
+    id: index + 1,
+    order: index,
+    createAt: now,
+    updateAt: now,
+  }));
+  const engineCategories = buildDefaultEngineCategories().map(
+    (category, index) => ({
+      ...category,
+      order: index,
+      createAt: now,
+      updateAt: now,
+    }),
+  );
+  const config: StoredConfig = {
+    schemaVersion: 1,
+    migration: {
+      status: "completed",
+      source: "fresh",
+      completedAt: now,
+    },
+    websites,
+    engines,
+    engineCategories,
+    metadata: {
+      settings: { ...DEFAULT_SETTINGS, language },
+    },
+  };
+
+  await writeStoredConfig(config);
+  if (!(await readStoredConfig())) {
+    throw new Error("Full configuration reset validation failed");
+  }
+}

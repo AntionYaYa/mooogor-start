@@ -445,5 +445,32 @@
   },
   "nt_multi_select": {
     "message": "多選"
+  },
+  "nt_websites_load_failed": {
+    "message": "常用網站載入失敗"
+  },
+  "nt_websites_load_failed_desc": {
+    "message": "暫時無法讀取你的常用網站，開啟新分頁時會自動重試。"
+  },
+  "nt_settings_common_load_failed_desc": {
+    "message": "本機常用網站資料無法讀取，你可以恢復預設資料。"
+  },
+  "nt_search_engines_load_failed": {
+    "message": "搜尋引擎載入失敗"
+  },
+  "nt_search_engines_load_failed_desc": {
+    "message": "本機搜尋引擎資料無法讀取，你可以恢復預設資料。"
+  },
+  "nt_config_load_failed": {
+    "message": "設定載入失敗"
+  },
+  "nt_config_load_failed_desc": {
+    "message": "完整設定無法讀取。你仍可使用有限功能，或重設全部設定進行修復。"
+  },
+  "nt_config_reset_all": {
+    "message": "重設全部設定"
+  },
+  "nt_config_reset_all_confirm": {
+    "message": "確定要重設全部設定嗎？這會清除自訂常用網站、搜尋引擎、分類和偏好設定，且無法復原。書籤、瀏覽記錄和已快取圖示不會被刪除。"
   }
 }

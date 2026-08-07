@@ -23,6 +23,7 @@
     interface Props {
         settingEnginesLoading: boolean;
         settingEnginesLoaded: boolean;
+        settingEnginesError: boolean;
         settingEnginesSaving: boolean;
         expandedCategoryIds: Set<string>;
         groups: SearchEngineGroup[];
@@ -40,11 +41,13 @@
         onEditEngine: (engine: Engine) => void;
         onAddEngineToCategory: (categoryId: string) => void;
         onToggleEngineSelected: (engine: Engine) => void;
+        onReset: () => void | Promise<void>;
     }
 
     let {
         settingEnginesLoading,
         settingEnginesLoaded,
+        settingEnginesError,
         settingEnginesSaving,
         expandedCategoryIds,
         groups,
@@ -56,6 +59,7 @@
         onEditEngine,
         onAddEngineToCategory,
         onToggleEngineSelected,
+        onReset,
     }: Props = $props();
 
     function isEngineSelected(engine: Engine) {
@@ -64,6 +68,7 @@
 </script>
 
 <div class="setting_con">
+    {#if !settingEnginesLoading && !settingEnginesError}
     <div class="select_item">
         <Button full align="c" onclick={onOpenCategoryManager} fill r="r1">
             <G full align="c">
@@ -80,12 +85,28 @@
             </G>
         </Button>
     </div>
+    {/if}
     <div class="categories_list">
-        {#if settingEnginesLoading && !settingEnginesLoaded}
-            <div class="engine_loading">
-                <G>
-                    <Icon name="Loading" color="var(--c-text)" />
-                </G>
+        {#if settingEnginesLoading}
+            <div class="settings_skeleton" aria-hidden="true">
+                {#each Array.from({ length: 6 }) as _}
+                    <div class="skeleton_row skeleton_shimmer">
+                        <div class="skeleton_icon"></div>
+                        <div class="skeleton_text"></div>
+                    </div>
+                {/each}
+            </div>
+        {:else if settingEnginesError}
+            <div class="error_state" role="alert">
+                <Icon name="Info" color="var(--c-text)" opacity={0.6} size={28} />
+                <T align="c" bold>{t("nt_search_engines_load_failed")}</T>
+                <T align="c" type="s">{t("nt_search_engines_load_failed_desc")}</T>
+                <Button onclick={() => void onReset()} bg="var(--c-text)">
+                    <G align="c">
+                        <Icon name="RotateCcw" color="var(--c-bg)" size={16} />
+                        <T color="var(--c-bg)">{t("nt_confirm_reset_search_engines_title")}</T>
+                    </G>
+                </Button>
             </div>
         {:else}
             {#each groups as group (group.id)}
@@ -228,10 +249,53 @@
         padding: var(--gap);
         gap: calc(var(--gap) * 2);
     }
-    .engine_loading {
+    .settings_skeleton,
+    .error_state {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        width: 100%;
+        box-sizing: border-box;
+        gap: var(--gap);
+    }
+    .error_state {
+        align-items: center;
+        padding: calc(var(--gap) * 3) var(--gap);
+    }
+    .skeleton_row {
+        display: flex;
+        align-items: center;
+        gap: var(--gap);
+        height: 42px;
         padding: var(--gap);
+        border-radius: var(--r);
+        background: var(--c-mask);
+        box-sizing: border-box;
+        position: relative;
+        overflow: hidden;
+    }
+    .skeleton_icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--c-mask1);
+    }
+    .skeleton_text {
+        width: 55%;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--c-mask1);
+    }
+    .skeleton_shimmer::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        transform: translateX(-100%);
+        background: linear-gradient(90deg, transparent, var(--c-card), transparent);
+        animation: settings-shimmer 1.25s ease-in-out infinite;
+    }
+    @keyframes settings-shimmer { to { transform: translateX(100%); } }
+    @media (prefers-reduced-motion: reduce) {
+        .skeleton_shimmer::after { animation: none; }
     }
     .engine_group {
         display: flex;

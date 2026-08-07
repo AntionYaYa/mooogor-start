@@ -25,6 +25,7 @@
 		Trash2,
 		BrushCleaning,
 		Info,
+		TriangleAlert,
 		Coffee,
 		Search,
 		Globe,
@@ -58,6 +59,7 @@
 		| "Trash2"
 		| "BrushCleaning"
 		| "Info"
+		| "TriangleAlert"
 		| "Search"
 		| "Globe"
 		| "Bolt"
@@ -149,6 +151,9 @@
 	{/if}
 	{#if name === "Info"}
 		<Info {size} {strokeWidth} />
+	{/if}
+	{#if name === "TriangleAlert"}
+		<TriangleAlert {size} {strokeWidth} />
 	{/if}
 	{#if name === "Coffee"}
 		<Coffee {size} {strokeWidth} />

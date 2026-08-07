@@ -32,6 +32,10 @@
     newTabOpen?: boolean;
     list?: boolean;
     showAdd: boolean;
+    loading?: boolean;
+    error?: boolean;
+    readOnly?: boolean;
+    onReset?: () => void | Promise<void>;
     onopenAdd: () => void;
     oncloseAdd: () => void;
     onUpdate: (items?: WebSite[]) => void;
@@ -44,6 +48,10 @@
     newTabOpen = false,
     list = false,
     showAdd,
+    loading = false,
+    error = false,
+    readOnly = false,
+    onReset = () => {},
     onopenAdd,
     oncloseAdd,
     onUpdate,
@@ -69,8 +77,10 @@
   let confirmOptions = $state<{
     title: string;
     description: string;
+    confirmText?: string;
     resolve: (value: boolean) => void;
   } | null>(null);
+  const skeletonItems = Array.from({ length: 8 });
 
   const fixedDomains = $derived.by(() => {
     return new Set(
@@ -82,6 +92,7 @@
   });
 
   function showContextMenu(e: MouseEvent, pinned: WebSite) {
+    if (readOnly) return;
     e.preventDefault();
     e.stopPropagation();
 
@@ -94,6 +105,7 @@
   }
 
   function showFrequentContextMenu(e: MouseEvent, site: FrequentSite) {
+    if (readOnly) return;
     e.preventDefault();
     e.stopPropagation();
 
@@ -105,10 +117,23 @@
     showFrequentMenu = true;
   }
 
-  function requestConfirm(title: string, description: string) {
+  function requestConfirm(title: string, description: string, confirmText?: string) {
     return new Promise<boolean>((resolve) => {
-      confirmOptions = { title, description, resolve };
+      confirmOptions = { title, description, confirmText, resolve };
     });
+  }
+
+  async function resetWebsitesAfterFailure() {
+    if (
+      !(await requestConfirm(
+        t("nt_confirm_reset_common_sites_title"),
+        t("nt_settings_common_reset_confirm"),
+        t("nt_confirm"),
+      ))
+    ) {
+      return;
+    }
+    await onReset();
   }
 
   function closeConfirm(result: boolean) {
@@ -122,11 +147,13 @@
   }
 
   function handleConsider(e: CustomEvent<DndEvent<WebSite>>) {
+    if (readOnly) return;
     isdarging = true;
     onUpdate(e.detail.items);
   }
 
   async function handleFinalize(e: CustomEvent<DndEvent<WebSite>>) {
+    if (readOnly) return;
     isdarging = false;
     const items = e.detail.items;
     onUpdate(items);
@@ -333,7 +360,32 @@
 </script>
 
 <div class="page" bind:this={pageEl}>
-  {#if allPinneds.length}
+  {#if loading}
+    <section class="section" role="status" aria-label="Loading websites">
+      <div class="content grid skeleton_grid" aria-hidden="true">
+        {#each skeletonItems as _}
+          <div class="skeleton_item">
+            <div class="skeleton_icon skeleton_shimmer"></div>
+            <div class="skeleton_text skeleton_shimmer"></div>
+          </div>
+        {/each}
+      </div>
+    </section>
+  {:else if error}
+    <section class="error_state" role="alert">
+      <Icon name="Info" color="var(--c-text)" opacity={0.6} size={32} />
+      <G vertical align="c">
+        <T align="c" type="l" bold>{t("nt_websites_load_failed")}</T>
+        <T align="c" type="s">{t("nt_websites_load_failed_desc")}</T>
+      </G>
+      <Button onclick={() => void resetWebsitesAfterFailure()} bg="var(--c-text)">
+        <G align="c">
+          <Icon name="RotateCcw" color="var(--c-bg)" size={16} />
+          <T color="var(--c-bg)">{t("nt_confirm_reset_common_sites_title")}</T>
+        </G>
+      </Button>
+    </section>
+  {:else if allPinneds.length}
     <section class="section">
       <div
         class="content grid {isdarging ? 'drag' : ''} {multiSelectMode
@@ -347,8 +399,8 @@
           zoneTabIndex: -1,
           zoneItemTabIndex: -1,
           transformDraggedElement: (e) => draggedel(e),
-          dragDisabled: multiSelectMode,
-          dropFromOthersDisabled: multiSelectMode,
+          dragDisabled: readOnly || multiSelectMode,
+          dropFromOthersDisabled: readOnly || multiSelectMode,
         }}
         onconsider={handleConsider}
         onfinalize={handleFinalize}
@@ -505,7 +557,7 @@
   {/if}
 </div>
 
-{#if showAdd}
+{#if showAdd && !readOnly}
   <AddPinned
     isEdit={openByEdit}
     urlValue={openByEdit ? currentPinned?.url : undefined}
@@ -516,7 +568,7 @@
   />
 {/if}
 
-{#if showPinnedMenu && currentPinned}
+{#if showPinnedMenu && currentPinned && !readOnly}
   <LinkContextMenu
     x={menuX}
     y={menuY}
@@ -545,13 +597,13 @@
   <ConfirmDialog
     title={confirmOptions.title}
     description={confirmOptions.description}
-    confirmText={t("nt_delete")}
+    confirmText={confirmOptions.confirmText ?? t("nt_delete")}
     onclickClose={() => closeConfirm(false)}
     onConfirm={() => closeConfirm(true)}
   />
 {/if}
 
-{#if showFrequentMenu && currentFrequent}
+{#if showFrequentMenu && currentFrequent && !readOnly}
   <LinkContextMenu
     x={menuX}
     y={menuY}
@@ -593,6 +645,63 @@
     flex-direction: column;
     width: 100%;
     box-sizing: border-box;
+  }
+  .error_state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--gap) * 2);
+    width: 100%;
+    min-height: 220px;
+    padding: calc(var(--gap) * 3);
+    box-sizing: border-box;
+  }
+  .skeleton_item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--gap);
+    padding: calc(var(--gap) * 2) var(--gap);
+  }
+  .skeleton_icon,
+  .skeleton_text {
+    background: var(--c-mask);
+    overflow: hidden;
+    position: relative;
+  }
+  .skeleton_icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--r1);
+  }
+  .skeleton_text {
+    width: 58px;
+    height: 10px;
+    border-radius: 999px;
+  }
+  .skeleton_shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--c-mask1),
+      transparent
+    );
+    animation: skeleton-shimmer 1.25s ease-in-out infinite;
+  }
+  @keyframes skeleton-shimmer {
+    to {
+      transform: translateX(100%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton_shimmer::after {
+      animation: none;
+    }
   }
   .item {
     display: flex;

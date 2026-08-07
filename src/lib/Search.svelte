@@ -47,6 +47,8 @@
         sortResults,
         type SearchItem,
     } from "@/lib/search/searchResults";
+    import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
+    import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
 
     interface Props {
         newTabOpen?: boolean;
@@ -54,6 +56,9 @@
         searchHistory?: boolean;
         rememberSearchEngineCategory?: boolean;
         settingsReady?: boolean;
+        configReady?: boolean;
+        loading?: boolean;
+        readOnly?: boolean;
     }
 
     let {
@@ -62,6 +67,9 @@
         searchHistory: searchHistoryEnabled = true,
         rememberSearchEngineCategory = false,
         settingsReady = true,
+        configReady = true,
+        loading = false,
+        readOnly = false,
     }: Props = $props();
 
     let engineCategories: EngineCategoryItem[] = $state([]);
@@ -91,6 +99,13 @@
     let lastSearchScope = $state<string | null>(null);
     let engineConfigReady = $state(false);
     let syncedRememberedCategory = $state(false);
+    let mounted = $state(false);
+    let databaseConfigLoaded = $state(false);
+    let databaseConfigAttempted = $state(false);
+    let fallbackConfigApplied = $state(false);
+    let engineConfigRequestId = 0;
+    let searchConfigLoading = $derived(loading || !engineConfigReady);
+    let effectiveReadOnly = $derived(readOnly || !databaseConfigLoaded);
     let showSearchKeys = $derived(
         !showMoreEngines &&
             searchAreaFocused &&
@@ -190,8 +205,34 @@
         }));
     }
 
-    async function loadEngineCategoriesFromDb() {
-        const categories = await getEngineCategories();
+    function applyFallbackEngineConfig() {
+        const fallbackCategoryIds = ["1", "2", "3"];
+        engineCategories = buildDefaultEngineCategories()
+            .filter((item) => fallbackCategoryIds.includes(item.id))
+            .map((item, index) => ({ ...item, order: index }));
+        const languageEngines = buildDefaultEngines().filter(
+            (engine) =>
+                engine.enabled !== false &&
+                fallbackCategoryIds.includes(engine.category ?? "1"),
+        );
+        enabledEngines = fallbackCategoryIds.flatMap((categoryId) =>
+            languageEngines
+                .filter((engine) => (engine.category ?? "1") === categoryId)
+                .slice(0, 3),
+        ).map((engine, index) => ({
+            ...engine,
+            id: -(index + 1),
+            order: index,
+        }));
+        disabledEngines = [];
+        if (!engineCategories.some((item) => item.id === selectedCategoryId)) {
+            selectedCategoryId = engineCategories[0]?.id ?? "1";
+        }
+        syncEnginesGroupTabs();
+        syncSelectedEngine();
+    }
+
+    function applyEngineCategories(categories: EngineCategoryItem[]) {
         const visibleCategories = categories.filter(
             (item) => item.id !== FALLBACK_ENGINE_CATEGORY_ID,
         );
@@ -216,27 +257,53 @@
         syncEnginesGroupTabs();
     }
 
-    async function loadEnabledEnginesFromDb() {
-        const enabled = await getEnabledEngines();
+    function applyEnabledEngines(enabled: Engine[]) {
         enabledEngines = enabled.map((e) => ({ ...e, enabled: true }));
     }
 
-    async function loadDisabledEnginesFromDb() {
-        const disabled = await getDisabledEngines();
+    function applyDisabledEngines(disabled: Engine[]) {
         disabledEngines = disabled.map((e) => ({ ...e, enabled: false }));
     }
 
     async function refreshEngineConfig() {
-        await loadEngineCategoriesFromDb();
-        await loadEnabledEnginesFromDb();
-        if (showMoreEngines) {
-            await loadDisabledEnginesFromDb();
+        const requestId = ++engineConfigRequestId;
+        if (!configReady) {
+            if (!loading) {
+                applyFallbackEngineConfig();
+                engineConfigReady = true;
+            }
+            databaseConfigLoaded = false;
+            databaseConfigAttempted = false;
+            return;
         }
-        syncSelectedEngine();
+        engineConfigReady = false;
+        try {
+            const [categories, enabled, disabled] = await Promise.all([
+                getEngineCategories(),
+                getEnabledEngines(),
+                showMoreEngines
+                    ? getDisabledEngines()
+                    : Promise.resolve([] as Engine[]),
+            ]);
+            if (requestId !== engineConfigRequestId) return;
+            applyEngineCategories(categories);
+            applyEnabledEngines(enabled);
+            applyDisabledEngines(disabled);
+            syncSelectedEngine();
+            databaseConfigLoaded = true;
+            engineConfigReady = true;
+        } catch (error) {
+            if (requestId !== engineConfigRequestId) return;
+            console.error("[Mooogor NewTab]", "search-config:load-failed", error);
+            applyFallbackEngineConfig();
+            databaseConfigLoaded = false;
+            engineConfigReady = true;
+        }
     }
 
     onMount(() => {
         const handleEngineConfigUpdated = () => {
+            if (!configReady) return;
             void refreshEngineConfig();
         };
         window.addEventListener(
@@ -244,13 +311,15 @@
             handleEngineConfigUpdated,
         );
 
-        void (async () => {
-            await hydrateSearchStorage();
-            searchKeys = readSearchKeys();
-            await refreshEngineConfig();
-            inputValue = backPageInitInputValue();
-            engineConfigReady = true;
-        })();
+        mounted = true;
+        inputValue = backPageInitInputValue();
+        void hydrateSearchStorage()
+            .then(() => {
+                searchKeys = readSearchKeys();
+            })
+            .catch((error) => {
+                console.warn("[Mooogor NewTab]", "search-storage:hydrate-failed", error);
+            });
 
         return () => {
             window.removeEventListener(
@@ -258,6 +327,32 @@
                 handleEngineConfigUpdated,
             );
         };
+    });
+
+    $effect(() => {
+        if (!mounted) return;
+        if (loading) {
+            engineConfigReady = false;
+            databaseConfigLoaded = false;
+            databaseConfigAttempted = false;
+            fallbackConfigApplied = false;
+            return;
+        }
+        if (!configReady) {
+            if (!fallbackConfigApplied) {
+                fallbackConfigApplied = true;
+                applyFallbackEngineConfig();
+            }
+            engineConfigReady = true;
+            databaseConfigLoaded = false;
+            databaseConfigAttempted = false;
+            return;
+        }
+        fallbackConfigApplied = false;
+        if (!databaseConfigAttempted) {
+            databaseConfigAttempted = true;
+            void refreshEngineConfig();
+        }
     });
 
     function clickEngineGroup(tab: TabItem) {
@@ -384,6 +479,7 @@
     }
 
     async function persistEnginesState() {
+        if (effectiveReadOnly) return;
         const enabledWithIds = enabledEngines.filter(
             (i): i is Engine & { id: number } => !!i.id,
         );
@@ -679,6 +775,7 @@
     }
 
     async function clickEditeEngines() {
+        if (effectiveReadOnly) return;
         showMoreEngines = !showMoreEngines;
         await refreshEngineConfig();
     }
@@ -709,7 +806,24 @@
 
 </script>
 
-<div class="search" class:hided_tab={enginesGroup.length <= 1}>
+<div class="search" class:hided_tab={!searchConfigLoading && enginesGroup.length <= 1}>
+    {#if searchConfigLoading}
+        <div class="search_skeleton" role="status" aria-label="Loading search configuration">
+            <div class="skeleton_tabs" aria-hidden="true">
+                {#each Array.from({ length: 4 }) as _}
+                    <div class="skeleton_tab skeleton_shimmer"></div>
+                {/each}
+            </div>
+            <div class="skeleton_search_box" aria-hidden="true">
+                <div class="skeleton_input skeleton_shimmer"></div>
+                <div class="skeleton_engines">
+                    {#each Array.from({ length: 4 }) as _}
+                        <div class="skeleton_engine skeleton_shimmer"></div>
+                    {/each}
+                </div>
+            </div>
+        </div>
+    {:else}
     {#if engineConfigReady && enginesGroup.length > 1}
         <Tab
             tabs={enginesGroup}
@@ -767,6 +881,7 @@
             </div>
         {/if}
     </div>
+    {/if}
 </div>
 
 {#snippet temInputGroup()}
@@ -873,6 +988,8 @@
                 zoneTabIndex: -1,
                 zoneItemTabIndex: -1,
                 dropTargetStyle: {},
+                dragDisabled: effectiveReadOnly || !showMoreEngines,
+                dropFromOthersDisabled: effectiveReadOnly,
             }}
             onconsider={handleConsiderEnabled}
             onfinalize={handleFinalizeEnabled}
@@ -901,15 +1018,17 @@
                 </div>
             {/each}
         </div>
-        <Button onclick={clickEditeEngines}>
-            <G>
-                <Icon
-                    name={showMoreEngines ? "X" : "Plus"}
-                    color="var(--c-text)"
-                    opacity={0.6}
-                />
-            </G>
-        </Button>
+        {#if !effectiveReadOnly}
+            <Button onclick={clickEditeEngines}>
+                <G>
+                    <Icon
+                        name={showMoreEngines ? "X" : "Plus"}
+                        color="var(--c-text)"
+                        opacity={0.6}
+                    />
+                </G>
+            </Button>
+        {/if}
     </div>
 {/snippet}
 
@@ -926,6 +1045,8 @@
                 zoneTabIndex: -1,
                 zoneItemTabIndex: -1,
                 dropTargetStyle: {},
+                dragDisabled: effectiveReadOnly,
+                dropFromOthersDisabled: effectiveReadOnly,
             }}
             onconsider={handleConsiderDisabled}
             onfinalize={handleFinalizeDisabled}
@@ -969,6 +1090,69 @@
 {/snippet}
 
 <style>
+    .search_skeleton {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: var(--gap);
+    }
+    .skeleton_tabs,
+    .skeleton_engines,
+    .skeleton_search_box {
+        display: flex;
+        align-items: center;
+        gap: var(--gap);
+    }
+    .skeleton_tabs {
+        justify-content: center;
+        height: 36px;
+    }
+    .skeleton_tab,
+    .skeleton_input,
+    .skeleton_engine {
+        position: relative;
+        overflow: hidden;
+        background: var(--c-mask);
+    }
+    .skeleton_tab {
+        width: 64px;
+        height: 12px;
+        border-radius: 999px;
+    }
+    .skeleton_search_box {
+        height: 58px;
+        padding: var(--gap);
+        border-radius: var(--r2);
+        background: var(--c-card);
+        box-sizing: border-box;
+    }
+    .skeleton_input {
+        height: 14px;
+        flex: 1;
+        border-radius: 999px;
+    }
+    .skeleton_engines {
+        flex: 0 0 auto;
+    }
+    .skeleton_engine {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+    }
+    .skeleton_shimmer::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        transform: translateX(-100%);
+        background: linear-gradient(90deg, transparent, var(--c-mask1), transparent);
+        animation: skeleton-shimmer 1.25s ease-in-out infinite;
+    }
+    @keyframes skeleton-shimmer {
+        to { transform: translateX(100%); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .skeleton_shimmer::after { animation: none; }
+    }
     .search_keys {
         display: flex;
         flex-wrap: wrap;

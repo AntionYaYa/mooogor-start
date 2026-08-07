@@ -16,6 +16,7 @@
   import { getBookmarkChildren, getBookmarks } from "@/lib/browser/bookmarks";
   import type { BookmarkNode } from "@/lib/browser/bookmarks";
   import type { FrequentSite } from "@/lib/browser/history";
+  import { ensureConfigReady } from "@/lib/browser/configReady";
   import { getAllWebSite } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import { fly, slide } from "svelte/transition";
@@ -30,6 +31,9 @@
   import type { OpenTab, UserSettings } from "@/lib/utils/settings";
   import { setLanguage, t } from "@/lib/utils/i18n";
   import { applyTheme } from "@/lib/utils/theme";
+  import { resetCommonSitesToDefaultByLanguage } from "@/lib/settings/commonSites";
+  import { resetConfigurationToDefaults } from "@/lib/DB/configRecovery";
+  import ConfirmDialog from "@/lib/ConfirmDialog.svelte";
   import {
     buildNewTabTabs,
     openTabToIndex,
@@ -58,7 +62,11 @@
   let firstMount = $state(true);
   let settingsLoaded = $state(false);
   let initializationFailed = $state(false);
+  let configurationState: "loading" | "ready" | "fallback" = $state("loading");
+  let websitesState: "loading" | "ready" | "fallback" = $state("loading");
+  let websitesRequestId = 0;
   let i18nRenderKey = $state(0);
+  const NEW_TAB_LOG_PREFIX = "[Mooogor NewTab]";
 
   let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
   let currentTabId: number | undefined = $state();
@@ -68,6 +76,8 @@
   let showSupport = $state(false);
   let clearHistoryRequestKey = $state(0);
   let historyClearable = $state(false);
+  let showFullResetConfirm = $state(false);
+  let fullResetting = $state(false);
   let effectiveNewTabOpen = $derived(
     userSettings.newTabOpen || currentTabPinned,
   );
@@ -124,16 +134,65 @@
   }
 
   onMount(() => {
+    console.info(NEW_TAB_LOG_PREFIX, "page:mounted", {
+      visibilityState: document.visibilityState,
+    });
     void initializePage();
   });
 
   async function initializePage() {
+    const startedAt = Date.now();
+    configurationState = "loading";
+    websitesState = "loading";
+    initializationFailed = false;
+    showSetting = false;
+    showAdd = false;
+    console.info(NEW_TAB_LOG_PREFIX, "initialization:start");
+
+    // Render the page shell immediately. Data-dependent areas use skeletons
+    // until persisted configuration is available.
+    userSettings = DEFAULT_SETTINGS;
+    applyTheme(DEFAULT_SETTINGS.theme);
+    allPinneds = [];
+    updateSelTab(tabs[0]);
+    settingsLoaded = true;
     try {
-      await browser.runtime.sendMessage({ type: "ensureConfigReady" });
+      await setLanguage(DEFAULT_SETTINGS.language);
+      updateTabLabels();
+      i18nRenderKey += 1;
+    } catch (error) {
+      console.warn(NEW_TAB_LOG_PREFIX, "fallback:language-load-failed", error);
+    }
+    await tick();
+    firstMount = false;
+    console.info(NEW_TAB_LOG_PREFIX, "shell:ready", {
+      durationMs: Date.now() - startedAt,
+    });
+
+    try {
+      console.info(NEW_TAB_LOG_PREFIX, "configuration:request");
+      await ensureConfigReady();
+      console.info(NEW_TAB_LOG_PREFIX, "configuration:ready");
+      console.info(NEW_TAB_LOG_PREFIX, "settings:load:start");
       userSettings = await loadSettings();
+      console.info(NEW_TAB_LOG_PREFIX, "settings:load:success", {
+        defaultOpen: userSettings.defaultOpen,
+        lastOpenTab: userSettings.lastOpenTab,
+        language: userSettings.language,
+        theme: userSettings.theme,
+      });
       applyTheme(userSettings.theme);
+      console.info(NEW_TAB_LOG_PREFIX, "theme:applied", {
+        theme: userSettings.theme,
+      });
       await refreshCurrentTabPinnedState();
+      console.info(NEW_TAB_LOG_PREFIX, "tab-state:ready", {
+        pinned: currentTabPinned,
+      });
       await setLanguage(userSettings.language);
+      console.info(NEW_TAB_LOG_PREFIX, "language:ready", {
+        language: userSettings.language,
+      });
       settingsLoaded = true;
       updateTabLabels();
       i18nRenderKey += 1;
@@ -142,17 +201,37 @@
           ? userSettings.lastOpenTab
           : userSettings.defaultOpen;
       const defaultIndex = openTabToIndex(startOpenTab);
+      // From this point persisted stores are available, so tab loaders and edits
+      // may safely switch from the local fallback to real data.
+      configurationState = "ready";
+      console.info(NEW_TAB_LOG_PREFIX, "initial-tab:load:start", {
+        startOpenTab,
+        defaultIndex,
+      });
       await clickTab(tabs[defaultIndex], defaultIndex, { rememberLast: false });
+      console.info(NEW_TAB_LOG_PREFIX, "initial-tab:load:success", {
+        selectedTab: tabs[defaultIndex]?.key,
+      });
+      console.info(NEW_TAB_LOG_PREFIX, "initialization:success", {
+        durationMs: Date.now() - startedAt,
+      });
     } catch (error) {
       // Keep an extension-page failure from leaving Edge with a blank new tab.
-      console.error("Failed to initialize Mooogor new tab", error);
+      console.error(NEW_TAB_LOG_PREFIX, "initialization:failed", {
+        durationMs: Date.now() - startedAt,
+        error,
+      });
       initializationFailed = true;
-      settingsLoaded = true;
+      configurationState = "fallback";
+      applyWebsitesFailureState();
       updateTabLabels();
       updateSelTab(tabs[0]);
     } finally {
       await tick();
-      firstMount = false;
+      console.info(NEW_TAB_LOG_PREFIX, "first-render:ready", {
+        success: !initializationFailed,
+        durationMs: Date.now() - startedAt,
+      });
     }
   }
 
@@ -332,7 +411,7 @@
 
     updateShowNext(i);
     updateSelTab(tab);
-    if (rememberLast) {
+    if (rememberLast && configurationState === "ready") {
       await rememberLastOpenTab(tab);
     }
 
@@ -353,27 +432,110 @@
   }
 
   async function clickUpdatePinneds(items: WebSite[] | undefined) {
+    if (configurationState !== "ready" || websitesState !== "ready") return;
     if (items) {
       allPinneds = items;
     } else {
-      allPinneds = await getAllWebSite();
+      const requestId = ++websitesRequestId;
+      try {
+        const nextItems = await getAllWebSite();
+        if (requestId !== websitesRequestId) return;
+        allPinneds = nextItems;
+      } catch (error) {
+        if (requestId !== websitesRequestId) return;
+        console.error(NEW_TAB_LOG_PREFIX, "websites:update-refresh-failed", error);
+        applyWebsitesFailureState();
+      }
     }
   }
 
   async function refreshPinnedsFromDb() {
-    allPinneds = await getAllWebSite();
+    if (configurationState !== "ready") return;
+    const requestId = ++websitesRequestId;
+    try {
+      const items = await getAllWebSite();
+      if (requestId !== websitesRequestId) return;
+      allPinneds = items;
+      websitesState = "ready";
+    } catch (error) {
+      if (requestId !== websitesRequestId) return;
+      console.error(NEW_TAB_LOG_PREFIX, "websites:refresh-failed", error);
+      applyWebsitesFailureState();
+    }
   }
 
   async function refreshCommonTab() {
-    allPinneds = await getAllWebSite();
-    historyPermission = await hasPermission("history");
-    if (!historyPermission) {
-      cancelFrequentSitesRefresh();
-      frequentSites = [];
-      frequentSitesLoading = false;
+    if (configurationState !== "ready") return;
+    const requestId = ++websitesRequestId;
+    websitesState = "loading";
+    try {
+      const items = await getAllWebSite();
+      if (requestId !== websitesRequestId) return;
+      allPinneds = items;
+      websitesState = "ready";
+    } catch (error) {
+      if (requestId !== websitesRequestId) return;
+      console.error(NEW_TAB_LOG_PREFIX, "websites:load-failed", error);
+      applyWebsitesFailureState();
       return;
     }
-    scheduleFrequentSitesRefresh();
+    try {
+      historyPermission = await hasPermission("history");
+      if (!historyPermission) {
+        cancelFrequentSitesRefresh();
+        frequentSites = [];
+        frequentSitesLoading = false;
+        return;
+      }
+      scheduleFrequentSitesRefresh();
+    } catch (error) {
+      console.warn(NEW_TAB_LOG_PREFIX, "frequent-sites:permission-check-failed", error);
+      historyPermission = false;
+      frequentSites = [];
+      frequentSitesLoading = false;
+    }
+  }
+
+  function applyWebsitesFailureState() {
+    allPinneds = [];
+    websitesState = "fallback";
+  }
+
+  async function resetFailedWebsites() {
+    const requestId = ++websitesRequestId;
+    websitesState = "loading";
+    try {
+      await resetCommonSitesToDefaultByLanguage(userSettings.language);
+      const items = await getAllWebSite();
+      if (requestId !== websitesRequestId) return;
+      allPinneds = items;
+      websitesState = "ready";
+      console.info(NEW_TAB_LOG_PREFIX, "websites:reset-success", {
+        websites: allPinneds.length,
+      });
+    } catch (error) {
+      if (requestId !== websitesRequestId) return;
+      console.error(NEW_TAB_LOG_PREFIX, "websites:reset-failed", error);
+      applyWebsitesFailureState();
+    }
+  }
+
+  async function resetEntireConfiguration() {
+    showFullResetConfirm = false;
+    fullResetting = true;
+    configurationState = "loading";
+    websitesState = "loading";
+    try {
+      await resetConfigurationToDefaults(userSettings.language);
+      console.info(NEW_TAB_LOG_PREFIX, "configuration:full-reset-success");
+      await initializePage();
+    } catch (error) {
+      console.error(NEW_TAB_LOG_PREFIX, "configuration:full-reset-failed", error);
+      configurationState = "fallback";
+      applyWebsitesFailureState();
+    } finally {
+      fullResetting = false;
+    }
   }
 
   function cancelFrequentSitesRefresh() {
@@ -548,19 +710,22 @@
       <div class="top">
         {@render headBar()}
       </div>
-      {#if settingsLoaded && !initializationFailed}
+      {#if settingsLoaded}
         <Search
           newTabOpen={effectiveNewTabOpen}
           searchBookmarks={userSettings.searchBookmarks}
           searchHistory={userSettings.searchHistory}
           rememberSearchEngineCategory={userSettings.rememberSearchEngineCategory}
-          settingsReady={true}
+          settingsReady={configurationState === "ready"}
+          configReady={configurationState === "ready"}
+          loading={configurationState === "loading"}
+          readOnly={configurationState !== "ready"}
         />
       {/if}
       <div class="content">
         <div class="tabs">
           <div class="side side-left">
-            {#if selTab?.key === "0"}
+            {#if selTab?.key === "0" && websitesState === "ready"}
               <div in:fly={{ x: -50, duration: 300 }}>
                 <G align="c">
                   <Button onclick={() => (showAdd = true)}>
@@ -676,6 +841,16 @@
   <Support onclickClose={() => (showSupport = false)} />
 {/if}
 
+{#if showFullResetConfirm}
+  <ConfirmDialog
+    title={t("nt_config_load_failed")}
+    description={`${t("nt_config_load_failed_desc")}\n\n${t("nt_config_reset_all_confirm")}`}
+    confirmText={t("nt_config_reset_all")}
+    onclickClose={() => (showFullResetConfirm = false)}
+    onConfirm={() => void resetEntireConfiguration()}
+  />
+{/if}
+
 {#snippet headBar()}
   <G full align="c">
     <G full>
@@ -689,7 +864,6 @@
       </Button>
     </G>
     <G gap>
-    
       <Button
         onclick={() => (showSupport = true)}
         title={t("nt_about_support_button")}
@@ -698,14 +872,25 @@
           <Icon name="Coffee" color="var(--c-text)" />
         </G>
       </Button>
-      {#if showSetting}
-        <Button onclick={toggleSettings} bg='var(--c-text)'>
+      {#if configurationState === "fallback"}
+        <Button
+          onclick={() => (showFullResetConfirm = true)}
+          title={t("nt_config_load_failed")}
+          bg="var(--c-red)"
+          disabled={fullResetting}
+        >
+          <G>
+            <Icon name="TriangleAlert" color="#fff" />
+          </G>
+        </Button>
+      {:else if showSetting}
+        <Button disabled={configurationState !== "ready"} onclick={toggleSettings} bg='var(--c-text)'>
           <G>
           <Icon name="Settings2" color="var(--c-bg)" />
         </G>
         </Button>
       {:else}
-        <Button onclick={toggleSettings}>
+        <Button disabled={configurationState !== "ready"} onclick={toggleSettings}>
           <G>
             <Icon name="Settings2" color="var(--c-text)" />
           </G>
@@ -722,6 +907,10 @@
     list={commonListView}
     {frequentSites}
     {showAdd}
+    loading={websitesState === "loading"}
+    error={websitesState === "fallback"}
+    readOnly={websitesState !== "ready"}
+    onReset={resetFailedWebsites}
     onopenAdd={() => (showAdd = true)}
     oncloseAdd={() => (showAdd = false)}
     onUpdate={(items) => clickUpdatePinneds(items)}

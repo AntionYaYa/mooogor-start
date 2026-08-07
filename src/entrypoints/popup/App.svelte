@@ -3,6 +3,7 @@
   import { addWebSite } from "@/lib/DB/DB";
   import { loadSettings } from "@/lib/utils/settings";
   import { applyTheme } from "@/lib/utils/theme";
+  import { ensureConfigReady } from "@/lib/browser/configReady";
 
   async function getActiveTab() {
     const [lastFocusedTab] = await browser.tabs.query({
@@ -33,7 +34,7 @@
   let inputUrlValueErr = $state(false);
 
   onMount(async () => {
-    await browser.runtime.sendMessage({ type: "ensureConfigReady" });
+    await ensureConfigReady();
     const settings = await loadSettings();
     applyTheme(settings.theme);
     try {
