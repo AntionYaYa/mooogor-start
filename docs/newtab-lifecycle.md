@@ -43,6 +43,92 @@
 
 禁止在新标签页、popup、Svelte 组件或普通配置读取函数中执行迁移或清理旧数据。
 
+## 后台 Service Worker 生命周期
+
+入口：`src/entrypoints/background.ts`
+
+后台是 Manifest V3 Service Worker，不是始终驻留的常驻进程。它由浏览器按事件唤醒，也可能在空闲后被回收。当前配置初始化必须同时适应“同一实例内多次请求”和“Service Worker 重启后重新进入”两种情况。
+
+### 唤醒入口
+
+后台主要由以下事件唤醒：
+
+| 事件 | 行为 |
+| --- | --- |
+| Service Worker 实例启动 | 注册 `runtime.onInstalled` 和 `runtime.onMessage` 监听器，输出 `service-worker:ready` |
+| `runtime.onInstalled: install` | 调用 `prepareConfiguration(true, "install")`，创建新配置并补齐默认数据 |
+| `runtime.onInstalled: update` | 调用 `prepareConfiguration(false, "update")`，检查或执行旧数据迁移 |
+| 新标签页发送 `ensureConfigReady` | 唤醒后台并调用 `prepareConfiguration(false, "ensureConfigReady")` |
+| 历史、favicon 等其他消息 | 只执行对应任务，不主动触发 UI 侧迁移 |
+
+### 单次实例内的状态
+
+`configurationReadyPromise` 是当前 Service Worker 实例内的初始化锁：
+
+```text
+null
+  │ 首个 install / update / ensureConfigReady
+  ▼
+pending ── 后续请求复用同一个 Promise
+  │
+  ├─ success → fulfilled（当前实例后续请求直接复用）
+  │
+  └─ failure → 记录 initialization:failed → 重置为 null
+```
+
+- 安装事件与新标签页请求同时发生时，不会并行执行两次迁移。
+- 初始化失败后必须清空该 Promise，确保下一次事件可以重试。
+- `configMigration.ts` 内部还有一个 `migrationPromise`，用于避免同一实例内重复进入迁移函数；失败时同样会清空。
+
+### 一次初始化的执行顺序
+
+```text
+prepareConfiguration
+  ├─ 首次安装：initializeFreshStoredConfig
+  └─ 升级/普通检查：initializeStoredConfig
+         ├─ 检查 browser.storage.local 新配置
+         ├─ 必要时读取旧 storage / Dexie
+         ├─ 写入新配置
+         ├─ 重新读取并验证
+         └─ 验证成功后清理旧配置记录
+  ├─ ensureDefaultWebSites
+  ├─ ensureDefaultEngineCategories
+  ├─ ensureDefaultEngines
+  └─ initialization:success
+```
+
+任一步明确抛错都会沿 Promise 传播：后台向 `ensureConfigReady` 请求返回 `{ ok: false, error }`，新标签页才进入全局错误状态。
+
+### 与新标签页通信
+
+收到 `ensureConfigReady` 后，后台不会立即返回“已收到”，而是等待共享的初始化 Promise 得到最终结果：
+
+```text
+NewTab                         Service Worker
+   │ ensureConfigReady(requestId)  │
+   ├──────────────────────────────►│
+   │                               ├─ prepareConfiguration
+   │        保持消息通道开放        ├─ 迁移 / 验证 / 默认数据
+   │                               │
+   │◄──────────────────────────────┤ { ok: true, requestId }
+   │              或               │
+   │◄──────────────────────────────┤ { ok: false, requestId, error }
+```
+
+监听器返回 `true`，使 Chromium 在异步初始化期间保持 `sendResponse` 通道。新标签页不设置人工超时：后台 Promise 仍在 pending 时，前端继续显示骨骼；只有消息通道明确 reject 或后台返回失败才显示错误与重置入口。
+
+### Service Worker 被回收或重启
+
+- Service Worker 被回收后，`configurationReadyPromise` 和 `migrationPromise` 等内存状态会丢失，这是正常行为。
+- `browser.storage.local` 中的配置、迁移完成标记和业务数据不会随 Worker 回收而丢失。
+- 新实例收到请求后会重新从 `null` 进入 `prepareConfiguration()`；若持久化配置有效，迁移检查会快速走 `check:already-completed`，不会重复搬运数据。
+- 如果上一个实例在新配置写入完成前被中断，新实例读不到有效新配置，会再次从旧数据迁移。
+- 如果中断发生在“新配置已完整写入”之后、“旧数据清理”之前，新实例会优先使用有效新配置，不重复搬运；旧 Dexie 配置记录可能暂时保留，但不会覆盖新配置。
+- 旧数据清理只发生在当前实例完成写后验证之后，因此 Worker 中断最多造成旧记录残留，不会先删旧数据再丢失新配置。
+- 如果浏览器明确关闭消息通道，新标签页的 `sendMessage` 会 reject，并进入明确错误状态；不会用等待时长推断 Worker 已失败。
+
+因此，内存 Promise 负责“当前 Worker 实例不并发重复执行”，持久化配置和迁移标记负责“Worker 重启后仍然幂等”。两者不能互相替代。
+
 ## 新标签页启动顺序
 
 入口：`src/entrypoints/newtab/App.svelte` 的 `initializePage()`。
