@@ -12,6 +12,18 @@ import { loadSettings } from "../lib/utils/settings";
 import { resolveTheme } from "../lib/utils/theme";
 import { getEffectiveLanguage } from "../lib/utils/i18n";
 import {
+  initializeFreshStoredConfig,
+  initializeStoredConfig,
+} from "../lib/DB/configMigration";
+import {
+  ensureDefaultEngineCategories,
+  ensureDefaultEngines,
+  ensureDefaultWebSites,
+} from "../lib/DB/DB";
+import { buildDefaultWebSites } from "../lib/config/defaultWebSites";
+import { buildDefaultEngines } from "../lib/DB/defaultEnginesFactory";
+import { buildDefaultEngineCategories } from "../lib/config/engineCategories";
+import {
   deleteHistoryRange,
   getFrequentSites,
   getHistoryItems,
@@ -50,7 +62,35 @@ const localeMessages: Record<Exclude<AppLanguage, "auto">, MessageMap> = {
   zh_TW: zhTWMessages,
 };
 
+let configurationReadyPromise: Promise<void> | null = null;
+
+function prepareConfiguration(isFreshInstall = false): Promise<void> {
+  configurationReadyPromise ??= (async () => {
+    if (isFreshInstall) {
+      await initializeFreshStoredConfig();
+    } else {
+      await initializeStoredConfig();
+    }
+    const language = getEffectiveLanguage("auto");
+    await ensureDefaultWebSites(buildDefaultWebSites(language));
+    await ensureDefaultEngineCategories(buildDefaultEngineCategories());
+    await ensureDefaultEngines(buildDefaultEngines(language));
+  })().catch((error) => {
+    configurationReadyPromise = null;
+    throw error;
+  });
+  return configurationReadyPromise;
+}
+
 export default defineBackground(() => {
+  browser.runtime.onInstalled.addListener((details) => {
+    void prepareConfiguration(details.reason === "install").catch((error) => {
+      // A new-tab page can ask the service worker to retry if initialization
+      // was interrupted during the install or update lifecycle event.
+      console.error("Failed to initialize Mooogor configuration", error);
+    });
+  });
+
   browser.runtime.onMessage.addListener((message) => {
     if (!message || typeof message !== "object") return;
     const { type, payload } = message as {
@@ -65,6 +105,7 @@ export default defineBackground(() => {
         maxResults?: number;
       };
     };
+    if (type === "ensureConfigReady") return prepareConfiguration();
     if (type === "getFrequentSites") return getFrequentSites();
     if (type === "getHistoryItems") return getHistoryItems(payload);
     if (type === "searchHistory") {
@@ -188,13 +229,14 @@ async function onFavicon(data?: { url?: string; faviconUrl?: string }) {
   const shouldStore = await shouldStoreFavicon(data.url);
   if (!shouldStore) return;
   const domain = getDomainFromUrl(data.url);
-  const blob = await urlToBlob(data.faviconUrl);
+  const blob: Blob | undefined = await urlToBlob(data.faviconUrl);
   const newFavicon: Favicon = {
     domain,
     faviconUrl: data.faviconUrl,
     blob,
   };
   await saveFavicon(newFavicon);
+
 }
 
 async function onGetFaviconData(data?: { domain?: string }) {
@@ -243,7 +285,8 @@ async function urlToBlob(url: string): Promise<Blob | undefined> {
   if (!url) return undefined;
   const response = await fetch(url, { mode: "cors" });
   if (!response.ok) throw new Error(`Failed to fetch ${url}: ${response.status}`);
-  return await response.blob();
+  const blob = await response.blob();
+  return blob;
 }
 
 // browser.contextMenus.onClicked.addListener((info, tab) => {

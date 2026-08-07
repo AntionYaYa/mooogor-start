@@ -33,6 +33,7 @@
   let inputUrlValueErr = $state(false);
 
   onMount(async () => {
+    await browser.runtime.sendMessage({ type: "ensureConfigReady" });
     const settings = await loadSettings();
     applyTheme(settings.theme);
     try {

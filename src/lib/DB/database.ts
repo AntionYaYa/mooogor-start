@@ -1,3 +1,6 @@
+import Dexie from "dexie";
+import type { EntityTable } from "dexie";
+
 export interface Favicon {
   domain: string;
   faviconUrl: string;
@@ -85,7 +88,7 @@ db.version(2)
       return [{ ...item, order: nextOrder++ }];
     });
 
-    if (updates.length) await table.bulkPut(updates);
+    if (updates.length) {
+      await table.bulkPut(updates);
+    }
   });
-import Dexie from "dexie";
-import type { EntityTable } from "dexie";

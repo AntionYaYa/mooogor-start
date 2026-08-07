@@ -1,11 +1,10 @@
-import { db } from "./database";
 import type { EngineCategoryItem } from "./database";
+import { getStoredConfig, updateStoredConfig } from "./configStorage";
 
 export const FALLBACK_ENGINE_CATEGORY_ID = "__fallback__";
 
-function normalizeCategoryName(name: string) {
-  return name.trim();
-}
+const byOrder = (a: EngineCategoryItem, b: EngineCategoryItem) => (a.order ?? 0) - (b.order ?? 0);
+const normalizeCategoryName = (name: string) => name.trim();
 
 function generateCategoryId() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -13,109 +12,75 @@ function generateCategoryId() {
     : `cat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export async function getEngineCategories(): Promise<EngineCategoryItem[]> {
-  return await db.engineCategories.orderBy("order").toArray();
+export async function getEngineCategories() {
+  return [...(await getStoredConfig()).engineCategories].sort(byOrder);
 }
 
-export async function ensureDefaultEngineCategories(
-  defaults: Pick<EngineCategoryItem, "id" | "name">[],
-) {
-  if ((await db.engineCategories.count()) > 0) return;
-  const now = Date.now();
-  await db.engineCategories.bulkAdd(
-    defaults.map((item, index) => ({
-      id: item.id,
-      name: normalizeCategoryName(item.name),
-      order: index,
-      createAt: now,
-      updateAt: now,
-    })),
-  );
+export async function ensureDefaultEngineCategories(defaults: Pick<EngineCategoryItem, "id" | "name">[]) {
+  await updateStoredConfig((config) => {
+    if (config.engineCategories.length) return;
+    const now = Date.now();
+    config.engineCategories = defaults.map((item, index) => ({ ...item, name: normalizeCategoryName(item.name), order: index, createAt: now, updateAt: now }));
+  });
 }
 
 export async function clearAllEngineCategories() {
-  await db.engineCategories.clear();
+  await updateStoredConfig((config) => { config.engineCategories = []; });
 }
 
-export async function resetEngineCategoriesToDefault(
-  defaults: Pick<EngineCategoryItem, "id" | "name">[],
-) {
-  await db.transaction("rw", db.engineCategories, async () => {
-    await db.engineCategories.clear();
+export async function resetEngineCategoriesToDefault(defaults: Pick<EngineCategoryItem, "id" | "name">[]) {
+  await updateStoredConfig((config) => {
     const now = Date.now();
-    await db.engineCategories.bulkAdd(
-      defaults.map((item, index) => ({
-        id: item.id,
-        name: normalizeCategoryName(item.name),
-        order: index,
-        createAt: now,
-        updateAt: now,
-      })),
-    );
+    config.engineCategories = defaults.map((item, index) => ({ ...item, name: normalizeCategoryName(item.name), order: index, createAt: now, updateAt: now }));
   });
 }
 
 export async function addEngineCategory(name: string): Promise<string> {
   const normalized = normalizeCategoryName(name);
   if (!normalized) throw new Error("Category name required");
-  const now = Date.now();
-  const id = generateCategoryId();
-  await db.engineCategories.add({
-    id,
-    name: normalized,
-    order: await db.engineCategories.count(),
-    createAt: now,
-    updateAt: now,
+  return await updateStoredConfig((config) => {
+    const id = generateCategoryId();
+    const now = Date.now();
+    config.engineCategories.push({ id, name: normalized, order: config.engineCategories.length, createAt: now, updateAt: now });
+    return id;
   });
-  return id;
 }
 
-export async function ensureEngineCategory(
-  item: Pick<EngineCategoryItem, "id" | "name">,
-  options: { order?: number } = {},
-): Promise<string> {
-  const existing = await db.engineCategories.get(item.id);
-  if (existing) return existing.id;
+export async function ensureEngineCategory(item: Pick<EngineCategoryItem, "id" | "name">, options: { order?: number } = {}) {
   const normalized = normalizeCategoryName(item.name);
   if (!normalized) throw new Error("Category name required");
-  const now = Date.now();
-  await db.engineCategories.add({
-    id: item.id,
-    name: normalized,
-    order: options.order ?? (await db.engineCategories.count()),
-    createAt: now,
-    updateAt: now,
+  return await updateStoredConfig((config) => {
+    if (config.engineCategories.some((category) => category.id === item.id)) return item.id;
+    const now = Date.now();
+    config.engineCategories.push({ ...item, name: normalized, order: options.order ?? config.engineCategories.length, createAt: now, updateAt: now });
+    return item.id;
   });
-  return item.id;
 }
 
 export async function renameEngineCategory(id: string, name: string) {
   const normalized = normalizeCategoryName(name);
   if (!normalized) throw new Error("Category name required");
-  await db.engineCategories.update(id, { name: normalized, updateAt: Date.now() });
-}
-
-export async function deleteEngineCategory(id: string) {
-  const now = Date.now();
-  await db.transaction("rw", db.engineCategories, db.engines, async () => {
-    await db.engines.where("category").equals(id).delete();
-    await db.engineCategories.delete(id);
-    const categories = await db.engineCategories.orderBy("order").toArray();
-    for (let i = 0; i < categories.length; i++) {
-      const item = categories[i];
-      if ((item.order ?? i) === i) continue;
-      await db.engineCategories.update(item.id, { order: i, updateAt: now });
-    }
+  await updateStoredConfig((config) => {
+    const category = config.engineCategories.find((item) => item.id === id);
+    if (category) { category.name = normalized; category.updateAt = Date.now(); }
   });
 }
 
-export async function updateEngineCategoriesOrder(
-  items: (EngineCategoryItem & { id: string })[],
-) {
-  const now = Date.now();
-  await db.transaction("rw", db.engineCategories, async () => {
-    for (let i = 0; i < items.length; i++) {
-      await db.engineCategories.update(items[i].id, { order: i, updateAt: now });
-    }
+export async function deleteEngineCategory(id: string) {
+  await updateStoredConfig((config) => {
+    config.engines = config.engines.filter((engine) => engine.category !== id);
+    config.engineCategories = config.engineCategories.filter((item) => item.id !== id).sort(byOrder);
+    const now = Date.now();
+    config.engineCategories.forEach((item, index) => { item.order = index; item.updateAt = now; });
+  });
+}
+
+export async function updateEngineCategoriesOrder(items: (EngineCategoryItem & { id: string })[]) {
+  await updateStoredConfig((config) => {
+    const orderById = new Map(items.map((item, index) => [item.id, index]));
+    const now = Date.now();
+    config.engineCategories = config.engineCategories.map((item) =>
+      orderById.has(item.id) ? { ...item, order: orderById.get(item.id), updateAt: now } : item,
+    );
   });
 }
