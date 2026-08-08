@@ -17,6 +17,7 @@
   import type { BookmarkNode } from "@/lib/browser/bookmarks";
   import type { FrequentSite } from "@/lib/browser/history";
   import { ensureConfigReady } from "@/lib/browser/configReady";
+  import { traceError, traceNewTab } from "@/lib/browser/newtabTrace";
   import { getAllWebSite } from "@/lib/DB/DB";
   import type { WebSite } from "@/lib/DB/DB";
   import { fly, slide } from "svelte/transition";
@@ -137,6 +138,7 @@
     console.info(NEW_TAB_LOG_PREFIX, "page:mounted", {
       visibilityState: document.visibilityState,
     });
+    traceNewTab("page:mounted", { visibilityState: document.visibilityState });
     void initializePage();
   });
 
@@ -148,6 +150,7 @@
     showSetting = false;
     showAdd = false;
     console.info(NEW_TAB_LOG_PREFIX, "initialization:start");
+    traceNewTab("initialization:start");
 
     // Render the page shell immediately. Data-dependent areas use skeletons
     // until persisted configuration is available.
@@ -162,18 +165,23 @@
       i18nRenderKey += 1;
     } catch (error) {
       console.warn(NEW_TAB_LOG_PREFIX, "fallback:language-load-failed", error);
+      traceNewTab("shell:language-failed", { error: traceError(error) });
     }
     await tick();
     firstMount = false;
     console.info(NEW_TAB_LOG_PREFIX, "shell:ready", {
       durationMs: Date.now() - startedAt,
     });
+    traceNewTab("shell:ready", { durationMs: Date.now() - startedAt });
 
     try {
       console.info(NEW_TAB_LOG_PREFIX, "configuration:request");
+      traceNewTab("configuration:request");
       await ensureConfigReady();
       console.info(NEW_TAB_LOG_PREFIX, "configuration:ready");
+      traceNewTab("configuration:ready");
       console.info(NEW_TAB_LOG_PREFIX, "settings:load:start");
+      traceNewTab("settings:load:start");
       userSettings = await loadSettings();
       console.info(NEW_TAB_LOG_PREFIX, "settings:load:success", {
         defaultOpen: userSettings.defaultOpen,
@@ -181,18 +189,26 @@
         language: userSettings.language,
         theme: userSettings.theme,
       });
+      traceNewTab("settings:load:success", {
+        defaultOpen: userSettings.defaultOpen,
+        language: userSettings.language,
+        theme: userSettings.theme,
+      });
       applyTheme(userSettings.theme);
       console.info(NEW_TAB_LOG_PREFIX, "theme:applied", {
         theme: userSettings.theme,
       });
+      traceNewTab("theme:applied", { theme: userSettings.theme });
       await refreshCurrentTabPinnedState();
       console.info(NEW_TAB_LOG_PREFIX, "tab-state:ready", {
         pinned: currentTabPinned,
       });
+      traceNewTab("tab-state:ready", { pinned: currentTabPinned });
       await setLanguage(userSettings.language);
       console.info(NEW_TAB_LOG_PREFIX, "language:ready", {
         language: userSettings.language,
       });
+      traceNewTab("language:ready", { language: userSettings.language });
       settingsLoaded = true;
       updateTabLabels();
       i18nRenderKey += 1;
@@ -208,11 +224,18 @@
         startOpenTab,
         defaultIndex,
       });
+      traceNewTab("initial-tab:load:start", { startOpenTab, defaultIndex });
       await clickTab(tabs[defaultIndex], defaultIndex, { rememberLast: false });
       console.info(NEW_TAB_LOG_PREFIX, "initial-tab:load:success", {
         selectedTab: tabs[defaultIndex]?.key,
       });
+      traceNewTab("initial-tab:load:success", {
+        selectedTab: tabs[defaultIndex]?.key ?? null,
+      });
       console.info(NEW_TAB_LOG_PREFIX, "initialization:success", {
+        durationMs: Date.now() - startedAt,
+      });
+      traceNewTab("initialization:success", {
         durationMs: Date.now() - startedAt,
       });
     } catch (error) {
@@ -220,6 +243,10 @@
       console.error(NEW_TAB_LOG_PREFIX, "initialization:failed", {
         durationMs: Date.now() - startedAt,
         error,
+      });
+      traceNewTab("initialization:failed", {
+        durationMs: Date.now() - startedAt,
+        error: traceError(error),
       });
       initializationFailed = true;
       configurationState = "fallback";
@@ -229,6 +256,10 @@
     } finally {
       await tick();
       console.info(NEW_TAB_LOG_PREFIX, "first-render:ready", {
+        success: !initializationFailed,
+        durationMs: Date.now() - startedAt,
+      });
+      traceNewTab("first-render:ready", {
         success: !initializationFailed,
         durationMs: Date.now() - startedAt,
       });

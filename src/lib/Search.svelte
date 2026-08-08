@@ -49,6 +49,7 @@
     } from "@/lib/search/searchResults";
     import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
     import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
+    import { traceError, traceNewTab } from "@/lib/browser/newtabTrace";
 
     interface Props {
         newTabOpen?: boolean;
@@ -267,6 +268,10 @@
 
     async function refreshEngineConfig() {
         const requestId = ++engineConfigRequestId;
+        traceNewTab("search-config:load:start", {
+            requestId,
+            showMoreEngines,
+        });
         if (!configReady) {
             if (!loading) {
                 applyFallbackEngineConfig();
@@ -292,12 +297,22 @@
             syncSelectedEngine();
             databaseConfigLoaded = true;
             engineConfigReady = true;
+            traceNewTab("search-config:load:success", {
+                requestId,
+                categories: categories.length,
+                enabled: enabled.length,
+                disabled: disabled.length,
+            });
         } catch (error) {
             if (requestId !== engineConfigRequestId) return;
             console.error("[Mooogor NewTab]", "search-config:load-failed", error);
             applyFallbackEngineConfig();
             databaseConfigLoaded = false;
             engineConfigReady = true;
+            traceNewTab("search-config:load:failed", {
+                requestId,
+                error: traceError(error),
+            });
         }
     }
 
@@ -312,13 +327,20 @@
         );
 
         mounted = true;
+        traceNewTab("search:mounted", { configReady, loading });
         inputValue = backPageInitInputValue();
         void hydrateSearchStorage()
             .then(() => {
                 searchKeys = readSearchKeys();
+                traceNewTab("search-storage:hydrate:success", {
+                    searchKeys: searchKeys.length,
+                });
             })
             .catch((error) => {
                 console.warn("[Mooogor NewTab]", "search-storage:hydrate-failed", error);
+                traceNewTab("search-storage:hydrate:failed", {
+                    error: traceError(error),
+                });
             });
 
         return () => {

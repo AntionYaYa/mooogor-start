@@ -65,6 +65,11 @@ const localeMessages: Record<Exclude<AppLanguage, "auto">, MessageMap> = {
 let configurationReadyPromise: Promise<void> | null = null;
 const CONFIG_LOG_PREFIX = "[Mooogor Config]";
 type ConfigurationTrigger = "install" | "update" | "ensureConfigReady";
+type NewTabTracePayload = {
+  phase?: unknown;
+  at?: unknown;
+  details?: unknown;
+};
 
 function prepareConfiguration(
   isFreshInstall = false,
@@ -167,6 +172,15 @@ export default defineBackground(() => {
       // Keep the response channel open on Chromium versions that do not support
       // returning a Promise directly from an onMessage listener.
       return true;
+    }
+    if (type === "newTabTrace") {
+      const trace = payload as NewTabTracePayload | undefined;
+      console.info("[Mooogor NewTab Trace]", {
+        phase: typeof trace?.phase === "string" ? trace.phase : "unknown",
+        at: typeof trace?.at === "number" ? trace.at : Date.now(),
+        details: trace?.details ?? {},
+      });
+      return;
     }
     if (type === "getFrequentSites") return getFrequentSites();
     if (type === "getHistoryItems") return getHistoryItems(payload);
