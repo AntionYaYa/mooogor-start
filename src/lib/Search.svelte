@@ -119,6 +119,7 @@
     );
 
     const SEARCH_DEBOUNCE_MS = 200;
+    const SEARCH_STORAGE_HYDRATE_DELAY_MS = 1_500;
     let isComposing = $state(false);
     function getFallbackCategoryId() {
         return engineCategories[0]?.id ?? "1";
@@ -330,22 +331,30 @@
         traceNewTab("search:mounted", { configReady, loading });
         inputValue = backPageInitInputValue();
         traceNewTab("search:input-ready");
-        traceNewTab("search-storage:hydrate:start");
-        void hydrateSearchStorage()
-            .then(() => {
-                searchKeys = readSearchKeys();
-                traceNewTab("search-storage:hydrate:success", {
-                    searchKeys: searchKeys.length,
+        // Search-history UI state is non-critical. Delay its first storage
+        // access so it cannot contend with the New Tab shell startup.
+        traceNewTab("search-storage:hydrate:deferred", {
+            delayMs: SEARCH_STORAGE_HYDRATE_DELAY_MS,
+        });
+        const hydrateTimer = window.setTimeout(() => {
+            traceNewTab("search-storage:hydrate:start");
+            void hydrateSearchStorage()
+                .then(() => {
+                    searchKeys = readSearchKeys();
+                    traceNewTab("search-storage:hydrate:success", {
+                        searchKeys: searchKeys.length,
+                    });
+                })
+                .catch((error) => {
+                    console.warn("[Mooogor NewTab]", "search-storage:hydrate-failed", error);
+                    traceNewTab("search-storage:hydrate:failed", {
+                        error: traceError(error),
+                    });
                 });
-            })
-            .catch((error) => {
-                console.warn("[Mooogor NewTab]", "search-storage:hydrate-failed", error);
-                traceNewTab("search-storage:hydrate:failed", {
-                    error: traceError(error),
-                });
-            });
+        }, SEARCH_STORAGE_HYDRATE_DELAY_MS);
 
         return () => {
+            clearTimeout(hydrateTimer);
             window.removeEventListener(
                 "engine-config-updated",
                 handleEngineConfigUpdated,

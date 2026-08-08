@@ -66,10 +66,43 @@ let configurationReadyPromise: Promise<void> | null = null;
 const CONFIG_LOG_PREFIX = "[Mooogor Config]";
 type ConfigurationTrigger = "install" | "update" | "ensureConfigReady";
 type NewTabTracePayload = {
+  sessionId?: unknown;
   phase?: unknown;
   at?: unknown;
   details?: unknown;
 };
+
+type NewTabTraceEvent = {
+  phase: string;
+  at: number;
+  details: unknown;
+};
+
+type NewTabTraceBatch = {
+  events: NewTabTraceEvent[];
+  flushTimer?: ReturnType<typeof setTimeout>;
+};
+
+const newTabTraceBatches = new Map<string, NewTabTraceBatch>();
+const NEW_TAB_TRACE_IDLE_MS = 300;
+
+function scheduleNewTabTraceSummary(sessionId: string, event: NewTabTraceEvent) {
+  const batch = newTabTraceBatches.get(sessionId) ?? { events: [] };
+  batch.events.push(event);
+  if (batch.flushTimer) clearTimeout(batch.flushTimer);
+  batch.flushTimer = setTimeout(() => {
+    console.info("[Mooogor NewTab Trace Summary]", {
+      sessionId,
+      events: batch.events.map((item) => ({
+        phase: item.phase,
+        elapsedMs: item.at - batch.events[0].at,
+        details: item.details,
+      })),
+    });
+    newTabTraceBatches.delete(sessionId);
+  }, NEW_TAB_TRACE_IDLE_MS);
+  newTabTraceBatches.set(sessionId, batch);
+}
 
 function prepareConfiguration(
   isFreshInstall = false,
@@ -175,11 +208,17 @@ export default defineBackground(() => {
     }
     if (type === "newTabTrace") {
       const trace = payload as NewTabTracePayload | undefined;
-      console.info("[Mooogor NewTab Trace]", {
+      const event: NewTabTraceEvent = {
         phase: typeof trace?.phase === "string" ? trace.phase : "unknown",
         at: typeof trace?.at === "number" ? trace.at : Date.now(),
         details: trace?.details ?? {},
-      });
+      };
+      const sessionId =
+        typeof trace?.sessionId === "string" ? trace.sessionId : "unknown";
+      // Keep the checkpoint visible immediately in case Edge exits before the
+      // summary timer fires, then also print one ordered summary after idle.
+      console.info("[Mooogor NewTab Trace]", { sessionId, ...event });
+      scheduleNewTabTraceSummary(sessionId, event);
       return;
     }
     if (type === "getFrequentSites") return getFrequentSites();
