@@ -160,14 +160,22 @@
     updateSelTab(tabs[0]);
     settingsLoaded = true;
     try {
+      traceNewTab("shell:language:start", {
+        language: DEFAULT_SETTINGS.language,
+      });
       await setLanguage(DEFAULT_SETTINGS.language);
+      traceNewTab("shell:language:success");
+      traceNewTab("shell:labels:start");
       updateTabLabels();
       i18nRenderKey += 1;
+      traceNewTab("shell:labels:success");
     } catch (error) {
       console.warn(NEW_TAB_LOG_PREFIX, "fallback:language-load-failed", error);
       traceNewTab("shell:language-failed", { error: traceError(error) });
     }
+    traceNewTab("shell:tick:start");
     await tick();
+    traceNewTab("shell:tick:success");
     firstMount = false;
     console.info(NEW_TAB_LOG_PREFIX, "shell:ready", {
       durationMs: Date.now() - startedAt,

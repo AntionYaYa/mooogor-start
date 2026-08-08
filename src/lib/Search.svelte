@@ -329,6 +329,8 @@
         mounted = true;
         traceNewTab("search:mounted", { configReady, loading });
         inputValue = backPageInitInputValue();
+        traceNewTab("search:input-ready");
+        traceNewTab("search-storage:hydrate:start");
         void hydrateSearchStorage()
             .then(() => {
                 searchKeys = readSearchKeys();
