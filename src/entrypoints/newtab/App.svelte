@@ -134,9 +134,6 @@
   }
 
   onMount(() => {
-    console.info(NEW_TAB_LOG_PREFIX, "page:mounted", {
-      visibilityState: document.visibilityState,
-    });
     void initializePage();
   });
 
@@ -147,8 +144,6 @@
     initializationFailed = false;
     showSetting = false;
     showAdd = false;
-    console.info(NEW_TAB_LOG_PREFIX, "initialization:start");
-
     // Render the page shell immediately. Data-dependent areas use skeletons
     // until persisted configuration is available.
     userSettings = DEFAULT_SETTINGS;
@@ -165,34 +160,12 @@
     }
     await tick();
     firstMount = false;
-    console.info(NEW_TAB_LOG_PREFIX, "shell:ready", {
-      durationMs: Date.now() - startedAt,
-    });
-
     try {
-      console.info(NEW_TAB_LOG_PREFIX, "configuration:request");
       await ensureConfigReady();
-      console.info(NEW_TAB_LOG_PREFIX, "configuration:ready");
-      console.info(NEW_TAB_LOG_PREFIX, "settings:load:start");
       userSettings = await loadSettings();
-      console.info(NEW_TAB_LOG_PREFIX, "settings:load:success", {
-        defaultOpen: userSettings.defaultOpen,
-        lastOpenTab: userSettings.lastOpenTab,
-        language: userSettings.language,
-        theme: userSettings.theme,
-      });
       applyTheme(userSettings.theme);
-      console.info(NEW_TAB_LOG_PREFIX, "theme:applied", {
-        theme: userSettings.theme,
-      });
       await refreshCurrentTabPinnedState();
-      console.info(NEW_TAB_LOG_PREFIX, "tab-state:ready", {
-        pinned: currentTabPinned,
-      });
       await setLanguage(userSettings.language);
-      console.info(NEW_TAB_LOG_PREFIX, "language:ready", {
-        language: userSettings.language,
-      });
       settingsLoaded = true;
       updateTabLabels();
       i18nRenderKey += 1;
@@ -204,17 +177,7 @@
       // From this point persisted stores are available, so tab loaders and edits
       // may safely switch from the local fallback to real data.
       configurationState = "ready";
-      console.info(NEW_TAB_LOG_PREFIX, "initial-tab:load:start", {
-        startOpenTab,
-        defaultIndex,
-      });
       await clickTab(tabs[defaultIndex], defaultIndex, { rememberLast: false });
-      console.info(NEW_TAB_LOG_PREFIX, "initial-tab:load:success", {
-        selectedTab: tabs[defaultIndex]?.key,
-      });
-      console.info(NEW_TAB_LOG_PREFIX, "initialization:success", {
-        durationMs: Date.now() - startedAt,
-      });
     } catch (error) {
       // Keep an extension-page failure from leaving Edge with a blank new tab.
       console.error(NEW_TAB_LOG_PREFIX, "initialization:failed", {
@@ -228,10 +191,6 @@
       updateSelTab(tabs[0]);
     } finally {
       await tick();
-      console.info(NEW_TAB_LOG_PREFIX, "first-render:ready", {
-        success: !initializationFailed,
-        durationMs: Date.now() - startedAt,
-      });
     }
   }
 
@@ -510,9 +469,6 @@
       if (requestId !== websitesRequestId) return;
       allPinneds = items;
       websitesState = "ready";
-      console.info(NEW_TAB_LOG_PREFIX, "websites:reset-success", {
-        websites: allPinneds.length,
-      });
     } catch (error) {
       if (requestId !== websitesRequestId) return;
       console.error(NEW_TAB_LOG_PREFIX, "websites:reset-failed", error);
@@ -527,7 +483,6 @@
     websitesState = "loading";
     try {
       await resetConfigurationToDefaults(userSettings.language);
-      console.info(NEW_TAB_LOG_PREFIX, "configuration:full-reset-success");
       await initializePage();
     } catch (error) {
       console.error(NEW_TAB_LOG_PREFIX, "configuration:full-reset-failed", error);

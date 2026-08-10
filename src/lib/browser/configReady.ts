@@ -31,17 +31,12 @@ function validateResponse(response: unknown): asserts response is ConfigReadyRes
 export async function ensureConfigReady(): Promise<void> {
   const startedAt = Date.now();
   const requestId = createRequestId();
-  console.info(CONFIG_CLIENT_LOG_PREFIX, "request", { requestId });
   try {
     const response = await browser.runtime.sendMessage({
       type: "ensureConfigReady",
       requestId,
     });
     validateResponse(response);
-    console.info(CONFIG_CLIENT_LOG_PREFIX, "success", {
-      requestId,
-      durationMs: Date.now() - startedAt,
-    });
   } catch (error) {
     console.error(CONFIG_CLIENT_LOG_PREFIX, "failed", {
       requestId,

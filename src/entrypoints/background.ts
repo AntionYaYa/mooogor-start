@@ -70,38 +70,19 @@ function prepareConfiguration(
   isFreshInstall = false,
   trigger: ConfigurationTrigger = "ensureConfigReady",
 ): Promise<void> {
-  console.info(CONFIG_LOG_PREFIX, "request", {
-    trigger,
-    isFreshInstall,
-    reusedPromise: configurationReadyPromise !== null,
-  });
   if (configurationReadyPromise) return configurationReadyPromise;
 
   const startedAt = Date.now();
   configurationReadyPromise = (async () => {
-    console.info(CONFIG_LOG_PREFIX, "initialization:start", { trigger });
     if (isFreshInstall) {
-      console.info(CONFIG_LOG_PREFIX, "configuration:fresh-install:start");
       await initializeFreshStoredConfig();
     } else {
-      console.info(CONFIG_LOG_PREFIX, "configuration:migration-check:start");
       await initializeStoredConfig();
     }
-    console.info(CONFIG_LOG_PREFIX, "configuration:ready");
     const language = getEffectiveLanguage("auto");
-    console.info(CONFIG_LOG_PREFIX, "defaults:websites:start", { language });
     await ensureDefaultWebSites(buildDefaultWebSites(language));
-    console.info(CONFIG_LOG_PREFIX, "defaults:websites:ready");
-    console.info(CONFIG_LOG_PREFIX, "defaults:engine-categories:start");
     await ensureDefaultEngineCategories(buildDefaultEngineCategories());
-    console.info(CONFIG_LOG_PREFIX, "defaults:engine-categories:ready");
-    console.info(CONFIG_LOG_PREFIX, "defaults:engines:start", { language });
     await ensureDefaultEngines(buildDefaultEngines(language));
-    console.info(CONFIG_LOG_PREFIX, "defaults:engines:ready");
-    console.info(CONFIG_LOG_PREFIX, "initialization:success", {
-      trigger,
-      durationMs: Date.now() - startedAt,
-    });
   })().catch((error) => {
     configurationReadyPromise = null;
     console.error(CONFIG_LOG_PREFIX, "initialization:failed", {
@@ -115,14 +96,9 @@ function prepareConfiguration(
 }
 
 export default defineBackground(() => {
-  console.info(CONFIG_LOG_PREFIX, "service-worker:ready");
   browser.runtime.onInstalled.addListener((details) => {
     const isFreshInstall = details.reason === "install";
     const trigger: ConfigurationTrigger = isFreshInstall ? "install" : "update";
-    console.info(CONFIG_LOG_PREFIX, "onInstalled", {
-      reason: details.reason,
-      previousVersion: details.previousVersion,
-    });
     void prepareConfiguration(isFreshInstall, trigger).catch((error) => {
       // A new-tab page can ask the service worker to retry if initialization
       // was interrupted during the install or update lifecycle event.
@@ -146,12 +122,8 @@ export default defineBackground(() => {
       };
     };
     if (type === "ensureConfigReady") {
-      console.info(CONFIG_LOG_PREFIX, "message:ensureConfigReady", { requestId });
       void prepareConfiguration(false, "ensureConfigReady").then(
         () => {
-          console.info(CONFIG_LOG_PREFIX, "message:ensureConfigReady:success", {
-            requestId,
-          });
           sendResponse({ ok: true, requestId });
         },
         (error) => {
@@ -350,7 +322,3 @@ async function urlToBlob(url: string): Promise<Blob | undefined> {
   const blob = await response.blob();
   return blob;
 }
-
-// browser.contextMenus.onClicked.addListener((info, tab) => {
-//   console.log(info,tab)
-// });
