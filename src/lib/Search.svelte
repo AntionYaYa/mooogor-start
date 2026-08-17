@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { slide } from "svelte/transition";
+    import { scale, slide } from "svelte/transition";
     import { flip } from "svelte/animate";
     import { dndzone } from "svelte-dnd-action";
     import type { DndEvent } from "svelte-dnd-action";
@@ -104,6 +104,7 @@
     let databaseConfigAttempted = $state(false);
     let fallbackConfigApplied = $state(false);
     let engineConfigRequestId = 0;
+    let suppressEngineToggleClick = false;
     let searchConfigLoading = $derived(loading || !engineConfigReady);
     let effectiveReadOnly = $derived(readOnly || !databaseConfigLoaded);
     let showSearchKeys = $derived(
@@ -496,22 +497,72 @@
         }
     }
 
+    async function enableEngine(engine: Engine) {
+        if (effectiveReadOnly) return;
+
+        const isSameEngine = (item: Engine) =>
+            engine.id
+                ? item.id === engine.id
+                : item.engineUrl === engine.engineUrl;
+
+        if (enabledEngines.some(isSameEngine)) return;
+
+        disabledEngines = disabledEngines.filter((item) => !isSameEngine(item));
+        enabledEngines = [...enabledEngines, { ...engine, enabled: true }];
+        await persistEnginesState();
+    }
+
+    async function disableEngine(engine: Engine) {
+        if (effectiveReadOnly) return;
+
+        const isSameEngine = (item: Engine) =>
+            engine.id
+                ? item.id === engine.id
+                : item.engineUrl === engine.engineUrl;
+
+        if (!enabledEngines.some(isSameEngine)) return;
+
+        enabledEngines = enabledEngines.filter((item) => !isSameEngine(item));
+        disabledEngines = [...disabledEngines, { ...engine, enabled: false }];
+        await persistEnginesState();
+    }
+
+    function markEngineDragging() {
+        suppressEngineToggleClick = true;
+    }
+
+    function clearEngineDragging() {
+        window.setTimeout(() => {
+            suppressEngineToggleClick = false;
+        }, 0);
+    }
+
     function handleConsiderEnabled(e: CustomEvent<DndEvent<Engine>>) {
+        markEngineDragging();
         syncFromEnabledZone(e.detail.items);
     }
 
     function handleConsiderDisabled(e: CustomEvent<DndEvent<Engine>>) {
+        markEngineDragging();
         syncFromDisabledZone(e.detail.items);
     }
 
     async function handleFinalizeEnabled(e: CustomEvent<DndEvent<Engine>>) {
         syncFromEnabledZone(e.detail.items);
-        await persistEnginesState();
+        try {
+            await persistEnginesState();
+        } finally {
+            clearEngineDragging();
+        }
     }
 
     async function handleFinalizeDisabled(e: CustomEvent<DndEvent<Engine>>) {
         syncFromDisabledZone(e.detail.items);
-        await persistEnginesState();
+        try {
+            await persistEnginesState();
+        } finally {
+            clearEngineDragging();
+        }
     }
 
     async function searchInput(value: string) {
@@ -674,6 +725,12 @@
     }
 
     function handleEngineClick(event: MouseEvent, engine: Engine) {
+        if (showMoreEngines) {
+            event.preventDefault();
+            if (suppressEngineToggleClick) return;
+            void disableEngine(engine);
+            return;
+        }
         selectEngine(engine);
         const keyword = normalizeSearchKey(inputValue);
         if (!keyword) {
@@ -715,6 +772,12 @@
     }
 
     function handleEngineKeydown(e: KeyboardEvent, engine: Engine) {
+        if (showMoreEngines && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            e.stopPropagation();
+            void disableEngine(engine);
+            return;
+        }
         if (e.key === "Enter") {
             e.stopPropagation();
             return;
@@ -747,6 +810,21 @@
         if (!nextEngine) return;
         selectEngine(nextEngine);
         getEngineLink(nextEngine.engineUrl)?.focus();
+    }
+
+    function handleDisabledEngineClick(engine: Engine) {
+        if (suppressEngineToggleClick) return;
+        void enableEngine(engine);
+    }
+
+    function handleDisabledEngineKeydown(
+        event: KeyboardEvent,
+        engine: Engine,
+    ) {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        event.stopPropagation();
+        handleDisabledEngineClick(engine);
     }
 
     function handleResultKeydown(e: KeyboardEvent) {
@@ -995,7 +1073,11 @@
             onfinalize={handleFinalizeEnabled}
         >
             {#each displayEnabledEngines as engine (engine.id)}
-                <div class="engine_item" animate:flip={{ duration: 200 }}>
+                <div
+                    class="engine_item"
+                    animate:flip={{ duration: 200 }}
+                    transition:scale={{ duration: 160, start: 0.85 }}
+                >
                     <a
                         class="engine"
                         class:selected={engine.engineUrl === selectedEngineUrl}
@@ -1004,6 +1086,9 @@
                         draggable="false"
                         target={newTabOpen ? "_blank" : "_self"}
                         rel={newTabOpen ? "noreferrer" : undefined}
+                        title={showMoreEngines
+                            ? t("nt_click_to_disable", engine.title ?? "")
+                            : undefined}
                         onclick={(event) => handleEngineClick(event, engine)}
                         onfocus={() => selectEngine(engine)}
                         onkeydown={(event) =>
@@ -1052,8 +1137,21 @@
             onfinalize={handleFinalizeDisabled}
         >
             {#each displayDisabledEngines as engine (engine.id)}
-                <div class="engine_item" animate:flip={{ duration: 200 }}>
-                    <div class="more_item" role="presentation">
+                <div
+                    class="engine_item"
+                    animate:flip={{ duration: 200 }}
+                    transition:scale={{ duration: 160, start: 0.85 }}
+                >
+                    <div
+                        class="more_item"
+                        role="button"
+                        tabindex="0"
+                        aria-label={t("nt_click_to_enable", engine.title ?? "")}
+                        title={t("nt_click_to_enable", engine.title ?? "")}
+                        onclick={() => handleDisabledEngineClick(engine)}
+                        onkeydown={(event) =>
+                            handleDisabledEngineKeydown(event, engine)}
+                    >
                         <EngineIcon
                             alt={engine.title ?? ""}
                             engineUrl={engine.engineUrl}
@@ -1254,6 +1352,10 @@
         filter: grayscale();
         align-items: center;
         overflow: hidden;
+        cursor: pointer;
+    }
+    .more_item:focus-visible {
+        outline: 2px var(--c-text) solid;
     }
     .search_g {
         display: flex;
@@ -1267,6 +1369,21 @@
         z-index: 10;
         padding: var(--gap);
         border-radius: var(--r2);
+        isolation: isolate;
+    }
+    .search_g::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        background-color: var(--c-bg1);
+        opacity: 0;
+        transform: scaleY(0);
+        transform-origin: top;
+        transition:
+            opacity 180ms ease,
+            transform 180ms ease;
     }
     .search_g_hidden {
         visibility: hidden;
@@ -1275,7 +1392,11 @@
         top: 0;
     }
     .bg {
-        background-color: var(--c-bg1);
+        background-color: transparent;
+    }
+    .bg::before {
+        opacity: 1;
+        transform: scaleY(1);
     }
 
     .list {

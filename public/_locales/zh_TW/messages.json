@@ -389,6 +389,12 @@
   "nt_drag_to_enable_sortable": {
     "message": "拖曳到這裡啟用（可排序）"
   },
+  "nt_click_to_enable": {
+    "message": "啟用$1"
+  },
+  "nt_click_to_disable": {
+    "message": "停用$1"
+  },
   "nt_edit_bookmark_title": {
     "message": "編輯書籤"
   },

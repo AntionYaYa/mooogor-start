@@ -389,6 +389,12 @@
   "nt_drag_to_enable_sortable": {
     "message": "Drag here to enable (sortable)"
   },
+  "nt_click_to_enable": {
+    "message": "Enable $1"
+  },
+  "nt_click_to_disable": {
+    "message": "Disable $1"
+  },
   "nt_edit_bookmark_title": {
     "message": "Edit bookmark"
   },

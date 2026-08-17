@@ -389,6 +389,12 @@
   "nt_drag_to_enable_sortable": {
     "message": "拖拽到这里激活（可排序）"
   },
+  "nt_click_to_enable": {
+    "message": "激活$1"
+  },
+  "nt_click_to_disable": {
+    "message": "禁用$1"
+  },
   "nt_edit_bookmark_title": {
     "message": "编辑书签"
   },
