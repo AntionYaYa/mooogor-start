@@ -12,7 +12,7 @@ export default defineConfig({
   manifest: {
     name: '__MSG_extName__',
     description: '__MSG_extDescription__',
-    default_locale: 'zh_CN',
+    default_locale: 'en',
     version,
     version_name: `V${version}`,
     optional_permissions: [
