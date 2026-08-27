@@ -13,6 +13,7 @@
   import {
     getBookmarks,
     getBookmarkChildren,
+    createBookmark,
     deleteBookmark,
     moveBookmark,
     updateBookmark,
@@ -30,7 +31,9 @@
     bookmarkNode: BookmarkNode;
     list?: boolean;
     newTabOpen?: boolean;
+    settingsOpen?: boolean;
     onclickFolder: (bkmk: BookmarkNode) => void;
+    onback?: () => void;
     onChanged?: () => void | Promise<void>;
   }
 
@@ -38,7 +41,9 @@
     bookmarkNode,
     list,
     newTabOpen = false,
+    settingsOpen = false,
     onclickFolder,
+    onback,
     onChanged,
   }: Props = $props();
   let currentBkmk: BookmarkNode | undefined = $state();
@@ -68,6 +73,16 @@
   let lastClickedIndex = $state(-1);
   let batchActionLoading = $state(false);
   let batchErrorMessage = $state("");
+  let folderPreviewUrls = $state<Record<string, string[]>>({});
+  let folderPreviewRequestId = 0;
+  let draggedBookmarkId = $state<string | null>(null);
+  let combineTargetId = $state<string | null>(null);
+  let releasedCombineTargetId: string | null = null;
+  let dragStartItems = $state<BookmarkNode[]>([]);
+  let pendingReorderItems: BookmarkNode[] | null = null;
+  let pendingReorderSignature = "";
+  let reorderDelayId: ReturnType<typeof setTimeout> | null = null;
+  const REORDER_HOVER_DELAY_MS = 280;
 
   function notifyBookmarksUpdated() {
     if (typeof window === "undefined") return;
@@ -96,9 +111,30 @@
 
   async function refreshCurrentFolder() {
     items = await getBookmarkChildren(bookmarkNode.id);
+    await loadFolderPreviews(items);
     pruneSelection();
     await onChanged?.();
     notifyBookmarksUpdated();
+  }
+
+  async function loadFolderPreviews(nodes: BookmarkNode[] = items) {
+    const requestId = ++folderPreviewRequestId;
+    const folders = nodes.filter((node) => !node.url);
+    const entries = await Promise.all(
+      folders.map(async (folder) => {
+        try {
+          const children = folder.children ?? await getBookmarkChildren(folder.id);
+          const urls = children
+            .flatMap((child) => child.url ? [child.url] : [])
+            .slice(0, 4);
+          return [folder.id, urls] as const;
+        } catch {
+          return [folder.id, []] as const;
+        }
+      }),
+    );
+    if (requestId !== folderPreviewRequestId) return;
+    folderPreviewUrls = Object.fromEntries(entries);
   }
 
   function isProtectedRootFolder(node: BookmarkNode) {
@@ -128,20 +164,139 @@
 
   function draggedel(el: HTMLElement | undefined) {
     if (!el) return;
-    el.style.backgroundColor = "var(--c-bg1)";
-    el.style.borderRadius = "var(--r1)";
+    el.style.backgroundColor = "transparent";
+    el.style.boxShadow = "none";
+    el.querySelectorAll<HTMLElement>(
+      "a, .folder_card, .bkmk_v, .bkmk_h",
+    ).forEach((child) => {
+      child.style.backgroundColor = "transparent";
+      child.style.boxShadow = "none";
+    });
+  }
+
+  function handleDragPointerMove(event: PointerEvent) {
+    if (!sorting || !draggedBookmarkId || !pageEl) return;
+    const nextTarget = findCombineTarget(event.clientX, event.clientY);
+    const wasCombining = combineTargetId !== null;
+    combineTargetId = nextTarget?.id ?? null;
+    if (nextTarget) {
+      cancelReorderDelay();
+    } else if (wasCombining) {
+      schedulePendingReorder();
+    }
+  }
+
+  function handleDragPointerUp() {
+    if (!sorting || !draggedBookmarkId || !pageEl) return;
+    const activeZone = pageEl.querySelector<HTMLElement>(
+      ".combine_drop_zone.combine_target[data-bookmark-combine-active-id]",
+    );
+    releasedCombineTargetId =
+      activeZone?.dataset.bookmarkCombineActiveId ?? combineTargetId;
+  }
+
+  function findCombineTarget(clientX: number, clientY: number) {
+    if (!pageEl) return null;
+    const zones = pageEl.querySelectorAll<HTMLElement>(
+      "[data-bookmark-combine-hit-id]",
+    );
+    for (const zone of zones) {
+      const targetId = zone.dataset.bookmarkCombineHitId;
+      if (!targetId || targetId === draggedBookmarkId) continue;
+      const rect = zone.getBoundingClientRect();
+      if (
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.bottom
+      ) {
+        return { id: targetId };
+      }
+    }
+    return null;
+  }
+
+  function cancelReorderDelay() {
+    if (reorderDelayId === null) return;
+    clearTimeout(reorderDelayId);
+    reorderDelayId = null;
+  }
+
+  function schedulePendingReorder() {
+    cancelReorderDelay();
+    if (!pendingReorderItems || combineTargetId) return;
+    reorderDelayId = setTimeout(() => {
+      reorderDelayId = null;
+      if (
+        sorting &&
+        draggedBookmarkId &&
+        !combineTargetId &&
+        pendingReorderItems
+      ) {
+        items = pendingReorderItems;
+      }
+    }, REORDER_HOVER_DELAY_MS);
   }
 
   function handleConsider(e: CustomEvent<DndEvent<BookmarkNode>>) {
     if (!canSortItems) return;
-    sorting = true;
-    items = e.detail.items;
+    if (e.detail.info.trigger === "dragStarted") {
+      cancelReorderDelay();
+      pendingReorderItems = null;
+      pendingReorderSignature = "";
+      combineTargetId = null;
+      releasedCombineTargetId = null;
+      draggedBookmarkId = e.detail.info.id;
+      dragStartItems = [...items];
+      sorting = true;
+      items = e.detail.items;
+      return;
+    }
+
+    pendingReorderItems = e.detail.items;
+    const nextSignature = e.detail.items.map((item) => item.id).join("|");
+    if (nextSignature !== pendingReorderSignature) {
+      pendingReorderSignature = nextSignature;
+      schedulePendingReorder();
+    }
   }
 
   async function handleFinalize(e: CustomEvent<DndEvent<BookmarkNode>>) {
+    cancelReorderDelay();
+    pendingReorderItems = null;
+    pendingReorderSignature = "";
+    const sourceId = draggedBookmarkId ?? e.detail.info.id;
+    const targetId = releasedCombineTargetId ?? combineTargetId;
     sorting = false;
     items = e.detail.items;
+    draggedBookmarkId = null;
+    combineTargetId = null;
+    releasedCombineTargetId = null;
     if (!canSortItems) return;
+
+    if (targetId && targetId !== sourceId) {
+      const source = dragStartItems.find((item) => item.id === sourceId);
+      const target = dragStartItems.find((item) => item.id === targetId);
+      if (source && target) {
+        if (target.url) {
+          const targetIndex = dragStartItems.findIndex(
+            (item) => item.id === target.id,
+          );
+          const folder = await createBookmark({
+            parentId: bookmarkNode.id,
+            index: Math.max(0, targetIndex),
+            title: t("nt_new_bookmark_folder"),
+          });
+          await moveBookmark(target.id, { parentId: folder.id, index: 0 });
+          await moveBookmark(source.id, { parentId: folder.id, index: 1 });
+        } else {
+          await moveBookmark(source.id, { parentId: target.id });
+        }
+        await refreshCurrentFolder();
+        return;
+      }
+    }
+
     for (const [index, item] of items.entries()) {
       await moveBookmark(item.id, {
         parentId: bookmarkNode.id,
@@ -162,7 +317,52 @@
   function openFolderByKeyboard(event: KeyboardEvent, bkmk: BookmarkNode) {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
+    event.stopPropagation();
     clickFolder(bkmk);
+  }
+
+  function openBookmarkByKeyboard(event: KeyboardEvent) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    event.stopPropagation();
+    (event.currentTarget as HTMLAnchorElement).click();
+  }
+
+  function disableKeyboardDnd(node: HTMLElement) {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (
+        multiSelectMode ||
+        event.repeat ||
+        (event.key !== "Enter" && event.key !== " ")
+      ) {
+        return;
+      }
+
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const item = target.closest<HTMLElement>(".item");
+      if (!item || item.parentElement !== node) return;
+
+      const bookmarkId = item.dataset.bookmarkId;
+      const bookmark = items.find((entry) => entry.id === bookmarkId);
+      if (!bookmark) return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      if (bookmark.url) {
+        item.querySelector<HTMLAnchorElement>("a[href]")?.click();
+      } else {
+        clickFolder(bookmark);
+      }
+    };
+
+    node.addEventListener("keydown", handleKeydown, true);
+    return {
+      destroy() {
+        node.removeEventListener("keydown", handleKeydown, true);
+      },
+    };
   }
 
   function clickEditBookmark(bkmk: BookmarkNode) {
@@ -199,6 +399,32 @@
     showEdit = false;
     currentBkmk = undefined;
     return true;
+  }
+
+  async function dissolveFolder(folder: BookmarkNode) {
+    if (folder.url || isProtectedRootFolder(folder)) return;
+    showMenu = false;
+    const confirmed = await requestConfirm(
+      t("nt_dissolve_bookmark_folder"),
+      t("nt_dissolve_bookmark_folder_confirm"),
+      t("nt_dissolve_bookmark_folder"),
+    );
+    if (!confirmed) return;
+
+    const children = await getBookmarkChildren(folder.id);
+    const folderIndex = Math.max(
+      0,
+      items.findIndex((item) => item.id === folder.id),
+    );
+    for (const [index, child] of children.entries()) {
+      await moveBookmark(child.id, {
+        parentId: bookmarkNode.id,
+        index: folderIndex + index,
+      });
+    }
+    await deleteBookmark(folder.id);
+    currentBkmk = undefined;
+    await refreshCurrentFolder();
   }
 
   function findNodeById(node: BookmarkNode | null, id: string): BookmarkNode | null {
@@ -270,17 +496,42 @@
   }
 
   function handleKeyDown(e: KeyboardEvent) {
-    if (e.key === "Escape" && multiSelectMode && !batchActionLoading) {
-      clearSelection();
+    if (e.key !== "Escape") return;
+    if (settingsOpen) return;
+
+    if (showEdit || showMove || showBatchMove || confirmOptions) return;
+    if (sorting || batchActionLoading) return;
+
+    if (showMenu) {
+      e.preventDefault();
+      showMenu = false;
+      return;
     }
+
+    if (multiSelectMode) {
+      e.preventDefault();
+      clearSelection();
+      return;
+    }
+
+    e.preventDefault();
+    onback?.();
   }
 
   onMount(() => {
     window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("pointermove", handleDragPointerMove);
+    window.addEventListener("pointerup", handleDragPointerUp);
+    window.addEventListener("mouseup", handleDragPointerUp, true);
+    void loadFolderPreviews();
   });
 
   onDestroy(() => {
     window.removeEventListener("keydown", handleKeyDown);
+    window.removeEventListener("pointermove", handleDragPointerMove);
+    window.removeEventListener("pointerup", handleDragPointerUp);
+    window.removeEventListener("mouseup", handleDragPointerUp, true);
+    cancelReorderDelay();
   });
 
   function handleItemClick(_e: MouseEvent, bkmk: BookmarkNode, index: number) {
@@ -413,9 +664,10 @@
         );
         return;
       }
-      clearSelection();
+      clearSelection(true);
     } finally {
       batchActionLoading = false;
+      if (!selectedIds.size) clearSelection(true);
     }
   }
 
@@ -440,6 +692,7 @@
       class="content {list ? 'list' : 'grid'} {sorting ? 'sorting' : ''} {multiSelectMode
         ? 'multi_select'
         : ''}"
+      use:disableKeyboardDnd
       use:dndzone={canSortItems
         ? {
             items,
@@ -448,6 +701,7 @@
             dropTargetStyle: {},
             zoneTabIndex: -1,
             zoneItemTabIndex: -1,
+            autoAriaDisabled: true,
             transformDraggedElement: (e) => draggedel(e),
             dragDisabled: multiSelectMode,
             dropFromOthersDisabled: multiSelectMode,
@@ -459,6 +713,7 @@
             dropTargetStyle: {},
             zoneTabIndex: -1,
             zoneItemTabIndex: -1,
+            autoAriaDisabled: true,
             transformDraggedElement: (e) => draggedel(e),
             dragDisabled: true,
             dropFromOthersDisabled: true,
@@ -467,19 +722,28 @@
       onfinalize={handleFinalize}
     >
       {#each items as bkmk, i (bkmk.id)}
-        <div class="item" animate:flip={{ duration: 200 }}>
+        <div
+          class="item"
+          data-bookmark-id={bkmk.id}
+          animate:flip={{ duration: 200 }}
+        >
+          <div
+            class="combine_hit_zone"
+            data-bookmark-combine-hit-id={bkmk.id}
+            aria-hidden="true"
+          ></div>
+          {#if sorting && bkmk.id !== draggedBookmarkId && dragStartItems.some((item) => item.id === bkmk.id)}
+            <div
+              class="combine_drop_zone"
+              class:combine_target={combineTargetId === bkmk.id}
+              data-bookmark-combine-active-id={bkmk.id}
+              aria-hidden="true"
+            >
+            </div>
+          {/if}
           {@render tembkmkWrapper(bkmk, i)}
         </div>
       {/each}
-      {#if multiSelectMode}
-        <div class="clear_btn_wrapper">
-          <Button onclick={() => clearSelection()} disabled={batchActionLoading} r="r1">
-            <G>
-              <Icon name="X" color="var(--c-main)" />
-            </G>
-          </Button>
-        </div>
-      {/if}
     </div>
     <div class="batch_bar_container">
       <BatchToolbar
@@ -492,6 +756,7 @@
         onselectall={toggleSelectAll}
         ondelete={deleteSelected}
         onmove={openBatchMove}
+        onclose={() => clearSelection()}
       />
     </div>
   {:else}
@@ -522,7 +787,7 @@
     onclick={multiSelectMode && !isProtectedRootFolder(bkmk) && list ? (e) => handleItemClick(e, bkmk, i) : undefined}
     role={multiSelectMode && list ? "button" : undefined}
     tabindex={multiSelectMode && list ? 0 : undefined}
-    onkeydown={multiSelectMode && !isProtectedRootFolder(bkmk) && list ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSelect(bkmk); } } : undefined}
+    onkeydown={multiSelectMode && !isProtectedRootFolder(bkmk) && list ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleSelect(bkmk); } } : undefined}
   >
     {#if multiSelectMode && !isProtectedRootFolder(bkmk)}
       {#if list}
@@ -530,19 +795,27 @@
           {#if bkmk.url}
             <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" />
           {:else}
-            <BookmarkFolderIcon folder={bkmk} size="s" />
+            <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" folderIcon />
           {/if}
         </G>
         <G full align="c">
           <T nowrap type="m">{bkmk.title}</T>
         </G>
       {:else}
-        <Button onclick={(e) => handleItemClick(e, bkmk, i)} sel={isSelected(bkmk)} r="r1">
+        <Button
+          onclick={(e) => handleItemClick(e, bkmk, i)}
+          sel={isSelected(bkmk)}
+          outlined={!isSelected(bkmk)}
+          r="r1"
+        >
           <G>
             {#if bkmk.url}
               <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="l" />
             {:else}
-              <BookmarkFolderIcon folder={bkmk} size="l" />
+              <BookmarkFolderIcon
+                previewUrls={folderPreviewUrls[bkmk.id] ?? []}
+                size="l"
+              />
             {/if}
           </G>
         </Button>
@@ -557,6 +830,7 @@
             rel={newTabOpen ? "noreferrer" : undefined}
             class="full-row"
             class:ctx={showMenu && currentBkmk === bkmk}
+            onkeydown={openBookmarkByKeyboard}
             oncontextmenu={(e) => showContextMenu(e, bkmk)}
           >
             <G align="c">
@@ -575,7 +849,7 @@
             oncontextmenu={(e) => showContextMenu(e, bkmk)}
           >
             <G align="c">
-              <BookmarkFolderIcon folder={bkmk} size="s" />
+              <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" folderIcon />
             </G>
             <G full align="c">
               <T nowrap type="m">{bkmk.title}</T>
@@ -592,6 +866,7 @@
             target={newTabOpen ? "_blank" : "_self"}
             rel={newTabOpen ? "noreferrer" : undefined}
             class:ctx={showMenu && currentBkmk === bkmk}
+            onkeydown={openBookmarkByKeyboard}
             oncontextmenu={(e) => showContextMenu(e, bkmk)}
           >
             <G align="c">
@@ -608,7 +883,9 @@
             onkeydown={(e) => openFolderByKeyboard(e, bkmk)}
             oncontextmenu={(e) => showContextMenu(e, bkmk)}
           >
-            <BookmarkFolderIcon folder={bkmk} />
+            <BookmarkFolderIcon
+              previewUrls={folderPreviewUrls[bkmk.id] ?? []}
+            />
           </div>
         {/if}
         {@render temText(false, bkmk.title)}
@@ -650,6 +927,13 @@
           <T>{t("nt_move")}</T>
         </G>
       </Button>
+      {#if !currentBkmk.url}
+        <Button full onclick={() => void dissolveFolder(currentBkmk!)}>
+          <G>
+            <T>{t("nt_dissolve_bookmark_folder")}</T>
+          </G>
+        </Button>
+      {/if}
       <Button full onclick={() => void clickDeleteBookmark()}>
         <G>
           <T color='var(--c-red)'>{t("nt_delete")}</T>
@@ -730,24 +1014,22 @@
     align-items: center;
     height: 100%;
     position: relative;
+    overflow: hidden;
   }
 
   .multi_select {
-    outline: var(--c-main-3) 2px solid;
+    box-shadow: inset 0 0 0 2px var(--c-main-3);
     position: relative;
     user-select: none;
   }
 
-  .clear_btn_wrapper {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    z-index: 5;
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-end;
-    background-color: var(--c-main-3);
-    border-radius: var(--r1) 0 var(--r1) 0;
+  .content.multi_select::after {
+    content: "";
+    display: block;
+    grid-column: 1 / -1;
+    height: calc(64px + var(--gap) * 2);
+    flex: 0 0 calc(64px + var(--gap) * 2);
+    pointer-events: none;
   }
 
   .batch_bar_container {
@@ -758,6 +1040,8 @@
     display: flex;
     justify-content: center;
     padding: var(--gap);
+    width: min(400px, calc(100% - var(--gap) * 4));
+    box-sizing: border-box;
     pointer-events: none;
     z-index: 20;
   }
@@ -769,6 +1053,7 @@
     border-radius: var(--r);
     padding: var(--gap);
     width: 100%;
+    position: relative;
   }
   .bkmk_v {
     display: flex;
@@ -799,15 +1084,57 @@
     gap: var(--gap);
     padding: var(--gap);
     width: 100%;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
     box-sizing: border-box;
     border-radius: var(--r1);
   }
   .content.sorting {
     outline: var(--c-mask) 2px dashed;
   }
+  .combine_hit_zone {
+    position: absolute;
+    top: calc(var(--gap) * 2);
+    left: 50%;
+    width: calc(40px + var(--gap) * 2);
+    height: calc(40px + var(--gap) * 2);
+    transform: translateX(-50%);
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .combine_drop_zone {
+    position: absolute;
+    top: calc(var(--gap) * 2);
+    left: 50%;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(40px + var(--gap) * 2);
+    height: calc(40px + var(--gap) * 2);
+    box-sizing: border-box;
+    border: none;
+    border-radius: var(--r1);
+    outline: 2px var(--c-mask) solid;
+    opacity: 0.72;
+    transform: translateX(-50%) scale(1);
+    transition:
+      opacity 120ms ease,
+      transform 120ms ease,
+      background-color 120ms ease;
+    pointer-events: none;
+  }
+  .combine_drop_zone.combine_target {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.08);
+    background-color: var(--c-main-3);
+  }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    align-content: start;
   }
   .list {
     display: flex;
@@ -816,9 +1143,30 @@
   .list .item {
     padding: 0;
   }
+  .list .combine_drop_zone {
+    top: 50%;
+    left: var(--gap);
+    width: 36px;
+    height: 36px;
+    transform: translateY(-50%) scale(1);
+  }
+  .list .combine_hit_zone {
+    top: 50%;
+    left: var(--gap);
+    width: 36px;
+    height: 36px;
+    transform: translateY(-50%);
+  }
+  .list .combine_drop_zone.combine_target {
+    transform: translateY(-50%) scale(1.08);
+  }
   .list.multi_select .bkmk_h {
     padding: var(--gap);
     gap: 0;
+    outline: 2px solid var(--c-mask);
+  }
+  .list.multi_select .bkmk_h.selected {
+    outline: 2px solid var(--c-main);
   }
 
   a {
@@ -847,6 +1195,9 @@
     padding: var(--gap);
     border-radius: var(--r1);
     cursor: default;
+  }
+  .grid .folder_card {
+    outline: 2px var(--c-mask) solid;
   }
   a:hover {
     background-color: var(--c-mask);

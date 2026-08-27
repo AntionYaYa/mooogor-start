@@ -425,6 +425,15 @@
   "nt_settings_bookmarks_add_folder": {
     "message": "Add folder"
   },
+  "nt_new_bookmark_folder": {
+    "message": "New folder"
+  },
+  "nt_dissolve_bookmark_folder": {
+    "message": "Dissolve folder"
+  },
+  "nt_dissolve_bookmark_folder_confirm": {
+    "message": "Move all items in this folder back to the current level and remove the empty folder?"
+  },
   "nt_switch": {
     "message": "Toggle"
   },

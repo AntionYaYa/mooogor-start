@@ -18,6 +18,8 @@ export type AppTheme =
 export type UserSettings = {
   defaultOpen: DefaultOpen;
   lastOpenTab: OpenTab;
+  defaultBookmarkFolderId: string | null;
+  lastBookmarkFolderId: string | null;
   newTabOpen: boolean;
   searchBookmarks: boolean;
   searchHistory: boolean;
@@ -30,6 +32,8 @@ export type UserSettings = {
 export const DEFAULT_SETTINGS: UserSettings = {
   defaultOpen: "common",
   lastOpenTab: "common",
+  defaultBookmarkFolderId: null,
+  lastBookmarkFolderId: null,
   newTabOpen: false,
   searchBookmarks: true,
   searchHistory: true,
@@ -69,6 +73,10 @@ function isOpenTab(value: unknown): value is OpenTab {
   return OPEN_TAB_VALUES.includes(value as OpenTab);
 }
 
+function normalizeBookmarkFolderId(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
 function isLanguage(value: unknown): value is AppLanguage {
   return LANGUAGE_VALUES.includes(value as AppLanguage);
 }
@@ -92,6 +100,12 @@ export async function loadSettings(): Promise<UserSettings> {
     lastOpenTab: isOpenTab(stored?.lastOpenTab)
       ? stored.lastOpenTab
       : DEFAULT_SETTINGS.lastOpenTab,
+    defaultBookmarkFolderId: normalizeBookmarkFolderId(
+      stored?.defaultBookmarkFolderId,
+    ),
+    lastBookmarkFolderId: normalizeBookmarkFolderId(
+      stored?.lastBookmarkFolderId,
+    ),
     newTabOpen: stored?.newTabOpen ?? DEFAULT_SETTINGS.newTabOpen,
     searchBookmarks:
       stored?.searchBookmarks ?? DEFAULT_SETTINGS.searchBookmarks,

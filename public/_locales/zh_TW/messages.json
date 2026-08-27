@@ -425,6 +425,15 @@
   "nt_settings_bookmarks_add_folder": {
     "message": "新增資料夾"
   },
+  "nt_new_bookmark_folder": {
+    "message": "新資料夾"
+  },
+  "nt_dissolve_bookmark_folder": {
+    "message": "解散資料夾"
+  },
+  "nt_dissolve_bookmark_folder_confirm": {
+    "message": "將資料夾內的所有項目移回目前層級，並移除空資料夾嗎？"
+  },
   "nt_switch": {
     "message": "開關"
   },

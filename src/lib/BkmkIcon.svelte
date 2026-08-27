@@ -31,7 +31,7 @@
   import { getBuiltInWebsiteLogo } from "./DB/websiteLogos";
   import Folder from "./components/svg/Folder.svelte";
 
-  type Size = "xl" | "l" | "m" | "s";
+  type Size = "xl" | "l" | "m" | "s" | "fill";
 
   interface Props {
     imgUrl?: string;
@@ -150,6 +150,13 @@
     height: 20px;
     min-height: 20px;
     border-radius: 2px;
+  }
+  .fill {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    border-radius: inherit;
   }
   .xl img {
     border-radius: var(--r);

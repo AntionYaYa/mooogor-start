@@ -85,6 +85,8 @@
     return (
       a.defaultOpen === b.defaultOpen &&
       a.lastOpenTab === b.lastOpenTab &&
+      a.defaultBookmarkFolderId === b.defaultBookmarkFolderId &&
+      a.lastBookmarkFolderId === b.lastBookmarkFolderId &&
       a.newTabOpen === b.newTabOpen &&
       a.searchBookmarks === b.searchBookmarks &&
       a.searchHistory === b.searchHistory &&
@@ -102,6 +104,18 @@
     const nextSettings: UserSettings = {
       ...userSettings,
       lastOpenTab: nextLastOpenTab,
+    };
+    userSettings = nextSettings;
+    await saveSettings(nextSettings);
+  }
+
+  async function rememberBookmarkFolder(
+    folderId: string,
+  ) {
+    if (userSettings.lastBookmarkFolderId === folderId) return;
+    const nextSettings: UserSettings = {
+      ...userSettings,
+      lastBookmarkFolderId: folderId,
     };
     userSettings = nextSettings;
     await saveSettings(nextSettings);
@@ -174,10 +188,19 @@
           ? userSettings.lastOpenTab
           : userSettings.defaultOpen;
       const defaultIndex = openTabToIndex(startOpenTab);
+      const bookmarkFolderId =
+        startOpenTab !== "bookmark"
+          ? undefined
+          : userSettings.defaultOpen === "last"
+            ? userSettings.lastBookmarkFolderId
+            : userSettings.defaultBookmarkFolderId;
       // From this point persisted stores are available, so tab loaders and edits
       // may safely switch from the local fallback to real data.
       configurationState = "ready";
-      await clickTab(tabs[defaultIndex], defaultIndex, { rememberLast: false });
+      await clickTab(tabs[defaultIndex], defaultIndex, {
+        rememberLast: false,
+        bookmarkFolderId,
+      });
     } catch (error) {
       // Keep an extension-page failure from leaving Edge with a blank new tab.
       console.error(NEW_TAB_LOG_PREFIX, "initialization:failed", {
@@ -328,20 +351,14 @@
     tabs[2].name = t("nt_tab_history");
   }
 
-  async function getBookmarksRoot() {
-    const children = await getBookmarkChildren("0");
-    return {
-      id: "0",
-      title: "root",
-      children,
-    } as BookmarkNode;
-  }
-
   async function clickGetPermission(permission: Permission) {
     if (permission === "bookmarks") {
       bookmarksPermission = await requestPermission(permission);
       if (!bookmarksPermission) return;
-      if (!currentNode) await initBookmarkView();
+      if (!currentNode) {
+        const folderId = await initBookmarkView();
+        if (folderId) await rememberBookmarkFolder(folderId);
+      }
     }
     if (permission === "history") {
       historyPermission = await requestPermission(permission);
@@ -354,16 +371,22 @@
   async function clickTab(
     tab: TabItem,
     i: number,
-    options: { rememberLast?: boolean } = {},
+    options: {
+      rememberLast?: boolean;
+      bookmarkFolderId?: string | null;
+    } = {},
   ) {
-    const { rememberLast = true } = options;
+    const {
+      rememberLast = true,
+      bookmarkFolderId,
+    } = options;
     //书签选中情况下再点击回到顶层，
     if (tab.sel) {
       if (tab.key === "0") {
         await refreshCommonTab();
       }
       if (tab.key === "1" && historyStack.length > 1) {
-        goBack();
+        await goBack();
       }
       return;
     }
@@ -381,7 +404,12 @@
     if (tab.key === "1") {
       bookmarksPermission = await hasPermission("bookmarks");
       if (!bookmarksPermission) return;
-      if (!currentNode) await initBookmarkView();
+      if (!currentNode) {
+        const folderId = await initBookmarkView(bookmarkFolderId);
+        if (folderId) {
+          await rememberBookmarkFolder(folderId);
+        }
+      }
       return;
     }
     if (tab.key === "2") {
@@ -560,29 +588,18 @@
     );
   }
 
-  function findBookmarkNodeById(node: BookmarkNode | undefined, id: string): BookmarkNode | undefined {
-    if (!node) return undefined;
-    if (node.id === id) return node;
-    for (const child of node.children ?? []) {
-      const found = findBookmarkNodeById(child as BookmarkNode, id);
-      if (found) return found as BookmarkNode;
-    }
-    return undefined;
-  }
-
   async function refreshBookmarkViewFromSettings() {
     if (!bookmarksPermission || !currentNode) return;
     const [root] = await getBookmarks();
-    const nextCurrent = findBookmarkNodeById(root as BookmarkNode, currentNode.id);
-    const fallback = nextCurrent ?? root;
-    if (!fallback) return;
-    currentNode = fallback as BookmarkNode;
-    historyStack = historyStack
-      .map((node) => findBookmarkNodeById(root as BookmarkNode, node.id))
-      .filter((node): node is BookmarkNode => !!node);
-    if (!historyStack.length) {
-      historyStack = [fallback as BookmarkNode];
-    }
+    if (!root) return;
+    const currentPath = findBookmarkPath(
+      root as BookmarkNode,
+      currentNode.id,
+    );
+    const nextPath = currentPath ?? getInitialBookmarkPath(root as BookmarkNode);
+    currentNode = nextPath[nextPath.length - 1];
+    historyStack = nextPath;
+    await repairMissingBookmarkFolderSettings(root as BookmarkNode);
     if (!currentNode.url && currentNode.title) {
       tabs[1].name = currentNode.title;
     } else {
@@ -612,11 +629,66 @@
     }
   }
 
-  async function initBookmarkView() {
-    const root = await getBookmarksRoot();
-    await clickFolder(root);
-    if (!root.children?.length) return;
-    await clickFolder(root.children[0]);
+  function findBookmarkPath(
+    node: BookmarkNode,
+    id: string,
+    parents: BookmarkNode[] = [],
+  ): BookmarkNode[] | undefined {
+    const path = [...parents, node];
+    if (node.id === id && !node.url) return path;
+    for (const child of node.children ?? []) {
+      if (child.url) continue;
+      const found = findBookmarkPath(child as BookmarkNode, id, path);
+      if (found) return found;
+    }
+    return undefined;
+  }
+
+  function getInitialBookmarkPath(root: BookmarkNode) {
+    const initialFolder = root.children?.find((child) => !child.url);
+    return initialFolder
+      ? [root, initialFolder as BookmarkNode]
+      : [root];
+  }
+
+  async function repairMissingBookmarkFolderSettings(root: BookmarkNode) {
+    const initialFolderId = getInitialBookmarkPath(root).at(-1)?.id;
+    if (!initialFolderId) return;
+    const defaultFolderMissing =
+      userSettings.defaultOpen === "bookmark" &&
+      (!userSettings.defaultBookmarkFolderId ||
+        !findBookmarkPath(root, userSettings.defaultBookmarkFolderId));
+    const lastFolderMissing =
+      !!userSettings.lastBookmarkFolderId &&
+      !findBookmarkPath(root, userSettings.lastBookmarkFolderId);
+    if (!defaultFolderMissing && !lastFolderMissing) return;
+    const nextSettings: UserSettings = {
+      ...userSettings,
+      defaultBookmarkFolderId: defaultFolderMissing
+        ? initialFolderId
+        : userSettings.defaultBookmarkFolderId,
+      lastBookmarkFolderId: lastFolderMissing
+        ? initialFolderId
+        : userSettings.lastBookmarkFolderId,
+    };
+    userSettings = nextSettings;
+    await saveSettings(nextSettings);
+  }
+
+  async function initBookmarkView(folderId?: string | null) {
+    const [root] = await getBookmarks();
+    if (!root) return undefined;
+    const fallbackPath = getInitialBookmarkPath(root as BookmarkNode);
+    const requestedPath = folderId
+      ? findBookmarkPath(root as BookmarkNode, folderId)
+      : undefined;
+    const path = requestedPath ?? fallbackPath;
+    const target = path[path.length - 1];
+    historyStack = path;
+    currentNode = target;
+    updateBookmarkTabName(target);
+    await repairMissingBookmarkFolderSettings(root as BookmarkNode);
+    return target.id;
   }
 
   async function clickFolder(bkmk: BookmarkNode) {
@@ -630,6 +702,7 @@
     tabs[1].name = bkmk.title;
     historyStack.push(bkmk);
     currentNode = bkmk;
+    await rememberBookmarkFolder(bkmk.id);
   }
 
   function updateBookmarkTabName(node: BookmarkNode) {
@@ -639,11 +712,14 @@
         : node.title;
   }
 
-  function goBack() {
+  async function goBack() {
     if (historyStack.length <= 1) return;
     historyStack.pop()!;
     currentNode = historyStack[historyStack.length - 1];
-    if (currentNode) updateBookmarkTabName(currentNode);
+    if (currentNode) {
+      updateBookmarkTabName(currentNode);
+      await rememberBookmarkFolder(currentNode.id);
+    }
   }
 </script>
 
@@ -887,7 +963,9 @@
         list={gridView}
         bookmarkNode={currentNode}
         newTabOpen={effectiveNewTabOpen}
+        settingsOpen={showSetting}
         onclickFolder={(bkmk) => clickFolder(bkmk)}
+        onback={goBack}
         onChanged={refreshCurrentBookmarkNode}
       />
     {/key}

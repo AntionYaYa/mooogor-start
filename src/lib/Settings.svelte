@@ -14,6 +14,9 @@
     import BatchToolbar from "./components/BatchToolbar.svelte";
     import SettingsCommonSitesSection from "@/lib/settings/SettingsCommonSitesSection.svelte";
     import SettingsSearchEnginesSection from "@/lib/settings/SettingsSearchEnginesSection.svelte";
+    import { getBookmarks } from "@/lib/browser/bookmarks";
+    import type { BookmarkNode } from "@/lib/browser/bookmarks";
+    import { hasPermission } from "@/lib/browser/permissions";
     import type { OpenTab, UserSettings } from "@/lib/utils/settings";
     import type { Engine, EngineCategoryItem, WebSite } from "@/lib/DB/DB";
     import {
@@ -105,7 +108,13 @@
             sel: o.value === userSettings.defaultOpen,
         })),
     );
-
+    let bookmarkFolderChoices = $state<{ label: string; value: string }[]>([]);
+    let bookmarkFolderOptions = $derived(
+        bookmarkFolderChoices.map((option) => ({
+            ...option,
+            sel: option.value === userSettings.defaultBookmarkFolderId,
+        })),
+    );
     let languageOptions = $derived(
         languageBase.map((o) => ({
             ...o,
@@ -167,6 +176,10 @@
     } | null>(null);
     let persistEngineLayoutTimer: ReturnType<typeof setTimeout> | null =
         $state(null);
+    let bookmarkFolderRequestId = 0;
+    let bookmarkAccessRequestId = 0;
+    let bookmarkFolderRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+    let registeredBookmarksApi: typeof browser.bookmarks | null = null;
     let selectableSearchEngineIds = $derived.by(() =>
         settingEngineCategories.flatMap((category) =>
             !expandedCategoryIds.has(category.id)
@@ -435,11 +448,136 @@
         void loadCommonSites();
     }
 
+    function handleBookmarksUpdated() {
+        if (!showSetting) return;
+        scheduleBookmarkFolderChoicesRefresh();
+    }
+
+    function handleBrowserBookmarksChanged() {
+        if (!showSetting) return;
+        scheduleBookmarkFolderChoicesRefresh();
+    }
+
+    function registerBookmarkListeners() {
+        if (registeredBookmarksApi) return;
+        const bookmarksApi = browser.bookmarks;
+        bookmarksApi.onCreated.addListener(handleBrowserBookmarksChanged);
+        bookmarksApi.onRemoved.addListener(handleBrowserBookmarksChanged);
+        bookmarksApi.onChanged.addListener(handleBrowserBookmarksChanged);
+        bookmarksApi.onMoved.addListener(handleBrowserBookmarksChanged);
+        registeredBookmarksApi = bookmarksApi;
+    }
+
+    function unregisterBookmarkListeners() {
+        const bookmarksApi = registeredBookmarksApi;
+        if (!bookmarksApi) return;
+        bookmarksApi.onCreated.removeListener(handleBrowserBookmarksChanged);
+        bookmarksApi.onRemoved.removeListener(handleBrowserBookmarksChanged);
+        bookmarksApi.onChanged.removeListener(handleBrowserBookmarksChanged);
+        bookmarksApi.onMoved.removeListener(handleBrowserBookmarksChanged);
+        registeredBookmarksApi = null;
+    }
+
+    function cancelBookmarkFolderChoicesRefresh() {
+        if (bookmarkFolderRefreshTimer === null) return;
+        clearTimeout(bookmarkFolderRefreshTimer);
+        bookmarkFolderRefreshTimer = null;
+    }
+
+    function scheduleBookmarkFolderChoicesRefresh() {
+        cancelBookmarkFolderChoicesRefresh();
+        bookmarkFolderRefreshTimer = setTimeout(() => {
+            bookmarkFolderRefreshTimer = null;
+            void syncBookmarkFolderAccess();
+        }, 120);
+    }
+
+    async function syncBookmarkFolderAccess() {
+        const accessRequestId = ++bookmarkAccessRequestId;
+        const granted = await hasPermission("bookmarks");
+        if (accessRequestId !== bookmarkAccessRequestId) return;
+        if (!granted) {
+            unregisterBookmarkListeners();
+            bookmarkFolderChoices = [];
+            return;
+        }
+        registerBookmarkListeners();
+        await loadBookmarkFolderChoices();
+    }
+
     function setOpenPos(value: string) {
+        const defaultBookmarkFolderId =
+            value === "bookmark" &&
+            !bookmarkFolderChoices.some(
+                (option) =>
+                    option.value === userSettings.defaultBookmarkFolderId,
+            )
+                ? (bookmarkFolderChoices[0]?.value ?? null)
+                : userSettings.defaultBookmarkFolderId;
         onchangeUserSettings({
             ...userSettings,
             defaultOpen: value as UserSettings["defaultOpen"],
+            defaultBookmarkFolderId,
         });
+    }
+
+    function setDefaultBookmarkFolder(value: string) {
+        if (!bookmarkFolderChoices.some((option) => option.value === value)) {
+            return;
+        }
+        onchangeUserSettings({
+            ...userSettings,
+            defaultBookmarkFolderId: value,
+        });
+    }
+
+    function collectBookmarkFolderChoices(root: BookmarkNode) {
+        const choices: { label: string; value: string }[] = [];
+        const visit = (node: BookmarkNode, parentTitles: string[]) => {
+            for (const child of node.children ?? []) {
+                if (child.url) continue;
+                const title = child.title || "--";
+                const titles = [...parentTitles, title];
+                choices.push({
+                    label: titles.join(" / "),
+                    value: child.id,
+                });
+                visit(child as BookmarkNode, titles);
+            }
+        };
+        visit(root, []);
+        return choices;
+    }
+
+    async function loadBookmarkFolderChoices() {
+        const requestId = ++bookmarkFolderRequestId;
+        try {
+            const [root] = await getBookmarks();
+            if (requestId !== bookmarkFolderRequestId) return;
+            if (!root) {
+                bookmarkFolderChoices = [];
+                return;
+            }
+            const choices = collectBookmarkFolderChoices(root as BookmarkNode);
+            bookmarkFolderChoices = choices;
+            const selectedId = userSettings.defaultBookmarkFolderId;
+            if (
+                userSettings.defaultOpen !== "bookmark" ||
+                (selectedId &&
+                    choices.some((option) => option.value === selectedId)) ||
+                !choices.length
+            ) {
+                return;
+            }
+            onchangeUserSettings({
+                ...userSettings,
+                defaultBookmarkFolderId: choices[0].value,
+            });
+        } catch {
+            if (requestId === bookmarkFolderRequestId) {
+                bookmarkFolderChoices = [];
+            }
+        }
     }
 
     function setLanguage(value: string) {
@@ -1048,16 +1186,22 @@
     function handleSettingsVisibility(event: Event) {
         const visible = (event as CustomEvent<{ visible: boolean }>).detail
             ?.visible;
+        if (visible === true) {
+            void syncBookmarkFolderAccess();
+            return;
+        }
         if (visible !== false) return;
         closeCategoryManager();
         closeSearchEngineEditor();
         closeCommonEditor();
+        cancelBookmarkFolderChoicesRefresh();
         settingPage = "root";
     }
 
     function handleOpenSearchEngines(event: Event) {
         const detail = (event as CustomEvent<{ categoryId?: string }>).detail;
         pendingExpandCategoryId = detail?.categoryId ?? null;
+        void syncBookmarkFolderAccess();
         openSettingPage("searchEngines");
     }
 
@@ -1067,6 +1211,7 @@
             handleEngineConfigUpdated,
         );
         window.addEventListener("websites-updated", handleWebSitesUpdated);
+        window.addEventListener("bookmarks-updated", handleBookmarksUpdated);
         window.addEventListener(
             "settings-visibility-changed",
             handleSettingsVisibility,
@@ -1083,6 +1228,11 @@
             handleEngineConfigUpdated,
         );
         window.removeEventListener("websites-updated", handleWebSitesUpdated);
+        window.removeEventListener("bookmarks-updated", handleBookmarksUpdated);
+        cancelBookmarkFolderChoicesRefresh();
+        bookmarkAccessRequestId += 1;
+        bookmarkFolderRequestId += 1;
+        unregisterBookmarkListeners();
         window.removeEventListener(
             "settings-visibility-changed",
             handleSettingsVisibility,
@@ -1424,11 +1574,18 @@
         "",
         true,
     )}
-    {@render temselectItem(
-        t("nt_settings_default_open"),
-        openPosOptions,
-        setOpenPos,
-    )}
+    <div class="select_item default_open_selects">
+        <G vertical full>
+            <T type="s" color="var(--c-text-1)">{t("nt_settings_default_open")}</T>
+        </G>
+        <Select options={openPosOptions} onChange={setOpenPos} />
+        {#if userSettings.defaultOpen === "bookmark"}
+            <Select
+                options={bookmarkFolderOptions}
+                onChange={setDefaultBookmarkFolder}
+            />
+        {/if}
+    </div>
     {@render temswithcItem(
         t("nt_settings_link_open_title"),
         t("nt_settings_new_tab_open"),
@@ -1601,6 +1758,9 @@
         box-sizing: border-box;
         padding: var(--gap);
         /* gap: var(--gap); */
+    }
+    .default_open_selects {
+        gap: var(--gap);
     }
     .collapsible_section {
         display: flex;

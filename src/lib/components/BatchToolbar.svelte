@@ -18,6 +18,7 @@
     onselectall: () => void;
     ondelete: () => void;
     onmove?: () => void;
+    onclose?: () => void;
   }
 
   let {
@@ -31,6 +32,7 @@
     onselectall,
     ondelete,
     onmove,
+    onclose,
   }: Props = $props();
 </script>
 
@@ -64,6 +66,13 @@
           {/if}
         </G>
       </Button>
+      {#if onclose}
+        <Button onclick={onclose} disabled={disabled} fill>
+          <G align="c">
+            <Icon name="X" color="var(--c-text)" />
+          </G>
+        </Button>
+      {/if}
     </div>
   </div>
 {/if}

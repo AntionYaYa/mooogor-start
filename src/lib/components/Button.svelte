@@ -7,6 +7,7 @@
 		fill?: boolean;
 		full?: boolean;
 		sel?: boolean;
+		outlined?: boolean;
 		align?: Align;
 		r?: R;
 		bg?: string;
@@ -21,6 +22,7 @@
 		fill = false,
 		full = false,
 		sel = false,
+		outlined = false,
 		onclick,
 		skipTabFocus,
 		align,
@@ -37,6 +39,7 @@
 	class:fill
 	class:full
 	class:sel
+	class:outlined
 	{onclick}
 	{disabled}
 	{title}
@@ -74,6 +77,9 @@
 		width: 100%;
 		box-sizing: border-box;
 		min-width: 0;
+	}
+	.outlined {
+		outline: 2px solid var(--c-mask);
 	}
 	.c {
 		justify-content: center;
