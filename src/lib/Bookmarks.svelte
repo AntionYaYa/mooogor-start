@@ -3,6 +3,7 @@
   import MoveBookmark from "./MoveBookmark.svelte";
   import ConfirmDialog from "./ConfirmDialog.svelte";
   import BkmkIcon from "./BkmkIcon.svelte";
+  import BookmarkFolderIcon from "./BookmarkFolderIcon.svelte";
   import T from "./components/T.svelte";
   import G from "./components/G.svelte";
   import { flip } from "svelte/animate";
@@ -526,12 +527,11 @@
     {#if multiSelectMode && !isProtectedRootFolder(bkmk)}
       {#if list}
         <G align="c">
-          <BkmkIcon
-            imgUrl={bkmk.url}
-            alt={bkmk.title}
-            size="s"
-            folderIcon={!bkmk.url}
-          />
+          {#if bkmk.url}
+            <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" />
+          {:else}
+            <BookmarkFolderIcon folder={bkmk} size="s" />
+          {/if}
         </G>
         <G full align="c">
           <T nowrap type="m">{bkmk.title}</T>
@@ -539,12 +539,11 @@
       {:else}
         <Button onclick={(e) => handleItemClick(e, bkmk, i)} sel={isSelected(bkmk)} r="r1">
           <G>
-            <BkmkIcon
-              imgUrl={bkmk.url}
-              alt={bkmk.title}
-              size="l"
-              folderIcon={!bkmk.url}
-            />
+            {#if bkmk.url}
+              <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="l" />
+            {:else}
+              <BookmarkFolderIcon folder={bkmk} size="l" />
+            {/if}
           </G>
         </Button>
         <T nowrap align="c" type="s">{bkmk.title}</T>
@@ -576,7 +575,7 @@
             oncontextmenu={(e) => showContextMenu(e, bkmk)}
           >
             <G align="c">
-              <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" folderIcon />
+              <BookmarkFolderIcon folder={bkmk} size="s" />
             </G>
             <G full align="c">
               <T nowrap type="m">{bkmk.title}</T>
@@ -609,7 +608,7 @@
             onkeydown={(e) => openFolderByKeyboard(e, bkmk)}
             oncontextmenu={(e) => showContextMenu(e, bkmk)}
           >
-            <BkmkIcon imgUrl={bkmk.url!} alt={bkmk.title} folderIcon />
+            <BookmarkFolderIcon folder={bkmk} />
           </div>
         {/if}
         {@render temText(false, bkmk.title)}
