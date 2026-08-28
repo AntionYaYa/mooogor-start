@@ -410,6 +410,15 @@
   "nt_drag_to_sort": {
     "message": "拖拽排序"
   },
+  "nt_engine_active": {
+    "message": "激活"
+  },
+  "nt_engine_disabled": {
+    "message": "禁用"
+  },
+  "nt_engine_edit_hint": {
+    "message": "拖拽排序，点击切换激活或禁用"
+  },
   "nt_click_to_enable": {
     "message": "激活$1"
   },

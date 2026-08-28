@@ -410,6 +410,15 @@
   "nt_drag_to_sort": {
     "message": "Drag to reorder"
   },
+  "nt_engine_active": {
+    "message": "Active"
+  },
+  "nt_engine_disabled": {
+    "message": "Disabled"
+  },
+  "nt_engine_edit_hint": {
+    "message": "Drag to reorder; click to activate or disable"
+  },
   "nt_click_to_enable": {
     "message": "Enable $1"
   },

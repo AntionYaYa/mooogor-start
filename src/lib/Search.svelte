@@ -494,6 +494,12 @@
                 : item.engineUrl === engine.engineUrl;
 
         if (!enabledEngines.some(isSameEngine)) return;
+        if (
+            displayEnabledEngines.length <= 1 &&
+            displayEnabledEngines.some(isSameEngine)
+        ) {
+            return;
+        }
 
         enabledEngines = enabledEngines.filter((item) => !isSameEngine(item));
         disabledEngines = [...disabledEngines, { ...engine, enabled: false }];
@@ -517,12 +523,14 @@
             const item = target.closest<HTMLElement>(".engine_item");
             if (!item || item.parentElement !== node) return;
 
-            // The inner disabled-engine button owns Enter/Space so it can
-            // continue to enable the engine without starting keyboard DnD.
+            const control = target.closest<HTMLElement>(".more_item");
             if (
-                target !== item &&
+                control &&
                 (event.key === "Enter" || event.key === " ")
             ) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                control.click();
                 return;
             }
             if (
@@ -735,9 +743,12 @@
     }
 
     function handleEngineClick(event: MouseEvent, engine: Engine) {
+        if (suppressEngineToggleClick) {
+            event.preventDefault();
+            return;
+        }
         if (showMoreEngines) {
             event.preventDefault();
-            if (suppressEngineToggleClick) return;
             void disableEngine(engine);
             return;
         }
@@ -825,16 +836,6 @@
     function handleDisabledEngineClick(engine: Engine) {
         if (suppressEngineToggleClick) return;
         void enableEngine(engine);
-    }
-
-    function handleDisabledEngineKeydown(
-        event: KeyboardEvent,
-        engine: Engine,
-    ) {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        event.stopPropagation();
-        handleDisabledEngineClick(engine);
     }
 
     function handleResultKeydown(e: KeyboardEvent) {
@@ -1066,7 +1067,7 @@
             bind:this={engineEls}
             class="engines"
             class:drag={showMoreEngines}
-            data-dnd-hint={t("nt_drag_to_sort")}
+            data-dnd-hint={t("nt_engine_active")}
             use:dndzone={{
                 items: displayEnabledEngines,
                 flipDurationMs: 200,
@@ -1074,7 +1075,7 @@
                 zoneTabIndex: -1,
                 zoneItemTabIndex: -1,
                 dropTargetStyle: {},
-                dragDisabled: effectiveReadOnly || !showMoreEngines,
+                dragDisabled: effectiveReadOnly,
                 dropFromOthersDisabled: true,
             }}
             onconsider={handleConsiderEnabled}
@@ -1093,9 +1094,6 @@
                         draggable="false"
                         target={newTabOpen ? "_blank" : "_self"}
                         rel={newTabOpen ? "noreferrer" : undefined}
-                        title={showMoreEngines
-                            ? t("nt_click_to_disable", engine.title ?? "")
-                            : undefined}
                         onclick={(event) => handleEngineClick(event, engine)}
                         onfocus={() => selectEngine(engine)}
                         onkeydown={(event) =>
@@ -1126,53 +1124,55 @@
 
 {#snippet temMoreEngines()}
     <div class="more_engines_M" transition:slide={{ duration: 200 }}>
-        <div
-            class="more_g"
-            class:drag={showMoreEngines}
-            data-dnd-hint={t("nt_drag_to_sort")}
-            use:disableKeyboardDnd
-            use:dndzone={{
-                items: displayDisabledEngines,
-                flipDurationMs: 200,
-                type: `disabled-engines-${selectedCategoryId}`,
-                zoneTabIndex: -1,
-                zoneItemTabIndex: -1,
-                dropTargetStyle: {},
-                dragDisabled: effectiveReadOnly,
-                dropFromOthersDisabled: true,
-            }}
-            onconsider={handleConsiderDisabled}
-            onfinalize={handleFinalizeDisabled}
-        >
-            {#each displayDisabledEngines as engine (engine.id)}
-                <div
-                    class="engine_item"
-                    animate:flip={{ duration: 200 }}
-                >
+        <div class="more_engines_row">
+            <div
+                class="more_g"
+                class:drag={showMoreEngines}
+                data-dnd-hint={t("nt_engine_disabled")}
+                use:disableKeyboardDnd
+                use:dndzone={{
+                    items: displayDisabledEngines,
+                    flipDurationMs: 200,
+                    type: `disabled-engines-${selectedCategoryId}`,
+                    zoneTabIndex: -1,
+                    zoneItemTabIndex: -1,
+                    dropTargetStyle: {},
+                    dragDisabled: effectiveReadOnly,
+                    dropFromOthersDisabled: true,
+                }}
+                onconsider={handleConsiderDisabled}
+                onfinalize={handleFinalizeDisabled}
+            >
+                {#each displayDisabledEngines as engine (engine.id)}
                     <div
-                        class="more_item"
-                        role="button"
-                        tabindex="0"
-                        aria-label={t("nt_click_to_enable", engine.title ?? "")}
-                        title={t("nt_click_to_enable", engine.title ?? "")}
-                        onclick={() => handleDisabledEngineClick(engine)}
-                        onkeydown={(event) =>
-                            handleDisabledEngineKeydown(event, engine)}
+                        class="engine_item"
+                        animate:flip={{ duration: 200 }}
                     >
-                        <EngineIcon
-                            alt={engine.title ?? ""}
-                            engineUrl={engine.engineUrl}
-                            src={engine.faviconUrl}
-                        />
+                        <button
+                            type="button"
+                            class="more_item"
+                            aria-label={t(
+                                "nt_click_to_enable",
+                                engine.title ?? "",
+                            )}
+                            onclick={() => handleDisabledEngineClick(engine)}
+                        >
+                            <EngineIcon
+                                alt={engine.title ?? ""}
+                                engineUrl={engine.engineUrl}
+                                src={engine.faviconUrl}
+                            />
+                        </button>
                     </div>
-                </div>
-            {/each}
+                {/each}
+            </div>
+            <Button onclick={openSearchEngineSettings}>
+                <G>
+                    <Icon name="SquarePen" color="var(--c-text)" opacity={0.6} />
+                </G>
+            </Button>
         </div>
-        <Button onclick={openSearchEngineSettings}>
-            <G>
-                <Icon name="SquarePen" color="var(--c-text)" opacity={0.6} />
-            </G>
-        </Button>
+        <p class="engine_edit_hint">{t("nt_engine_edit_hint")}</p>
     </div>
 {/snippet}
 
@@ -1341,13 +1341,26 @@
     }
     .more_engines_M {
         display: flex;
-        flex-direction: row;
-        align-items: center;
+        flex-direction: column;
         padding: var(--gap);
         width: 100%;
         box-sizing: border-box;
         background-color: var(--c-bg1);
         border-radius: var(--r1);
+    }
+    .more_engines_row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        width: 100%;
+    }
+    .engine_edit_hint {
+        align-self: flex-start;
+        margin: 0;
+        padding: 0 calc(var(--gap) * 2) var(--gap);
+        color: var(--c-text-2);
+        font-size: var(--f-size-s);
+        line-height: 1.4;
     }
 
     .more_item {
@@ -1355,11 +1368,13 @@
         background-color: unset;
         border: none;
         padding: 0;
-        border-radius: var(--r);
+        border-radius: calc(var(--r) / 2 + 2px);
         filter: grayscale();
         align-items: center;
         overflow: hidden;
         cursor: pointer;
+        min-width: 30px;
+        flex: 0 0 auto;
     }
     .more_item:focus-visible {
         outline: 2px var(--c-main) solid;
@@ -1532,6 +1547,9 @@
     .engine_item {
         display: flex;
         flex: 0 0 auto;
+    }
+    .engine_item:focus {
+        outline: none;
     }
     .engine {
         display: flex;

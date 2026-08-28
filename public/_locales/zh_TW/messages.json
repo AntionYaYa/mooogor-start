@@ -410,6 +410,15 @@
   "nt_drag_to_sort": {
     "message": "拖曳排序"
   },
+  "nt_engine_active": {
+    "message": "啟用"
+  },
+  "nt_engine_disabled": {
+    "message": "停用"
+  },
+  "nt_engine_edit_hint": {
+    "message": "拖曳排序，點擊切換啟用或停用"
+  },
   "nt_click_to_enable": {
     "message": "啟用$1"
   },
