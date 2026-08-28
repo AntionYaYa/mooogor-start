@@ -395,11 +395,11 @@
       </Button>
     </section>
   {:else if allPinneds.length}
-    <section class="section">
-      <div
-        class="content grid {isdarging ? 'drag' : ''} {multiSelectMode
+    <section class="section padding_section {multiSelectMode
           ? 'multi_select'
-          : ''}"
+          : ''}">
+      <div
+        class="content grid {isdarging ? 'drag' : ''}"
         use:dndzone={{
           items: allPinneds,
           flipDurationMs: 200,
@@ -449,7 +449,7 @@
             {/if}
           </div>
         {/each}
-        <div class="batch_bar_container">
+      </div>
           <BatchToolbar
             show={multiSelectMode}
             count={selectedCount}
@@ -460,8 +460,6 @@
             ondelete={deleteSelected}
             onclose={() => clearSelection()}
           />
-        </div>
-      </div>
     </section>
   {:else}
     <NoData
@@ -649,6 +647,13 @@
     flex-direction: column;
     width: 100%;
     box-sizing: border-box;
+    position: relative;
+    padding: var(--gap);
+    border-radius: var(--r1);
+  }
+
+  .padding_section {
+    gap: var(--gap);
   }
   .error_state {
     display: flex;
@@ -821,25 +826,5 @@
     box-shadow: inset 0 0 0 2px var(--c-main-3);
     position: relative;
     user-select: none;
-  }
-
-  .content.multi_select::after {
-    content: "";
-    display: block;
-    grid-column: 1 / -1;
-    height: calc(64px + var(--gap) * 2);
-    pointer-events: none;
-  }
-
-  .batch_bar_container {
-    position: fixed;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    padding: var(--gap);
-    pointer-events: none;
-    z-index: 20;
   }
 </style>

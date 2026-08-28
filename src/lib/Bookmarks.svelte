@@ -706,7 +706,10 @@
 </script>
 
 <div class="page" bind:this={pageEl}>
-  <div class="bookmark_scroll">
+  <div
+    class="bookmark_scroll"
+    class:multi_select_frame={multiSelectMode}
+  >
     {#if items.length}
       <div
         class="content {list ? 'list' : 'grid'} {sorting
@@ -769,24 +772,23 @@
         <NoData iconName="Bookmark" title={t("nt_no_bookmarks")} />
       </div>
     {/if}
+    {#if items.length}
+      <div class="batch_bar_container">
+        <BatchToolbar
+          show={multiSelectMode}
+          count={selectedCount}
+          {allSelected}
+          showDeleteText
+          showMoveText
+          disabled={batchActionLoading}
+          onselectall={toggleSelectAll}
+          ondelete={deleteSelected}
+          onmove={openBatchMove}
+          onclose={() => clearSelection()}
+        />
+      </div>
+    {/if}
   </div>
-
-  {#if items.length}
-    <div class="batch_bar_container">
-      <BatchToolbar
-        show={multiSelectMode}
-        count={selectedCount}
-        {allSelected}
-        showDeleteText
-        showMoveText
-        disabled={batchActionLoading}
-        onselectall={toggleSelectAll}
-        ondelete={deleteSelected}
-        onmove={openBatchMove}
-        onclose={() => clearSelection()}
-      />
-    </div>
-  {/if}
 </div>
 
 {#snippet temText(list: boolean, text: string)}
@@ -1061,20 +1063,24 @@
     overflow-y: auto;
     overflow-x: hidden;
     box-sizing: border-box;
+    border-radius: var(--r1);
+  }
+
+  .bookmark_scroll.multi_select_frame {
+    border: 2px solid var(--c-main-3);
   }
 
   .multi_select {
-    box-shadow: inset 0 0 0 2px var(--c-main-3);
     position: relative;
     user-select: none;
   }
 
-  .content.multi_select::after {
+  .bookmark_scroll::after {
     content: "";
     display: block;
     grid-column: 1 / -1;
-    height: calc(64px + var(--gap) * 2);
-    flex: 0 0 calc(64px + var(--gap) * 2);
+    height:90px;
+    flex: 0 0 90px;
     pointer-events: none;
   }
 
