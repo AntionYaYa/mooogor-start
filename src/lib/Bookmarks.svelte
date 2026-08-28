@@ -1,5 +1,6 @@
 <script lang="ts">
   import EditBookmark from "./EditBookmark.svelte";
+  import AddBookmark from "./AddBookmark.svelte";
   import MoveBookmark from "./MoveBookmark.svelte";
   import ConfirmDialog from "./ConfirmDialog.svelte";
   import BkmkIcon from "./BkmkIcon.svelte";
@@ -52,6 +53,7 @@
 
   let showMenu = $state(false);
   let showEdit = $state(false);
+  let showAddBookmark = $state(false);
   let showMove = $state(false);
   let confirmOptions = $state<{
     title: string;
@@ -83,6 +85,31 @@
   let pendingReorderSignature = "";
   let reorderDelayId: ReturnType<typeof setTimeout> | null = null;
   const REORDER_HOVER_DELAY_MS = 280;
+  const ADD_BOOKMARK_DND_ID = "__add-bookmark-placeholder__";
+  const addBookmarkDndItem: BookmarkNode = {
+    id: ADD_BOOKMARK_DND_ID,
+    parentId: "",
+    title: "",
+    syncing: false,
+  };
+  const dndItems = $derived(
+    !multiSelectMode && bookmarkNode.id !== "0"
+      ? [...items, addBookmarkDndItem]
+      : items,
+  );
+
+  function withoutAddBookmarkEntry(nodes: BookmarkNode[]) {
+    return nodes.filter((node) => node.id !== ADD_BOOKMARK_DND_ID);
+  }
+
+  function stopAddBookmarkDrag(event: Event) {
+    event.stopPropagation();
+  }
+
+  function openAddBookmark(event: MouseEvent) {
+    event.stopPropagation();
+    showAddBookmark = true;
+  }
 
   function notifyBookmarksUpdated() {
     if (typeof window === "undefined") return;
@@ -123,9 +150,10 @@
     const entries = await Promise.all(
       folders.map(async (folder) => {
         try {
-          const children = folder.children ?? await getBookmarkChildren(folder.id);
+          const children =
+            folder.children ?? (await getBookmarkChildren(folder.id));
           const urls = children
-            .flatMap((child) => child.url ? [child.url] : [])
+            .flatMap((child) => (child.url ? [child.url] : []))
             .slice(0, 4);
           return [folder.id, urls] as const;
         } catch {
@@ -240,6 +268,7 @@
 
   function handleConsider(e: CustomEvent<DndEvent<BookmarkNode>>) {
     if (!canSortItems) return;
+    const nextItems = withoutAddBookmarkEntry(e.detail.items);
     if (e.detail.info.trigger === "dragStarted") {
       cancelReorderDelay();
       pendingReorderItems = null;
@@ -249,12 +278,12 @@
       draggedBookmarkId = e.detail.info.id;
       dragStartItems = [...items];
       sorting = true;
-      items = e.detail.items;
+      items = nextItems;
       return;
     }
 
-    pendingReorderItems = e.detail.items;
-    const nextSignature = e.detail.items.map((item) => item.id).join("|");
+    pendingReorderItems = nextItems;
+    const nextSignature = nextItems.map((item) => item.id).join("|");
     if (nextSignature !== pendingReorderSignature) {
       pendingReorderSignature = nextSignature;
       schedulePendingReorder();
@@ -268,7 +297,7 @@
     const sourceId = draggedBookmarkId ?? e.detail.info.id;
     const targetId = releasedCombineTargetId ?? combineTargetId;
     sorting = false;
-    items = e.detail.items;
+    items = withoutAddBookmarkEntry(e.detail.items);
     draggedBookmarkId = null;
     combineTargetId = null;
     releasedCombineTargetId = null;
@@ -383,6 +412,19 @@
     showEdit = false;
   }
 
+  async function clickCreateBookmark(nextValue: {
+    title: string;
+    url?: string;
+  }) {
+    await createBookmark({
+      parentId: bookmarkNode.id,
+      title: nextValue.title,
+      url: nextValue.url,
+    });
+    await refreshCurrentFolder();
+    showAddBookmark = false;
+  }
+
   async function clickDeleteBookmark() {
     if (!currentBkmk) return false;
     if (isProtectedRootFolder(currentBkmk)) return false;
@@ -392,7 +434,8 @@
     const title = currentBkmk.url
       ? t("nt_confirm_delete_bookmark_title")
       : t("nt_confirm_delete_bookmark_folder_title");
-    if (!(await requestConfirm(title, description, t("nt_delete")))) return false;
+    if (!(await requestConfirm(title, description, t("nt_delete"))))
+      return false;
     await deleteBookmark(currentBkmk.id);
     await refreshCurrentFolder();
     showMenu = false;
@@ -404,13 +447,6 @@
   async function dissolveFolder(folder: BookmarkNode) {
     if (folder.url || isProtectedRootFolder(folder)) return;
     showMenu = false;
-    const confirmed = await requestConfirm(
-      t("nt_dissolve_bookmark_folder"),
-      t("nt_dissolve_bookmark_folder_confirm"),
-      t("nt_dissolve_bookmark_folder"),
-    );
-    if (!confirmed) return;
-
     const children = await getBookmarkChildren(folder.id);
     const folderIndex = Math.max(
       0,
@@ -427,7 +463,10 @@
     await refreshCurrentFolder();
   }
 
-  function findNodeById(node: BookmarkNode | null, id: string): BookmarkNode | null {
+  function findNodeById(
+    node: BookmarkNode | null,
+    id: string,
+  ): BookmarkNode | null {
     if (!node) return null;
     if (node.id === id) return node;
     for (const child of node.children ?? []) {
@@ -499,7 +538,14 @@
     if (e.key !== "Escape") return;
     if (settingsOpen) return;
 
-    if (showEdit || showMove || showBatchMove || confirmOptions) return;
+    if (
+      showEdit ||
+      showAddBookmark ||
+      showMove ||
+      showBatchMove ||
+      confirmOptions
+    )
+      return;
     if (sorting || batchActionLoading) return;
 
     if (showMenu) {
@@ -611,9 +657,7 @@
     if (!selectedCount || batchActionLoading) return;
     const [root] = await getBookmarks();
     const selectedFolderIds = new Set(
-      items
-        .filter((b) => selectedIds.has(b.id) && !b.url)
-        .map((b) => b.id),
+      items.filter((b) => selectedIds.has(b.id) && !b.url).map((b) => b.id),
     );
     batchMoveFolders = buildFolderTreeExcluding(
       root as BookmarkNode,
@@ -683,68 +727,82 @@
       if (!nextIds.length && !batchActionLoading) multiSelectMode = false;
     }
   }
-
 </script>
 
 <div class="page" bind:this={pageEl}>
-  {#if items.length}
-    <div
-      class="content {list ? 'list' : 'grid'} {sorting ? 'sorting' : ''} {multiSelectMode
-        ? 'multi_select'
-        : ''}"
-      use:disableKeyboardDnd
-      use:dndzone={canSortItems
-        ? {
-            items,
-            flipDurationMs: 200,
-            type: `bookmark-${bookmarkNode.id}`,
-            dropTargetStyle: {},
-            zoneTabIndex: -1,
-            zoneItemTabIndex: -1,
-            autoAriaDisabled: true,
-            transformDraggedElement: (e) => draggedel(e),
-            dragDisabled: multiSelectMode,
-            dropFromOthersDisabled: multiSelectMode,
-          }
-        : {
-            items,
-            flipDurationMs: 200,
-            type: `bookmark-${bookmarkNode.id}`,
-            dropTargetStyle: {},
-            zoneTabIndex: -1,
-            zoneItemTabIndex: -1,
-            autoAriaDisabled: true,
-            transformDraggedElement: (e) => draggedel(e),
-            dragDisabled: true,
-            dropFromOthersDisabled: true,
-          }}
-      onconsider={handleConsider}
-      onfinalize={handleFinalize}
-    >
-      {#each items as bkmk, i (bkmk.id)}
-        <div
-          class="item"
-          data-bookmark-id={bkmk.id}
-          animate:flip={{ duration: 200 }}
-        >
+  <div class="bookmark_scroll">
+    {#if items.length}
+      <div
+        class="content {list ? 'list' : 'grid'} {sorting
+          ? 'sorting'
+          : ''} {multiSelectMode ? 'multi_select' : ''}"
+        use:disableKeyboardDnd
+        use:dndzone={canSortItems
+          ? {
+              items: dndItems,
+              flipDurationMs: 200,
+              type: `bookmark-${bookmarkNode.id}`,
+              dropTargetStyle: {},
+              zoneTabIndex: -1,
+              zoneItemTabIndex: -1,
+              autoAriaDisabled: true,
+              transformDraggedElement: (e) => draggedel(e),
+              dragDisabled: multiSelectMode,
+              dropFromOthersDisabled: multiSelectMode,
+            }
+          : {
+              items: dndItems,
+              flipDurationMs: 200,
+              type: `bookmark-${bookmarkNode.id}`,
+              dropTargetStyle: {},
+              zoneTabIndex: -1,
+              zoneItemTabIndex: -1,
+              autoAriaDisabled: true,
+              transformDraggedElement: (e) => draggedel(e),
+              dragDisabled: true,
+              dropFromOthersDisabled: true,
+            }}
+        onconsider={handleConsider}
+        onfinalize={handleFinalize}
+      >
+        {#each items as bkmk, i (bkmk.id)}
           <div
-            class="combine_hit_zone"
-            data-bookmark-combine-hit-id={bkmk.id}
-            aria-hidden="true"
-          ></div>
-          {#if sorting && bkmk.id !== draggedBookmarkId && dragStartItems.some((item) => item.id === bkmk.id)}
+            class="item"
+            data-bookmark-id={bkmk.id}
+            animate:flip={{ duration: 200 }}
+          >
             <div
-              class="combine_drop_zone"
-              class:combine_target={combineTargetId === bkmk.id}
-              data-bookmark-combine-active-id={bkmk.id}
+              class="combine_hit_zone"
+              data-bookmark-combine-hit-id={bkmk.id}
               aria-hidden="true"
-            >
-            </div>
-          {/if}
-          {@render tembkmkWrapper(bkmk, i)}
-        </div>
-      {/each}
-    </div>
+            ></div>
+            {#if sorting && bkmk.id !== draggedBookmarkId && dragStartItems.some((item) => item.id === bkmk.id)}
+              <div
+                class="combine_drop_zone"
+                class:combine_target={combineTargetId === bkmk.id}
+                data-bookmark-combine-active-id={bkmk.id}
+                aria-hidden="true"
+              ></div>
+            {/if}
+            {@render tembkmkWrapper(bkmk, i)}
+          </div>
+        {/each}
+        {#if !multiSelectMode && bookmarkNode.id !== "0"}
+          {@render addBookmarkEntry()}
+        {/if}
+      </div>
+    {:else}
+      <div class="content {list ? 'list' : 'grid'} empty_content">
+        {#if bookmarkNode.id !== "0"}
+          {@render addBookmarkEntry()}
+        {:else}
+          <NoData iconName="Bookmark" title={t("nt_no_bookmarks")} />
+        {/if}
+      </div>
+    {/if}
+  </div>
+
+  {#if items.length}
     <div class="batch_bar_container">
       <BatchToolbar
         show={multiSelectMode}
@@ -759,10 +817,50 @@
         onclose={() => clearSelection()}
       />
     </div>
-  {:else}
-    <NoData iconName='Bookmark' title={t("nt_no_bookmarks")} />
   {/if}
 </div>
+
+{#snippet addBookmarkEntry()}
+  <div class="add_box">
+    {#if list}
+      <button
+        type="button"
+        class="list_add_bookmark_entry"
+        onmousedown={stopAddBookmarkDrag}
+        ontouchstart={stopAddBookmarkDrag}
+        onkeydown={stopAddBookmarkDrag}
+        onclick={openAddBookmark}
+      >
+        <G align="c">
+          <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
+        </G>
+        <G full align="c">
+          <T type="m" nowrap>{t("nt_add_bookmark")}</T>
+        </G>
+      </button>
+    {:else}
+      <G vertical align="c" gap>
+        {@render addBookmarkButton()}
+        <T type="s" align="c" nowrap>{t("nt_add_bookmark")}</T>
+      </G>
+    {/if}
+  </div>
+{/snippet}
+
+{#snippet addBookmarkButton()}
+  <button
+    type="button"
+    class="add_bookmark_entry"
+    onmousedown={stopAddBookmarkDrag}
+    ontouchstart={stopAddBookmarkDrag}
+    onkeydown={stopAddBookmarkDrag}
+    onclick={openAddBookmark}
+  >
+    <G>
+      <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
+    </G>
+  </button>
+{/snippet}
 
 {#snippet temText(list: boolean, text: string)}
   {@const hasText = !!text}
@@ -771,23 +869,32 @@
 
   {#if list}
     <G full align="c">
-      <T nowrap type="m" color={color}>{value}</T>
+      <T nowrap type="m" {color}>{value}</T>
     </G>
   {:else}
-    <T nowrap align="c" type="s" color={color}>{value}</T>
+    <T nowrap align="c" type="s" {color}>{value}</T>
   {/if}
 {/snippet}
-
 
 {#snippet tembkmkWrapper(bkmk: BookmarkNode, i: number)}
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <div
     class={list ? "bkmk_h" : "bkmk_v"}
     class:selected={multiSelectMode && list && isSelected(bkmk)}
-    onclick={multiSelectMode && !isProtectedRootFolder(bkmk) && list ? (e) => handleItemClick(e, bkmk, i) : undefined}
+    onclick={multiSelectMode && !isProtectedRootFolder(bkmk) && list
+      ? (e) => handleItemClick(e, bkmk, i)
+      : undefined}
     role={multiSelectMode && list ? "button" : undefined}
     tabindex={multiSelectMode && list ? 0 : undefined}
-    onkeydown={multiSelectMode && !isProtectedRootFolder(bkmk) && list ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleSelect(bkmk); } } : undefined}
+    onkeydown={multiSelectMode && !isProtectedRootFolder(bkmk) && list
+      ? (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleSelect(bkmk);
+          }
+        }
+      : undefined}
   >
     {#if multiSelectMode && !isProtectedRootFolder(bkmk)}
       {#if list}
@@ -821,75 +928,71 @@
         </Button>
         <T nowrap align="c" type="s">{bkmk.title}</T>
       {/if}
-    {:else}
-      {#if list}
-        {#if bkmk.url}
-          <a
-            href={bkmk.url}
-            target={newTabOpen ? "_blank" : "_self"}
-            rel={newTabOpen ? "noreferrer" : undefined}
-            class="full-row"
-            class:ctx={showMenu && currentBkmk === bkmk}
-            onkeydown={openBookmarkByKeyboard}
-            oncontextmenu={(e) => showContextMenu(e, bkmk)}
-          >
-            <G align="c">
-              <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" />
-            </G>
-            {@render temText(list, bkmk.title)}
-          </a>
-        {:else}
-          <div
-            class="full-row folder_card"
-            class:ctx={showMenu && currentBkmk === bkmk}
-            role="button"
-            tabindex="0"
-            onclick={() => clickFolder(bkmk)}
-            onkeydown={(e) => openFolderByKeyboard(e, bkmk)}
-            oncontextmenu={(e) => showContextMenu(e, bkmk)}
-          >
-            <G align="c">
-              <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" folderIcon />
-            </G>
-            <G full align="c">
-              <T nowrap type="m">{bkmk.title}</T>
-            </G>
-            <G align="c">
-              <Icon name="ChevronRight" color="var(--c-text-1)"opacity={0.6} />
-            </G>
-          </div>
-        {/if}
+    {:else if list}
+      {#if bkmk.url}
+        <a
+          href={bkmk.url}
+          target={newTabOpen ? "_blank" : "_self"}
+          rel={newTabOpen ? "noreferrer" : undefined}
+          class="full-row"
+          class:ctx={showMenu && currentBkmk === bkmk}
+          onkeydown={openBookmarkByKeyboard}
+          oncontextmenu={(e) => showContextMenu(e, bkmk)}
+        >
+          <G align="c">
+            <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" />
+          </G>
+          {@render temText(list, bkmk.title)}
+        </a>
       {:else}
-        {#if bkmk.url}
-          <a
-            href={bkmk.url}
-            target={newTabOpen ? "_blank" : "_self"}
-            rel={newTabOpen ? "noreferrer" : undefined}
-            class:ctx={showMenu && currentBkmk === bkmk}
-            onkeydown={openBookmarkByKeyboard}
-            oncontextmenu={(e) => showContextMenu(e, bkmk)}
-          >
-            <G align="c">
-              <BkmkIcon imgUrl={bkmk.url!} alt={bkmk.title} />
-            </G>
-          </a>
-        {:else}
-          <div
-            class="folder_card"
-            class:ctx={showMenu && currentBkmk === bkmk}
-            role="button"
-            tabindex="0"
-            onclick={() => clickFolder(bkmk)}
-            onkeydown={(e) => openFolderByKeyboard(e, bkmk)}
-            oncontextmenu={(e) => showContextMenu(e, bkmk)}
-          >
-            <BookmarkFolderIcon
-              previewUrls={folderPreviewUrls[bkmk.id] ?? []}
-            />
-          </div>
-        {/if}
-        {@render temText(false, bkmk.title)}
+        <div
+          class="full-row folder_card"
+          class:ctx={showMenu && currentBkmk === bkmk}
+          role="button"
+          tabindex="0"
+          onclick={() => clickFolder(bkmk)}
+          onkeydown={(e) => openFolderByKeyboard(e, bkmk)}
+          oncontextmenu={(e) => showContextMenu(e, bkmk)}
+        >
+          <G align="c">
+            <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" folderIcon />
+          </G>
+          <G full align="c">
+            <T nowrap type="m">{bkmk.title}</T>
+          </G>
+          <G align="c">
+            <Icon name="ChevronRight" color="var(--c-text-1)" opacity={0.6} />
+          </G>
+        </div>
       {/if}
+    {:else}
+      {#if bkmk.url}
+        <a
+          href={bkmk.url}
+          target={newTabOpen ? "_blank" : "_self"}
+          rel={newTabOpen ? "noreferrer" : undefined}
+          class:ctx={showMenu && currentBkmk === bkmk}
+          onkeydown={openBookmarkByKeyboard}
+          oncontextmenu={(e) => showContextMenu(e, bkmk)}
+        >
+          <G align="c">
+            <BkmkIcon imgUrl={bkmk.url!} alt={bkmk.title} />
+          </G>
+        </a>
+      {:else}
+        <div
+          class="folder_card"
+          class:ctx={showMenu && currentBkmk === bkmk}
+          role="button"
+          tabindex="0"
+          onclick={() => clickFolder(bkmk)}
+          onkeydown={(e) => openFolderByKeyboard(e, bkmk)}
+          oncontextmenu={(e) => showContextMenu(e, bkmk)}
+        >
+          <BookmarkFolderIcon previewUrls={folderPreviewUrls[bkmk.id] ?? []} />
+        </div>
+      {/if}
+      {@render temText(false, bkmk.title)}
     {/if}
   </div>
 {/snippet}
@@ -936,7 +1039,7 @@
       {/if}
       <Button full onclick={() => void clickDeleteBookmark()}>
         <G>
-          <T color='var(--c-red)'>{t("nt_delete")}</T>
+          <T color="var(--c-red)">{t("nt_delete")}</T>
         </G>
       </Button>
     {/if}
@@ -951,6 +1054,13 @@
     onclickClose={() => {
       showEdit = false;
     }}
+  />
+{/if}
+
+{#if showAddBookmark}
+  <AddBookmark
+    onSave={clickCreateBookmark}
+    onclickClose={() => (showAddBookmark = false)}
   />
 {/if}
 
@@ -1017,6 +1127,15 @@
     overflow: hidden;
   }
 
+  .bookmark_scroll {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
   .multi_select {
     box-shadow: inset 0 0 0 2px var(--c-main-3);
     position: relative;
@@ -1066,7 +1185,7 @@
     height: 100%;
     box-sizing: border-box;
     border-radius: var(--r);
-    cursor: default;
+    cursor: default !important;
   }
   .bkmk_h {
     display: flex;
@@ -1078,21 +1197,18 @@
     height: 100%;
     box-sizing: border-box;
     border-radius: var(--r);
-    cursor: default;
+    cursor: default !important;
   }
   .content {
     gap: var(--gap);
     padding: var(--gap);
     width: 100%;
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
     box-sizing: border-box;
     border-radius: var(--r1);
   }
   .content.sorting {
-    outline: var(--c-mask) 2px dashed;
+    outline: 2px dashed var(--c-mask);
+    outline-offset: -2px;
   }
   .combine_hit_zone {
     position: absolute;
@@ -1145,20 +1261,20 @@
   }
   .list .combine_drop_zone {
     top: 50%;
-    left: var(--gap);
+    left: calc(var(--gap) * 2 + 10px);
     width: 36px;
     height: 36px;
-    transform: translateY(-50%) scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
   .list .combine_hit_zone {
     top: 50%;
-    left: var(--gap);
+    left: calc(var(--gap) * 2 + 10px);
     width: 36px;
     height: 36px;
-    transform: translateY(-50%);
+    transform: translate(-50%, -50%);
   }
   .list .combine_drop_zone.combine_target {
-    transform: translateY(-50%) scale(1.08);
+    transform: translate(-50%, -50%) scale(1.08);
   }
   .list.multi_select .bkmk_h {
     padding: var(--gap);
@@ -1234,5 +1350,73 @@
   }
   .item {
     cursor: default !important;
+  }
+  .add_box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--gap);
+    padding: var(--gap);
+    box-sizing: border-box;
+    cursor: default !important;
+    pointer-events: none;
+  }
+  .add_bookmark_entry {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--gap);
+    background: transparent;
+    border:  var(--c-border) 2px dashed;
+    border-radius: var(--r1);
+    padding: var(--gap);
+    box-sizing: border-box;
+    cursor: default;
+    pointer-events: auto;
+  }
+  .add_bookmark_entry:hover {
+    background-color: var(--c-mask);
+  }
+  .add_bookmark_entry:active {
+    background-color: var(--c-mask1);
+  }
+  .add_bookmark_entry:focus-visible {
+    outline: 2px solid var(--c-text);
+  }
+  .grid .add_box {
+    min-height: 84px;
+    flex-direction: column;
+  }
+  .list .add_box {
+    width: 100%;
+    min-height: 40px;
+    padding: 0;
+  }
+  .list_add_bookmark_entry {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    padding: 0;
+    color: var(--c-text);
+    background: transparent;
+    border: none;
+    border-radius: var(--r);
+    box-sizing: border-box;
+    cursor: default;
+    pointer-events: auto;
+  }
+  .list_add_bookmark_entry:hover {
+    background-color: var(--c-mask);
+  }
+  .list_add_bookmark_entry:active {
+    background-color: var(--c-mask1);
+  }
+  .list_add_bookmark_entry:focus-visible {
+    outline: 2px solid var(--c-text);
+  }
+  .empty_content {
+    align-content: start;
   }
 </style>

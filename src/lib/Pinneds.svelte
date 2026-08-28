@@ -68,6 +68,7 @@
   let multiSelectMode = $state(false);
   let selectedIds = $state<Set<number | string>>(new Set());
   let lastClickedIndex = $state(-1);
+  let batchActionLoading = $state(false);
 
   let showPinnedMenu = $state(false);
   let showFrequentMenu = $state(false);
@@ -223,7 +224,8 @@
     selectedBtn?.focus();
   }
 
-  function clearSelection() {
+  function clearSelection(force = false) {
+    if (batchActionLoading && !force) return;
     multiSelectMode = false;
     selectedIds = new Set();
   }
@@ -243,6 +245,7 @@
   });
 
   function handleItemClick(_e: MouseEvent, pinned: WebSite, index: number) {
+    if (batchActionLoading) return;
     if (_e.shiftKey && lastClickedIndex >= 0) {
       _e.preventDefault();
       const start = Math.min(lastClickedIndex, index);
@@ -260,6 +263,7 @@
   }
 
   function toggleSelect(pinned: WebSite) {
+    if (batchActionLoading) return;
     const id = pinned.id ?? pinned.url;
     const next = new Set(selectedIds);
     if (next.has(id)) {
@@ -286,16 +290,16 @@
   );
 
   function toggleSelectAll() {
+    if (batchActionLoading) return;
     if (allSelected) {
-      selectedIds = new Set();
-      multiSelectMode = false;
+      clearSelection(true);
     } else {
       selectedIds = new Set(allPinneds.map((p) => p.id ?? p.url));
     }
   }
 
   async function deleteSelected() {
-    if (!selectedCount) return;
+    if (!selectedCount || batchActionLoading) return;
     if (
       !(await requestConfirm(
         t("nt_confirm_delete_common_sites_title"),
@@ -304,15 +308,20 @@
     ) {
       return;
     }
-    for (const pinned of allPinneds) {
+    const selectedPinneds = allPinneds.filter((pinned) => {
       const id = pinned.id ?? pinned.url;
-      if (selectedIds.has(id) && pinned.id) {
-        await deleteWebSite(pinned.id);
-      }
+      return selectedIds.has(id) && !!pinned.id;
+    });
+    batchActionLoading = true;
+    try {
+      await Promise.allSettled(
+        selectedPinneds.map((pinned) => deleteWebSite(pinned.id!)),
+      );
+      clearSelection(true);
+      await onUpdate();
+    } finally {
+      batchActionLoading = false;
     }
-    selectedIds = new Set();
-    multiSelectMode = false;
-    onUpdate();
   }
 
   function trackStickyFrequentTitle(node: HTMLElement) {
@@ -411,6 +420,7 @@
               <Button
                 onclick={(e) => handleItemClick(e, pinned, i)}
                 sel={multiSelectMode && isSelected(pinned)}
+                outlined={!isSelected(pinned)}
                 r="r1"
               >
                 <G>
@@ -439,23 +449,16 @@
             {/if}
           </div>
         {/each}
-        {#if multiSelectMode}
-          <div class="clear_btn_wrapper">
-            <Button onclick={clearSelection} r="r1">
-              <G>
-                <Icon name="X" color="var(--c-main)" />
-              </G>
-            </Button>
-          </div>
-        {/if}
         <div class="batch_bar_container">
           <BatchToolbar
             show={multiSelectMode}
             count={selectedCount}
             {allSelected}
             showDeleteText
+            disabled={batchActionLoading}
             onselectall={toggleSelectAll}
             ondelete={deleteSelected}
+            onclose={() => clearSelection()}
           />
         </div>
       </div>
@@ -639,6 +642,7 @@
     width: 100%;
     align-items: center;
     gap: calc(var(--gap) * 2);
+    position: relative;
   }
   .section {
     display: flex;
@@ -814,21 +818,17 @@
   }
 
   .multi_select {
-    outline: var(--c-main-3) 2px solid;
+    box-shadow: inset 0 0 0 2px var(--c-main-3);
     position: relative;
     user-select: none;
   }
 
-  .clear_btn_wrapper {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    z-index: 5;
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-end;
-    background-color: var(--c-main-3);
-    border-radius: var(--r1) 0 var(--r1) 0;
+  .content.multi_select::after {
+    content: "";
+    display: block;
+    grid-column: 1 / -1;
+    height: calc(64px + var(--gap) * 2);
+    pointer-events: none;
   }
 
   .batch_bar_container {

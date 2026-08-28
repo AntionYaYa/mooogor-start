@@ -305,6 +305,24 @@
   "nt_add_pinned_title": {
     "message": "新增常用網站"
   },
+  "nt_add_bookmark": {
+    "message": "新增書籤"
+  },
+  "nt_add_bookmark_title": {
+    "message": "新增書籤或資料夾"
+  },
+  "nt_add_bookmark_type": {
+    "message": "新增類型"
+  },
+  "nt_bookmark": {
+    "message": "書籤"
+  },
+  "nt_bookmark_folder": {
+    "message": "資料夾"
+  },
+  "nt_add": {
+    "message": "新增"
+  },
   "nt_popup_open_newtab": {
     "message": "開啟新分頁"
   },
@@ -430,9 +448,6 @@
   },
   "nt_dissolve_bookmark_folder": {
     "message": "解散資料夾"
-  },
-  "nt_dissolve_bookmark_folder_confirm": {
-    "message": "將資料夾內的所有項目移回目前層級，並移除空資料夾嗎？"
   },
   "nt_switch": {
     "message": "開關"

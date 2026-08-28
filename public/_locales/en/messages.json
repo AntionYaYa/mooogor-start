@@ -305,6 +305,24 @@
   "nt_add_pinned_title": {
     "message": "Add Common Site"
   },
+  "nt_add_bookmark": {
+    "message": "Add bookmark"
+  },
+  "nt_add_bookmark_title": {
+    "message": "Add bookmark or folder"
+  },
+  "nt_add_bookmark_type": {
+    "message": "Item type"
+  },
+  "nt_bookmark": {
+    "message": "Bookmark"
+  },
+  "nt_bookmark_folder": {
+    "message": "Folder"
+  },
+  "nt_add": {
+    "message": "Add"
+  },
   "nt_popup_open_newtab": {
     "message": "Open new tab"
   },
@@ -430,9 +448,6 @@
   },
   "nt_dissolve_bookmark_folder": {
     "message": "Dissolve folder"
-  },
-  "nt_dissolve_bookmark_folder_confirm": {
-    "message": "Move all items in this folder back to the current level and remove the empty folder?"
   },
   "nt_switch": {
     "message": "Toggle"

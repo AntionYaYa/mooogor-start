@@ -967,7 +967,6 @@
         <div class="input_group">
             {#if !showMoreEngines}
                 <div class="input_box">
-                    <!-- svelte-ignore a11y_autofocus -->
                     <input
                         name="Search"
                         class="input"
@@ -991,7 +990,6 @@
                         onblur={handleInputBlur}
                         oninput={() => searchInput(inputValue)}
                         onkeydown={inputKey}
-                        autofocus
                     />
                     {#if inputValue.length}
                         <Button

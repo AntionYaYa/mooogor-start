@@ -67,7 +67,7 @@
         </G>
       </Button>
       {#if onclose}
-        <Button onclick={onclose} disabled={disabled} fill>
+        <Button onclick={onclose} disabled={disabled}>
           <G align="c">
             <Icon name="X" color="var(--c-text)" />
           </G>
@@ -90,7 +90,7 @@
     gap: var(--gap);
     padding: var(--gap);
     background-color: var(--c-bg1);
-    border-radius: var(--r);
+    border-radius: var(--r1);
     box-shadow: var(--shadow);
     pointer-events: auto;
     max-width: 400px;
