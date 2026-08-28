@@ -490,7 +490,7 @@
               opacity={0.6}
               size={16}
             />
-            <T type="m" color="var(--c-text-1)">
+            <T type="m" color="var(--c-text-1)" fullWidth={false}>
               {t("nt_frequent_section")}
             </T>
             <Button

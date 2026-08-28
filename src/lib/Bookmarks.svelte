@@ -85,26 +85,6 @@
   let pendingReorderSignature = "";
   let reorderDelayId: ReturnType<typeof setTimeout> | null = null;
   const REORDER_HOVER_DELAY_MS = 280;
-  const ADD_BOOKMARK_DND_ID = "__add-bookmark-placeholder__";
-  const addBookmarkDndItem: BookmarkNode = {
-    id: ADD_BOOKMARK_DND_ID,
-    parentId: "",
-    title: "",
-    syncing: false,
-  };
-  const dndItems = $derived(
-    !multiSelectMode && bookmarkNode.id !== "0"
-      ? [...items, addBookmarkDndItem]
-      : items,
-  );
-
-  function withoutAddBookmarkEntry(nodes: BookmarkNode[]) {
-    return nodes.filter((node) => node.id !== ADD_BOOKMARK_DND_ID);
-  }
-
-  function stopAddBookmarkDrag(event: Event) {
-    event.stopPropagation();
-  }
 
   function openAddBookmark(event: MouseEvent) {
     event.stopPropagation();
@@ -268,7 +248,7 @@
 
   function handleConsider(e: CustomEvent<DndEvent<BookmarkNode>>) {
     if (!canSortItems) return;
-    const nextItems = withoutAddBookmarkEntry(e.detail.items);
+    const nextItems = e.detail.items;
     if (e.detail.info.trigger === "dragStarted") {
       cancelReorderDelay();
       pendingReorderItems = null;
@@ -297,7 +277,7 @@
     const sourceId = draggedBookmarkId ?? e.detail.info.id;
     const targetId = releasedCombineTargetId ?? combineTargetId;
     sorting = false;
-    items = withoutAddBookmarkEntry(e.detail.items);
+    items = e.detail.items;
     draggedBookmarkId = null;
     combineTargetId = null;
     releasedCombineTargetId = null;
@@ -739,7 +719,7 @@
         use:disableKeyboardDnd
         use:dndzone={canSortItems
           ? {
-              items: dndItems,
+              items,
               flipDurationMs: 200,
               type: `bookmark-${bookmarkNode.id}`,
               dropTargetStyle: {},
@@ -751,7 +731,7 @@
               dropFromOthersDisabled: multiSelectMode,
             }
           : {
-              items: dndItems,
+              items,
               flipDurationMs: 200,
               type: `bookmark-${bookmarkNode.id}`,
               dropTargetStyle: {},
@@ -787,10 +767,12 @@
             {@render tembkmkWrapper(bkmk, i)}
           </div>
         {/each}
-        {#if !multiSelectMode && bookmarkNode.id !== "0"}
-          {@render addBookmarkEntry()}
-        {/if}
       </div>
+      {#if bookmarkNode.id !== "0"}
+        <div class="add_entry_content {list ? 'list' : 'grid'}">
+          {@render addBookmarkEntry()}
+        </div>
+      {/if}
     {:else}
       <div class="content {list ? 'list' : 'grid'} empty_content">
         {#if bookmarkNode.id !== "0"}
@@ -826,9 +808,6 @@
       <button
         type="button"
         class="list_add_bookmark_entry"
-        onmousedown={stopAddBookmarkDrag}
-        ontouchstart={stopAddBookmarkDrag}
-        onkeydown={stopAddBookmarkDrag}
         onclick={openAddBookmark}
       >
         <G align="c">
@@ -851,9 +830,6 @@
   <button
     type="button"
     class="add_bookmark_entry"
-    onmousedown={stopAddBookmarkDrag}
-    ontouchstart={stopAddBookmarkDrag}
-    onkeydown={stopAddBookmarkDrag}
     onclick={openAddBookmark}
   >
     <G>
@@ -1205,6 +1181,12 @@
     width: 100%;
     box-sizing: border-box;
     border-radius: var(--r1);
+  }
+  .add_entry_content {
+    gap: var(--gap);
+    width: 100%;
+    padding: 0 var(--gap) var(--gap);
+    box-sizing: border-box;
   }
   .content.sorting {
     outline: 2px dashed var(--c-mask);

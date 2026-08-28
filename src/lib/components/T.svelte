@@ -9,12 +9,13 @@
 		color?: string;
 		align?: alignType;
 		strike?: boolean;
+		fullWidth?: boolean;
 	}
-	let { children, type = "m", bold, nowrap, color, align, strike }: Props = $props();
+	let { children, type = "m", bold, nowrap, color, align, strike, fullWidth=true }: Props = $props();
 </script>
 
 <p
-	class="{type} {bold ? 'bold' : ''} {nowrap ? 'nowrap' : ''} {strike ? 'strike' : ''}"
+	class="{type} {bold ? 'bold' : ''} {nowrap ? 'nowrap' : ''} {strike ? 'strike' : ''} {fullWidth ? 'full-width' : ''}"
 	style="color: {color}; text-align: {align === 'c' ? 'center' : align === 'r' ?'right': 'left'}"
 >
 	{@render children()}
@@ -24,7 +25,6 @@
 	p {
 		margin: 0;
 		padding: calc(var(--gap) / 2) var(--gap);
-		width: 100%;
 		border-radius: var(--r);
 		box-sizing: border-box;
 		overflow: hidden;
@@ -62,5 +62,8 @@
 	}
 	.strike {
 		text-decoration: line-through;
+	}
+	.full-width {
+		width: 100%;
 	}
 </style>
