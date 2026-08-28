@@ -407,6 +407,9 @@
   "nt_drag_to_enable_sortable": {
     "message": "Drag here to enable (sortable)"
   },
+  "nt_drag_to_sort": {
+    "message": "Drag to reorder"
+  },
   "nt_click_to_enable": {
     "message": "Enable $1"
   },

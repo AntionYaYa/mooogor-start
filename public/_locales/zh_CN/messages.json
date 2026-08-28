@@ -407,6 +407,9 @@
   "nt_drag_to_enable_sortable": {
     "message": "拖拽到这里激活（可排序）"
   },
+  "nt_drag_to_sort": {
+    "message": "拖拽排序"
+  },
   "nt_click_to_enable": {
     "message": "激活$1"
   },

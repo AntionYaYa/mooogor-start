@@ -407,6 +407,9 @@
   "nt_drag_to_enable_sortable": {
     "message": "拖曳到這裡啟用（可排序）"
   },
+  "nt_drag_to_sort": {
+    "message": "拖曳排序"
+  },
   "nt_click_to_enable": {
     "message": "啟用$1"
   },

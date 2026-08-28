@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { scale, slide } from "svelte/transition";
+    import { slide } from "svelte/transition";
     import { flip } from "svelte/animate";
     import { dndzone } from "svelte-dnd-action";
     import type { DndEvent } from "svelte-dnd-action";
@@ -277,7 +277,8 @@
             databaseConfigAttempted = false;
             return;
         }
-        engineConfigReady = false;
+        // Keep an already rendered search panel mounted during background
+        // refreshes so its expand/collapse transitions are not interrupted.
         try {
             const [categories, enabled, disabled] = await Promise.all([
                 getEngineCategories(),
@@ -420,63 +421,35 @@
     }
 
     function mergeEnabledFromZone(zoneItems: Engine[]): Engine[] {
-        const zoneResult = zoneItems.map((item) => ({
-            ...item,
-            enabled: true,
-        }));
-
         if (engineCategories.length <= 1) {
-            return zoneResult;
+            return zoneItems;
         }
 
         const otherEnabled = enabledEngines.filter(
             (e) => normalizeEngineCategoryId(e.category) !== selectedCategoryId,
         );
 
-        return [...otherEnabled, ...zoneResult];
+        return [...otherEnabled, ...zoneItems];
     }
 
     function mergeDisabledFromZone(zoneItems: Engine[]): Engine[] {
-        const zoneResult = zoneItems.map((item) => ({
-            ...item,
-            enabled: false,
-        }));
-
         if (engineCategories.length <= 1) {
-            return zoneResult;
+            return zoneItems;
         }
 
         const otherDisabled = disabledEngines.filter(
             (e) => normalizeEngineCategoryId(e.category) !== selectedCategoryId,
         );
 
-        return [...otherDisabled, ...zoneResult];
+        return [...otherDisabled, ...zoneItems];
     }
 
-    function getZoneItemIds(zoneItems: Engine[]) {
-        return new Set(
-            zoneItems
-                .map((item) => item.id)
-                .filter((id): id is number => typeof id === "number"),
-        );
-    }
-
-    function syncFromEnabledZone(zoneItems: Engine[]) {
-        const zoneIds = getZoneItemIds(zoneItems);
+    function updateEnabledZoneOrder(zoneItems: Engine[]) {
         enabledEngines = mergeEnabledFromZone(zoneItems);
-        if (!zoneIds.size) return;
-        disabledEngines = disabledEngines.filter(
-            (item) => !item.id || !zoneIds.has(item.id),
-        );
     }
 
-    function syncFromDisabledZone(zoneItems: Engine[]) {
-        const zoneIds = getZoneItemIds(zoneItems);
+    function updateDisabledZoneOrder(zoneItems: Engine[]) {
         disabledEngines = mergeDisabledFromZone(zoneItems);
-        if (!zoneIds.size) return;
-        enabledEngines = enabledEngines.filter(
-            (item) => !item.id || !zoneIds.has(item.id),
-        );
     }
 
     async function persistEnginesState() {
@@ -537,18 +510,55 @@
         }, 0);
     }
 
+    function disableKeyboardDnd(node: HTMLElement) {
+        const stopKeyboardDrag = (event: KeyboardEvent) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) return;
+            const item = target.closest<HTMLElement>(".engine_item");
+            if (!item || item.parentElement !== node) return;
+
+            // The inner disabled-engine button owns Enter/Space so it can
+            // continue to enable the engine without starting keyboard DnD.
+            if (
+                target !== item &&
+                (event.key === "Enter" || event.key === " ")
+            ) {
+                return;
+            }
+            if (
+                event.key !== "Enter" &&
+                event.key !== " " &&
+                event.key !== "ArrowUp" &&
+                event.key !== "ArrowDown" &&
+                event.key !== "ArrowLeft" &&
+                event.key !== "ArrowRight"
+            ) {
+                return;
+            }
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        };
+
+        node.addEventListener("keydown", stopKeyboardDrag, true);
+        return {
+            destroy() {
+                node.removeEventListener("keydown", stopKeyboardDrag, true);
+            },
+        };
+    }
+
     function handleConsiderEnabled(e: CustomEvent<DndEvent<Engine>>) {
         markEngineDragging();
-        syncFromEnabledZone(e.detail.items);
+        updateEnabledZoneOrder(e.detail.items);
     }
 
     function handleConsiderDisabled(e: CustomEvent<DndEvent<Engine>>) {
         markEngineDragging();
-        syncFromDisabledZone(e.detail.items);
+        updateDisabledZoneOrder(e.detail.items);
     }
 
     async function handleFinalizeEnabled(e: CustomEvent<DndEvent<Engine>>) {
-        syncFromEnabledZone(e.detail.items);
+        updateEnabledZoneOrder(e.detail.items);
         try {
             await persistEnginesState();
         } finally {
@@ -557,7 +567,7 @@
     }
 
     async function handleFinalizeDisabled(e: CustomEvent<DndEvent<Engine>>) {
-        syncFromDisabledZone(e.detail.items);
+        updateDisabledZoneOrder(e.detail.items);
         try {
             await persistEnginesState();
         } finally {
@@ -1056,16 +1066,16 @@
             bind:this={engineEls}
             class="engines"
             class:drag={showMoreEngines}
-            data-dnd-hint={t("nt_drag_to_enable_sortable")}
+            data-dnd-hint={t("nt_drag_to_sort")}
             use:dndzone={{
                 items: displayEnabledEngines,
                 flipDurationMs: 200,
-                type: "engines",
+                type: `enabled-engines-${selectedCategoryId}`,
                 zoneTabIndex: -1,
                 zoneItemTabIndex: -1,
                 dropTargetStyle: {},
                 dragDisabled: effectiveReadOnly || !showMoreEngines,
-                dropFromOthersDisabled: effectiveReadOnly,
+                dropFromOthersDisabled: true,
             }}
             onconsider={handleConsiderEnabled}
             onfinalize={handleFinalizeEnabled}
@@ -1074,7 +1084,6 @@
                 <div
                     class="engine_item"
                     animate:flip={{ duration: 200 }}
-                    transition:scale={{ duration: 160, start: 0.85 }}
                 >
                     <a
                         class="engine"
@@ -1120,16 +1129,17 @@
         <div
             class="more_g"
             class:drag={showMoreEngines}
-            data-dnd-hint={t("nt_drag_to_disable")}
+            data-dnd-hint={t("nt_drag_to_sort")}
+            use:disableKeyboardDnd
             use:dndzone={{
                 items: displayDisabledEngines,
                 flipDurationMs: 200,
-                type: "engines",
+                type: `disabled-engines-${selectedCategoryId}`,
                 zoneTabIndex: -1,
                 zoneItemTabIndex: -1,
                 dropTargetStyle: {},
                 dragDisabled: effectiveReadOnly,
-                dropFromOthersDisabled: effectiveReadOnly,
+                dropFromOthersDisabled: true,
             }}
             onconsider={handleConsiderDisabled}
             onfinalize={handleFinalizeDisabled}
@@ -1138,7 +1148,6 @@
                 <div
                     class="engine_item"
                     animate:flip={{ duration: 200 }}
-                    transition:scale={{ duration: 160, start: 0.85 }}
                 >
                     <div
                         class="more_item"
@@ -1353,7 +1362,7 @@
         cursor: pointer;
     }
     .more_item:focus-visible {
-        outline: 2px var(--c-text) solid;
+        outline: 2px var(--c-main) solid;
     }
     .search_g {
         display: flex;
@@ -1532,10 +1541,6 @@
         min-width: 30px;
         flex: 0 0 auto;
     }
-    .engine:focus {
-        outline: 2px var(--c-text) solid;
-    }
-
     .engine.selected {
         outline: 2px var(--c-text-2) solid;
     }
@@ -1556,7 +1561,9 @@
     .item:active {
         background-color: var(--c-mask);
     }
-    .engine:focus,
+    .engine:focus {
+        outline: 2px var(--c-main) solid;
+    }
     .item:focus {
         outline: 2px var(--c-text) solid;
     }
