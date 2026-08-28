@@ -503,6 +503,10 @@
 
         enabledEngines = enabledEngines.filter((item) => !isSameEngine(item));
         disabledEngines = [...disabledEngines, { ...engine, enabled: false }];
+        if (selectedEngineUrl === engine.engineUrl) {
+            const nextEngine = displayEnabledEngines[0];
+            if (nextEngine) selectEngine(nextEngine);
+        }
         await persistEnginesState();
     }
 
@@ -567,20 +571,14 @@
 
     async function handleFinalizeEnabled(e: CustomEvent<DndEvent<Engine>>) {
         updateEnabledZoneOrder(e.detail.items);
-        try {
-            await persistEnginesState();
-        } finally {
-            clearEngineDragging();
-        }
+        clearEngineDragging();
+        await persistEnginesState();
     }
 
     async function handleFinalizeDisabled(e: CustomEvent<DndEvent<Engine>>) {
         updateDisabledZoneOrder(e.detail.items);
-        try {
-            await persistEnginesState();
-        } finally {
-            clearEngineDragging();
-        }
+        clearEngineDragging();
+        await persistEnginesState();
     }
 
     async function searchInput(value: string) {
