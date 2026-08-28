@@ -628,7 +628,7 @@
     onclickClose={() => (showFrequentInfo = false)}
   >
     <div class="info_body">
-      <T type="s" color="var(--c-text)">
+      <T type="s" color="var(--c-text-1)">
         {t("nt_frequent_info_desc")}
       </T>
     </div>

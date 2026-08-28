@@ -69,7 +69,16 @@
   title={isEdit ? t("nt_edit_pinned_title") : t("nt_add_pinned_title")}
   {onclickClose}
 >
+
   <G full>
+    <Input
+      name="title"
+      type="text"
+      placeholder={t("nt_input_name")}
+      bind:value={inputTitleValue}
+    />
+  </G>
+    <G full>
     <Shake shake={inputUrlValueErr}>
       <Input
         name="url"
@@ -78,14 +87,6 @@
         bind:value={inputUrlValue}
       />
     </Shake>
-  </G>
-  <G full>
-    <Input
-      name="title"
-      type="text"
-      placeholder={t("nt_input_name")}
-      bind:value={inputTitleValue}
-    />
   </G>
   {#if isEdit && onDelete}
     <div class="actions has_delete">

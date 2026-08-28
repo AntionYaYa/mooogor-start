@@ -72,6 +72,7 @@
   let currentTabId: number | undefined = $state();
   let currentTabPinned = $state(false);
   let showAdd = $state(false);
+  let showAddBookmark = $state(false);
   let showAbout = $state(false);
   let showSupport = $state(false);
   let clearHistoryRequestKey = $state(0);
@@ -158,6 +159,7 @@
     initializationFailed = false;
     showSetting = false;
     showAdd = false;
+    showAddBookmark = false;
     // Render the page shell immediately. Data-dependent areas use skeletons
     // until persisted configuration is available.
     userSettings = DEFAULT_SETTINGS;
@@ -756,17 +758,7 @@
       <div class="content">
         <div class="tabs">
           <div class="side side-left">
-            {#if selTab?.key === "0" && websitesState === "ready"}
-              <div in:fly={{ x: -50, duration: 300 }}>
-                <G align="c">
-                  <Button onclick={() => (showAdd = true)}>
-                    <G>
-                      <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
-                    </G>
-                  </Button>
-                </G>
-              </div>
-            {:else if selTab?.key === "1" && historyStack.length > 1}
+            {#if selTab?.key === "1" && historyStack.length > 1}
               <div in:fly={{ x: 50, duration: 300 }}>
                 <G align="c">
                   <Button onclick={goBack}>
@@ -787,9 +779,30 @@
             <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
           </div>
           <div class="side side-right">
-            {#if selTab?.key === "1" && historyStack.length > 0}
+            {#if selTab?.key === "0" && websitesState === "ready"}
               <div in:fly={{ x: -50, duration: 300 }}>
                 <G align="c">
+                  <Button onclick={() => (showAdd = true)}>
+                    <G>
+                      <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
+                    </G>
+                  </Button>
+                </G>
+              </div>
+            {:else if selTab?.key === "1" && historyStack.length > 0}
+              <div in:fly={{ x: -50, duration: 300 }}>
+                <G align="c">
+                  {#if currentNode?.id !== "0"}
+                    <Button onclick={() => (showAddBookmark = true)}>
+                      <G>
+                        <Icon
+                          name="Plus"
+                          color="var(--c-text)"
+                          opacity={0.6}
+                        />
+                      </G>
+                    </Button>
+                  {/if}
                   {#if gridView}
                     <Button onclick={() => (gridView = false)} bg='var(--c-text)'>
                       <G>
@@ -962,6 +975,7 @@
       <Bookmarks
         list={gridView}
         bookmarkNode={currentNode}
+        bind:showAddBookmark
         newTabOpen={effectiveNewTabOpen}
         settingsOpen={showSetting}
         onclickFolder={(bkmk) => clickFolder(bkmk)}
@@ -1095,7 +1109,7 @@
   }
   .tabs {
     display: grid;
-    grid-template-columns: 48px minmax(0, 1fr) 48px;
+    grid-template-columns: 88px minmax(0, 1fr) 88px;
     align-items: center;
     width: 100%;
     box-sizing: border-box;

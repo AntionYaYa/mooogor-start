@@ -30,6 +30,7 @@
 
   interface Props {
     bookmarkNode: BookmarkNode;
+    showAddBookmark?: boolean;
     list?: boolean;
     newTabOpen?: boolean;
     settingsOpen?: boolean;
@@ -40,6 +41,7 @@
 
   let {
     bookmarkNode,
+    showAddBookmark = $bindable(false),
     list,
     newTabOpen = false,
     settingsOpen = false,
@@ -53,7 +55,6 @@
 
   let showMenu = $state(false);
   let showEdit = $state(false);
-  let showAddBookmark = $state(false);
   let showMove = $state(false);
   let confirmOptions = $state<{
     title: string;
@@ -85,11 +86,6 @@
   let pendingReorderSignature = "";
   let reorderDelayId: ReturnType<typeof setTimeout> | null = null;
   const REORDER_HOVER_DELAY_MS = 280;
-
-  function openAddBookmark(event: MouseEvent) {
-    event.stopPropagation();
-    showAddBookmark = true;
-  }
 
   function notifyBookmarksUpdated() {
     if (typeof window === "undefined") return;
@@ -768,18 +764,9 @@
           </div>
         {/each}
       </div>
-      {#if bookmarkNode.id !== "0"}
-        <div class="add_entry_content {list ? 'list' : 'grid'}">
-          {@render addBookmarkEntry()}
-        </div>
-      {/if}
     {:else}
       <div class="content {list ? 'list' : 'grid'} empty_content">
-        {#if bookmarkNode.id !== "0"}
-          {@render addBookmarkEntry()}
-        {:else}
-          <NoData iconName="Bookmark" title={t("nt_no_bookmarks")} />
-        {/if}
+        <NoData iconName="Bookmark" title={t("nt_no_bookmarks")} />
       </div>
     {/if}
   </div>
@@ -801,42 +788,6 @@
     </div>
   {/if}
 </div>
-
-{#snippet addBookmarkEntry()}
-  <div class="add_box">
-    {#if list}
-      <button
-        type="button"
-        class="list_add_bookmark_entry"
-        onclick={openAddBookmark}
-      >
-        <G align="c">
-          <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
-        </G>
-        <G full align="c">
-          <T type="m" nowrap>{t("nt_add_bookmark")}</T>
-        </G>
-      </button>
-    {:else}
-      <G vertical align="c" gap>
-        {@render addBookmarkButton()}
-        <T type="s" align="c" nowrap>{t("nt_add_bookmark")}</T>
-      </G>
-    {/if}
-  </div>
-{/snippet}
-
-{#snippet addBookmarkButton()}
-  <button
-    type="button"
-    class="add_bookmark_entry"
-    onclick={openAddBookmark}
-  >
-    <G>
-      <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
-    </G>
-  </button>
-{/snippet}
 
 {#snippet temText(list: boolean, text: string)}
   {@const hasText = !!text}
@@ -1182,12 +1133,6 @@
     box-sizing: border-box;
     border-radius: var(--r1);
   }
-  .add_entry_content {
-    gap: var(--gap);
-    width: 100%;
-    padding: 0 var(--gap) var(--gap);
-    box-sizing: border-box;
-  }
   .content.sorting {
     outline: 2px dashed var(--c-mask);
     outline-offset: -2px;
@@ -1332,71 +1277,6 @@
   }
   .item {
     cursor: default !important;
-  }
-  .add_box {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--gap);
-    padding: var(--gap);
-    box-sizing: border-box;
-    cursor: default !important;
-    pointer-events: none;
-  }
-  .add_bookmark_entry {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--gap);
-    background: transparent;
-    border:  var(--c-border) 2px dashed;
-    border-radius: var(--r1);
-    padding: var(--gap);
-    box-sizing: border-box;
-    cursor: default;
-    pointer-events: auto;
-  }
-  .add_bookmark_entry:hover {
-    background-color: var(--c-mask);
-  }
-  .add_bookmark_entry:active {
-    background-color: var(--c-mask1);
-  }
-  .add_bookmark_entry:focus-visible {
-    outline: 2px solid var(--c-text);
-  }
-  .grid .add_box {
-    min-height: 84px;
-    flex-direction: column;
-  }
-  .list .add_box {
-    width: 100%;
-    min-height: 40px;
-    padding: 0;
-  }
-  .list_add_bookmark_entry {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-width: 0;
-    min-height: 40px;
-    padding: 0;
-    color: var(--c-text);
-    background: transparent;
-    border: none;
-    border-radius: var(--r);
-    box-sizing: border-box;
-    cursor: default;
-    pointer-events: auto;
-  }
-  .list_add_bookmark_entry:hover {
-    background-color: var(--c-mask);
-  }
-  .list_add_bookmark_entry:active {
-    background-color: var(--c-mask1);
-  }
-  .list_add_bookmark_entry:focus-visible {
-    outline: 2px solid var(--c-text);
   }
   .empty_content {
     align-content: start;
