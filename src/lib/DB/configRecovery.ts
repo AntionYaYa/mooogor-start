@@ -4,6 +4,10 @@ import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
 import { readStoredConfig, writeStoredConfig, type StoredConfig } from "./configStorage";
 import { DEFAULT_SETTINGS, type AppLanguage } from "@/lib/utils/settings";
 import { getEffectiveLanguage } from "@/lib/utils/i18n";
+import {
+  PRESET_BACKGROUNDS,
+  cloneBackgroundItem,
+} from "@/lib/background/background";
 
 export async function resetConfigurationToDefaults(
   language: AppLanguage = "auto",
@@ -42,6 +46,7 @@ export async function resetConfigurationToDefaults(
     websites,
     engines,
     engineCategories,
+    backgrounds: PRESET_BACKGROUNDS.map(cloneBackgroundItem),
     metadata: {
       settings: { ...DEFAULT_SETTINGS, language },
     },

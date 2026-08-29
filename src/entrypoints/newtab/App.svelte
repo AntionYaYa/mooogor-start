@@ -29,6 +29,17 @@
     DEFAULT_SETTINGS,
   } from "@/lib/utils/settings";
   import type { OpenTab, UserSettings } from "@/lib/utils/settings";
+  import {
+    PRESET_BACKGROUNDS,
+    cloneBackgroundItem,
+    resolveBackgroundItem,
+    type BackgroundConfig,
+    type BackgroundItem,
+  } from "@/lib/background/background";
+  import {
+    loadBackgroundItems,
+    saveBackgroundConfiguration,
+  } from "@/lib/background/backgroundStorage";
   import { setLanguage, t } from "@/lib/utils/i18n";
   import { applyTheme } from "@/lib/utils/theme";
   import { resetCommonSitesToDefaultByLanguage } from "@/lib/settings/commonSites";
@@ -69,6 +80,10 @@
   const NEW_TAB_LOG_PREFIX = "[Mooogor NewTab]";
 
   let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
+  let backgroundItems: BackgroundItem[] = $state(
+    PRESET_BACKGROUNDS.map(cloneBackgroundItem),
+  );
+  let activeBackground: BackgroundItem | null = $state(null);
   let currentTabId: number | undefined = $state();
   let currentTabPinned = $state(false);
   let showAdd = $state(false);
@@ -96,16 +111,7 @@
       a.injectRelatedSearch === b.injectRelatedSearch &&
       a.language === b.language &&
       a.theme === b.theme &&
-      a.background.enabled === b.background.enabled &&
-      a.background.url === b.background.url &&
-      JSON.stringify(a.background.parameters) ===
-        JSON.stringify(b.background.parameters) &&
-      JSON.stringify(a.background.colorSchemes) ===
-        JSON.stringify(b.background.colorSchemes) &&
-      a.background.customUrls.length === b.background.customUrls.length &&
-      a.background.customUrls.every(
-        (url, index) => url === b.background.customUrls[index],
-      )
+      JSON.stringify(a.background) === JSON.stringify(b.background)
     );
   }
 
@@ -172,6 +178,8 @@
     // Render the page shell immediately. Data-dependent areas use skeletons
     // until persisted configuration is available.
     userSettings = DEFAULT_SETTINGS;
+    backgroundItems = PRESET_BACKGROUNDS.map(cloneBackgroundItem);
+    activeBackground = null;
     applyTheme(DEFAULT_SETTINGS.theme);
     allPinneds = [];
     updateSelTab(tabs[0]);
@@ -187,7 +195,20 @@
     firstMount = false;
     try {
       await ensureConfigReady();
-      userSettings = await loadSettings();
+      [userSettings, backgroundItems] = await Promise.all([
+        loadSettings(),
+        loadBackgroundItems(),
+      ]);
+      activeBackground = userSettings.background.enabled
+        ? resolveBackgroundItem(backgroundItems, userSettings.background.id)
+        : null;
+      if (userSettings.background.enabled && !activeBackground) {
+        userSettings = {
+          ...userSettings,
+          background: { enabled: false, id: null },
+        };
+        await saveSettings(userSettings);
+      }
       applyTheme(userSettings.theme);
       await refreshCurrentTabPinnedState();
       await setLanguage(userSettings.language);
@@ -335,6 +356,21 @@
     if (relatedSearchChanged) {
       await refreshRelatedSearchPanels();
     }
+  }
+
+  async function handleBackgroundConfigurationChange(
+    background: BackgroundConfig,
+  ) {
+    const setting = {
+      enabled: background.enabled,
+      id: background.enabled ? background.current.id : null,
+    };
+    backgroundItems = background.items.map(cloneBackgroundItem);
+    activeBackground = background.enabled
+      ? cloneBackgroundItem(background.current)
+      : null;
+    userSettings = { ...userSettings, background: setting };
+    await saveBackgroundConfiguration(setting, backgroundItems);
   }
 
   async function refreshRelatedSearchPanels() {
@@ -749,8 +785,11 @@
     <Settings
       {showSetting}
       {userSettings}
+      {backgroundItems}
+      {activeBackground}
       {currentTabPinned}
       onchangeUserSettings={handleUserSettingsChange}
+      onchangeBackground={handleBackgroundConfigurationChange}
       onclickAbout={() => (showAbout = true)}
       onclickSupport={() => (showSupport = true)}
       onOpenTab={handleSettingsOpenTab}

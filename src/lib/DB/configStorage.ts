@@ -1,4 +1,9 @@
 import type { Engine, EngineCategoryItem, WebSite } from "./database";
+import {
+  PRESET_BACKGROUNDS,
+  cloneBackgroundItem,
+  type BackgroundItem,
+} from "@/lib/background/background";
 import { browser } from "wxt/browser";
 
 export const CONFIG_STORAGE_KEY = "mooogor.config.v1";
@@ -6,6 +11,7 @@ const CONFIG_STORAGE_KEYS = {
   websites: "mooogor.websites.v1",
   engines: "mooogor.engines.v1",
   engineCategories: "mooogor.engine-categories.v1",
+  backgrounds: "mooogor.backgrounds.v1",
   metadata: "mooogor.metadata.v1",
   migration: "mooogor.config-migration.v1",
 } as const;
@@ -20,6 +26,7 @@ export type StoredConfig = {
   websites: WebSite[];
   engines: Engine[];
   engineCategories: EngineCategoryItem[];
+  backgrounds: BackgroundItem[];
   metadata: Record<string, unknown>;
 };
 
@@ -79,6 +86,9 @@ function toStoredConfig(value: Record<string, unknown>): StoredConfig {
     websites: value[CONFIG_STORAGE_KEYS.websites] as WebSite[],
     engines: value[CONFIG_STORAGE_KEYS.engines] as Engine[],
     engineCategories: value[CONFIG_STORAGE_KEYS.engineCategories] as EngineCategoryItem[],
+    backgrounds: Array.isArray(value[CONFIG_STORAGE_KEYS.backgrounds])
+      ? value[CONFIG_STORAGE_KEYS.backgrounds] as BackgroundItem[]
+      : PRESET_BACKGROUNDS.map(cloneBackgroundItem),
     metadata: value[CONFIG_STORAGE_KEYS.metadata] as Record<string, unknown>,
   };
 }
@@ -88,6 +98,8 @@ export function toStorageParts(config: StoredConfig): Record<string, unknown> {
     [CONFIG_STORAGE_KEYS.websites]: config.websites,
     [CONFIG_STORAGE_KEYS.engines]: config.engines,
     [CONFIG_STORAGE_KEYS.engineCategories]: config.engineCategories,
+    [CONFIG_STORAGE_KEYS.backgrounds]: config.backgrounds ??
+      PRESET_BACKGROUNDS.map(cloneBackgroundItem),
     [CONFIG_STORAGE_KEYS.metadata]: config.metadata,
     [CONFIG_STORAGE_KEYS.migration]: config.migration,
   };

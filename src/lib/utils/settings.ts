@@ -1,9 +1,4 @@
 import { getStoredConfig, updateStoredConfig } from "@/lib/DB/configStorage";
-import {
-  DEFAULT_BACKGROUND_CONFIG,
-  normalizeBackgroundConfig,
-  type BackgroundConfig,
-} from "@/lib/background/background";
 
 export type AppLanguage =
   | "auto"
@@ -20,6 +15,11 @@ export type AppTheme =
   | "yellow"
   | "random";
 
+export type BackgroundSettings = {
+  enabled: boolean;
+  id: string | null;
+};
+
 export type UserSettings = {
   defaultOpen: DefaultOpen;
   lastOpenTab: OpenTab;
@@ -33,7 +33,7 @@ export type UserSettings = {
   injectRelatedSearch: boolean;
   language: AppLanguage;
   theme: AppTheme;
-  background: BackgroundConfig;
+  background: BackgroundSettings;
 };
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -49,10 +49,10 @@ export const DEFAULT_SETTINGS: UserSettings = {
   injectRelatedSearch: true,
   language: "auto",
   theme: "default",
-  background: DEFAULT_BACKGROUND_CONFIG,
+  background: { enabled: false, id: null },
 };
 
-const SETTINGS_KEY = "settings";
+export const SETTINGS_KEY = "settings";
 const DEFAULT_OPEN_VALUES = ["common", "bookmark", "history", "last"] as const;
 const OPEN_TAB_VALUES = ["common", "bookmark", "history"] as const;
 const LANGUAGE_VALUES = [
@@ -94,6 +94,25 @@ function isTheme(value: unknown): value is AppTheme {
   return THEME_VALUES.includes(value as AppTheme);
 }
 
+function normalizeBackgroundSettings(value: unknown): BackgroundSettings {
+  const stored = value && typeof value === "object"
+    ? value as {
+        enabled?: unknown;
+        id?: unknown;
+        current?: { id?: unknown };
+      }
+    : {};
+  const id = typeof stored.id === "string" && stored.id
+    ? stored.id
+    : typeof stored.current?.id === "string" && stored.current.id
+      ? stored.current.id
+      : null;
+  return {
+    enabled: stored.enabled === true && id !== null,
+    id,
+  };
+}
+
 async function loadStoredSettings(): Promise<Partial<UserSettings> | undefined> {
   return (await getStoredConfig()).metadata[SETTINGS_KEY] as
     | Partial<UserSettings>
@@ -130,7 +149,7 @@ export async function loadSettings(): Promise<UserSettings> {
       ? stored.language
       : DEFAULT_SETTINGS.language,
     theme: isTheme(stored?.theme) ? stored.theme : DEFAULT_SETTINGS.theme,
-    background: normalizeBackgroundConfig(stored?.background),
+    background: normalizeBackgroundSettings(stored?.background),
   };
 }
 

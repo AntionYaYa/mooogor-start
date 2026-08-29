@@ -1,6 +1,10 @@
 import { db } from "./database";
 import type { Engine, EngineCategoryItem, WebSite } from "./database";
 import {
+  PRESET_BACKGROUNDS,
+  cloneBackgroundItem,
+} from "@/lib/background/background";
+import {
   CONFIG_STORAGE_KEY,
   getExtensionStorage,
   isStoredConfig,
@@ -20,6 +24,7 @@ function createConfig(
   return {
     schemaVersion: 1,
     migration: { status: "completed", source, completedAt: Date.now() },
+    backgrounds: PRESET_BACKGROUNDS.map(cloneBackgroundItem),
     ...data,
   };
 }
@@ -27,8 +32,17 @@ function createConfig(
 async function validateStoredConfig(expected: StoredConfig): Promise<StoredConfig> {
   const written = await readStoredConfig();
   if (!written) throw new Error("Configuration migration validation failed");
-  for (const key of ["websites", "engines", "engineCategories", "metadata"] as const) {
-    if (stableStringify(written[key]) !== stableStringify(expected[key])) {
+  for (const key of [
+    "websites",
+    "engines",
+    "engineCategories",
+    "backgrounds",
+    "metadata",
+  ] as const) {
+    const expectedValue = key === "backgrounds"
+      ? expected.backgrounds ?? PRESET_BACKGROUNDS
+      : expected[key];
+    if (stableStringify(written[key]) !== stableStringify(expectedValue)) {
       throw new Error(`Configuration migration validation failed: ${key}`);
     }
   }

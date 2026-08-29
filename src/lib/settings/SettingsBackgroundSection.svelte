@@ -1,9 +1,9 @@
 <script lang="ts">
   import {
     DEFAULT_BACKGROUND_PARAMETERS,
-    PRESET_BACKGROUND_URLS,
-    type BackgroundColorScheme,
+    cloneBackgroundItem,
     type BackgroundConfig,
+    type BackgroundItem,
   } from "@/lib/background/background";
   import Icon from "@/lib/components/Icon.svelte";
   import T from "@/lib/components/T.svelte";
@@ -23,48 +23,42 @@
   let { config, onPreview, onCommit, onOpenAdd, onRemove }: Props = $props();
   let loadedUrls = $state<Record<string, boolean>>({});
 
-  let backgroundUrls = $derived([
-    ...PRESET_BACKGROUND_URLS,
-    ...config.customUrls.filter(
-      (url) =>
-        !PRESET_BACKGROUND_URLS.includes(
-          url as (typeof PRESET_BACKGROUND_URLS)[number],
-        ),
-    ),
-  ]);
-  let currentColorScheme = $derived(config.colorSchemes[config.url]);
-  let currentParameters = $derived(
-    config.parameters[config.url] ?? DEFAULT_BACKGROUND_PARAMETERS,
-  );
-
   function disableBackground() {
     onCommit({ ...config, enabled: false });
   }
 
-  function selectBackground(url: string) {
-    onCommit({ ...config, enabled: true, url });
+  function selectBackground(id: string) {
+    const item = config.items.find((item) => item.id === id);
+    if (!item) return;
+    onCommit({
+      ...config,
+      enabled: true,
+      current: cloneBackgroundItem(item),
+    });
   }
 
-  function requestRemove(event: MouseEvent, url: string) {
+  function requestRemove(event: MouseEvent, id: string) {
     event.stopPropagation();
-    onRemove(url);
+    onRemove(id);
   }
 
   function selectModeColor(
     mode: "light" | "dark",
     color: string,
-    scheme: BackgroundColorScheme,
   ) {
-    const nextScheme = {
-      ...scheme,
+    updateCurrent({
       [mode === "light" ? "lightColor" : "darkColor"]: color,
-    };
+    });
+  }
+
+  function updateCurrent(patch: Partial<BackgroundItem>) {
+    const current = { ...config.current, ...patch };
     onCommit({
       ...config,
-      colorSchemes: {
-        ...config.colorSchemes,
-        [config.url]: nextScheme,
-      },
+      current,
+      items: config.items.map((item) =>
+        item.id === current.id ? cloneBackgroundItem(current) : item,
+      ),
     });
   }
 
@@ -91,10 +85,10 @@
   ) {
     update({
       ...config,
-      parameters: {
-        ...config.parameters,
-        [config.url]: { ...currentParameters, [key]: value },
-      },
+      current: { ...config.current, [key]: value },
+      items: config.items.map((item) =>
+        item.id === config.current.id ? { ...item, [key]: value } : item,
+      ),
     });
   }
 
@@ -114,14 +108,15 @@
       onclick={disableBackground}
     ></button>
 
-    {#each backgroundUrls as url, index (url)}
+    {#each config.items as item, index (item.id)}
+      {@const url = item.url}
       <div class="background_card">
         <button
           type="button"
           class="background_choice"
-          class:selected={config.enabled && config.url === url}
+          class:selected={config.enabled && config.current.id === item.id}
           title={`${t("nt_settings_background_option")} ${index + 1}`}
-          onclick={() => selectBackground(url)}
+          onclick={() => selectBackground(item.id)}
         >
           {#if !loadedUrls[url]}
             <span class="thumbnail_placeholder" aria-hidden="true"></span>
@@ -137,13 +132,13 @@
             onerror={() => finishThumbnailLoad(url)}
           />
         </button>
-        {#if config.customUrls.includes(url)}
+        {#if item.deletable}
           <button
             type="button"
             class="remove_background"
             aria-label={t("nt_settings_background_remove")}
             title={t("nt_settings_background_remove")}
-            onclick={(event) => requestRemove(event, url)}
+            onclick={(event) => requestRemove(event, item.id)}
           >
             <Icon name="X" color="#fff" size={16} />
           </button>
@@ -161,17 +156,17 @@
     </button>
   </div>
 
-  {#if config.enabled && currentColorScheme}
+  {#if config.enabled && config.current.options.length}
     <div class="color_modes">
       {@render colorMode(
         t("nt_settings_background_light_color"),
         "light",
-        currentColorScheme,
+        config.current,
       )}
       {@render colorMode(
         t("nt_settings_background_dark_color"),
         "dark",
-        currentColorScheme,
+        config.current,
       )}
     </div>
   {/if}
@@ -181,7 +176,7 @@
       {@render rangeControl(
         t("nt_settings_background_fade"),
         "fadePosition",
-        currentParameters.fadePosition,
+        config.current.fadePosition,
         0,
         200,
         "%",
@@ -189,7 +184,7 @@
       {@render rangeControl(
         t("nt_settings_background_scale"),
         "scale",
-        currentParameters.scale,
+        config.current.scale,
         100,
         200,
         "%",
@@ -197,7 +192,7 @@
       {@render rangeControl(
         t("nt_settings_background_position_x"),
         "positionX",
-        currentParameters.positionX,
+        config.current.positionX,
         0,
         100,
         "%",
@@ -205,7 +200,7 @@
       {@render rangeControl(
         t("nt_settings_background_position_y"),
         "positionY",
-        currentParameters.positionY,
+        config.current.positionY,
         0,
         100,
         "%",
@@ -213,7 +208,7 @@
       {@render rangeControl(
         t("nt_settings_background_blur"),
         "blur",
-        currentParameters.blur,
+        config.current.blur,
         0,
         100,
         "%",
@@ -225,23 +220,23 @@
 {#snippet colorMode(
   label: string,
   mode: "light" | "dark",
-  scheme: BackgroundColorScheme,
+  background: BackgroundItem,
 )}
   <div class="color_mode">
   <G>
     <T type="s">{label}</T>
   </G>
     <div class="color_options">
-      {#each scheme.options as option (option.base)}
+      {#each background.options as option (option.base)}
         {@const color = mode === "light" ? option.light : option.dark}
         <button
           type="button"
           class="color_option"
           class:selected_color={color ===
-            (mode === "light" ? scheme.lightColor : scheme.darkColor)}
+            (mode === "light" ? background.lightColor : background.darkColor)}
           title={color}
           aria-label={`${label} ${color}`}
-          onclick={() => selectModeColor(mode, color, scheme)}
+          onclick={() => selectModeColor(mode, color)}
         >
           <span class="color_swatch" style:background-color={color}></span>
         </button>

@@ -9,18 +9,22 @@ export const PRESET_BACKGROUND_URLS = [
 
 export type BackgroundConfig = {
   enabled: boolean;
-  url: string;
-  customUrls: string[];
-  parameters: Record<string, BackgroundParameters>;
-  colorSchemes: Record<string, BackgroundColorScheme>;
+  current: BackgroundItem;
+  items: BackgroundItem[];
 };
 
-export type BackgroundParameters = {
+export type BackgroundItem = {
+  id: string;
+  url: string;
+  deletable: boolean;
   fadePosition: number;
   scale: number;
   positionX: number;
   positionY: number;
   blur: number;
+  options: BackgroundColorOption[];
+  lightColor: string | null;
+  darkColor: string | null;
 };
 
 export type BackgroundColorOption = {
@@ -35,7 +39,7 @@ export type BackgroundColorScheme = {
   darkColor: string;
 };
 
-export const PRESET_BACKGROUND_COLOR_SCHEMES: Record<
+const PRESET_BACKGROUND_COLOR_SCHEMES: Record<
   string,
   BackgroundColorScheme
 > = {
@@ -119,7 +123,7 @@ export const PRESET_BACKGROUND_COLOR_SCHEMES: Record<
   },
 };
 
-export const DEFAULT_BACKGROUND_PARAMETERS: BackgroundParameters = {
+export const DEFAULT_BACKGROUND_PARAMETERS = {
   fadePosition: 100,
   scale: 100,
   positionX: 50,
@@ -127,18 +131,27 @@ export const DEFAULT_BACKGROUND_PARAMETERS: BackgroundParameters = {
   blur: 0,
 };
 
-function createDefaultBackgroundParameters(urls: readonly string[]) {
-  return Object.fromEntries(
-    urls.map((url) => [url, { ...DEFAULT_BACKGROUND_PARAMETERS }]),
-  );
+export function cloneBackgroundItem(item: BackgroundItem): BackgroundItem {
+  return {
+    ...item,
+    options: item.options.map((option) => ({ ...option })),
+  };
 }
+
+export const PRESET_BACKGROUNDS: BackgroundItem[] = PRESET_BACKGROUND_URLS.map(
+  (url, index) => ({
+    id: `preset-${index + 1}`,
+    url,
+    deletable: false,
+    ...DEFAULT_BACKGROUND_PARAMETERS,
+    ...PRESET_BACKGROUND_COLOR_SCHEMES[url],
+  }),
+);
 
 export const DEFAULT_BACKGROUND_CONFIG: BackgroundConfig = {
   enabled: false,
-  url: PRESET_BACKGROUND_URLS[0],
-  customUrls: [],
-  parameters: createDefaultBackgroundParameters(PRESET_BACKGROUND_URLS),
-  colorSchemes: PRESET_BACKGROUND_COLOR_SCHEMES,
+  current: cloneBackgroundItem(PRESET_BACKGROUNDS[0]),
+  items: PRESET_BACKGROUNDS.map(cloneBackgroundItem),
 };
 
 export function isBackgroundUrl(value: unknown): value is string {
@@ -226,98 +239,93 @@ export function createBackgroundColorScheme(
   };
 }
 
-function normalizeColorScheme(value: unknown): BackgroundColorScheme | null {
-  if (!value || typeof value !== "object") return null;
-  const stored = value as Partial<BackgroundColorScheme>;
-  const options = Array.isArray(stored.options)
-    ? stored.options.flatMap((option) => {
-        if (!option || typeof option !== "object") return [];
-        const item = option as Partial<BackgroundColorOption>;
-        return isBackgroundColor(item.base) &&
-          isBackgroundColor(item.light) &&
-          isBackgroundColor(item.dark)
-          ? [{
-              base: item.base.toLowerCase(),
-              light: item.light.toLowerCase(),
-              dark: item.dark.toLowerCase(),
-            }]
-          : [];
-      })
-    : [];
-  if (!options.length) return null;
-  return {
-    options,
-    lightColor: isBackgroundColor(stored.lightColor)
-      ? stored.lightColor.toLowerCase()
-      : options[0].light,
-    darkColor: isBackgroundColor(stored.darkColor)
-      ? stored.darkColor.toLowerCase()
-      : options[0].dark,
-  };
+function normalizeColorOptions(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((option) => {
+    if (!option || typeof option !== "object") return [];
+    const item = option as Partial<BackgroundColorOption>;
+    return isBackgroundColor(item.base) &&
+      isBackgroundColor(item.light) &&
+      isBackgroundColor(item.dark)
+      ? [{
+          base: item.base.toLowerCase(),
+          light: item.light.toLowerCase(),
+          dark: item.dark.toLowerCase(),
+        }]
+      : [];
+  });
 }
 
-function normalizeColorSchemes(value: unknown) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  return Object.fromEntries(
-    Object.entries(value).flatMap(([url, scheme]) => {
-      const normalized = isBackgroundUrl(url)
-        ? normalizeColorScheme(scheme)
-        : null;
-      return normalized ? [[url, normalized]] : [];
-    }),
-  );
-}
-
-function normalizeBackgroundParameters(value: unknown): BackgroundParameters {
+function normalizeBackgroundItem(
+  value: unknown,
+  preset?: BackgroundItem,
+): BackgroundItem | null {
   const stored =
     value && typeof value === "object"
-      ? (value as Partial<BackgroundParameters>)
+      ? (value as Partial<BackgroundItem>)
       : {};
+  const url = preset?.url ?? (isBackgroundUrl(stored.url) ? stored.url.trim() : null);
+  if (!url) return null;
+  const id = preset?.id ?? (
+    typeof stored.id === "string" && stored.id.trim()
+      ? stored.id.trim()
+      : createCustomBackgroundId(url)
+  );
+  const options = preset
+    ? preset.options.map((option) => ({ ...option }))
+    : normalizeColorOptions(stored.options);
+  const storedLightColor = isBackgroundColor(stored.lightColor)
+    ? stored.lightColor.toLowerCase()
+    : null;
+  const storedDarkColor = isBackgroundColor(stored.darkColor)
+    ? stored.darkColor.toLowerCase()
+    : null;
+  const lightColor = storedLightColor &&
+      options.some((option) => option.light === storedLightColor)
+    ? storedLightColor
+    : (preset?.lightColor ?? options[0]?.light ?? null);
+  const darkColor = storedDarkColor &&
+      options.some((option) => option.dark === storedDarkColor)
+    ? storedDarkColor
+    : (preset?.darkColor ?? options[0]?.dark ?? null);
   return {
+    id,
+    url,
+    deletable: !preset,
     fadePosition: clampNumber(
       stored.fadePosition,
-      DEFAULT_BACKGROUND_PARAMETERS.fadePosition,
+      preset?.fadePosition ?? DEFAULT_BACKGROUND_PARAMETERS.fadePosition,
       0,
       200,
     ),
     scale: clampNumber(
       stored.scale,
-      DEFAULT_BACKGROUND_PARAMETERS.scale,
+      preset?.scale ?? DEFAULT_BACKGROUND_PARAMETERS.scale,
       100,
       200,
     ),
     positionX: clampNumber(
       stored.positionX,
-      DEFAULT_BACKGROUND_PARAMETERS.positionX,
+      preset?.positionX ?? DEFAULT_BACKGROUND_PARAMETERS.positionX,
       0,
       100,
     ),
     positionY: clampNumber(
       stored.positionY,
-      DEFAULT_BACKGROUND_PARAMETERS.positionY,
+      preset?.positionY ?? DEFAULT_BACKGROUND_PARAMETERS.positionY,
       0,
       100,
     ),
     blur: clampNumber(
       stored.blur,
-      DEFAULT_BACKGROUND_PARAMETERS.blur,
+      preset?.blur ?? DEFAULT_BACKGROUND_PARAMETERS.blur,
       0,
       100,
     ),
+    options,
+    lightColor,
+    darkColor,
   };
-}
-
-function normalizeBackgroundParametersByUrl(
-  value: unknown,
-  urls: string[],
-) {
-  const stored =
-    value && typeof value === "object" && !Array.isArray(value)
-      ? (value as Record<string, unknown>)
-      : {};
-  return Object.fromEntries(
-    urls.map((url) => [url, normalizeBackgroundParameters(stored[url])]),
-  );
 }
 
 export function normalizeBackgroundConfig(
@@ -327,41 +335,72 @@ export function normalizeBackgroundConfig(
     value && typeof value === "object"
       ? (value as Partial<BackgroundConfig>)
       : {};
-  const url = isBackgroundUrl(stored.url)
-    ? stored.url.trim()
-    : DEFAULT_BACKGROUND_CONFIG.url;
-  const customUrls = Array.isArray(stored.customUrls)
-    ? [...new Set(stored.customUrls.filter(isBackgroundUrl).map((item) => item.trim()))]
-    : [];
-  const backgroundUrls = [...new Set([...PRESET_BACKGROUND_URLS, ...customUrls, url])];
-  const parameters = normalizeBackgroundParametersByUrl(
-    stored.parameters,
-    backgroundUrls,
+  const storedItems = Array.isArray(stored.items) ? stored.items : [];
+  const items = PRESET_BACKGROUNDS.map((preset) =>
+    normalizeBackgroundItem(
+      storedItems.find((item) => item?.url === preset.url),
+      preset,
+    )!,
   );
-  const colorSchemes = normalizeColorSchemes(stored.colorSchemes);
-  for (const [presetUrl, presetScheme] of Object.entries(
-    PRESET_BACKGROUND_COLOR_SCHEMES,
-  )) {
-    const selected = colorSchemes[presetUrl];
-    colorSchemes[presetUrl] = {
-      ...presetScheme,
-      lightColor: presetScheme.options.some(
-        (option) => option.light === selected?.lightColor,
-      )
-        ? selected.lightColor
-        : presetScheme.lightColor,
-      darkColor: presetScheme.options.some(
-        (option) => option.dark === selected?.darkColor,
-      )
-        ? selected.darkColor
-        : presetScheme.darkColor,
-    };
+  const presetUrls = new Set<string>(PRESET_BACKGROUND_URLS);
+  const customUrls = new Set<string>();
+  for (const value of storedItems) {
+    const item = normalizeBackgroundItem(value);
+    if (!item || presetUrls.has(item.url) || customUrls.has(item.url)) continue;
+    customUrls.add(item.url);
+    items.push(item);
   }
+  const currentId = typeof stored.current?.id === "string"
+    ? stored.current.id
+    : null;
+  const currentUrl = isBackgroundUrl(stored.current?.url)
+    ? stored.current.url.trim()
+    : PRESET_BACKGROUND_URLS[0];
+  const current = items.find((item) => item.id === currentId) ??
+    items.find((item) => item.url === currentUrl) ?? items[0];
   return {
-    enabled: stored.enabled === true && isBackgroundUrl(url),
-    url,
-    customUrls,
-    parameters,
-    colorSchemes,
+    enabled: stored.enabled === true,
+    current: cloneBackgroundItem(current),
+    items,
   };
+}
+
+function createCustomBackgroundId(url: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < url.length; index += 1) {
+    hash ^= url.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `custom-${(hash >>> 0).toString(36)}`;
+}
+
+export function createBackgroundItem(
+  url: string,
+  palette?: BackgroundColorScheme,
+): BackgroundItem {
+  return {
+    id: createCustomBackgroundId(url),
+    url,
+    deletable: true,
+    ...DEFAULT_BACKGROUND_PARAMETERS,
+    options: palette?.options.map((option) => ({ ...option })) ?? [],
+    lightColor: palette?.lightColor ?? null,
+    darkColor: palette?.darkColor ?? null,
+  };
+}
+
+export function normalizeBackgroundItems(value: unknown) {
+  const stored = Array.isArray(value) ? value : [];
+  return normalizeBackgroundConfig({
+    enabled: false,
+    current: PRESET_BACKGROUNDS[0],
+    items: stored,
+  }).items;
+}
+
+export function resolveBackgroundItem(
+  items: BackgroundItem[],
+  id: string | null,
+) {
+  return id ? items.find((item) => item.id === id) ?? null : null;
 }

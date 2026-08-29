@@ -1,31 +1,24 @@
 <script lang="ts">
-  import {
-    DEFAULT_BACKGROUND_PARAMETERS,
-    type BackgroundConfig,
-  } from "./background";
+  import type { BackgroundItem } from "./background";
 
   interface Props {
-    config: BackgroundConfig;
+    background: BackgroundItem;
   }
 
-  let { config }: Props = $props();
-  let parameters = $derived(
-    config.parameters[config.url] ?? DEFAULT_BACKGROUND_PARAMETERS,
-  );
+  let { background }: Props = $props();
   let transparentPosition = $derived(
-    parameters.fadePosition > 100 ? (parameters.fadePosition - 100) / 2 : 0,
+    background.fadePosition > 100 ? (background.fadePosition - 100) / 2 : 0,
   );
-  let opaquePosition = $derived(Math.min(parameters.fadePosition, 100));
+  let opaquePosition = $derived(Math.min(background.fadePosition, 100));
   let mask = $derived(
     `linear-gradient(to bottom, transparent ${transparentPosition}%, black ${opaquePosition}%)`,
   );
-  let colorScheme = $derived(config.colorSchemes[config.url]);
 </script>
 
 <div
   class="background_layer"
-  style:--background-color-light={colorScheme?.lightColor ?? "var(--c-bg)"}
-  style:--background-color-dark={colorScheme?.darkColor ?? "var(--c-bg)"}
+  style:--background-color-light={background.lightColor ?? "var(--c-bg)"}
+  style:--background-color-dark={background.darkColor ?? "var(--c-bg)"}
   aria-hidden="true"
 >
   <div
@@ -34,14 +27,14 @@
     style:-webkit-mask-image={mask}
   >
     <img
-      src={config.url}
+      src={background.url}
       alt=""
       draggable="false"
       referrerpolicy="no-referrer"
-      style:object-position={`${parameters.positionX}% ${parameters.positionY}%`}
-      style:transform-origin={`${parameters.positionX}% ${parameters.positionY}%`}
-      style:transform={`scale(${parameters.scale / 100})`}
-      style:filter={`blur(${parameters.blur}px)`}
+      style:object-position={`${background.positionX}% ${background.positionY}%`}
+      style:transform-origin={`${background.positionX}% ${background.positionY}%`}
+      style:transform={`scale(${background.scale / 100})`}
+      style:filter={`blur(${background.blur}px)`}
     />
   </div>
 </div>

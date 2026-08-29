@@ -18,9 +18,10 @@
     import BackgroundUrlDialog from "@/lib/settings/BackgroundUrlDialog.svelte";
     import BackgroundLayer from "@/lib/background/BackgroundLayer.svelte";
     import {
-        DEFAULT_BACKGROUND_PARAMETERS,
-        PRESET_BACKGROUND_URLS,
+        cloneBackgroundItem,
+        createBackgroundItem,
         type BackgroundConfig,
+        type BackgroundItem,
     } from "@/lib/background/background";
     import { getBookmarks } from "@/lib/browser/bookmarks";
     import type { BookmarkNode } from "@/lib/browser/bookmarks";
@@ -74,7 +75,10 @@
         children: any;
         showSetting: boolean;
         userSettings: UserSettings;
+        backgroundItems: BackgroundItem[];
+        activeBackground: BackgroundItem | null;
         onchangeUserSettings: (userSettings: UserSettings) => void;
+        onchangeBackground: (background: BackgroundConfig) => void;
         onclickAbout: () => void;
         onclickSupport: () => void;
         onOpenTab: (tab: OpenTab) => void | Promise<void>;
@@ -84,7 +88,10 @@
         children,
         showSetting,
         userSettings,
+        backgroundItems,
+        activeBackground,
         onchangeUserSettings,
+        onchangeBackground,
         onclickAbout,
         onclickSupport,
         onOpenTab,
@@ -157,7 +164,13 @@
     let otherSettingsExpanded = $state(true);
     let backgroundPreview = $state<BackgroundConfig | null>(null);
     let backgroundDraft = $derived(
-        backgroundPreview ?? userSettings.background,
+        backgroundPreview ?? {
+            enabled: userSettings.background.enabled && !!activeBackground,
+            current: cloneBackgroundItem(
+                activeBackground ?? backgroundItems[0],
+            ),
+            items: backgroundItems.map(cloneBackgroundItem),
+        },
     );
     let showBackgroundUrlDialog = $state(false);
     let pageDirection = $state<1 | -1>(1);
@@ -618,94 +631,74 @@
     function previewBackground(background: BackgroundConfig) {
         backgroundPreview = {
             ...background,
-            customUrls: [...background.customUrls],
-            parameters: Object.fromEntries(
-                Object.entries(background.parameters).map(
-                    ([url, parameters]) => [url, { ...parameters }],
-                ),
-            ),
-            colorSchemes: { ...background.colorSchemes },
+            current: cloneBackgroundItem(background.current),
+            items: background.items.map(cloneBackgroundItem),
         };
     }
 
     function commitBackground(background: BackgroundConfig) {
         previewBackground(background);
-        onchangeUserSettings({
-            ...userSettings,
-            background: {
-                ...background,
-                customUrls: [...background.customUrls],
-                parameters: Object.fromEntries(
-                    Object.entries(background.parameters).map(
-                        ([url, parameters]) => [url, { ...parameters }],
-                    ),
-                ),
-                colorSchemes: { ...background.colorSchemes },
-            },
+        onchangeBackground({
+            ...background,
+            current: cloneBackgroundItem(background.current),
+            items: background.items.map(cloneBackgroundItem),
         });
         backgroundPreview = null;
     }
 
     async function addBackgroundUrl(url: string) {
-        const background = backgroundPreview ?? userSettings.background;
-        let scheme = background.colorSchemes[url];
-        if (!scheme) {
+        const background = backgroundDraft;
+        const existing = background.items.find((item) => item.url === url);
+        let item: BackgroundItem = existing
+            ? cloneBackgroundItem(existing)
+            : createBackgroundItem(url);
+        if (!item.options.length) {
             try {
                 const { extractBackgroundColorScheme } = await import(
                     "@/lib/background/backgroundColors"
                 );
-                scheme = await extractBackgroundColorScheme(url);
+                item = {
+                    ...item,
+                    ...(await extractBackgroundColorScheme(url)),
+                };
             } catch {
                 // 配色不是必填项，失败或超时后继续使用现有的 --c-bg。
             }
         }
-        const customUrls = PRESET_BACKGROUND_URLS.includes(
-            url as (typeof PRESET_BACKGROUND_URLS)[number],
-        )
-            ? background.customUrls
-            : [...new Set([...background.customUrls, url])];
+        const items = existing
+            ? background.items.map((backgroundItem) =>
+                  backgroundItem.url === url
+                      ? cloneBackgroundItem(item)
+                      : backgroundItem,
+              )
+            : [...background.items, cloneBackgroundItem(item)];
         commitBackground({
             ...background,
             enabled: true,
-            url,
-            customUrls,
-            parameters: {
-                ...background.parameters,
-                [url]: background.parameters[url] ?? {
-                    ...DEFAULT_BACKGROUND_PARAMETERS,
-                },
-            },
-            colorSchemes: scheme
-                ? { ...background.colorSchemes, [url]: scheme }
-                : background.colorSchemes,
+            current: cloneBackgroundItem(item),
+            items,
         });
     }
 
-    async function removeBackgroundUrl(url: string) {
+    async function removeBackgroundUrl(id: string) {
         const confirmed = await requestConfirm(
             t("nt_confirm_delete_background_title"),
             t("nt_settings_background_delete_confirm"),
             t("nt_delete"),
         );
         if (!confirmed) return;
-        const background = backgroundPreview ?? userSettings.background;
-        const customUrls = background.customUrls.filter(
-            (item) => item !== url,
-        );
-        const colorSchemes = { ...background.colorSchemes };
-        delete colorSchemes[url];
-        const parameters = { ...background.parameters };
-        delete parameters[url];
+        const background = backgroundDraft;
+        const target = background.items.find((item) => item.id === id);
+        if (!target?.deletable) return;
+        const items = background.items.filter((item) => item.id !== id);
+        const removingCurrent = background.current.id === id;
         commitBackground({
             ...background,
-            enabled: background.url === url ? false : background.enabled,
-            url:
-                background.url === url
-                    ? PRESET_BACKGROUND_URLS[0]
-                    : background.url,
-            customUrls,
-            parameters,
-            colorSchemes,
+            enabled: removingCurrent ? false : background.enabled,
+            current: removingCurrent
+                ? cloneBackgroundItem(items[0])
+                : background.current,
+            items,
         });
     }
 
@@ -1375,7 +1368,7 @@
             class:background_active={backgroundDraft.enabled}
         >
             {#if backgroundDraft.enabled}
-                <BackgroundLayer config={backgroundDraft} />
+                <BackgroundLayer background={backgroundDraft.current} />
             {/if}
             {@render children()}
         </div>
