@@ -33,6 +33,7 @@
         clearPersistedSelectedCategoryId,
         hydrateSearchStorage,
         MAX_SEARCH_KEYS,
+        migrateLegacySearchKeys,
         normalizeSearchKey,
         persistSearchKeys,
         persistSelectedCategoryId,
@@ -54,6 +55,7 @@
         newTabOpen?: boolean;
         searchBookmarks?: boolean;
         searchHistory?: boolean;
+        recordSearchKeywords?: boolean;
         rememberSearchEngineCategory?: boolean;
         settingsReady?: boolean;
         configReady?: boolean;
@@ -65,6 +67,7 @@
         newTabOpen = false,
         searchBookmarks: searchBookmarksEnabled = true,
         searchHistory: searchHistoryEnabled = true,
+        recordSearchKeywords = true,
         rememberSearchEngineCategory = false,
         settingsReady = true,
         configReady = true,
@@ -80,7 +83,7 @@
     let bookmarksResults: SearchItem[] = $state([]);
     let historyResults: SearchItem[] = $state([]);
     let historyLoading = $state(false);
-    let searchKeys: string[] = $state(readSearchKeys());
+    let searchKeys: string[] = $state([]);
 
     let searchEl: HTMLInputElement | undefined = $state();
     let engineEls: HTMLDivElement | undefined = $state();
@@ -104,11 +107,13 @@
     let databaseConfigAttempted = $state(false);
     let fallbackConfigApplied = $state(false);
     let engineConfigRequestId = 0;
+    let searchStorageReady = false;
     let suppressEngineToggleClick = false;
     let searchConfigLoading = $derived(loading || !engineConfigReady);
     let effectiveReadOnly = $derived(readOnly || !databaseConfigLoaded);
     let showSearchKeys = $derived(
         !showMoreEngines &&
+            recordSearchKeywords &&
             searchAreaFocused &&
             !inputValue.trim() &&
             !bookmarksResults.length &&
@@ -206,6 +211,17 @@
         }));
     }
 
+    function loadSelectedCategorySearchKeys() {
+        if (!searchStorageReady) return;
+        searchKeys = readSearchKeys(selectedCategoryId);
+    }
+
+    async function migrateAndLoadSearchKeys() {
+        if (!searchStorageReady || !engineCategories.length) return;
+        await migrateLegacySearchKeys(engineCategories[0].id);
+        loadSelectedCategorySearchKeys();
+    }
+
     function applyFallbackEngineConfig() {
         const fallbackCategoryIds = ["1", "2", "3"];
         engineCategories = buildDefaultEngineCategories()
@@ -292,6 +308,7 @@
             applyEnabledEngines(enabled);
             applyDisabledEngines(disabled);
             syncSelectedEngine();
+            void migrateAndLoadSearchKeys();
             databaseConfigLoaded = true;
             engineConfigReady = true;
         } catch (error) {
@@ -316,8 +333,9 @@
         mounted = true;
         inputValue = backPageInitInputValue();
         void hydrateSearchStorage()
-            .then(() => {
-                searchKeys = readSearchKeys();
+            .then(async () => {
+                searchStorageReady = true;
+                await migrateAndLoadSearchKeys();
             })
             .catch((error) => {
                 console.warn("[Mooogor NewTab]", "search-storage:hydrate-failed", error);
@@ -364,6 +382,8 @@
         }
         syncEnginesGroupTabs();
         syncSelectedEngine();
+        loadSelectedCategorySearchKeys();
+        searchEl?.focus();
     }
 
     $effect(() => {
@@ -378,6 +398,7 @@
                 ) {
                     selectedCategoryId = rememberedCategoryId;
                     syncEnginesGroupTabs();
+                    loadSelectedCategorySearchKeys();
                     return;
                 }
             }
@@ -389,6 +410,7 @@
             }
             persistSelectedCategoryId(selectedCategoryId);
             syncEnginesGroupTabs();
+            loadSelectedCategorySearchKeys();
             return;
         }
         syncedRememberedCategory = false;
@@ -665,18 +687,19 @@
     }
 
     function saveSearchKey(value: string) {
+        if (!recordSearchKeywords) return;
         const next = normalizeSearchKey(value);
         if (!next) return;
         searchKeys = [
             next,
             ...searchKeys.filter((item) => item !== next),
         ].slice(0, MAX_SEARCH_KEYS);
-        persistSearchKeys(searchKeys);
+        persistSearchKeys(selectedCategoryId, searchKeys);
     }
 
-    function removeSearchKey(value: string) {
-        searchKeys = searchKeys.filter((item) => item !== value);
-        persistSearchKeys(searchKeys);
+    function clearSearchKeys() {
+        searchKeys = [];
+        persistSearchKeys(selectedCategoryId, []);
     }
 
     function fillSearchKey(value: string) {
@@ -1031,31 +1054,32 @@
 {#snippet temSearchKeys()}
     <div class="search_keys" transition:slide={{duration: 200}}>
         {#each searchKeys as key (key)}
-            <div class="search_key">
-                <button
-                    type="button"
-                    class="search_key_main"
-                    onmousedown={(e) => e.preventDefault()}
-                    onclick={() => fillSearchKey(key)}
-                >
-                    <T type="s" nowrap>{key}</T>
-                </button>
-                <button
-                    type="button"
-                    class="search_key_remove"
-                    aria-label={`remove ${key}`}
-                    onmousedown={(e) => e.preventDefault()}
-                    onclick={() => removeSearchKey(key)}
-                >
-                    <Icon
-                        name="X"
-                        color="var(--c-text)"
-                        opacity={0.5}
-                        size={12}
-                    />
-                </button>
-            </div>
+            <button
+                type="button"
+                class="search_key"
+                onmousedown={(e) => e.preventDefault()}
+                onclick={() => fillSearchKey(key)}
+            >
+                <T type="s" nowrap>{key}</T>
+            </button>
         {/each}
+        <button
+            type="button"
+            class="search_keys_clear"
+            aria-label={t("nt_clear_search_keywords")}
+            title={t("nt_clear_search_keywords")}
+            onmousedown={(e) => e.preventDefault()}
+            onclick={clearSearchKeys}
+        >
+        <G>
+            <Icon
+                name="BrushCleaning"
+                color="var(--c-text)"
+                opacity={0.6}
+                size={16}
+            />
+        </G>
+        </button>
     </div>
 {/snippet}
 
@@ -1170,7 +1194,9 @@
                 </G>
             </Button>
         </div>
-        <p class="engine_edit_hint">{t("nt_engine_edit_hint")}</p>
+        <T type="s" color="var(--c-text-2)">
+            {t("nt_engine_edit_hint")}
+        </T>
     </div>
 {/snippet}
 
@@ -1259,44 +1285,39 @@
     .search_keys {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
         gap: var(--gap);
         width: 100%;
         box-sizing: border-box;
-        padding:var(--gap);
+        padding: var(--gap);
     }
     .search_key {
         display: inline-flex;
-        align-items: stretch;
+        align-items: center;
+        border: none;
         border-radius: 999px;
         background-color: var(--c-mask);
-    }
-    .search_key_main,
-    .search_key_remove {
-        border: none;
-        background: transparent;
         color: var(--c-text);
+        padding: var(--gap) calc(var(--gap) * 2);
     }
-    .search_key_main {
-        display: inline-flex;
-        align-items: center;
-        padding: var(--gap) var(--gap) var(--gap) calc(var(--gap) * 2);
-        border-radius: 999px 0 0 999px;
-    }
-    .search_key_main:focus-visible,
-    .search_key_remove:focus-visible {
+    .search_key:focus-visible,
+    .search_keys_clear:focus-visible {
         outline: solid 2px var(--c-text);
     }
-    .search_key_main:active,
-    .search_key_remove:active {
+    .search_key:active,
+    .search_keys_clear:active {
         background-color: var(--c-mask1);
     }
-    .search_key_remove {
+    .search_keys_clear {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: var(--gap) calc(var(--gap) * 2) var(--gap) var(--gap);
+        margin-left: auto;
+        padding: 0;
+        border: none;
+        background: transparent;
         flex: 0 0 auto;
-        border-radius: 0 999px 999px 0;
+        border-radius: var(--r);
     }
     .input::-webkit-search-cancel-button {
         -webkit-appearance: none;
@@ -1352,15 +1373,6 @@
         align-items: center;
         width: 100%;
     }
-    .engine_edit_hint {
-        align-self: flex-start;
-        margin: 0;
-        padding: 0 calc(var(--gap) * 2) var(--gap);
-        color: var(--c-text-2);
-        font-size: var(--f-size-s);
-        line-height: 1.4;
-    }
-
     .more_item {
         display: flex;
         background-color: unset;

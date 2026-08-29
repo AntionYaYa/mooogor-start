@@ -38,6 +38,10 @@
     import Checkbox from "./components/Checkbox.svelte";
     import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
     import {
+        deleteSearchKeysForCategory,
+        retainSearchKeysForCategories,
+    } from "@/lib/search/searchStorage";
+    import {
         deleteCommonSiteEntry,
         fetchCommonSites,
         getResetCommonSitesConfirmMessage,
@@ -606,6 +610,10 @@
         onchangeUserSettings({ ...userSettings, searchHistory: value });
     }
 
+    function setRecordSearchKeywords(value: boolean) {
+        onchangeUserSettings({ ...userSettings, recordSearchKeywords: value });
+    }
+
     function setRememberSearchEngineCategory(value: boolean) {
         onchangeUserSettings({
             ...userSettings,
@@ -1028,6 +1036,7 @@
         settingEnginesSaving = true;
         try {
             await deleteEngineCategory(id);
+            await deleteSearchKeysForCategory(id);
             await loadSearchSettingEngines(true);
             notifyEngineConfigUpdated();
         } finally {
@@ -1151,6 +1160,9 @@
             await resetSearchEnginesToDefault(
                 defaultCategories,
                 defaultEngines,
+            );
+            await retainSearchKeysForCategories(
+                defaultCategories.map((category) => category.id),
             );
             await loadSearchSettingEngines(true);
             notifyEngineConfigUpdated();
@@ -1555,6 +1567,13 @@
         undefined,
         userSettings.searchHistory,
         setSearchHistory,
+    )}
+    {@render temswithcItem(
+        undefined,
+        t("nt_settings_record_search_keywords"),
+        t("nt_settings_record_search_keywords_tip"),
+        userSettings.recordSearchKeywords,
+        setRecordSearchKeywords,
     )}
 {/snippet}
 

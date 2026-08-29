@@ -110,11 +110,17 @@
   "nt_settings_search_history": {
     "message": "搜索历史记录"
   },
+  "nt_settings_record_search_keywords": {
+    "message": "记录搜索关键词"
+  },
+  "nt_settings_record_search_keywords_tip": {
+    "message": "开启后按搜索引擎分类记录最近使用的搜索关键词"
+  },
   "nt_settings_search_remember_engine_category": {
     "message": "记住所选分类"
   },
   "nt_settings_search_remember_engine_category_tip": {
-    "message": "开启后，打开会保留上次选择的分类"
+    "message": "开启后会保留上次选择的分类"
   },
   "nt_settings_search_inject_related": {
     "message": "注入到相关网页"
@@ -400,6 +406,9 @@
   },
   "nt_search_placeholder_fallback": {
     "message": "搜索"
+  },
+  "nt_clear_search_keywords": {
+    "message": "清除当前分类的搜索关键词"
   },
   "nt_drag_to_disable": {
     "message": "拖拽到这里禁用"

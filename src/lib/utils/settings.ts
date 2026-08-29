@@ -23,6 +23,7 @@ export type UserSettings = {
   newTabOpen: boolean;
   searchBookmarks: boolean;
   searchHistory: boolean;
+  recordSearchKeywords: boolean;
   rememberSearchEngineCategory: boolean;
   injectRelatedSearch: boolean;
   language: AppLanguage;
@@ -37,6 +38,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   newTabOpen: false,
   searchBookmarks: true,
   searchHistory: true,
+  recordSearchKeywords: true,
   rememberSearchEngineCategory: false,
   injectRelatedSearch: true,
   language: "auto",
@@ -110,6 +112,8 @@ export async function loadSettings(): Promise<UserSettings> {
     searchBookmarks:
       stored?.searchBookmarks ?? DEFAULT_SETTINGS.searchBookmarks,
     searchHistory: stored?.searchHistory ?? DEFAULT_SETTINGS.searchHistory,
+    recordSearchKeywords:
+      stored?.recordSearchKeywords ?? DEFAULT_SETTINGS.recordSearchKeywords,
     rememberSearchEngineCategory:
       stored?.rememberSearchEngineCategory ??
       DEFAULT_SETTINGS.rememberSearchEngineCategory,

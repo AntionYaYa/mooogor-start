@@ -110,6 +110,12 @@
   "nt_settings_search_history": {
     "message": "Search History"
   },
+  "nt_settings_record_search_keywords": {
+    "message": "Remember search keywords"
+  },
+  "nt_settings_record_search_keywords_tip": {
+    "message": "Remember recently used search keywords separately for each engine category"
+  },
   "nt_settings_search_remember_engine_category": {
     "message": "Remember selected category"
   },
@@ -400,6 +406,9 @@
   },
   "nt_search_placeholder_fallback": {
     "message": "Search"
+  },
+  "nt_clear_search_keywords": {
+    "message": "Clear search keywords for this category"
   },
   "nt_drag_to_disable": {
     "message": "Drag here to disable"

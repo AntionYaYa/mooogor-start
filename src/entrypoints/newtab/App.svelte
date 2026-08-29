@@ -91,6 +91,7 @@
       a.newTabOpen === b.newTabOpen &&
       a.searchBookmarks === b.searchBookmarks &&
       a.searchHistory === b.searchHistory &&
+      a.recordSearchKeywords === b.recordSearchKeywords &&
       a.rememberSearchEngineCategory === b.rememberSearchEngineCategory &&
       a.injectRelatedSearch === b.injectRelatedSearch &&
       a.language === b.language &&
@@ -748,6 +749,7 @@
           newTabOpen={effectiveNewTabOpen}
           searchBookmarks={userSettings.searchBookmarks}
           searchHistory={userSettings.searchHistory}
+          recordSearchKeywords={userSettings.recordSearchKeywords}
           rememberSearchEngineCategory={userSettings.rememberSearchEngineCategory}
           settingsReady={configurationState === "ready"}
           configReady={configurationState === "ready"}

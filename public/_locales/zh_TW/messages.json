@@ -110,11 +110,17 @@
   "nt_settings_search_history": {
     "message": "搜尋歷史記錄"
   },
+  "nt_settings_record_search_keywords": {
+    "message": "記錄搜尋關鍵字"
+  },
+  "nt_settings_record_search_keywords_tip": {
+    "message": "開啟後依搜尋引擎分類記錄最近使用的搜尋關鍵字"
+  },
   "nt_settings_search_remember_engine_category": {
     "message": "記住所選分類"
   },
   "nt_settings_search_remember_engine_category_tip": {
-    "message": "開啟後，打開時會保留上次選擇的分類"
+    "message": "開啟後會保留上次選擇的分類"
   },
   "nt_settings_search_inject_related": {
     "message": "注入到相關網頁"
@@ -400,6 +406,9 @@
   },
   "nt_search_placeholder_fallback": {
     "message": "搜尋"
+  },
+  "nt_clear_search_keywords": {
+    "message": "清除目前分類的搜尋關鍵字"
   },
   "nt_drag_to_disable": {
     "message": "拖曳到這裡停用"
