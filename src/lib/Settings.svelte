@@ -1653,9 +1653,9 @@
                 </G>
                 <G>
                     <Icon
-                        name={expanded ? "ChevronDown" : "ChevronRight"}
+                        name={expanded ? "ChevronUp" : "ChevronDown"}
                         color="var(--c-text)"
-                        opacity={0.6}
+                        opacity={0.4}
                     />
                 </G>
         </Button>
