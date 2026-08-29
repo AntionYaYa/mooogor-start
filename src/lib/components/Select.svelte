@@ -18,22 +18,29 @@
 	interface Props {
 		options: SelectOption[];
 		onChange: (value: string) => void;
+		disabled?: boolean;
 	}
 
-	let { options, onChange }: Props = $props();
+	let { options, onChange, disabled = false }: Props = $props();
 	let open = $state(false);
 	let rootEl: HTMLDivElement | null = null;
 	let selected = $derived(options.find((o) => o.sel));
+
+	$effect(() => {
+		if (disabled) open = false;
+	});
 
 	function setOpen(next: boolean) {
 		open = next;
 	}
 
 	function handleToggle() {
+		if (disabled) return;
 		setOpen(!open);
 	}
 
 	function handleSelect(option: SelectOption) {
+		if (disabled) return;
 		onChange(option.value);
 		open = false;
 	}
@@ -58,8 +65,8 @@
 	});
 </script>
 
-<div class="select" bind:this={rootEl}>
-	<Button onclick={handleToggle} align="c" full fill r="r1">
+<div class="select" class:disabled bind:this={rootEl}>
+	<Button {disabled} onclick={handleToggle} align="c" full fill r="r1">
 		<G full align="c">
 			<G full>
 				<T>{selected ? selected.label : t("nt_select_placeholder")}</T>
@@ -73,20 +80,24 @@
 			</G>
 		</G>
 	</Button>
-	{#if open}
-		<div class="menu" transition:slide={{ duration: 200 }}>
+	{#if open && !disabled}
+		<div class="menu" transition:slide={{ duration: 100 }}>
 			<div class="menu_items">
 				{#each options as option}
 					{#if option.dividerTop}
 						<Divider />
 					{/if}
 					<button class="option" onclick={() => handleSelect(option)}>
-						<T color="var(--c-text)">{option.label}</T>
-						<Icon
-							name="Check"
-							color="var(--c-green)"
-							opacity={option.sel ? 0.6 : 0}
-						/>
+						{#if option.sel}
+							<T color="var(--c-main)">{option.label}</T>
+							<Icon
+								name="Check"
+								color="var(--c-main)"
+								opacity={0.6}
+							/>
+						{:else}
+							<T color="var(--c-text)">{option.label}</T>
+						{/if}
 					</button>
 				{/each}
 			</div>
@@ -114,6 +125,9 @@
 		position: relative;
 		width: 100%;
 		box-sizing: border-box;
+	}
+	.select.disabled {
+		opacity: 0.4;
 	}
 	.menu {
 		position: absolute;

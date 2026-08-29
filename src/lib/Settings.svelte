@@ -1603,6 +1603,7 @@
             <Select
                 options={bookmarkFolderOptions}
                 onChange={setDefaultBookmarkFolder}
+                disabled={!bookmarkFolderChoices.length}
             />
         {/if}
     </div>
