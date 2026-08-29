@@ -1287,4 +1287,8 @@
   .empty_content {
     align-content: start;
   }
+  .grid.empty_content {
+    display: flex;
+    justify-content: center;
+  }
 </style>

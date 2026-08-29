@@ -53,10 +53,12 @@
   let selectedEngineUrl = $state("");
   let inputFocused = $state(false);
   let engineFocused = $state(false);
+  let isComposing = $state(false);
   let inputWidth = $state(62);
-  let host: HTMLElement | null = null;
   let inputEl: HTMLInputElement | undefined = $state();
   let measureEl: HTMLSpanElement | undefined = $state();
+  let enginesEl: HTMLDivElement | undefined = $state();
+  let panelEl: HTMLDivElement;
 
   const active = $derived(inputFocused || engineFocused || !!keyword.trim());
   const hasKeyword = $derived(!!keyword.trim());
@@ -64,7 +66,6 @@
   const showSwitchShortcutTip = $derived(engineFocused);
 
   onMount(() => {
-    host = getHost();
     keyword = initialKeyword;
     selectedEngineUrl = resolveEngineByDomain(
       data.engines,
@@ -80,10 +81,6 @@
     if (!measureEl) return;
     measureEl.textContent = keyword || placeholder || "";
     inputWidth = Math.max(62, Math.ceil(measureEl.scrollWidth) + 2);
-  }
-
-  function getHost() {
-    return inputEl?.closest<HTMLElement>("#mooogor-related-search") ?? null;
   }
 
   function selectEngine(engine: RelatedSearchEngine) {
@@ -112,12 +109,13 @@
   }
 
   function keyInput(event: KeyboardEvent) {
+    if (isComposing || event.isComposing) return;
     if (event.key !== "Enter") return;
     event.preventDefault();
     event.stopPropagation();
     const engine = getSelectedEngine();
     if (!engine) return;
-    if (event.shiftKey) {
+    if (!event.shiftKey) {
       searchWithEngine(engine);
       return;
     }
@@ -170,8 +168,8 @@
   }
 
   function getEngineButton(engineUrl: string) {
-    if (!host) return null;
-    return host.querySelector<HTMLAnchorElement>(
+    if (!enginesEl) return null;
+    return enginesEl.querySelector<HTMLAnchorElement>(
       `.engine[data-engine-url="${CSS.escape(engineUrl)}"]`,
     );
   }
@@ -182,22 +180,22 @@
   let startTop = 0;
 
   function pointerDown(event: PointerEvent) {
-    if (event.button !== 0 || !host) return;
-    const rect = host.getBoundingClientRect();
+    if (event.button !== 0) return;
+    const rect = panelEl.getBoundingClientRect();
     startX = event.clientX;
     startY = event.clientY;
     startLeft = rect.left;
     startTop = rect.top;
-    host.style.left = `${rect.left}px`;
-    host.style.top = `${rect.top}px`;
-    host.style.right = "auto";
+    panelEl.style.left = `${rect.left}px`;
+    panelEl.style.top = `${rect.top}px`;
+    panelEl.style.right = "auto";
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
   }
 
   function pointerMove(event: PointerEvent) {
     const target = event.currentTarget as HTMLElement;
-    if (!target.hasPointerCapture(event.pointerId) || !host) return;
-    const rect = host.getBoundingClientRect();
+    if (!target.hasPointerCapture(event.pointerId)) return;
+    const rect = panelEl.getBoundingClientRect();
     const nextLeft = clamp(
       startLeft + event.clientX - startX,
       8,
@@ -208,31 +206,30 @@
       8,
       window.innerHeight - rect.height - 8,
     );
-    host.style.left = `${nextLeft}px`;
-    host.style.top = `${nextTop}px`;
+    panelEl.style.left = `${nextLeft}px`;
+    panelEl.style.top = `${nextTop}px`;
   }
 
   function pointerUp(event: PointerEvent) {
     const target = event.currentTarget as HTMLElement;
-    if (!target.hasPointerCapture(event.pointerId) || !host) return;
+    if (!target.hasPointerCapture(event.pointerId)) return;
     target.releasePointerCapture(event.pointerId);
-    const rect = host.getBoundingClientRect();
+    const rect = panelEl.getBoundingClientRect();
     void getExtensionStorage().set({
       [getPositionStorageKey()]: { left: rect.left, top: rect.top },
     });
   }
 
   async function restorePosition() {
-    if (!host) return;
     const saved = readPanelPosition(
       (await getExtensionStorage().get(getPositionStorageKey()))[
         getPositionStorageKey()
       ],
     );
     if (!saved) return;
-    host.style.left = `${saved.left}px`;
-    host.style.top = `${saved.top}px`;
-    host.style.right = "auto";
+    panelEl.style.left = `${saved.left}px`;
+    panelEl.style.top = `${saved.top}px`;
+    panelEl.style.right = "auto";
   }
 
   function getPositionStorageKey() {
@@ -260,7 +257,7 @@
   }
 </script>
 
-<div class="search">
+<div class="search" bind:this={panelEl}>
   <div class="close">
     <Button onclick={onClose}>
       <G>
@@ -285,7 +282,7 @@
             name="GripHorizontal"
             color="var(--c-text)"
             size={18}
-            opacity={0.6}
+            opacity={0.4}
           />
         </G>
       </button>
@@ -302,13 +299,18 @@
               type="search"
               {placeholder}
               style:width={`${inputWidth}px`}
-              oninput={syncInputWidth}
+              oncompositionstart={() => (isComposing = true)}
+              oncompositionend={() => {
+                isComposing = false;
+                void syncInputWidth();
+              }}
+              oninput={() => void syncInputWidth()}
               onfocus={() => (inputFocused = true)}
               onblur={() => (inputFocused = false)}
               onkeydown={keyInput}
             />
           </div>
-          <div class="engines">
+          <div class="engines" bind:this={enginesEl}>
             {#each data.engines as engine (engine.engineUrl)}
               <a
                 class="engine"
@@ -336,32 +338,26 @@
       </div>
     </div>
     {#if showSearchShortcutTip}
-        {@render tip(searchShortcutTip)}
+      {@render tip(searchShortcutTip)}
     {/if}
     {#if showSwitchShortcutTip}
-        {@render tip(switchShortcutTip)}
+      {@render tip(switchShortcutTip)}
     {/if}
   </div>
 </div>
 
 {#snippet tip(tip: string)}
-<div class="tip" transition:slide={{ duration: 200 }}>
-  <T type="s" color="var(--c-text-1)">{tip}</T>
-</div>
+  <div class="tip" transition:slide={{ duration: 200 }}>
+    <T type="s" color="var(--c-text-1)" nowrap>{tip}</T>
+  </div>
 {/snippet}
 
 <style>
-  :global(#mooogor-related-search) {
+  .search {
     position: fixed;
     top: 10px;
     left: 10px;
     z-index: 2147483647;
-    color-scheme: light dark;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  }
-
-  .search {
-    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -371,13 +367,17 @@
     padding: 0;
     margin: 0;
     border-radius: var(--r2);
+    color-scheme: light dark;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
-  .tip{
+  .tip {
     display: flex;
     align-items: center;
     justify-content: center;
     padding: var(--gap);
-    width: 100%;
+    width: 0;
+    min-width: 100%;
+    overflow: hidden;
     box-sizing: border-box;
   }
   .search:hover .close {
@@ -386,6 +386,7 @@
     transform: scale(1);
     border-radius: var(--r-100);
     background-color: var(--c-bg1);
+    border:1px solid var(--c-border);
   }
 
   .close {
@@ -398,6 +399,7 @@
     opacity: 0;
     pointer-events: none;
     transform: scale(0.8);
+    
     transition:
       opacity 0.16s ease,
       transform 0.16s ease;
@@ -410,19 +412,20 @@
     width: max-content;
     max-width: calc(100vw - 20px);
     box-sizing: border-box;
-    
+    box-shadow: var(--shadow);
     border-radius: var(--r2);
     background-color: var(--c-bg);
+    
   }
   .search_box {
     display: flex;
     align-items: center;
-    gap: var(--gap);
     width: max-content;
     box-sizing: border-box;
-     border-radius: var(--r2);
-     padding: var(--gap);
+    border-radius: calc(var(--r1) + 3px);
+    padding: calc(var(--gap) / 2);
     background-color: var(--c-bg1);
+    border:1px solid var(--c-border);
   }
   .drag {
     display: flex;
@@ -438,7 +441,6 @@
   }
 
   .drag:active {
-    background: var(--c-mask);
     cursor: grabbing;
   }
   .input_group_border {
@@ -465,7 +467,6 @@
     position: relative;
     display: flex;
     align-items: center;
-    min-width: 100px;
     max-width: min(320px, calc(100vw - 170px));
   }
 
@@ -511,7 +512,8 @@
   }
 
   .engines {
-    display: flex;
+    display: inline-flex;
+    flex-direction: row;
     align-items: center;
     justify-content: flex-end;
     gap: var(--gap);
@@ -521,21 +523,18 @@
     min-width: max-content;
     width: max-content;
     box-sizing: border-box;
+    position: relative;
     flex-wrap: nowrap;
   }
 
   .engine {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
     border-radius: calc(var(--r) / 2 + 2px);
-    background: transparent;
-    cursor: default;
-    min-width: 30px;
-    min-height: 30px;
     overflow: hidden;
-    padding: 0;
+    cursor: default !important;
+    min-width: 30px;
+    flex: 0 0 auto;
+    text-decoration: none;
   }
 
   .engine:active {
@@ -546,7 +545,7 @@
     outline: 2px var(--c-text-2) solid;
   }
 
-  .engine:focus-visible {
-    outline: 2px var(--c-text) solid;
+  .engine:focus {
+    outline: 2px var(--c-main) solid;
   }
 </style>

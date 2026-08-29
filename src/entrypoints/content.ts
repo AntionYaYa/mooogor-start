@@ -3,21 +3,27 @@ import RelatedSearchPanel from "./content/RelatedSearchPanel.svelte";
 import type { RelatedSearchPayload } from "./content/RelatedSearchPanel.svelte";
 import baseStyles from "@/lib/style/base.css?inline";
 import colorStyles from "@/lib/style/color.css?inline";
+import type { ContentScriptContext } from "wxt/utils/content-script-context";
+import type { ShadowRootContentScriptUi } from "wxt/utils/content-script-ui/shadow-root";
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
 export default defineContentScript({
   matches: ["http://*/*", "https://*/*"],
-  main() {
+  cssInjectionMode: "ui",
+  async main(ctx) {
+    contentScriptContext = ctx;
     setupListeners();
-    init();
+    await init();
   },
 });
 
 let pageHidden = false;
-let relatedSearchHost: HTMLDivElement | null = null;
-let relatedSearchApp: Record<string, unknown> | null = null;
+let contentScriptContext: ContentScriptContext | null = null;
+let relatedSearchUi: ShadowRootContentScriptUi<Record<string, unknown>> | null =
+  null;
+let relatedSearchRequestId = 0;
 
 /**
  * 设置生命周期监听，处理 BFCache (往返缓存)
@@ -106,60 +112,77 @@ async function init() {
 }
 
 async function initRelatedSearchPanel() {
+  const requestId = ++relatedSearchRequestId;
   const related = await safeSendMessage<RelatedSearchPayload>({
     type: "getRelatedSearchEngines",
     payload: { url: location.href },
   });
 
-  destroyRelatedSearchPanel();
+  if (requestId !== relatedSearchRequestId) return;
+  removeRelatedSearchPanel();
 
   if (!related?.engines.length) return;
-  mountRelatedSearchPanel(related);
+  await mountRelatedSearchPanel(related, requestId);
 }
 
-function mountRelatedSearchPanel(data: RelatedSearchPayload) {
-  const host = document.createElement("div");
-  host.id = "mooogor-related-search";
-  if (data.theme !== "default") {
-    host.dataset.theme = data.theme;
-  }
-  const style = document.createElement("style");
-  const target = document.createElement("div");
-  style.textContent = getScopedSharedStyles();
+async function mountRelatedSearchPanel(
+  data: RelatedSearchPayload,
+  requestId: number,
+) {
+  if (!contentScriptContext) return;
   const initialKeyword = getKeywordFromUrl(
     data.matchedEngine.engineUrl,
     location.href,
   );
 
-  host.append(style, target);
-  document.documentElement.append(host);
-  relatedSearchHost = host;
-  relatedSearchApp = mount(RelatedSearchPanel, {
-    target,
-    props: {
-      data,
-      initialKeyword,
-      placeholder: data.texts.placeholder,
-      searchShortcutTip: data.texts.searchShortcutTip,
-      switchShortcutTip: data.texts.switchShortcutTip,
-      onClose: destroyRelatedSearchPanel,
+  const ui = await createShadowRootUi(contentScriptContext, {
+    name: "mooogor-related-search",
+    mode: "open",
+    position: "inline",
+    anchor: "html",
+    append: "last",
+    isolateEvents: true,
+    css: getShadowSharedStyles(),
+    onMount(container, _shadow, shadowHost) {
+      shadowHost.id = "mooogor-related-search";
+      if (data.theme !== "default") {
+        shadowHost.dataset.theme = data.theme;
+      }
+      return mount(RelatedSearchPanel, {
+        target: container,
+        props: {
+          data,
+          initialKeyword,
+          placeholder: data.texts.placeholder,
+          searchShortcutTip: data.texts.searchShortcutTip,
+          switchShortcutTip: data.texts.switchShortcutTip,
+          onClose: destroyRelatedSearchPanel,
+        },
+      });
+    },
+    onRemove(app) {
+      if (app) void unmount(app);
     },
   });
+
+  if (requestId !== relatedSearchRequestId) return;
+  relatedSearchUi = ui;
+  ui.mount();
 }
 
-function getScopedSharedStyles() {
-  return `${baseStyles}\n${colorStyles}`
-    .replaceAll(":root", "#mooogor-related-search")
-    .replaceAll("::-webkit-scrollbar", "#mooogor-related-search ::-webkit-scrollbar");
+function getShadowSharedStyles() {
+  return `${baseStyles}\n${colorStyles}\nhtml, body { margin: 0; padding: 0; width: max-content; height: max-content; }`
+    .replaceAll(":root", ":host");
 }
 
 function destroyRelatedSearchPanel() {
-  if (relatedSearchApp) {
-    void unmount(relatedSearchApp);
-    relatedSearchApp = null;
-  }
-  relatedSearchHost?.remove();
-  relatedSearchHost = null;
+  relatedSearchRequestId += 1;
+  removeRelatedSearchPanel();
+}
+
+function removeRelatedSearchPanel() {
+  relatedSearchUi?.remove();
+  relatedSearchUi = null;
 }
 
 function getKeywordFromUrl(engineUrl: string, currentUrl: string) {

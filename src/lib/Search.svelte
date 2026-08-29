@@ -97,6 +97,8 @@
     let selectedEngineUrl = $state("");
     let selectedEngineCategoryId = $state("");
     let searchAreaFocused = $state(false);
+    let searchInputFocused = $state(false);
+    let searchEngineFocused = $state(false);
     let lastSearchScope = $state<string | null>(null);
     let engineConfigReady = $state(false);
     let syncedRememberedCategory = $state(false);
@@ -119,6 +121,12 @@
             !bookmarksLoading &&
             !historyLoading &&
             searchKeys.length > 0,
+    );
+    let showSearchShortcutTip = $derived(
+        !showMoreEngines && searchInputFocused && !!inputValue.trim(),
+    );
+    let showSwitchShortcutTip = $derived(
+        !showMoreEngines && searchEngineFocused,
     );
 
     const SEARCH_DEBOUNCE_MS = 200;
@@ -810,7 +818,7 @@
             e.stopPropagation();
             const engine = getSelectedEngine();
             if (!engine) return;
-            if (e.shiftKey) {
+            if (!e.shiftKey) {
                 openEngineSearch(engine);
                 return;
             }
@@ -903,10 +911,12 @@
     }
 
     function handleInputFocus() {
+        searchInputFocused = true;
         searchAreaFocused = true;
     }
 
     function handleInputBlur(e: FocusEvent) {
+        searchInputFocused = false;
         const next = e.relatedTarget as Node | null;
         if (next && searchPanelEl?.contains(next)) return;
         searchAreaFocused = false;
@@ -962,12 +972,20 @@
                         (bookmarksResults.length || bookmarksLoading)) ||
                         (searchHistoryEnabled &&
                             (historyResults.length || historyLoading)) ||
-                        showSearchKeys))}
+                        showSearchKeys ||
+                        showSearchShortcutTip ||
+                        showSwitchShortcutTip))}
             class:top0={enginesGroup.length <= 1}
         >
             {@render temInputGroup()}
+            {#if showSearchShortcutTip}
+                {@render temShortcutTip(t("nt_related_search_shortcut_search"))}
+            {/if}
+            {#if showSwitchShortcutTip}
+                {@render temShortcutTip(t("nt_related_search_shortcut_switch"))}
+            {/if}
             {#if !showMoreEngines && showSearchKeys}
-            {@render temSearchKeys()}
+                {@render temSearchKeys()}
             {/if}
             {#if !showMoreEngines && searchAreaFocused && ((searchBookmarksEnabled && (bookmarksResults.length || bookmarksLoading)) || (searchHistoryEnabled && (historyResults.length || historyLoading)))}
                 <div
@@ -1127,7 +1145,11 @@
                         target={newTabOpen ? "_blank" : "_self"}
                         rel={newTabOpen ? "noreferrer" : undefined}
                         onclick={(event) => handleEngineClick(event, engine)}
-                        onfocus={() => selectEngine(engine)}
+                        onfocus={() => {
+                            searchEngineFocused = true;
+                            selectEngine(engine);
+                        }}
+                        onblur={() => (searchEngineFocused = false)}
                         onkeydown={(event) =>
                             handleEngineKeydown(event, engine)}
                     >
@@ -1151,6 +1173,12 @@
                 </G>
             </Button>
         {/if}
+    </div>
+{/snippet}
+
+{#snippet temShortcutTip(text: string)}
+    <div class="shortcut_tip" transition:slide={{ duration: 200 }}>
+        <T type="s" color="var(--c-text-2)">{text}</T>
     </div>
 {/snippet}
 
@@ -1310,6 +1338,14 @@
         width: 100%;
         box-sizing: border-box;
         padding: var(--gap);
+    }
+    .shortcut_tip {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--gap);
+        width: 100%;
+        box-sizing: border-box;
     }
     .search_keys_list {
         display: flex;
@@ -1501,6 +1537,12 @@
         justify-content: flex-end;
         gap: var(--gap);
     }
+    @supports (corner-shape: squircle) {
+        .input_group {
+            border-radius: 100px;
+            corner-shape: squircle;
+        }
+    }
     .input_box {
         display: flex;
         align-items: center;
@@ -1581,6 +1623,7 @@
         font-size: var(--f-size-s);
         pointer-events: none;
     }
+
     .drag {
         border: 2px var(--c-mask) dashed;
     }
@@ -1602,7 +1645,6 @@
     .engine.selected {
         outline: 2px var(--c-text-2) solid;
     }
-
     .item {
         display: flex;
         flex-direction: row;

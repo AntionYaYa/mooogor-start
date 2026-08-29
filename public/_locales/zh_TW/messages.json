@@ -129,7 +129,7 @@
     "message": "在符合搜尋引擎的網站中顯示快捷搜尋浮窗"
   },
   "nt_related_search_shortcut_search": {
-    "message": "Shift + Enter 快捷搜尋"
+    "message": "Enter 快捷搜尋，Shift + Enter 選擇搜尋引擎"
   },
   "nt_related_search_shortcut_switch": {
     "message": "按左/右鍵快捷切換"

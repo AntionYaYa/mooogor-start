@@ -129,7 +129,7 @@
     "message": "Show a Quick Search floating panel on matching search engine sites"
   },
   "nt_related_search_shortcut_search": {
-    "message": "Shift + Enter for quick search"
+    "message": "Enter to search; Shift + Enter to select an engine"
   },
   "nt_related_search_shortcut_switch": {
     "message": "Press Left/Right to switch quickly"

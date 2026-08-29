@@ -111,9 +111,7 @@
     await saveSettings(nextSettings);
   }
 
-  async function rememberBookmarkFolder(
-    folderId: string,
-  ) {
+  async function rememberBookmarkFolder(folderId: string) {
     if (userSettings.lastBookmarkFolderId === folderId) return;
     const nextSettings: UserSettings = {
       ...userSettings,
@@ -379,10 +377,7 @@
       bookmarkFolderId?: string | null;
     } = {},
   ) {
-    const {
-      rememberLast = true,
-      bookmarkFolderId,
-    } = options;
+    const { rememberLast = true, bookmarkFolderId } = options;
     //书签选中情况下再点击回到顶层，
     if (tab.sel) {
       if (tab.key === "0") {
@@ -433,7 +428,11 @@
         allPinneds = nextItems;
       } catch (error) {
         if (requestId !== websitesRequestId) return;
-        console.error(NEW_TAB_LOG_PREFIX, "websites:update-refresh-failed", error);
+        console.error(
+          NEW_TAB_LOG_PREFIX,
+          "websites:update-refresh-failed",
+          error,
+        );
         applyWebsitesFailureState();
       }
     }
@@ -479,7 +478,11 @@
       }
       scheduleFrequentSitesRefresh();
     } catch (error) {
-      console.warn(NEW_TAB_LOG_PREFIX, "frequent-sites:permission-check-failed", error);
+      console.warn(
+        NEW_TAB_LOG_PREFIX,
+        "frequent-sites:permission-check-failed",
+        error,
+      );
       historyPermission = false;
       frequentSites = [];
       frequentSitesLoading = false;
@@ -516,7 +519,11 @@
       await resetConfigurationToDefaults(userSettings.language);
       await initializePage();
     } catch (error) {
-      console.error(NEW_TAB_LOG_PREFIX, "configuration:full-reset-failed", error);
+      console.error(
+        NEW_TAB_LOG_PREFIX,
+        "configuration:full-reset-failed",
+        error,
+      );
       configurationState = "fallback";
       applyWebsitesFailureState();
     } finally {
@@ -548,7 +555,10 @@
       void refreshFrequentSites();
     };
     const idleWindow = window as Window & {
-      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      requestIdleCallback?: (
+        callback: () => void,
+        options?: { timeout: number },
+      ) => number;
     };
     if (idleWindow.requestIdleCallback) {
       frequentSitesIdleCallbackId = idleWindow.requestIdleCallback(run, {
@@ -563,9 +573,9 @@
     const requestId = ++frequentSitesRequestId;
     frequentSitesLoading = true;
     try {
-      const sites = await browser.runtime.sendMessage({
+      const sites = (await browser.runtime.sendMessage({
         type: "getFrequentSites",
-      }) as FrequentSite[];
+      })) as FrequentSite[];
       if (requestId !== frequentSitesRequestId) return;
       frequentSites = sites;
     } catch {
@@ -595,11 +605,9 @@
     if (!bookmarksPermission || !currentNode) return;
     const [root] = await getBookmarks();
     if (!root) return;
-    const currentPath = findBookmarkPath(
-      root as BookmarkNode,
-      currentNode.id,
-    );
-    const nextPath = currentPath ?? getInitialBookmarkPath(root as BookmarkNode);
+    const currentPath = findBookmarkPath(root as BookmarkNode, currentNode.id);
+    const nextPath =
+      currentPath ?? getInitialBookmarkPath(root as BookmarkNode);
     currentNode = nextPath[nextPath.length - 1];
     historyStack = nextPath;
     await repairMissingBookmarkFolderSettings(root as BookmarkNode);
@@ -649,9 +657,7 @@
 
   function getInitialBookmarkPath(root: BookmarkNode) {
     const initialFolder = root.children?.find((child) => !child.url);
-    return initialFolder
-      ? [root, initialFolder as BookmarkNode]
-      : [root];
+    return initialFolder ? [root, initialFolder as BookmarkNode] : [root];
   }
 
   async function repairMissingBookmarkFolderSettings(root: BookmarkNode) {
@@ -710,9 +716,7 @@
 
   function updateBookmarkTabName(node: BookmarkNode) {
     tabs[1].name =
-      node.url || node.id === "0"
-        ? t("nt_tab_bookmarks")
-        : node.title;
+      node.url || node.id === "0" ? t("nt_tab_bookmarks") : node.title;
   }
 
   async function goBack() {
@@ -797,18 +801,17 @@
                   {#if currentNode?.id !== "0"}
                     <Button onclick={() => (showAddBookmark = true)}>
                       <G>
-                        <Icon
-                          name="Plus"
-                          color="var(--c-text)"
-                          opacity={0.6}
-                        />
+                        <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
                       </G>
                     </Button>
                   {/if}
                   {#if gridView}
-                    <Button onclick={() => (gridView = false)} bg='var(--c-text)'>
+                    <Button
+                      onclick={() => (gridView = false)}
+                      bg="var(--c-text)"
+                    >
                       <G>
-                        <Icon name="Rows3" color="var(--c-bg)"/>
+                        <Icon name="Rows3" color="var(--c-bg)" />
                       </G>
                     </Button>
                   {:else}
@@ -901,12 +904,12 @@
   <G full align="c">
     <G full>
       <Button align="c" onclick={() => (showAbout = true)}>
-        <G align='c'>
-        <G>
-          <img class="logo" src="/Mooogor.svg" alt="Mooogor Start" />
+        <G align="c">
+          <G>
+            <img class="logo" src="/Mooogor.svg" alt="Mooogor Start" />
+          </G>
+          <T>Mooogor Start</T>
         </G>
-        <T>Mooogor Start</T>
-      </G>
       </Button>
     </G>
     <G gap>
@@ -930,13 +933,20 @@
           </G>
         </Button>
       {:else if showSetting}
-        <Button disabled={configurationState !== "ready"} onclick={toggleSettings} bg='var(--c-text)'>
+        <Button
+          disabled={configurationState !== "ready"}
+          onclick={toggleSettings}
+          bg="var(--c-text)"
+        >
           <G>
-          <Icon name="Settings2" color="var(--c-bg)" />
-        </G>
+            <Icon name="Settings2" color="var(--c-bg)" />
+          </G>
         </Button>
       {:else}
-        <Button disabled={configurationState !== "ready"} onclick={toggleSettings}>
+        <Button
+          disabled={configurationState !== "ready"}
+          onclick={toggleSettings}
+        >
           <G>
             <Icon name="Settings2" color="var(--c-text)" />
           </G>
@@ -1021,10 +1031,13 @@
         <T align="c" type="s">{desc}</T>
       </G>
       <G vertical align="c">
-        <Button onclick={() => clickGetPermission(permission)} bg='var(--c-text)'>
-          <G >
+        <Button
+          onclick={() => clickGetPermission(permission)}
+          bg="var(--c-text)"
+        >
+          <G>
             <T color="var(--c-bg)">{t("nt_authorize")}</T>
-          </G >
+          </G>
         </Button>
       </G>
     </G>
@@ -1068,14 +1081,20 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding:var(--gap);
+    padding: var(--gap);
     width: 100%;
     max-width: 1280px;
     box-sizing: border-box;
     height: 100%;
-    background: linear-gradient(180deg, var(--c-card), rgba(0,0,0,0));
+    background: linear-gradient(180deg, var(--c-card), rgba(0, 0, 0, 0));
     border-radius: var(--r3);
     position: relative;
+  }
+  @supports (corner-shape: squircle) {
+    .content {
+      border-radius: 50px;
+      corner-shape: squircle;
+    }
   }
 
   /* On screens smaller than 1024px, use full width */
