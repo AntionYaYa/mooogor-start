@@ -41,6 +41,45 @@
   "nt_settings_theme": {
     "message": "主題顏色"
   },
+  "nt_settings_background_title": {
+    "message": "背景"
+  },
+  "nt_settings_background_none": {
+    "message": "不設定背景"
+  },
+  "nt_settings_background_option": {
+    "message": "背景"
+  },
+  "nt_settings_background_url": {
+    "message": "新增背景圖片 URL"
+  },
+  "nt_settings_background_remove": {
+    "message": "移除自訂背景"
+  },
+  "nt_settings_background_add": {
+    "message": "新增背景"
+  },
+  "nt_settings_background_light_color": {
+    "message": "淺色模式底色"
+  },
+  "nt_settings_background_dark_color": {
+    "message": "深色模式底色"
+  },
+  "nt_settings_background_fade": {
+    "message": "漸層透明位置"
+  },
+  "nt_settings_background_scale": {
+    "message": "圖片縮放"
+  },
+  "nt_settings_background_position_x": {
+    "message": "水平位置"
+  },
+  "nt_settings_background_position_y": {
+    "message": "垂直位置"
+  },
+  "nt_settings_background_reset": {
+    "message": "重設參數"
+  },
   "nt_theme_default": {
     "message": "森林"
   },

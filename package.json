@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@lucide/svelte": "^0.563.1",
+    "colorthief": "3.5.0",
     "dexie": "^4.2.1",
     "validator": "^13.15.26",
     "webext-bridge": "^6.0.1"

@@ -41,6 +41,45 @@
   "nt_settings_theme": {
     "message": "Theme"
   },
+  "nt_settings_background_title": {
+    "message": "Background"
+  },
+  "nt_settings_background_none": {
+    "message": "No background image"
+  },
+  "nt_settings_background_option": {
+    "message": "Background"
+  },
+  "nt_settings_background_url": {
+    "message": "Add background image URL"
+  },
+  "nt_settings_background_remove": {
+    "message": "Remove custom background"
+  },
+  "nt_settings_background_add": {
+    "message": "Add background"
+  },
+  "nt_settings_background_light_color": {
+    "message": "Light mode color"
+  },
+  "nt_settings_background_dark_color": {
+    "message": "Dark mode color"
+  },
+  "nt_settings_background_fade": {
+    "message": "Fade position"
+  },
+  "nt_settings_background_scale": {
+    "message": "Image scale"
+  },
+  "nt_settings_background_position_x": {
+    "message": "Horizontal position"
+  },
+  "nt_settings_background_position_y": {
+    "message": "Vertical position"
+  },
+  "nt_settings_background_reset": {
+    "message": "Reset value"
+  },
   "nt_theme_default": {
     "message": "Forest"
   },

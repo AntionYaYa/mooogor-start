@@ -14,6 +14,14 @@
     import BatchToolbar from "./components/BatchToolbar.svelte";
     import SettingsCommonSitesSection from "@/lib/settings/SettingsCommonSitesSection.svelte";
     import SettingsSearchEnginesSection from "@/lib/settings/SettingsSearchEnginesSection.svelte";
+    import SettingsBackgroundSection from "@/lib/settings/SettingsBackgroundSection.svelte";
+    import BackgroundUrlDialog from "@/lib/settings/BackgroundUrlDialog.svelte";
+    import BackgroundLayer from "@/lib/background/BackgroundLayer.svelte";
+    import {
+        PRESET_BACKGROUND_URLS,
+        type BackgroundConfig,
+    } from "@/lib/background/background";
+    import { extractBackgroundColorScheme } from "@/lib/background/backgroundColors";
     import { getBookmarks } from "@/lib/browser/bookmarks";
     import type { BookmarkNode } from "@/lib/browser/bookmarks";
     import { hasPermission } from "@/lib/browser/permissions";
@@ -141,11 +149,17 @@
         | "root"
         | "searchEngines"
         | "common"
+        | "background"
         | "history";
     let settingPage = $state<SettingsPage>("root");
     let searchSettingsExpanded = $state(true);
     let websiteSettingsExpanded = $state(true);
     let otherSettingsExpanded = $state(true);
+    let backgroundPreview = $state<BackgroundConfig | null>(null);
+    let backgroundDraft = $derived(
+        backgroundPreview ?? userSettings.background,
+    );
+    let showBackgroundUrlDialog = $state(false);
     let pageDirection = $state<1 | -1>(1);
     let settingEnabledEngines: Engine[] = $state([]);
     let settingDisabledEngines: Engine[] = $state([]);
@@ -396,6 +410,9 @@
             return t("nt_settings_search_engines_title");
         }
         if (settingPage === "common") return t("nt_tab_common");
+        if (settingPage === "background") {
+            return t("nt_settings_background_title");
+        }
         if (settingPage === "history") return t("nt_tab_history");
         return t("nt_settings_title");
     }
@@ -595,6 +612,53 @@
         onchangeUserSettings({
             ...userSettings,
             theme: value as UserSettings["theme"],
+        });
+    }
+
+    function previewBackground(background: BackgroundConfig) {
+        backgroundPreview = {
+            ...background,
+            customUrls: [...background.customUrls],
+            colorSchemes: { ...background.colorSchemes },
+        };
+    }
+
+    function commitBackground(background: BackgroundConfig) {
+        previewBackground(background);
+        onchangeUserSettings({
+            ...userSettings,
+            background: {
+                ...background,
+                customUrls: [...background.customUrls],
+                colorSchemes: { ...background.colorSchemes },
+            },
+        });
+        backgroundPreview = null;
+    }
+
+    async function addBackgroundUrl(url: string) {
+        const background = backgroundPreview ?? userSettings.background;
+        let scheme = background.colorSchemes[url];
+        if (!scheme) {
+            try {
+                scheme = await extractBackgroundColorScheme(url);
+            } catch {
+                // 配色不是必填项，失败或超时后继续使用现有的 --c-bg。
+            }
+        }
+        const customUrls = PRESET_BACKGROUND_URLS.includes(
+            url as (typeof PRESET_BACKGROUND_URLS)[number],
+        )
+            ? background.customUrls
+            : [...new Set([...background.customUrls, url])];
+        commitBackground({
+            ...background,
+            enabled: true,
+            url,
+            customUrls,
+            colorSchemes: scheme
+                ? { ...background.colorSchemes, [url]: scheme }
+                : background.colorSchemes,
         });
     }
 
@@ -1258,7 +1322,14 @@
 
 <div class="layout">
     <div class="left" class:shrink={showSetting}>
-        <div class="app_box" class:radius={showSetting}>
+        <div
+            class="app_box"
+            class:radius={showSetting}
+            class:background_active={backgroundDraft.enabled}
+        >
+            {#if backgroundDraft.enabled}
+                <BackgroundLayer config={backgroundDraft} />
+            {/if}
             {@render children()}
         </div>
     </div>
@@ -1313,6 +1384,14 @@
                                 onEdit={openEditCommonSiteEditor}
                                 onToggleSelected={toggleCommonSiteSelected}
                                 onReset={resetCommonSitesToDefaultConfirm}
+                            />
+                        {:else if settingPage === "background"}
+                            <SettingsBackgroundSection
+                                config={backgroundDraft}
+                                onPreview={previewBackground}
+                                onCommit={commitBackground}
+                                onOpenAdd={() =>
+                                    (showBackgroundUrlDialog = true)}
                             />
                         {/if}
                     </div>
@@ -1375,6 +1454,13 @@
         confirmText={confirmOptions.confirmText}
         onclickClose={() => closeConfirm(false)}
         onConfirm={() => closeConfirm(true)}
+    />
+{/if}
+
+{#if showBackgroundUrlDialog}
+    <BackgroundUrlDialog
+        onclickClose={() => (showBackgroundUrlDialog = false)}
+        onConfirm={addBackgroundUrl}
     />
 {/if}
 
@@ -1618,6 +1704,9 @@
 {/snippet}
 
 {#snippet temOtherSettingsGroup()}
+    {@render temEntranceItem(t("nt_settings_background_title"), () =>
+        openSettingPage("background"),
+    )}
     {@render temselectItem(t("nt_settings_theme"), themeOptions, setTheme)}
     {@render temselectItem(
         t("nt_settings_language"),
@@ -1829,6 +1918,10 @@
             var(--c-main-3) 0%,
             var(--c-bg) 50%
         );
+        isolation: isolate;
+    }
+    .app_box.background_active {
+        background: none;
     }
     .radius {
         border-radius: var(--r1);

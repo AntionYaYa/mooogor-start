@@ -1,4 +1,9 @@
 import { getStoredConfig, updateStoredConfig } from "@/lib/DB/configStorage";
+import {
+  DEFAULT_BACKGROUND_CONFIG,
+  normalizeBackgroundConfig,
+  type BackgroundConfig,
+} from "@/lib/background/background";
 
 export type AppLanguage =
   | "auto"
@@ -28,6 +33,7 @@ export type UserSettings = {
   injectRelatedSearch: boolean;
   language: AppLanguage;
   theme: AppTheme;
+  background: BackgroundConfig;
 };
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -43,6 +49,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   injectRelatedSearch: true,
   language: "auto",
   theme: "default",
+  background: DEFAULT_BACKGROUND_CONFIG,
 };
 
 const SETTINGS_KEY = "settings";
@@ -123,6 +130,7 @@ export async function loadSettings(): Promise<UserSettings> {
       ? stored.language
       : DEFAULT_SETTINGS.language,
     theme: isTheme(stored?.theme) ? stored.theme : DEFAULT_SETTINGS.theme,
+    background: normalizeBackgroundConfig(stored?.background),
   };
 }
 
