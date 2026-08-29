@@ -18,6 +18,7 @@
     import BackgroundUrlDialog from "@/lib/settings/BackgroundUrlDialog.svelte";
     import BackgroundLayer from "@/lib/background/BackgroundLayer.svelte";
     import {
+        DEFAULT_BACKGROUND_PARAMETERS,
         PRESET_BACKGROUND_URLS,
         type BackgroundConfig,
     } from "@/lib/background/background";
@@ -618,6 +619,11 @@
         backgroundPreview = {
             ...background,
             customUrls: [...background.customUrls],
+            parameters: Object.fromEntries(
+                Object.entries(background.parameters).map(
+                    ([url, parameters]) => [url, { ...parameters }],
+                ),
+            ),
             colorSchemes: { ...background.colorSchemes },
         };
     }
@@ -629,6 +635,11 @@
             background: {
                 ...background,
                 customUrls: [...background.customUrls],
+                parameters: Object.fromEntries(
+                    Object.entries(background.parameters).map(
+                        ([url, parameters]) => [url, { ...parameters }],
+                    ),
+                ),
                 colorSchemes: { ...background.colorSchemes },
             },
         });
@@ -658,6 +669,12 @@
             enabled: true,
             url,
             customUrls,
+            parameters: {
+                ...background.parameters,
+                [url]: background.parameters[url] ?? {
+                    ...DEFAULT_BACKGROUND_PARAMETERS,
+                },
+            },
             colorSchemes: scheme
                 ? { ...background.colorSchemes, [url]: scheme }
                 : background.colorSchemes,
@@ -677,6 +694,8 @@
         );
         const colorSchemes = { ...background.colorSchemes };
         delete colorSchemes[url];
+        const parameters = { ...background.parameters };
+        delete parameters[url];
         commitBackground({
             ...background,
             enabled: background.url === url ? false : background.enabled,
@@ -685,6 +704,7 @@
                     ? PRESET_BACKGROUND_URLS[0]
                     : background.url,
             customUrls,
+            parameters,
             colorSchemes,
         });
     }

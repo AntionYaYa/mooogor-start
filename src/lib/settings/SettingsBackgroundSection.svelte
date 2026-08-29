@@ -1,6 +1,6 @@
 <script lang="ts">
   import {
-    DEFAULT_BACKGROUND_CONFIG,
+    DEFAULT_BACKGROUND_PARAMETERS,
     PRESET_BACKGROUND_URLS,
     type BackgroundColorScheme,
     type BackgroundConfig,
@@ -18,7 +18,7 @@
     onRemove: (url: string) => void;
   }
 
-  type NumericSetting = "fadePosition" | "scale" | "positionX" | "positionY";
+  type NumericSetting = keyof typeof DEFAULT_BACKGROUND_PARAMETERS;
 
   let { config, onPreview, onCommit, onOpenAdd, onRemove }: Props = $props();
   let loadedUrls = $state<Record<string, boolean>>({});
@@ -33,6 +33,9 @@
     ),
   ]);
   let currentColorScheme = $derived(config.colorSchemes[config.url]);
+  let currentParameters = $derived(
+    config.parameters[config.url] ?? DEFAULT_BACKGROUND_PARAMETERS,
+  );
 
   function disableBackground() {
     onCommit({ ...config, enabled: false });
@@ -70,15 +73,29 @@
   }
 
   function previewNumber(key: NumericSetting, event: Event) {
-    onPreview({ ...config, [key]: getRangeValue(event) });
+    updateNumber(key, getRangeValue(event), onPreview);
   }
 
   function commitNumber(key: NumericSetting, event: Event) {
-    onCommit({ ...config, [key]: getRangeValue(event) });
+    updateNumber(key, getRangeValue(event), onCommit);
   }
 
   function resetNumber(key: NumericSetting) {
-    onCommit({ ...config, [key]: DEFAULT_BACKGROUND_CONFIG[key] });
+    updateNumber(key, DEFAULT_BACKGROUND_PARAMETERS[key], onCommit);
+  }
+
+  function updateNumber(
+    key: NumericSetting,
+    value: number,
+    update: (config: BackgroundConfig) => void,
+  ) {
+    update({
+      ...config,
+      parameters: {
+        ...config.parameters,
+        [config.url]: { ...currentParameters, [key]: value },
+      },
+    });
   }
 
   function finishThumbnailLoad(url: string) {
@@ -164,7 +181,7 @@
       {@render rangeControl(
         t("nt_settings_background_fade"),
         "fadePosition",
-        config.fadePosition,
+        currentParameters.fadePosition,
         0,
         200,
         "%",
@@ -172,7 +189,7 @@
       {@render rangeControl(
         t("nt_settings_background_scale"),
         "scale",
-        config.scale,
+        currentParameters.scale,
         100,
         200,
         "%",
@@ -180,7 +197,7 @@
       {@render rangeControl(
         t("nt_settings_background_position_x"),
         "positionX",
-        config.positionX,
+        currentParameters.positionX,
         0,
         100,
         "%",
@@ -188,7 +205,15 @@
       {@render rangeControl(
         t("nt_settings_background_position_y"),
         "positionY",
-        config.positionY,
+        currentParameters.positionY,
+        0,
+        100,
+        "%",
+      )}
+      {@render rangeControl(
+        t("nt_settings_background_blur"),
+        "blur",
+        currentParameters.blur,
         0,
         100,
         "%",

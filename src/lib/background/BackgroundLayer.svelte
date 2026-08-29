@@ -1,13 +1,23 @@
 <script lang="ts">
-  import type { BackgroundConfig } from "./background";
+  import {
+    DEFAULT_BACKGROUND_PARAMETERS,
+    type BackgroundConfig,
+  } from "./background";
 
   interface Props {
     config: BackgroundConfig;
   }
 
   let { config }: Props = $props();
+  let parameters = $derived(
+    config.parameters[config.url] ?? DEFAULT_BACKGROUND_PARAMETERS,
+  );
+  let transparentPosition = $derived(
+    parameters.fadePosition > 100 ? (parameters.fadePosition - 100) / 2 : 0,
+  );
+  let opaquePosition = $derived(Math.min(parameters.fadePosition, 100));
   let mask = $derived(
-    `linear-gradient(to bottom, transparent 0%, black ${config.fadePosition}%)`,
+    `linear-gradient(to bottom, transparent ${transparentPosition}%, black ${opaquePosition}%)`,
   );
   let colorScheme = $derived(config.colorSchemes[config.url]);
 </script>
@@ -28,9 +38,10 @@
       alt=""
       draggable="false"
       referrerpolicy="no-referrer"
-      style:object-position={`${config.positionX}% ${config.positionY}%`}
-      style:transform-origin={`${config.positionX}% ${config.positionY}%`}
-      style:transform={`scale(${config.scale / 100})`}
+      style:object-position={`${parameters.positionX}% ${parameters.positionY}%`}
+      style:transform-origin={`${parameters.positionX}% ${parameters.positionY}%`}
+      style:transform={`scale(${parameters.scale / 100})`}
+      style:filter={`blur(${parameters.blur}px)`}
     />
   </div>
 </div>

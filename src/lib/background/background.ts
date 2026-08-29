@@ -11,11 +11,16 @@ export type BackgroundConfig = {
   enabled: boolean;
   url: string;
   customUrls: string[];
+  parameters: Record<string, BackgroundParameters>;
+  colorSchemes: Record<string, BackgroundColorScheme>;
+};
+
+export type BackgroundParameters = {
   fadePosition: number;
   scale: number;
   positionX: number;
   positionY: number;
-  colorSchemes: Record<string, BackgroundColorScheme>;
+  blur: number;
 };
 
 export type BackgroundColorOption = {
@@ -114,14 +119,25 @@ export const PRESET_BACKGROUND_COLOR_SCHEMES: Record<
   },
 };
 
-export const DEFAULT_BACKGROUND_CONFIG: BackgroundConfig = {
-  enabled: false,
-  url: PRESET_BACKGROUND_URLS[0],
-  customUrls: [],
+export const DEFAULT_BACKGROUND_PARAMETERS: BackgroundParameters = {
   fadePosition: 100,
   scale: 100,
   positionX: 50,
   positionY: 50,
+  blur: 0,
+};
+
+function createDefaultBackgroundParameters(urls: readonly string[]) {
+  return Object.fromEntries(
+    urls.map((url) => [url, { ...DEFAULT_BACKGROUND_PARAMETERS }]),
+  );
+}
+
+export const DEFAULT_BACKGROUND_CONFIG: BackgroundConfig = {
+  enabled: false,
+  url: PRESET_BACKGROUND_URLS[0],
+  customUrls: [],
+  parameters: createDefaultBackgroundParameters(PRESET_BACKGROUND_URLS),
   colorSchemes: PRESET_BACKGROUND_COLOR_SCHEMES,
 };
 
@@ -252,6 +268,58 @@ function normalizeColorSchemes(value: unknown) {
   );
 }
 
+function normalizeBackgroundParameters(value: unknown): BackgroundParameters {
+  const stored =
+    value && typeof value === "object"
+      ? (value as Partial<BackgroundParameters>)
+      : {};
+  return {
+    fadePosition: clampNumber(
+      stored.fadePosition,
+      DEFAULT_BACKGROUND_PARAMETERS.fadePosition,
+      0,
+      200,
+    ),
+    scale: clampNumber(
+      stored.scale,
+      DEFAULT_BACKGROUND_PARAMETERS.scale,
+      100,
+      200,
+    ),
+    positionX: clampNumber(
+      stored.positionX,
+      DEFAULT_BACKGROUND_PARAMETERS.positionX,
+      0,
+      100,
+    ),
+    positionY: clampNumber(
+      stored.positionY,
+      DEFAULT_BACKGROUND_PARAMETERS.positionY,
+      0,
+      100,
+    ),
+    blur: clampNumber(
+      stored.blur,
+      DEFAULT_BACKGROUND_PARAMETERS.blur,
+      0,
+      100,
+    ),
+  };
+}
+
+function normalizeBackgroundParametersByUrl(
+  value: unknown,
+  urls: string[],
+) {
+  const stored =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
+  return Object.fromEntries(
+    urls.map((url) => [url, normalizeBackgroundParameters(stored[url])]),
+  );
+}
+
 export function normalizeBackgroundConfig(
   value: unknown,
 ): BackgroundConfig {
@@ -265,6 +333,11 @@ export function normalizeBackgroundConfig(
   const customUrls = Array.isArray(stored.customUrls)
     ? [...new Set(stored.customUrls.filter(isBackgroundUrl).map((item) => item.trim()))]
     : [];
+  const backgroundUrls = [...new Set([...PRESET_BACKGROUND_URLS, ...customUrls, url])];
+  const parameters = normalizeBackgroundParametersByUrl(
+    stored.parameters,
+    backgroundUrls,
+  );
   const colorSchemes = normalizeColorSchemes(stored.colorSchemes);
   for (const [presetUrl, presetScheme] of Object.entries(
     PRESET_BACKGROUND_COLOR_SCHEMES,
@@ -288,30 +361,7 @@ export function normalizeBackgroundConfig(
     enabled: stored.enabled === true && isBackgroundUrl(url),
     url,
     customUrls,
-    fadePosition: clampNumber(
-      stored.fadePosition,
-      DEFAULT_BACKGROUND_CONFIG.fadePosition,
-      0,
-      200,
-    ),
-    scale: clampNumber(
-      stored.scale,
-      DEFAULT_BACKGROUND_CONFIG.scale,
-      100,
-      200,
-    ),
-    positionX: clampNumber(
-      stored.positionX,
-      DEFAULT_BACKGROUND_CONFIG.positionX,
-      0,
-      100,
-    ),
-    positionY: clampNumber(
-      stored.positionY,
-      DEFAULT_BACKGROUND_CONFIG.positionY,
-      0,
-      100,
-    ),
+    parameters,
     colorSchemes,
   };
 }

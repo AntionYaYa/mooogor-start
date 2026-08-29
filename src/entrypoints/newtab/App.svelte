@@ -98,10 +98,8 @@
       a.theme === b.theme &&
       a.background.enabled === b.background.enabled &&
       a.background.url === b.background.url &&
-      a.background.fadePosition === b.background.fadePosition &&
-      a.background.scale === b.background.scale &&
-      a.background.positionX === b.background.positionX &&
-      a.background.positionY === b.background.positionY &&
+      JSON.stringify(a.background.parameters) ===
+        JSON.stringify(b.background.parameters) &&
       JSON.stringify(a.background.colorSchemes) ===
         JSON.stringify(b.background.colorSchemes) &&
       a.background.customUrls.length === b.background.customUrls.length &&

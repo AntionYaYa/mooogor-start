@@ -83,6 +83,9 @@
   "nt_settings_background_position_y": {
     "message": "垂直位置"
   },
+  "nt_settings_background_blur": {
+    "message": "圖片模糊"
+  },
   "nt_settings_background_reset": {
     "message": "重設參數"
   },
