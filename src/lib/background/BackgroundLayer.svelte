@@ -6,10 +6,8 @@
   }
 
   let { background }: Props = $props();
-  let transparentPosition = $derived(
-    background.fadePosition > 100 ? (background.fadePosition - 100) / 2 : 0,
-  );
-  let opaquePosition = $derived(Math.min(background.fadePosition, 100));
+  let transparentPosition = $derived(background.fadePosition / 2);
+  let opaquePosition = $derived(100 + background.fadePosition);
   let mask = $derived(
     `linear-gradient(to bottom, transparent ${transparentPosition}%, black ${opaquePosition}%)`,
   );

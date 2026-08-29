@@ -488,7 +488,8 @@
     transition: background-color 0.16s ease;
   }
   .history_group_title_stuck {
-    background-color: var(--c-bg1);
+    background-color: var(--c-background-surface, var(--c-bg1));
+    background-image: linear-gradient(var(--c-surface), var(--c-surface));
   }
   .item {
     display: flex;

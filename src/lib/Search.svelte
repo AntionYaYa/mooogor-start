@@ -1531,12 +1531,14 @@
         align-items: center;
         border-radius: calc(var(--r1) - 2px);
         padding: var(--gap);
-        background-color: var(--c-bg1);
+        background-color: var(--c-background-surface, var(--c-bg1));
+        background-image: linear-gradient(var(--c-surface), var(--c-surface));
         width: 100%;
         box-sizing: border-box;
         justify-content: flex-end;
         gap: var(--gap);
     }
+
     @supports (corner-shape: squircle) {
         .input_group {
             border-radius: 100px;
@@ -1562,7 +1564,7 @@
         caret-color: var(--c-green);
     }
     .input::selection {
-        background-color: var(--c-green);
+        background-color: var(--c-main);
         color: var(--c-bg);
     }
     .input::placeholder {

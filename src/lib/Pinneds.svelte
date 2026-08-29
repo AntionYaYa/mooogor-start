@@ -763,7 +763,8 @@
     flex: 1;
   }
   .frequent_section_title_stuck {
-    background-color: var(--c-bg1);
+    background-color: var(--c-background-surface, var(--c-bg1));
+    background-image: linear-gradient(var(--c-surface), var(--c-surface));
   }
   .drag {
     outline: var(--c-mask) 2px dashed;

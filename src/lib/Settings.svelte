@@ -1366,6 +1366,12 @@
             class="app_box"
             class:radius={showSetting}
             class:background_active={backgroundDraft.enabled}
+            style:--c-background-surface-light={backgroundDraft.enabled
+                ? (backgroundDraft.current.lightColor ?? "var(--c-bg)")
+                : "var(--c-bg1)"}
+            style:--c-background-surface-dark={backgroundDraft.enabled
+                ? (backgroundDraft.current.darkColor ?? "var(--c-bg)")
+                : "var(--c-bg1)"}
         >
             {#if backgroundDraft.enabled}
                 <BackgroundLayer background={backgroundDraft.current} />
@@ -1947,6 +1953,7 @@
         will-change: transform, opacity;
     }
     .app_box {
+        --c-background-surface: var(--c-background-surface-light);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -1961,6 +1968,11 @@
             var(--c-bg) 50%
         );
         isolation: isolate;
+    }
+    @media (prefers-color-scheme: dark) {
+        .app_box {
+            --c-background-surface: var(--c-background-surface-dark);
+        }
     }
     .app_box.background_active {
         background: none;

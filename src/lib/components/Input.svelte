@@ -116,7 +116,7 @@
 	}
 
 	input::selection {
-		background-color: var(--c-green);
+		background-color: var(--c-main);
 		color: var(--c-bg);
 	}
 	input::placeholder {

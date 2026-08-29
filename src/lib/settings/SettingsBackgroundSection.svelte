@@ -178,7 +178,7 @@
         "fadePosition",
         config.current.fadePosition,
         0,
-        200,
+        100,
         "%",
       )}
       {@render rangeControl(

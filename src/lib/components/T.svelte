@@ -32,7 +32,7 @@
 		word-break: break-word;
 	}
 	::selection{
-      background-color: var(--c-green);
+      background-color: var(--c-main);
       color: var(--c-bg);
     }
 	.nowrap {

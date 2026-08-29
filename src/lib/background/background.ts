@@ -124,7 +124,7 @@ const PRESET_BACKGROUND_COLOR_SCHEMES: Record<
 };
 
 export const DEFAULT_BACKGROUND_PARAMETERS = {
-  fadePosition: 100,
+  fadePosition: 0,
   scale: 100,
   positionX: 50,
   positionY: 50,
@@ -296,7 +296,7 @@ function normalizeBackgroundItem(
       stored.fadePosition,
       preset?.fadePosition ?? DEFAULT_BACKGROUND_PARAMETERS.fadePosition,
       0,
-      200,
+      100,
     ),
     scale: clampNumber(
       stored.scale,
