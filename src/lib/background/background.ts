@@ -1,6 +1,10 @@
 export const PRESET_BACKGROUND_URLS = [
   "https://images.unsplash.com/photo-1752606402432-9eeb131c6101?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   "https://images.unsplash.com/photo-1783972669797-35dade964f0c?q=80&w=1587&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://images.unsplash.com/photo-1446034295857-c39f8844fad4?q=80&w=5340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://images.unsplash.com/photo-1540205082-e56e180508e6?q=80&w=3732&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://images.unsplash.com/photo-1783638204102-c20f956b5663?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://images.unsplash.com/photo-1777276516260-3a87c1e42db4?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
 ] as const;
 
 export type BackgroundConfig = {
@@ -38,21 +42,75 @@ export const PRESET_BACKGROUND_COLOR_SCHEMES: Record<
       { base: "#668ba0", light: "#dde2e5", dark: "#2b363c" },
       { base: "#5b5f6b", light: "#dbdcde", dark: "#2c2d31" },
       { base: "#a5a19e", light: "#e5e4e4", dark: "#3a3837" },
+      { base: "#404c4b", light: "#d8dbdb", dark: "#272c2c" },
     ],
     lightColor: "#c7d4e1",
     darkColor: "#152230",
   },
   [PRESET_BACKGROUND_URLS[1]]: {
     options: [
-      { base: "#3a898b", light: "#d5e4e5", dark: "#213b3c" },
+      { base: "#328385", light: "#d3e4e5", dark: "#1e3b3c" },
       { base: "#041b19", light: "#c1e5e2", dark: "#0f3330" },
+      { base: "#76b4b7", light: "#dee7e8", dark: "#2a4243" },
       { base: "#8fcdd2", light: "#e0ebec", dark: "#294a4d" },
       { base: "#82c2cc", light: "#dfeaeb", dark: "#28464b" },
       { base: "#05443b", light: "#c2e9e4", dark: "#103833" },
       { base: "#a8d3d4", light: "#e4ecec", dark: "#2e4b4c" },
     ],
-    lightColor: "#d5e4e5",
-    darkColor: "#213b3c",
+    lightColor: "#d3e4e5",
+    darkColor: "#1e3b3c",
+  },
+  [PRESET_BACKGROUND_URLS[2]]: {
+    options: [
+      { base: "#29332d", light: "#d4d9d6", dark: "#232925" },
+      { base: "#bcafa6", light: "#e8e6e4", dark: "#413a35" },
+      { base: "#777670", light: "#dfdfde", dark: "#323230" },
+      { base: "#606663", light: "#dcdedd", dark: "#2d2f2e" },
+      { base: "#8d8985", light: "#e2e2e1", dark: "#363533" },
+      { base: "#93948c", light: "#e3e3e2", dark: "#373734" },
+      { base: "#9c642c", light: "#e8ddd3", dark: "#412f1c" },
+    ],
+    lightColor: "#d4d9d6",
+    darkColor: "#232925",
+  },
+  [PRESET_BACKGROUND_URLS[3]]: {
+    options: [
+      { base: "#1aadaa", light: "#cfebea", dark: "#164746" },
+      { base: "#046474", light: "#c6e6eb", dark: "#12383e" },
+      { base: "#044158", light: "#c3dfea", dark: "#112f3b" },
+      { base: "#95e1da", light: "#e0efed", dark: "#245550" },
+      { base: "#60e2d9", light: "#daefed", dark: "#1c5451" },
+      { base: "#047e72", light: "#c7ebe8", dark: "#12403b" },
+      { base: "#06554b", light: "#c3eae5", dark: "#113b35" },
+    ],
+    lightColor: "#cfebea",
+    darkColor: "#164746",
+  },
+  [PRESET_BACKGROUND_URLS[4]]: {
+    options: [
+      { base: "#3a4449", light: "#d7dadb", dark: "#262a2c" },
+      { base: "#0e1213", light: "#cfd5d7", dark: "#1e2325" },
+      { base: "#aba096", light: "#e6e4e3", dark: "#3d3834" },
+      { base: "#7a7f87", light: "#e0e0e1", dark: "#313335" },
+      { base: "#747575", light: "#dfdfdf", dark: "#313131" },
+      { base: "#616e76", light: "#dcdee0", dark: "#2c3133" },
+      { base: "#888e92", light: "#e1e2e3", dark: "#333537" },
+    ],
+    lightColor: "#d7dadb",
+    darkColor: "#262a2c",
+  },
+  [PRESET_BACKGROUND_URLS[5]]: {
+    options: [
+      { base: "#050b13", light: "#c4d1e1", dark: "#131f2e" },
+      { base: "#47494e", light: "#d9dadb", dark: "#292a2c" },
+      { base: "#5e5e61", light: "#dcdcdd", dark: "#2d2d2e" },
+      { base: "#6d6e71", light: "#dededf", dark: "#303031" },
+      { base: "#34333a", light: "#d7d6d9", dark: "#262629" },
+      { base: "#383c3c", light: "#d7d9d9", dark: "#272929" },
+      { base: "#546464", light: "#dadede", dark: "#2a3030" },
+    ],
+    lightColor: "#c4d1e1",
+    darkColor: "#131f2e",
   },
 };
 
@@ -207,10 +265,25 @@ export function normalizeBackgroundConfig(
   const customUrls = Array.isArray(stored.customUrls)
     ? [...new Set(stored.customUrls.filter(isBackgroundUrl).map((item) => item.trim()))]
     : [];
-  const colorSchemes = {
-    ...PRESET_BACKGROUND_COLOR_SCHEMES,
-    ...normalizeColorSchemes(stored.colorSchemes),
-  };
+  const colorSchemes = normalizeColorSchemes(stored.colorSchemes);
+  for (const [presetUrl, presetScheme] of Object.entries(
+    PRESET_BACKGROUND_COLOR_SCHEMES,
+  )) {
+    const selected = colorSchemes[presetUrl];
+    colorSchemes[presetUrl] = {
+      ...presetScheme,
+      lightColor: presetScheme.options.some(
+        (option) => option.light === selected?.lightColor,
+      )
+        ? selected.lightColor
+        : presetScheme.lightColor,
+      darkColor: presetScheme.options.some(
+        (option) => option.dark === selected?.darkColor,
+      )
+        ? selected.darkColor
+        : presetScheme.darkColor,
+    };
+  }
   return {
     enabled: stored.enabled === true && isBackgroundUrl(url),
     url,
@@ -219,7 +292,7 @@ export function normalizeBackgroundConfig(
       stored.fadePosition,
       DEFAULT_BACKGROUND_CONFIG.fadePosition,
       0,
-      100,
+      200,
     ),
     scale: clampNumber(
       stored.scale,

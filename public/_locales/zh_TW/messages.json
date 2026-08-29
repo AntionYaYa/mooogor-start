@@ -56,6 +56,12 @@
   "nt_settings_background_remove": {
     "message": "移除自訂背景"
   },
+  "nt_confirm_delete_background_title": {
+    "message": "刪除背景"
+  },
+  "nt_settings_background_delete_confirm": {
+    "message": "確定要刪除這個自訂背景嗎？"
+  },
   "nt_settings_background_add": {
     "message": "新增背景"
   },

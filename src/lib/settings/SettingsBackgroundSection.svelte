@@ -15,11 +15,12 @@
     onPreview: (config: BackgroundConfig) => void;
     onCommit: (config: BackgroundConfig) => void;
     onOpenAdd: () => void;
+    onRemove: (url: string) => void;
   }
 
   type NumericSetting = "fadePosition" | "scale" | "positionX" | "positionY";
 
-  let { config, onPreview, onCommit, onOpenAdd }: Props = $props();
+  let { config, onPreview, onCommit, onOpenAdd, onRemove }: Props = $props();
   let loadedUrls = $state<Record<string, boolean>>({});
 
   let backgroundUrls = $derived([
@@ -41,18 +42,9 @@
     onCommit({ ...config, enabled: true, url });
   }
 
-  function removeCustomUrl(event: MouseEvent, url: string) {
+  function requestRemove(event: MouseEvent, url: string) {
     event.stopPropagation();
-    const customUrls = config.customUrls.filter((item) => item !== url);
-    const colorSchemes = { ...config.colorSchemes };
-    delete colorSchemes[url];
-    onCommit({
-      ...config,
-      enabled: config.url === url ? false : config.enabled,
-      url: config.url === url ? DEFAULT_BACKGROUND_CONFIG.url : config.url,
-      customUrls,
-      colorSchemes,
-    });
+    onRemove(url);
   }
 
   function selectModeColor(
@@ -115,7 +107,7 @@
           onclick={() => selectBackground(url)}
         >
           {#if !loadedUrls[url]}
-            <span class="thumbnail_skeleton" aria-hidden="true"></span>
+            <span class="thumbnail_placeholder" aria-hidden="true"></span>
           {/if}
           <img
             class:loaded={loadedUrls[url]}
@@ -134,7 +126,7 @@
             class="remove_background"
             aria-label={t("nt_settings_background_remove")}
             title={t("nt_settings_background_remove")}
-            onclick={(event) => removeCustomUrl(event, url)}
+            onclick={(event) => requestRemove(event, url)}
           >
             <Icon name="X" color="#fff" size={16} />
           </button>
@@ -174,7 +166,7 @@
         "fadePosition",
         config.fadePosition,
         0,
-        100,
+        200,
         "%",
       )}
       {@render rangeControl(
@@ -211,7 +203,9 @@
   scheme: BackgroundColorScheme,
 )}
   <div class="color_mode">
+  <G>
     <T type="s">{label}</T>
+  </G>
     <div class="color_options">
       {#each scheme.options as option (option.base)}
         {@const color = mode === "light" ? option.light : option.dark}
@@ -276,7 +270,7 @@
     flex-direction: column;
     width: 100%;
     box-sizing: border-box;
-    gap: var(--gap);
+    gap: 0;
     padding: var(--gap);
   }
 
@@ -341,26 +335,10 @@
     opacity: 1;
   }
 
-  .thumbnail_skeleton {
+  .thumbnail_placeholder {
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      100deg,
-      var(--c-mask) 25%,
-      var(--c-mask1) 50%,
-      var(--c-mask) 75%
-    );
-    background-size: 200% 100%;
-    animation: skeleton 1.2s linear infinite;
-  }
-
-  @keyframes skeleton {
-    from {
-      background-position: 100% 0;
-    }
-    to {
-      background-position: -100% 0;
-    }
+    background: var(--c-mask);
   }
 
   .remove_background {
@@ -385,15 +363,16 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: var(--gap);
-    padding: var(--gap);
+    padding: 0;
     box-sizing: border-box;
   }
 
   .color_options {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: var(--gap);
+    padding: var(--gap);
+    box-sizing: border-box;
   }
 
   .color_option {
@@ -416,19 +395,6 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-  }
-
-  .range_header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-  }
-
-  .range_actions {
-    display: flex;
-    align-items: center;
-    gap: var(--gap);
   }
 
   .range_reset {

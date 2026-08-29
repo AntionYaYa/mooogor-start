@@ -41,11 +41,7 @@
   }
 </script>
 
-<Popup
-  type="m"
-  title={t("nt_settings_background_add")}
-  onclickClose={close}
->
+<Popup type="s" title={t("nt_settings_background_add")} onclickClose={close}>
   <div class="dialog">
     <Shake shake={urlInvalid}>
       <Input
@@ -56,26 +52,31 @@
         disabled={submitting}
       />
     </Shake>
-    <div class="actions">
-      <Button full fill r="r1" onclick={close} disabled={submitting}>
-        <G align="c"><T>{t("nt_cancel")}</T></G>
+    <G align="r" gap>
+      <Button fill r="r1" onclick={close} disabled={submitting}>
+        <G align="c">
+          <G align="c">
+            <T>{t("nt_cancel")}</T>
+          </G>
+        </G>
       </Button>
       <Button
-        full
         r="r1"
         bg="var(--c-text)"
         onclick={() => void confirm()}
         disabled={submitting}
       >
         <G align="c">
-          {#if submitting}
-            <Icon name="Loading" color="var(--c-bg)" />
-          {:else}
-            <T color="var(--c-bg)">{t("nt_confirm")}</T>
-          {/if}
+          <G align="c">
+            {#if submitting}
+              <Icon name="Loading" color="var(--c-bg)" />
+            {:else}
+              <T color="var(--c-bg)">{t("nt_confirm")}</T>
+            {/if}
+          </G>
         </G>
       </Button>
-    </div>
+    </G>
   </div>
 </Popup>
 
@@ -87,12 +88,6 @@
     gap: var(--gap);
     padding: var(--gap);
     box-sizing: border-box;
-  }
-
-  .actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--gap);
-    width: 100%;
+    overflow: hidden;
   }
 </style>

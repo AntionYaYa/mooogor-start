@@ -50,14 +50,14 @@ export async function extractBackgroundColorScheme(
 ): Promise<BackgroundColorScheme> {
   const image = await loadImage(url);
   const palette = await getPalette(createAnalysisCanvas(image), {
-    colorCount: 6,
+    colorCount: 7,
     quality: 5,
   });
   const colors = (palette ?? []).sort(
     (a, b) => b.population - a.population,
   );
   const bases = [...new Set(colors.map((color) => color.hex().toLowerCase()))]
-    .slice(0, 6);
+    .slice(0, 7);
   if (!bases.length) throw new Error("No colors found");
   return createBackgroundColorScheme(bases);
 }

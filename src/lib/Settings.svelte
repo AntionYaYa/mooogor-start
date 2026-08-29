@@ -21,7 +21,6 @@
         PRESET_BACKGROUND_URLS,
         type BackgroundConfig,
     } from "@/lib/background/background";
-    import { extractBackgroundColorScheme } from "@/lib/background/backgroundColors";
     import { getBookmarks } from "@/lib/browser/bookmarks";
     import type { BookmarkNode } from "@/lib/browser/bookmarks";
     import { hasPermission } from "@/lib/browser/permissions";
@@ -641,6 +640,9 @@
         let scheme = background.colorSchemes[url];
         if (!scheme) {
             try {
+                const { extractBackgroundColorScheme } = await import(
+                    "@/lib/background/backgroundColors"
+                );
                 scheme = await extractBackgroundColorScheme(url);
             } catch {
                 // 配色不是必填项，失败或超时后继续使用现有的 --c-bg。
@@ -659,6 +661,31 @@
             colorSchemes: scheme
                 ? { ...background.colorSchemes, [url]: scheme }
                 : background.colorSchemes,
+        });
+    }
+
+    async function removeBackgroundUrl(url: string) {
+        const confirmed = await requestConfirm(
+            t("nt_confirm_delete_background_title"),
+            t("nt_settings_background_delete_confirm"),
+            t("nt_delete"),
+        );
+        if (!confirmed) return;
+        const background = backgroundPreview ?? userSettings.background;
+        const customUrls = background.customUrls.filter(
+            (item) => item !== url,
+        );
+        const colorSchemes = { ...background.colorSchemes };
+        delete colorSchemes[url];
+        commitBackground({
+            ...background,
+            enabled: background.url === url ? false : background.enabled,
+            url:
+                background.url === url
+                    ? PRESET_BACKGROUND_URLS[0]
+                    : background.url,
+            customUrls,
+            colorSchemes,
         });
     }
 
@@ -1392,6 +1419,8 @@
                                 onCommit={commitBackground}
                                 onOpenAdd={() =>
                                     (showBackgroundUrlDialog = true)}
+                                onRemove={(url) =>
+                                    void removeBackgroundUrl(url)}
                             />
                         {/if}
                     </div>
@@ -1704,10 +1733,10 @@
 {/snippet}
 
 {#snippet temOtherSettingsGroup()}
+    {@render temselectItem(t("nt_settings_theme"), themeOptions, setTheme)}
     {@render temEntranceItem(t("nt_settings_background_title"), () =>
         openSettingPage("background"),
     )}
-    {@render temselectItem(t("nt_settings_theme"), themeOptions, setTheme)}
     {@render temselectItem(
         t("nt_settings_language"),
         languageOptions,
