@@ -16,9 +16,7 @@
         getEngineCategories,
         updateEnginesState,
     } from "@/lib/DB/DB";
-    import {
-        searchBookmarks,
-    } from "@/lib/browser/bookmarks";
+    import { searchBookmarks } from "@/lib/browser/bookmarks";
     import type { HistoryItem } from "@/lib/browser/history";
     import Button from "./components/Button.svelte";
     import BkmkIcon from "./BkmkIcon.svelte";
@@ -232,15 +230,17 @@
                 engine.enabled !== false &&
                 fallbackCategoryIds.includes(engine.category ?? "1"),
         );
-        enabledEngines = fallbackCategoryIds.flatMap((categoryId) =>
-            languageEngines
-                .filter((engine) => (engine.category ?? "1") === categoryId)
-                .slice(0, 3),
-        ).map((engine, index) => ({
-            ...engine,
-            id: -(index + 1),
-            order: index,
-        }));
+        enabledEngines = fallbackCategoryIds
+            .flatMap((categoryId) =>
+                languageEngines
+                    .filter((engine) => (engine.category ?? "1") === categoryId)
+                    .slice(0, 3),
+            )
+            .map((engine, index) => ({
+                ...engine,
+                id: -(index + 1),
+                order: index,
+            }));
         disabledEngines = [];
         if (!engineCategories.some((item) => item.id === selectedCategoryId)) {
             selectedCategoryId = engineCategories[0]?.id ?? "1";
@@ -313,7 +313,11 @@
             engineConfigReady = true;
         } catch (error) {
             if (requestId !== engineConfigRequestId) return;
-            console.error("[Mooogor NewTab]", "search-config:load-failed", error);
+            console.error(
+                "[Mooogor NewTab]",
+                "search-config:load-failed",
+                error,
+            );
             applyFallbackEngineConfig();
             databaseConfigLoaded = false;
             engineConfigReady = true;
@@ -338,7 +342,11 @@
                 await migrateAndLoadSearchKeys();
             })
             .catch((error) => {
-                console.warn("[Mooogor NewTab]", "search-storage:hydrate-failed", error);
+                console.warn(
+                    "[Mooogor NewTab]",
+                    "search-storage:hydrate-failed",
+                    error,
+                );
             });
 
         return () => {
@@ -550,10 +558,7 @@
             if (!item || item.parentElement !== node) return;
 
             const control = target.closest<HTMLElement>(".more_item");
-            if (
-                control &&
-                (event.key === "Enter" || event.key === " ")
-            ) {
+            if (control && (event.key === "Enter" || event.key === " ")) {
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 control.click();
@@ -913,12 +918,18 @@
         if (next && searchPanelEl?.contains(next)) return;
         searchAreaFocused = false;
     }
-
 </script>
 
-<div class="search" class:hided_tab={!searchConfigLoading && enginesGroup.length <= 1}>
+<div
+    class="search"
+    class:hided_tab={!searchConfigLoading && enginesGroup.length <= 1}
+>
     {#if searchConfigLoading}
-        <div class="search_skeleton" role="status" aria-label="Loading search configuration">
+        <div
+            class="search_skeleton"
+            role="status"
+            aria-label="Loading search configuration"
+        >
             <div class="skeleton_tabs" aria-hidden="true">
                 {#each Array.from({ length: 4 }) as _}
                     <div class="skeleton_tab skeleton_shimmer"></div>
@@ -934,63 +945,63 @@
             </div>
         </div>
     {:else}
-    {#if engineConfigReady && enginesGroup.length > 1}
-        <Tab
-            tabs={enginesGroup}
-            onclick={clickEngineGroup}
-            selectedBg={false}
-        />
-    {/if}
-    <div
-        class="search_g"
-        bind:this={searchPanelEl}
-        class:search_g_hidden={!engineConfigReady}
-        class:bg={showMoreEngines ||
-            (searchAreaFocused &&
-                (((searchBookmarksEnabled &&
-                (bookmarksResults.length || bookmarksLoading)) ||
-                (searchHistoryEnabled &&
-                    (historyResults.length || historyLoading))) ||
-                    showSearchKeys))}
-        class:top0={enginesGroup.length <= 1}
-    >
-        {@render temInputGroup()}
-        {#if !showMoreEngines && showSearchKeys}
+        {#if engineConfigReady && enginesGroup.length > 1}
+            <Tab
+                tabs={enginesGroup}
+                onclick={clickEngineGroup}
+                selectedBg={false}
+            />
+        {/if}
+        <div
+            class="search_g"
+            bind:this={searchPanelEl}
+            class:search_g_hidden={!engineConfigReady}
+            class:bg={showMoreEngines ||
+                (searchAreaFocused &&
+                    ((searchBookmarksEnabled &&
+                        (bookmarksResults.length || bookmarksLoading)) ||
+                        (searchHistoryEnabled &&
+                            (historyResults.length || historyLoading)) ||
+                        showSearchKeys))}
+            class:top0={enginesGroup.length <= 1}
+        >
+            {@render temInputGroup()}
+            {#if !showMoreEngines && showSearchKeys}
             {@render temSearchKeys()}
-        {/if}
-        {#if !showMoreEngines && searchAreaFocused && ((searchBookmarksEnabled && (bookmarksResults.length || bookmarksLoading)) || (searchHistoryEnabled && (historyResults.length || historyLoading)))}
-            <div
-                class="list"
-                bind:this={listEls}
-                onfocusout={handleListFocusOut}
-                transition:slide={{ duration: 200 }}
-            >
-                {#if searchBookmarksEnabled && bookmarksResults.length}
-                    <G>
-                        <T type="s">{t("nt_label_bookmarks")}</T>
-                    </G>
-                    {#each bookmarksResults as bookmark}
-                        {@render temBkmk(bookmark)}
-                    {/each}
-                {/if}
+            {/if}
+            {#if !showMoreEngines && searchAreaFocused && ((searchBookmarksEnabled && (bookmarksResults.length || bookmarksLoading)) || (searchHistoryEnabled && (historyResults.length || historyLoading)))}
+                <div
+                    class="list"
+                    bind:this={listEls}
+                    onfocusout={handleListFocusOut}
+                    transition:slide={{ duration: 200 }}
+                >
+                    {#if searchBookmarksEnabled && bookmarksResults.length}
+                        <G>
+                            <T type="s">{t("nt_label_bookmarks")}</T>
+                        </G>
+                        {#each bookmarksResults as bookmark}
+                            {@render temBkmk(bookmark)}
+                        {/each}
+                    {/if}
 
-                {#if searchHistoryEnabled && historyResults.length}
-                    <G>
-                        <T type="s">{t("nt_label_history")}</T>
-                    </G>
-                    {#each historyResults as history}
-                        {@render temBkmk(history)}
-                    {/each}
-                {/if}
+                    {#if searchHistoryEnabled && historyResults.length}
+                        <G>
+                            <T type="s">{t("nt_label_history")}</T>
+                        </G>
+                        {#each historyResults as history}
+                            {@render temBkmk(history)}
+                        {/each}
+                    {/if}
 
-                {#if (searchHistoryEnabled && historyLoading) || (searchBookmarksEnabled && bookmarksLoading)}
-                    <div class="more_trigger">
-                        <Icon name="Loading" color="var(--c-text)" />
-                    </div>
-                {/if}
-            </div>
-        {/if}
-    </div>
+                    {#if (searchHistoryEnabled && historyLoading) || (searchBookmarksEnabled && bookmarksLoading)}
+                        <div class="more_trigger">
+                            <Icon name="Loading" color="var(--c-text)" />
+                        </div>
+                    {/if}
+                </div>
+            {/if}
+        </div>
     {/if}
 </div>
 
@@ -1052,17 +1063,19 @@
 {/snippet}
 
 {#snippet temSearchKeys()}
-    <div class="search_keys" transition:slide={{duration: 200}}>
-        {#each searchKeys as key (key)}
-            <button
-                type="button"
-                class="search_key"
-                onmousedown={(e) => e.preventDefault()}
-                onclick={() => fillSearchKey(key)}
-            >
-                <T type="s" nowrap>{key}</T>
-            </button>
-        {/each}
+    <div class="search_keys" transition:slide={{ duration: 200 }}>
+        <div class="search_keys_list">
+            {#each searchKeys as key (key)}
+                <button
+                    type="button"
+                    class="search_key"
+                    onmousedown={(e) => e.preventDefault()}
+                    onclick={() => fillSearchKey(key)}
+                >
+                    <T type="s" nowrap>{key}</T>
+                </button>
+            {/each}
+        </div>
         <button
             type="button"
             class="search_keys_clear"
@@ -1071,14 +1084,14 @@
             onmousedown={(e) => e.preventDefault()}
             onclick={clearSearchKeys}
         >
-        <G>
-            <Icon
-                name="BrushCleaning"
-                color="var(--c-text)"
-                opacity={0.6}
-                size={16}
-            />
-        </G>
+            <G>
+                <Icon
+                    name="BrushCleaning"
+                    color="var(--c-text)"
+                    opacity={0.6}
+                    size={16}
+                />
+            </G>
         </button>
     </div>
 {/snippet}
@@ -1104,10 +1117,7 @@
             onfinalize={handleFinalizeEnabled}
         >
             {#each displayEnabledEngines as engine (engine.id)}
-                <div
-                    class="engine_item"
-                    animate:flip={{ duration: 200 }}
-                >
+                <div class="engine_item" animate:flip={{ duration: 200 }}>
                     <a
                         class="engine"
                         class:selected={engine.engineUrl === selectedEngineUrl}
@@ -1166,10 +1176,7 @@
                 onfinalize={handleFinalizeDisabled}
             >
                 {#each displayDisabledEngines as engine (engine.id)}
-                    <div
-                        class="engine_item"
-                        animate:flip={{ duration: 200 }}
-                    >
+                    <div class="engine_item" animate:flip={{ duration: 200 }}>
                         <button
                             type="button"
                             class="more_item"
@@ -1190,7 +1197,11 @@
             </div>
             <Button onclick={openSearchEngineSettings}>
                 <G>
-                    <Icon name="SquarePen" color="var(--c-text)" opacity={0.6} />
+                    <Icon
+                        name="SquarePen"
+                        color="var(--c-text)"
+                        opacity={0.6}
+                    />
                 </G>
             </Button>
         </div>
@@ -1273,27 +1284,47 @@
         position: absolute;
         inset: 0;
         transform: translateX(-100%);
-        background: linear-gradient(90deg, transparent, var(--c-mask1), transparent);
+        background: linear-gradient(
+            90deg,
+            transparent,
+            var(--c-mask1),
+            transparent
+        );
         animation: skeleton-shimmer 1.25s ease-in-out infinite;
     }
     @keyframes skeleton-shimmer {
-        to { transform: translateX(100%); }
+        to {
+            transform: translateX(100%);
+        }
     }
     @media (prefers-reduced-motion: reduce) {
-        .skeleton_shimmer::after { animation: none; }
+        .skeleton_shimmer::after {
+            animation: none;
+        }
     }
     .search_keys {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
         gap: var(--gap);
         width: 100%;
         box-sizing: border-box;
         padding: var(--gap);
     }
+    .search_keys_list {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: var(--gap);
+        min-width: 0;
+        max-width: 100%;
+    }
     .search_key {
         display: inline-flex;
         align-items: center;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
         border: none;
         border-radius: 999px;
         background-color: var(--c-mask);
@@ -1312,7 +1343,6 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-left: auto;
         padding: 0;
         border: none;
         background: transparent;

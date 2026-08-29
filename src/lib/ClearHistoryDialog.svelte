@@ -91,7 +91,7 @@
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
-    background-color: var(--c-mask);
+    border: 2px solid var(--c-mask);
     border-radius: var(--r1);
     max-height: 480px;
     overflow-y: auto;

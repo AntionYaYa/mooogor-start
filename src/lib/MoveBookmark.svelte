@@ -375,7 +375,7 @@
     gap: var(--gap);
     box-sizing: border-box;
     padding: var(--gap);
-    border: 2px solid var(--c-border);
+    border: 2px solid var(--c-mask);
     border-radius: var(--r1);
   }
   .folder_group,

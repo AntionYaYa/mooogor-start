@@ -1555,6 +1555,13 @@
         setInjectRelatedSearch,
     )}
     {@render temswithcItem(
+        undefined,
+        t("nt_settings_record_search_keywords"),
+        t("nt_settings_record_search_keywords_tip"),
+        userSettings.recordSearchKeywords,
+        setRecordSearchKeywords,
+    )}
+    {@render temswithcItem(
         t("nt_settings_search_scope"),
         t("nt_settings_search_bookmarks"),
         undefined,
@@ -1568,13 +1575,7 @@
         userSettings.searchHistory,
         setSearchHistory,
     )}
-    {@render temswithcItem(
-        undefined,
-        t("nt_settings_record_search_keywords"),
-        t("nt_settings_record_search_keywords_tip"),
-        userSettings.recordSearchKeywords,
-        setRecordSearchKeywords,
-    )}
+
 {/snippet}
 
 {#snippet temWebsiteSettingsGroup()}
