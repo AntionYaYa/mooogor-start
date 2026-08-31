@@ -140,6 +140,63 @@
   "nt_settings_other_section_title": {
     "message": "Other"
   },
+  "nt_settings_data_sync_title": {
+    "message": "Data"
+  },
+  "nt_settings_data_sync_switch": {
+    "message": "Sync across devices"
+  },
+  "nt_settings_data_sync_syncs": {
+    "message": "Once enabled, common sites, search engines, search categories, and preferences are synced."
+  },
+  "nt_settings_data_sync_usage": {
+    "message": "Sync storage"
+  },
+  "nt_settings_data_local_usage": {
+    "message": "Local storage"
+  },
+  "nt_settings_data_sync_last": {
+    "message": "Last sync write"
+  },
+  "nt_settings_data_sync_not_yet": {
+    "message": "Not synced yet"
+  },
+  "nt_settings_data_sync_pending": {
+    "message": "Waiting to write sync data"
+  },
+  "nt_settings_data_sync_retry": {
+    "message": "Retry"
+  },
+  "nt_settings_data_sync_error": {
+    "message": "Sync failed. Check your browser sync settings or try again later."
+  },
+  "nt_data_sync_loading_title": {
+    "message": "Writing sync data"
+  },
+  "nt_data_sync_error_title": {
+    "message": "Data sync issue"
+  },
+  "nt_data_sync_error_quota": {
+    "message": "Sync storage is full. Remove some common sites or search engines, then retry."
+  },
+  "nt_data_sync_error_rate": {
+    "message": "There were too many writes in a short time. Wait a moment, then retry."
+  },
+  "nt_data_sync_error_unknown": {
+    "message": "Check Chrome sync and your network connection. You can also reload the extension, then retry."
+  },
+  "nt_data_sync_retrying": {
+    "message": "Retrying"
+  },
+  "nt_local_storage_error_title": {
+    "message": "Local data could not be saved"
+  },
+  "nt_local_storage_error_quota": {
+    "message": "Local storage is full, so the latest change may not have been saved. Remove unused custom backgrounds or other local data, then repeat the operation."
+  },
+  "nt_local_storage_error_write": {
+    "message": "The latest change could not be saved. Reload the extension and try again. If it continues, check extension storage or reset the configuration."
+  },
   "nt_settings_new_tab_open": {
     "message": "Open links in a new tab"
   },

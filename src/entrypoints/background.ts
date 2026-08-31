@@ -32,6 +32,11 @@ import {
 import enMessages from "@@/public/_locales/en/messages.json";
 import zhCNMessages from "@@/public/_locales/zh_CN/messages.json";
 import zhTWMessages from "@@/public/_locales/zh_TW/messages.json";
+import {
+  initializeDataSync,
+  registerDataSyncListener,
+} from "../lib/sync/dataSync";
+import { persistLocalStorageHealthUpdate } from "../lib/storage/localStorageHealth";
 
 type RelatedSearchEngine = Pick<
   Engine,
@@ -83,6 +88,7 @@ function prepareConfiguration(
     await ensureDefaultWebSites(buildDefaultWebSites(language));
     await ensureDefaultEngineCategories(buildDefaultEngineCategories());
     await ensureDefaultEngines(buildDefaultEngines(language));
+    await initializeDataSync();
   })().catch((error) => {
     configurationReadyPromise = null;
     console.error(CONFIG_LOG_PREFIX, "initialization:failed", {
@@ -96,6 +102,7 @@ function prepareConfiguration(
 }
 
 export default defineBackground(() => {
+  registerDataSyncListener();
   browser.runtime.onInstalled.addListener((details) => {
     const isFreshInstall = details.reason === "install";
     const trigger: ConfigurationTrigger = isFreshInstall ? "install" : "update";
@@ -108,9 +115,10 @@ export default defineBackground(() => {
 
   browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!message || typeof message !== "object") return;
-    const { type, payload, requestId } = message as {
+    const { type, payload, requestId, state } = message as {
       type?: string;
       requestId?: string;
+      state?: unknown;
       payload?: {
         url?: string;
         faviconUrl?: string;
@@ -121,6 +129,9 @@ export default defineBackground(() => {
         maxResults?: number;
       };
     };
+    if (type === "updateLocalStorageHealth") {
+      return persistLocalStorageHealthUpdate(state ?? null);
+    }
     if (type === "ensureConfigReady") {
       void prepareConfiguration(false, "ensureConfigReady").then(
         () => {

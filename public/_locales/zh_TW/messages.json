@@ -140,6 +140,63 @@
   "nt_settings_other_section_title": {
     "message": "其他"
   },
+  "nt_settings_data_sync_title": {
+    "message": "資料"
+  },
+  "nt_settings_data_sync_switch": {
+    "message": "跨裝置同步"
+  },
+  "nt_settings_data_sync_syncs": {
+    "message": "開啟後會同步常用網站、搜尋引擎、搜尋分類及偏好設定。"
+  },
+  "nt_settings_data_sync_usage": {
+    "message": "同步空間"
+  },
+  "nt_settings_data_local_usage": {
+    "message": "本機空間"
+  },
+  "nt_settings_data_sync_last": {
+    "message": "最近寫入同步資料"
+  },
+  "nt_settings_data_sync_not_yet": {
+    "message": "尚未同步"
+  },
+  "nt_settings_data_sync_pending": {
+    "message": "等待寫入同步資料"
+  },
+  "nt_settings_data_sync_retry": {
+    "message": "重試"
+  },
+  "nt_settings_data_sync_error": {
+    "message": "同步操作失敗。請檢查瀏覽器同步設定或稍後再試。"
+  },
+  "nt_data_sync_loading_title": {
+    "message": "正在寫入同步資料"
+  },
+  "nt_data_sync_error_title": {
+    "message": "資料同步異常"
+  },
+  "nt_data_sync_error_quota": {
+    "message": "同步空間不足。請減少常用網站或搜尋引擎後重試。"
+  },
+  "nt_data_sync_error_rate": {
+    "message": "短時間內寫入過於頻繁。請稍候片刻再重試。"
+  },
+  "nt_data_sync_error_unknown": {
+    "message": "請檢查 Chrome 的同步狀態和網路連線；也可以重新載入擴充功能後再重試。"
+  },
+  "nt_data_sync_retrying": {
+    "message": "正在重試"
+  },
+  "nt_local_storage_error_title": {
+    "message": "本機資料儲存異常"
+  },
+  "nt_local_storage_error_quota": {
+    "message": "本機空間不足，最新修改可能沒有儲存。請刪除不需要的自訂背景或其他本機資料，然後重新進行剛才的操作。"
+  },
+  "nt_local_storage_error_write": {
+    "message": "最新修改未能儲存。請重新載入擴充功能後再次操作；如果問題持續發生，請檢查擴充功能儲存空間或重設設定。"
+  },
   "nt_settings_new_tab_open": {
     "message": "在新分頁開啟連結"
   },

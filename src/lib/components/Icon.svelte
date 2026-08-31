@@ -31,6 +31,7 @@
 		Globe,
 		Bolt,
 		Sparkles,
+		Shuffle,
 	} from "@lucide/svelte";
 	export type IconName =
 		| "Loading"
@@ -64,6 +65,7 @@
 		| "Globe"
 		| "Bolt"
 		| "Sparkles"
+		| "Shuffle"
 		| "Coffee";
 
 	interface Props {
@@ -169,6 +171,9 @@
 	{/if}
 	{#if name === "Sparkles"}
 		<Sparkles {size} {strokeWidth} />
+	{/if}
+	{#if name === "Shuffle"}
+		<Shuffle {size} {strokeWidth} />
 	{/if}
 	{#if name === "Loading"}
 		<svg width="20" height="20" viewBox="0 0 20 20">

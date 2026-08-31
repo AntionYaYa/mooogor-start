@@ -45,6 +45,19 @@
   import { resetCommonSitesToDefaultByLanguage } from "@/lib/settings/commonSites";
   import { resetConfigurationToDefaults } from "@/lib/DB/configRecovery";
   import ConfirmDialog from "@/lib/ConfirmDialog.svelte";
+  import DataSyncIssueDialog from "@/lib/DataSyncIssueDialog.svelte";
+  import LocalStorageIssueDialog from "@/lib/LocalStorageIssueDialog.svelte";
+  import {
+    DATA_SYNC_RUNTIME_KEY,
+    getDataSyncState,
+    retryDataSync,
+    type DataSyncState,
+  } from "@/lib/sync/dataSync";
+  import {
+    getLocalStorageHealth,
+    LOCAL_STORAGE_RUNTIME_KEY,
+    type LocalStorageHealthState,
+  } from "@/lib/storage/localStorageHealth";
   import {
     buildNewTabTabs,
     openTabToIndex,
@@ -78,6 +91,11 @@
   let websitesRequestId = 0;
   let i18nRenderKey = $state(0);
   const NEW_TAB_LOG_PREFIX = "[Mooogor NewTab]";
+  const debugConfigFallback =
+    import.meta.env.DEV &&
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("debug") ===
+      "config-fallback";
 
   let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
   let backgroundItems: BackgroundItem[] = $state(
@@ -93,7 +111,26 @@
   let clearHistoryRequestKey = $state(0);
   let historyClearable = $state(false);
   let showFullResetConfirm = $state(false);
+  let fullResetDialogMode: "recovery" | "manual" = $state("recovery");
   let fullResetting = $state(false);
+  let dataSyncState = $state<DataSyncState>({
+    enabled: false,
+    lastSyncedAt: null,
+    phase: "idle",
+    errorCode: null,
+    usedBytes: 0,
+    quotaBytes: 102_400,
+    localUsedBytes: 0,
+    localQuotaBytes: 10_485_760,
+  });
+  let showDataSyncIssue = $state(false);
+  let dataSyncRetrying = $state(false);
+  let localStorageHealth = $state<LocalStorageHealthState>({
+    phase: "idle",
+    errorCode: null,
+    lastFailureAt: null,
+  });
+  let showLocalStorageIssue = $state(false);
   let effectiveNewTabOpen = $derived(
     userSettings.newTabOpen || currentTabPinned,
   );
@@ -167,6 +204,77 @@
     void initializePage();
   });
 
+  onMount(() => {
+    const handleRuntimeMessage = (message: unknown) => {
+      if (
+        !message ||
+        typeof message !== "object" ||
+        (message as { type?: string }).type !== "dataSyncApplied"
+      ) {
+        return;
+      }
+      void initializePage();
+    };
+    browser.runtime.onMessage.addListener(handleRuntimeMessage);
+    return () => browser.runtime.onMessage.removeListener(handleRuntimeMessage);
+  });
+
+  onMount(() => {
+    void refreshDataSyncState();
+    void refreshLocalStorageHealth();
+    const handleStorageChanged = (
+      changes: Record<string, unknown>,
+      areaName: string,
+    ) => {
+      if (
+        areaName === "sync" ||
+        (areaName === "local" && DATA_SYNC_RUNTIME_KEY in changes)
+      ) {
+        void refreshDataSyncState();
+      }
+      if (
+        areaName === "session" &&
+        LOCAL_STORAGE_RUNTIME_KEY in changes
+      ) {
+        void refreshLocalStorageHealth();
+      }
+    };
+    browser.storage.onChanged.addListener(handleStorageChanged);
+    return () => browser.storage.onChanged.removeListener(handleStorageChanged);
+  });
+
+  async function refreshDataSyncState() {
+    try {
+      dataSyncState = await getDataSyncState();
+      if (!dataSyncState.enabled || dataSyncState.phase === "idle") {
+        showDataSyncIssue = false;
+      }
+    } catch (error) {
+      console.error("[Mooogor Data Sync]", "indicator:failed", error);
+    }
+  }
+
+  async function refreshLocalStorageHealth() {
+    localStorageHealth = await getLocalStorageHealth();
+    if (localStorageHealth.phase !== "error") {
+      showLocalStorageIssue = false;
+    }
+  }
+
+  async function retryDataSyncFromIndicator() {
+    if (dataSyncRetrying) return;
+    dataSyncRetrying = true;
+    try {
+      dataSyncState = await retryDataSync();
+      if (dataSyncState.phase !== "error") showDataSyncIssue = false;
+    } catch (error) {
+      console.error("[Mooogor Data Sync]", "indicator:retry-failed", error);
+      await refreshDataSyncState();
+    } finally {
+      dataSyncRetrying = false;
+    }
+  }
+
   async function initializePage() {
     const startedAt = Date.now();
     configurationState = "loading";
@@ -194,6 +302,9 @@
     await tick();
     firstMount = false;
     try {
+      if (debugConfigFallback) {
+        throw new Error("Debug configuration fallback");
+      }
       await ensureConfigReady();
       [userSettings, backgroundItems] = await Promise.all([
         loadSettings(),
@@ -577,6 +688,11 @@
     }
   }
 
+  function openFullResetDialog(mode: "recovery" | "manual") {
+    fullResetDialogMode = mode;
+    showFullResetConfirm = true;
+  }
+
   function cancelFrequentSitesRefresh() {
     const idleWindow = window as Window & {
       cancelIdleCallback?: (id: number) => void;
@@ -792,6 +908,7 @@
       onchangeBackground={handleBackgroundConfigurationChange}
       onclickAbout={() => (showAbout = true)}
       onclickSupport={() => (showSupport = true)}
+      onResetAllData={() => openFullResetDialog("manual")}
       onOpenTab={handleSettingsOpenTab}
     >
       <div class="top">
@@ -939,13 +1056,39 @@
   <Support onclickClose={() => (showSupport = false)} />
 {/if}
 
+{#if showDataSyncIssue && dataSyncState.enabled}
+  <DataSyncIssueDialog
+    errorCode={dataSyncState.errorCode}
+    retrying={dataSyncRetrying}
+    onclickClose={() => (showDataSyncIssue = false)}
+    onRetry={retryDataSyncFromIndicator}
+  />
+{/if}
+
+{#if showLocalStorageIssue && localStorageHealth.phase === "error"}
+  <LocalStorageIssueDialog
+    errorCode={localStorageHealth.errorCode}
+    onclickClose={() => (showLocalStorageIssue = false)}
+  />
+{/if}
+
 {#if showFullResetConfirm}
   <ConfirmDialog
-    title={t("nt_config_load_failed")}
-    description={`${t("nt_config_load_failed_desc")}\n\n${t("nt_config_reset_all_confirm")}`}
+    title={fullResetDialogMode === "recovery"
+      ? t("nt_config_load_failed")
+      : t("nt_config_reset_all")}
+    description={fullResetDialogMode === "recovery"
+      ? `${t("nt_config_load_failed_desc")}\n\n${t("nt_config_reset_all_confirm")}`
+      : t("nt_config_reset_all_confirm")}
     confirmText={t("nt_config_reset_all")}
     onclickClose={() => (showFullResetConfirm = false)}
-    onConfirm={() => void resetEntireConfiguration()}
+    onConfirm={() => {
+      if (debugConfigFallback) {
+        showFullResetConfirm = false;
+        return;
+      }
+      void resetEntireConfiguration();
+    }}
   />
 {/if}
 
@@ -962,6 +1105,36 @@
       </Button>
     </G>
     <G gap>
+      {#if localStorageHealth.phase === "error"}
+        <Button
+          onclick={() => (showLocalStorageIssue = true)}
+          title={t("nt_local_storage_error_title")}
+        >
+          <G>
+            <Icon name="TriangleAlert" color="var(--c-red)" />
+          </G>
+        </Button>
+      {/if}
+      {#if dataSyncState.enabled && dataSyncState.phase === "pending"}
+        <Button
+          disabled
+          skipTabFocus
+          title={t("nt_data_sync_loading_title")}
+        >
+          <G>
+            <Icon name="Loading" color="var(--c-text)" />
+          </G>
+        </Button>
+      {:else if dataSyncState.enabled && dataSyncState.phase === "error"}
+        <Button
+          onclick={() => (showDataSyncIssue = true)}
+          title={t("nt_data_sync_error_title")}
+        >
+          <G>
+            <Icon name="TriangleAlert" color="var(--c-red)" />
+          </G>
+        </Button>
+      {/if}
       <Button
         onclick={() => (showSupport = true)}
         title={t("nt_about_support_button")}
@@ -972,7 +1145,7 @@
       </Button>
       {#if configurationState === "fallback"}
         <Button
-          onclick={() => (showFullResetConfirm = true)}
+          onclick={() => openFullResetDialog("recovery")}
           title={t("nt_config_load_failed")}
           bg="var(--c-red)"
           disabled={fullResetting}

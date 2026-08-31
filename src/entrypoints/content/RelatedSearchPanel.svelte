@@ -217,16 +217,10 @@
     const target = event.currentTarget as HTMLElement;
     if (!target.hasPointerCapture(event.pointerId)) return;
     target.releasePointerCapture(event.pointerId);
-<<<<<<< HEAD
     const rect = panelEl.getBoundingClientRect();
-    void getExtensionStorage().set({
-      [getPositionStorageKey()]: { left: rect.left, top: rect.top },
-=======
-    const rect = host.getBoundingClientRect();
     void saveRelatedSearchPosition(location.hostname, {
       left: rect.left,
       top: rect.top,
->>>>>>> 70dd283 (优化注入的时候数据存储key太散)
     });
   }
 

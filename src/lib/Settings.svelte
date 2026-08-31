@@ -15,6 +15,8 @@
     import SettingsCommonSitesSection from "@/lib/settings/SettingsCommonSitesSection.svelte";
     import SettingsSearchEnginesSection from "@/lib/settings/SettingsSearchEnginesSection.svelte";
     import SettingsBackgroundSection from "@/lib/settings/SettingsBackgroundSection.svelte";
+    import SettingsDataSyncSection from "@/lib/settings/SettingsDataSyncSection.svelte";
+    import SettingsThemePicker from "@/lib/settings/SettingsThemePicker.svelte";
     import BackgroundUrlDialog from "@/lib/settings/BackgroundUrlDialog.svelte";
     import BackgroundLayer from "@/lib/background/BackgroundLayer.svelte";
     import {
@@ -26,7 +28,11 @@
     import { getBookmarks } from "@/lib/browser/bookmarks";
     import type { BookmarkNode } from "@/lib/browser/bookmarks";
     import { hasPermission } from "@/lib/browser/permissions";
-    import type { OpenTab, UserSettings } from "@/lib/utils/settings";
+    import type {
+        AppTheme,
+        OpenTab,
+        UserSettings,
+    } from "@/lib/utils/settings";
     import type { Engine, EngineCategoryItem, WebSite } from "@/lib/DB/DB";
     import {
         addEngine,
@@ -81,6 +87,7 @@
         onchangeBackground: (background: BackgroundConfig) => void;
         onclickAbout: () => void;
         onclickSupport: () => void;
+        onResetAllData: () => void;
         onOpenTab: (tab: OpenTab) => void | Promise<void>;
         currentTabPinned?: boolean;
     }
@@ -94,6 +101,7 @@
         onchangeBackground,
         onclickAbout,
         onclickSupport,
+        onResetAllData,
         onOpenTab,
         currentTabPinned = false,
     }: Props = $props();
@@ -110,15 +118,6 @@
         { label: "简体中文", value: "zh_CN", dividerTop: true },
         { label: "繁體中文", value: "zh_TW" },
         { label: "English", value: "en" },
-    ] as const;
-
-    const themeBase = [
-        { label: t("nt_theme_default"), value: "default" },
-        { label: t("nt_theme_ocean"), value: "ocean" },
-        { label: t("nt_theme_sunset"), value: "sunset" },
-        { label: t("nt_theme_purple"), value: "purple" },
-        { label: t("nt_theme_yellow"), value: "yellow" },
-        { label: t("nt_theme_random"), value: "random", dividerTop: true },
     ] as const;
 
     let openPosOptions = $derived(
@@ -141,13 +140,6 @@
         })),
     );
 
-    let themeOptions = $derived(
-        themeBase.map((o) => ({
-            ...o,
-            sel: o.value === userSettings.theme,
-        })),
-    );
-
     let effectiveNewTabOpenSwitch = $derived(
         userSettings.newTabOpen || currentTabPinned,
     );
@@ -157,6 +149,7 @@
         | "searchEngines"
         | "common"
         | "background"
+        | "dataSync"
         | "history";
     let settingPage = $state<SettingsPage>("root");
     let searchSettingsExpanded = $state(true);
@@ -426,6 +419,9 @@
         if (settingPage === "background") {
             return t("nt_settings_background_title");
         }
+        if (settingPage === "dataSync") {
+            return t("nt_settings_data_sync_title");
+        }
         if (settingPage === "history") return t("nt_tab_history");
         return t("nt_settings_title");
     }
@@ -621,10 +617,10 @@
         });
     }
 
-    function setTheme(value: string) {
+    function setTheme(value: AppTheme) {
         onchangeUserSettings({
             ...userSettings,
-            theme: value as UserSettings["theme"],
+            theme: value,
         });
     }
 
@@ -1441,6 +1437,8 @@
                                 onRemove={(url) =>
                                     void removeBackgroundUrl(url)}
                             />
+                        {:else if settingPage === "dataSync"}
+                            <SettingsDataSyncSection />
                         {/if}
                     </div>
                 {/key}
@@ -1616,17 +1614,25 @@
             ? resetSearchEnginesToDefaultConfirm
             : settingPage === "common"
               ? resetCommonSitesToDefaultConfirm
+              : settingPage === "dataSync"
+                ? onResetAllData
               : undefined}
         skipTabFocus={!(
-            settingPage === "searchEngines" || settingPage === "common"
+            settingPage === "searchEngines" ||
+            settingPage === "common" ||
+            settingPage === "dataSync"
         )}
+        title={settingPage === "dataSync"
+            ? t("nt_config_reset_all")
+            : undefined}
     >
         <G>
             <Icon
                 name="RotateCcw"
                 color="var(--c-text)"
                 opacity={settingPage === "searchEngines" ||
-                settingPage === "common"
+                settingPage === "common" ||
+                settingPage === "dataSync"
                     ? 0.6
                     : 0}
             />
@@ -1752,9 +1758,12 @@
 {/snippet}
 
 {#snippet temOtherSettingsGroup()}
-    {@render temselectItem(t("nt_settings_theme"), themeOptions, setTheme)}
+    <SettingsThemePicker value={userSettings.theme} onChange={setTheme} />
     {@render temEntranceItem(t("nt_settings_background_title"), () =>
         openSettingPage("background"),
+    )}
+    {@render temEntranceItem(t("nt_settings_data_sync_title"), () =>
+        openSettingPage("dataSync"),
     )}
     {@render temselectItem(
         t("nt_settings_language"),

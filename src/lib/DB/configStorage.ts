@@ -5,6 +5,10 @@ import {
   type BackgroundItem,
 } from "@/lib/background/background";
 import { browser } from "wxt/browser";
+import {
+  clearLocalStorageWriteFailure,
+  reportLocalStorageWriteFailure,
+} from "@/lib/storage/localStorageHealth";
 
 export const CONFIG_STORAGE_KEY = "mooogor.config.v1";
 const CONFIG_STORAGE_KEYS = {
@@ -37,9 +41,33 @@ type ExtensionStorageArea = {
 };
 
 let writeQueue = Promise.resolve();
+let monitoredStorage: ExtensionStorageArea | null = null;
 
 export function getExtensionStorage() {
-  return browser.storage.local as ExtensionStorageArea;
+  if (monitoredStorage) return monitoredStorage;
+  const storage = browser.storage.local as ExtensionStorageArea;
+  monitoredStorage = {
+    get: (keys) => storage.get(keys),
+    set: async (items) => {
+      try {
+        await storage.set(items);
+        void clearLocalStorageWriteFailure();
+      } catch (error) {
+        await reportLocalStorageWriteFailure(error);
+        throw error;
+      }
+    },
+    remove: async (keys) => {
+      try {
+        await storage.remove(keys);
+        void clearLocalStorageWriteFailure();
+      } catch (error) {
+        await reportLocalStorageWriteFailure(error);
+        throw error;
+      }
+    },
+  };
+  return monitoredStorage;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

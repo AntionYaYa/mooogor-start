@@ -19,6 +19,15 @@ const LANGUAGE_VALUES = [
   "en",
 ] as const;
 
+const INTL_LOCALE_BY_LANGUAGE: Record<
+  Exclude<AppLanguage, "auto">,
+  string
+> = {
+  zh_CN: "zh-CN",
+  zh_TW: "zh-TW",
+  en: "en",
+};
+
 let currentLanguage: AppLanguage = "auto";
 let currentMessages: MessageMap | null = readInitialMessages();
 let languageRequestSeq = 0;
@@ -53,6 +62,20 @@ export function getEffectiveLanguage(
   language: AppLanguage = currentLanguage,
 ): Exclude<AppLanguage, "auto"> {
   return language === "auto" ? resolveAutoLanguage() : language;
+}
+
+export function getIntlLocale(language: AppLanguage = currentLanguage): string {
+  return INTL_LOCALE_BY_LANGUAGE[getEffectiveLanguage(language)];
+}
+
+export function formatDateTime(
+  value: number | Date,
+  options: Intl.DateTimeFormatOptions = {
+    dateStyle: "short",
+    timeStyle: "short",
+  },
+): string {
+  return new Intl.DateTimeFormat(getIntlLocale(), options).format(value);
 }
 
 function readInitialMessages(): MessageMap | null {

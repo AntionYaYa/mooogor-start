@@ -140,6 +140,63 @@
   "nt_settings_other_section_title": {
     "message": "其他"
   },
+  "nt_settings_data_sync_title": {
+    "message": "数据"
+  },
+  "nt_settings_data_sync_switch": {
+    "message": "跨设备同步"
+  },
+  "nt_settings_data_sync_syncs": {
+    "message": "开启后会同步常用网站、搜索引擎、搜索分类及偏好设置。"
+  },
+  "nt_settings_data_sync_usage": {
+    "message": "同步空间"
+  },
+  "nt_settings_data_local_usage": {
+    "message": "本地空间"
+  },
+  "nt_settings_data_sync_last": {
+    "message": "最近写入同步数据"
+  },
+  "nt_settings_data_sync_not_yet": {
+    "message": "尚未同步"
+  },
+  "nt_settings_data_sync_pending": {
+    "message": "等待写入同步数据"
+  },
+  "nt_settings_data_sync_retry": {
+    "message": "重试"
+  },
+  "nt_settings_data_sync_error": {
+    "message": "同步操作失败。请检查浏览器同步设置或稍后重试。"
+  },
+  "nt_data_sync_loading_title": {
+    "message": "正在写入同步数据"
+  },
+  "nt_data_sync_error_title": {
+    "message": "数据同步异常"
+  },
+  "nt_data_sync_error_quota": {
+    "message": "同步空间不足。请减少常用网站或搜索引擎后重试。"
+  },
+  "nt_data_sync_error_rate": {
+    "message": "短时间内写入过于频繁。请稍等片刻后重试。"
+  },
+  "nt_data_sync_error_unknown": {
+    "message": "请检查 Chrome 的同步状态和网络连接；也可以重新加载扩展后再重试。"
+  },
+  "nt_data_sync_retrying": {
+    "message": "正在重试"
+  },
+  "nt_local_storage_error_title": {
+    "message": "本地数据保存异常"
+  },
+  "nt_local_storage_error_quota": {
+    "message": "本地空间不足，最新修改可能没有保存。请删除不需要的自定义背景或其他本地数据，然后重新进行刚才的操作。"
+  },
+  "nt_local_storage_error_write": {
+    "message": "最新修改未能保存。请重新加载扩展后再次操作；如果问题持续出现，请检查扩展存储或重置配置。"
+  },
   "nt_settings_new_tab_open": {
     "message": "新标签页打开链接"
   },
