@@ -6,7 +6,10 @@
   import Icon from "@/lib/components/Icon.svelte";
   import T from "@/lib/components/T.svelte";
   import { resolveEngineByDomain } from "./relatedSearchEngineMatch";
-  import { getExtensionStorage } from "@/lib/DB/configStorage";
+  import {
+    readRelatedSearchPosition,
+    saveRelatedSearchPosition,
+  } from "@/lib/search/relatedSearchStorage";
   import { fly, slide } from "svelte/transition";
 
   export type RelatedSearchEngine = {
@@ -214,26 +217,27 @@
     const target = event.currentTarget as HTMLElement;
     if (!target.hasPointerCapture(event.pointerId)) return;
     target.releasePointerCapture(event.pointerId);
+<<<<<<< HEAD
     const rect = panelEl.getBoundingClientRect();
     void getExtensionStorage().set({
       [getPositionStorageKey()]: { left: rect.left, top: rect.top },
+=======
+    const rect = host.getBoundingClientRect();
+    void saveRelatedSearchPosition(location.hostname, {
+      left: rect.left,
+      top: rect.top,
+>>>>>>> 70dd283 (优化注入的时候数据存储key太散)
     });
   }
 
   async function restorePosition() {
     const saved = readPanelPosition(
-      (await getExtensionStorage().get(getPositionStorageKey()))[
-        getPositionStorageKey()
-      ],
+      await readRelatedSearchPosition(location.hostname),
     );
     if (!saved) return;
     panelEl.style.left = `${saved.left}px`;
     panelEl.style.top = `${saved.top}px`;
     panelEl.style.right = "auto";
-  }
-
-  function getPositionStorageKey() {
-    return `mooogor.related-search-position.v1:${location.hostname}`;
   }
 
   function readPanelPosition(
