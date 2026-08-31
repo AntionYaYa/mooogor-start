@@ -147,7 +147,7 @@
     "message": "跨裝置同步"
   },
   "nt_settings_data_sync_syncs": {
-    "message": "開啟後會同步常用網站、搜尋引擎、搜尋分類及偏好設定。"
+    "message": "開啟後會同步常用網站、搜尋引擎、搜尋分類、背景及偏好設定。"
   },
   "nt_settings_data_sync_usage": {
     "message": "同步空間"

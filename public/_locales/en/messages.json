@@ -147,7 +147,7 @@
     "message": "Sync across devices"
   },
   "nt_settings_data_sync_syncs": {
-    "message": "Once enabled, common sites, search engines, search categories, and preferences are synced."
+    "message": "Once enabled, common sites, search engines, search categories, backgrounds, and preferences are synced."
   },
   "nt_settings_data_sync_usage": {
     "message": "Sync storage"

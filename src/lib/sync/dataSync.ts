@@ -1,10 +1,17 @@
 import type { Engine, EngineCategoryItem, WebSite } from "@/lib/DB/database";
 import {
+  normalizeBackgroundItems,
+  type BackgroundItem,
+} from "@/lib/background/background";
+import {
   getExtensionStorage,
   readStoredConfig,
   updateStoredConfig,
 } from "@/lib/DB/configStorage";
-import type { UserSettings } from "@/lib/utils/settings";
+import type {
+  BackgroundSettings,
+  UserSettings,
+} from "@/lib/utils/settings";
 import { browser } from "wxt/browser";
 
 const ENABLED_KEY = "mooogor.data-sync-enabled.v1";
@@ -17,6 +24,7 @@ const SYNCED_LOCAL_KEYS = new Set([
   "mooogor.websites.v1",
   "mooogor.engines.v1",
   "mooogor.engine-categories.v1",
+  "mooogor.backgrounds.v1",
   "mooogor.metadata.v1",
 ]);
 
@@ -39,6 +47,7 @@ type SyncedSettings = Pick<
   | "injectRelatedSearch"
   | "language"
   | "theme"
+  | "background"
 >;
 
 type SyncedData = {
@@ -46,6 +55,7 @@ type SyncedData = {
   websites: WebSite[];
   engines: Engine[];
   engineCategories: EngineCategoryItem[];
+  backgrounds?: BackgroundItem[];
   settings: Partial<SyncedSettings>;
 };
 
@@ -167,6 +177,7 @@ function isSyncedData(value: unknown): value is SyncedData {
     Array.isArray(value.websites) &&
     Array.isArray(value.engines) &&
     Array.isArray(value.engineCategories) &&
+    (value.backgrounds === undefined || Array.isArray(value.backgrounds)) &&
     isRecord(value.settings)
   );
 }
@@ -202,6 +213,15 @@ function selectSyncedSettings(value: unknown): Partial<SyncedSettings> {
   if (["default", "ocean", "sunset", "purple", "yellow", "random"].includes(String(value.theme))) {
     settings.theme = value.theme as SyncedSettings["theme"];
   }
+  if (isRecord(value.background)) {
+    const id = typeof value.background.id === "string" && value.background.id
+      ? value.background.id
+      : null;
+    settings.background = {
+      enabled: value.background.enabled === true && id !== null,
+      id,
+    } satisfies BackgroundSettings;
+  }
   return settings;
 }
 
@@ -211,6 +231,7 @@ function buildSyncedData(config: NonNullable<Awaited<ReturnType<typeof readStore
     websites: config.websites,
     engines: config.engines,
     engineCategories: config.engineCategories,
+    backgrounds: normalizeBackgroundItems(config.backgrounds),
     settings: selectSyncedSettings(config.metadata[SETTINGS_KEY]),
   };
 }
@@ -367,6 +388,9 @@ async function applyRemoteData(remote: Awaited<ReturnType<typeof readRemoteData>
     local.websites = remote.data.websites;
     local.engines = remote.data.engines;
     local.engineCategories = remote.data.engineCategories;
+    if (remote.data.backgrounds) {
+      local.backgrounds = normalizeBackgroundItems(remote.data.backgrounds);
+    }
     local.metadata[SETTINGS_KEY] = {
       ...localSettings,
       ...selectSyncedSettings(remote.data.settings),
@@ -504,9 +528,24 @@ export async function initializeDataSync() {
         return false;
       }
       const changed = await applyRemoteData(remote);
+      let lastSuccessfulWriteAt = manifest.updatedAt;
+      if (remote.data.backgrounds === undefined) {
+        const config = await readStoredConfig();
+        if (config) {
+          const published = await writeRemoteData(buildSyncedData(config));
+          lastSuccessfulWriteAt = published.updatedAt;
+          await getSyncStorage().set({
+            [ENABLED_KEY]: {
+              enabled: true,
+              contentHash: published.contentHash,
+              updatedAt: Date.now(),
+            } satisfies SyncActivation,
+          });
+        }
+      }
       await writeRuntimeState({
         phase: "idle",
-        lastSuccessfulWriteAt: manifest.updatedAt,
+        lastSuccessfulWriteAt,
       });
       return changed;
     }

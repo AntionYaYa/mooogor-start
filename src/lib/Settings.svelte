@@ -1758,12 +1758,12 @@
 {/snippet}
 
 {#snippet temOtherSettingsGroup()}
+    {@render temEntranceItem(t("nt_settings_data_sync_title"), () =>
+        openSettingPage("dataSync"),
+    )}
     <SettingsThemePicker value={userSettings.theme} onChange={setTheme} />
     {@render temEntranceItem(t("nt_settings_background_title"), () =>
         openSettingPage("background"),
-    )}
-    {@render temEntranceItem(t("nt_settings_data_sync_title"), () =>
-        openSettingPage("dataSync"),
     )}
     {@render temselectItem(
         t("nt_settings_language"),
