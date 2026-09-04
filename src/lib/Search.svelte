@@ -1561,7 +1561,7 @@
         min-width: 0;
         flex: 1 1 auto;
         height: 40px;
-        caret-color: var(--c-green);
+        caret-color: var(--c-main);
     }
     .input::selection {
         background-color: var(--c-main);

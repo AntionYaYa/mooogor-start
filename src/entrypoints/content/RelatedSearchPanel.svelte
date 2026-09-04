@@ -491,7 +491,7 @@
     font: inherit;
     font-size: var(--f-size-m);
     height: 40px;
-    caret-color: var(--c-green);
+    caret-color: var(--c-main);
     transition: width 0.1s ease-out;
   }
 

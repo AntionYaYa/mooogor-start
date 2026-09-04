@@ -98,7 +98,10 @@
     return !!folder.folderType;
   }
 
-  function applySelection(nextFolderTree: FolderTreeNode[], preferredId?: string) {
+  function applySelection(
+    nextFolderTree: FolderTreeNode[],
+    preferredId?: string,
+  ) {
     const nextSelectedId =
       (preferredId && findFolderById(nextFolderTree, preferredId)?.id) ||
       nextFolderTree[0]?.id ||
@@ -236,7 +239,10 @@
     }
   }
 
-  function handleFolderEntryKeydown(event: KeyboardEvent, folder: FolderTreeNode) {
+  function handleFolderEntryKeydown(
+    event: KeyboardEvent,
+    folder: FolderTreeNode,
+  ) {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       selectedFolderId = folder.id;
@@ -251,13 +257,13 @@
 </script>
 
 <Popup type="m" title={t("nt_move_bookmark_title")} {onclickClose}>
-<G>
-  <div class="tree">
-    {#each folderTree as folder (folder.id)}
-      {@render folderNode(folder, 0)}
-    {/each}
-  </div>
-</G>
+  <G>
+    <div class="tree">
+      {#each folderTree as folder (folder.id)}
+        {@render folderNode(folder, 0)}
+      {/each}
+    </div>
+  </G>
 
   <div class="actions">
     <Button fill onclick={() => void openCreateFolder()} r="r1">
@@ -283,10 +289,7 @@
   <div class="folder_group">
     <div class="folder_row" style={`padding-left: ${depth * 16}px;`}>
       {#if folder.children?.length}
-        <Button
-          r="r_o"
-          onclick={() => toggleFolder(folder.id)}
-        >
+        <Button r="r_o" onclick={() => toggleFolder(folder.id)}>
           <G>
             <Icon
               name={expanded ? "FolderOpen" : "Folder"}
@@ -324,9 +327,13 @@
             role="presentation"
             ondblclick={() => void startEditFolder(folder)}
           >
-            <T nowrap>{folder.title || t("nt_unnamed")}</T>
             {#if selectedFolderId === folder.id}
-              <Icon name='Check' color='var(--c-green)' opacity={0.6}/>
+              <T nowrap color="var(--c-main)">
+                {folder.title || t("nt_unnamed")}
+              </T>
+              <Icon name="Check" color="var(--c-main)" opacity={0.6} />
+            {:else}
+              <T nowrap>{folder.title || t("nt_unnamed")}</T>
             {/if}
           </div>
         {/if}
@@ -344,7 +351,10 @@
         class="folder_children creating_row"
         transition:slide={{ duration: 200 }}
       >
-        <div class="folder_row folder_row_input" style={`padding-left: ${(depth + 1) * 16}px;`}>
+        <div
+          class="folder_row folder_row_input"
+          style={`padding-left: ${(depth + 1) * 16}px;`}
+        >
           <div class="folder_toggle_placeholder"></div>
           <div class="folder_entry selected">
             <input
@@ -414,8 +424,7 @@
     cursor: default;
     /* transition: background-color 0.15s ease-out; */
   }
-  .folder_entry:active{
-
+  .folder_entry:active {
     background-color: var(--c-mask);
   }
   .folder_entry.selected {
@@ -447,7 +456,7 @@
     font-size: var(--f-size-m);
     padding: 0 var(--gap);
     box-sizing: border-box;
-    caret-color: var(--c-green);
+    caret-color: var(--c-main);
   }
   .folder_input:focus {
     outline: none;

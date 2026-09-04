@@ -112,7 +112,7 @@
 		width: 100%;
 		box-sizing: border-box;
 		height: 36px;
-		caret-color: var(--c-green);
+		caret-color: var(--c-main);
 	}
 
 	input::selection {
