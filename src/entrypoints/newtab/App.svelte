@@ -1231,6 +1231,7 @@
   {:else}
     <History
       newTabOpen={effectiveNewTabOpen}
+      settingsOpen={showSetting}
       clearRequestKey={clearHistoryRequestKey}
       onClearableChange={(clearable) => (historyClearable = clearable)}
     />

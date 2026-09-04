@@ -160,3 +160,7 @@ export async function deleteHistoryRange(
     endTime: range.endTime,
   });
 }
+
+export async function deleteHistoryUrls(urls: string[]): Promise<void> {
+  await Promise.all(urls.map((url) => browser.history.deleteUrl({ url })));
+}

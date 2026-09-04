@@ -371,6 +371,12 @@
   "nt_history_clearing": {
     "message": "Clearing..."
   },
+  "nt_confirm_delete_history_title": {
+    "message": "Delete History"
+  },
+  "nt_delete_history_items_confirm": {
+    "message": "Delete the selected $1 history items? This cannot be undone."
+  },
   "nt_history_recent": {
     "message": "Just now"
   },

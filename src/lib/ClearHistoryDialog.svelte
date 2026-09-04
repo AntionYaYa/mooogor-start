@@ -41,11 +41,16 @@
       {#each options as option}
         <Button full fill={selectedKey === option.key} r="r_o" onclick={() => selectKey(option.key)}>
           <div class="option">
-            <G full>
-              <T>{option.label}</T>
-            </G>
+         
             {#if selectedKey === option.key}
-              <Icon name="Check" color="var(--c-green)" opacity={0.6} />
+            <G full>
+              <T color="var(--c-main)">{option.label}</T>
+            </G>
+              <Icon name="Check" color="var(--c-main)" opacity={0.6} />
+              {:else}
+                 <G full>
+              <T >{option.label}</T>
+            </G>
             {/if}
           </div>
         </Button>

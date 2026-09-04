@@ -371,6 +371,12 @@
   "nt_history_clearing": {
     "message": "清理中..."
   },
+  "nt_confirm_delete_history_title": {
+    "message": "刪除歷史記錄"
+  },
+  "nt_delete_history_items_confirm": {
+    "message": "確定刪除已選的 $1 條歷史記錄嗎？此操作無法復原。"
+  },
   "nt_history_recent": {
     "message": "剛剛"
   },

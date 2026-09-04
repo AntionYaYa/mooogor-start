@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onDestroy, onMount, tick } from "svelte";
   import type { HistoryItem, HistoryRange } from "@/lib/browser/history";
   import T from "./components/T.svelte";
   import G from "./components/G.svelte";
@@ -8,6 +8,8 @@
   import LinkContextMenu from "./LinkContextMenu.svelte";
   import Button from "./components/Button.svelte";
   import ClearHistoryDialog from "./ClearHistoryDialog.svelte";
+  import ConfirmDialog from "./ConfirmDialog.svelte";
+  import BatchToolbar from "./components/BatchToolbar.svelte";
   import { addToPinneds } from "@/lib/utils/pinneds";
   import NoData from "./NoData.svelte";
   import { t } from "@/lib/utils/i18n";
@@ -16,12 +18,14 @@
 
   interface Props {
     newTabOpen?: boolean;
+    settingsOpen?: boolean;
     clearRequestKey?: number;
     onClearableChange?: (clearable: boolean) => void;
   }
 
   let {
     newTabOpen = false,
+    settingsOpen = false,
     clearRequestKey = 0,
     onClearableChange,
   }: Props = $props();
@@ -35,11 +39,31 @@
   let handledClearRequestKey = $state(0);
   let pageEl: HTMLElement | undefined = $state();
   let stuckHistoryGroupKeys = $state<Set<string>>(new Set());
+  let multiSelectMode = $state(false);
+  let selectedUrls = $state<Set<string>>(new Set());
+  let lastClickedIndex = $state(-1);
+  let batchActionLoading = $state(false);
+  let confirmDelete = $state(false);
 
   let currentHistory: HistoryItem | undefined = $state();
   let showMenu = $state(false);
 
   const allGroups = $derived([...topGroups, ...dayGroups]);
+  const visibleHistoryItems = $derived.by(() => {
+    const seen = new Set<string>();
+    return allGroups.flatMap((group) => group.items).filter((item) => {
+      const url = item.url ?? "";
+      if (!url || seen.has(url)) return false;
+      seen.add(url);
+      return true;
+    });
+  });
+  const selectedCount = $derived(selectedUrls.size);
+  const allSelected = $derived(
+    multiSelectMode &&
+      visibleHistoryItems.length > 0 &&
+      selectedCount === visibleHistoryItems.length,
+  );
   type ClearRangeOption = "1h" | "today" | "today-yesterday" | "all";
   const clearRangeOptions = $derived.by(() => [
     { key: "1h" as ClearRangeOption, label: t("nt_history_1h") },
@@ -305,9 +329,14 @@
   }
 
   onMount(async () => {
+    window.addEventListener("keydown", handleKeyDown);
     handledClearRequestKey = clearRequestKey;
     await loadToday();
     await ensureFirstScreenFilled();
+  });
+
+  onDestroy(() => {
+    window.removeEventListener("keydown", handleKeyDown);
   });
 
   function notifyClearable() {
@@ -334,6 +363,101 @@
     menuX = e.clientX;
     menuY = e.clientY;
     showMenu = true;
+  }
+
+  async function enterMultiSelect() {
+    showMenu = false;
+    const url = currentHistory?.url;
+    multiSelectMode = true;
+    selectedUrls = url ? new Set([url]) : new Set();
+    lastClickedIndex = url
+      ? visibleHistoryItems.findIndex((item) => item.url === url)
+      : -1;
+    await tick();
+    pageEl?.querySelector<HTMLElement>(".item.selected")?.focus();
+  }
+
+  function clearSelection(force = false) {
+    if (batchActionLoading && !force) return;
+    multiSelectMode = false;
+    selectedUrls = new Set();
+    lastClickedIndex = -1;
+  }
+
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key !== "Escape" || confirmDelete || batchActionLoading) return;
+    if (showMenu) {
+      e.preventDefault();
+      showMenu = false;
+      return;
+    }
+    if (multiSelectMode) {
+      e.preventDefault();
+      clearSelection();
+    }
+  }
+
+  function toggleSelect(history: HistoryItem) {
+    const url = history.url;
+    if (!url || batchActionLoading) return;
+    const next = new Set(selectedUrls);
+    if (next.has(url)) next.delete(url);
+    else next.add(url);
+    if (next.size === 0) {
+      clearSelection();
+      return;
+    }
+    selectedUrls = next;
+  }
+
+  function handleItemClick(e: MouseEvent, history: HistoryItem) {
+    if (!multiSelectMode || batchActionLoading) return;
+    e.preventDefault();
+    const index = visibleHistoryItems.findIndex(
+      (item) => item.url === history.url,
+    );
+    if (e.shiftKey && lastClickedIndex >= 0 && index >= 0) {
+      const start = Math.min(lastClickedIndex, index);
+      const end = Math.max(lastClickedIndex, index);
+      selectedUrls = new Set(
+        visibleHistoryItems
+          .slice(start, end + 1)
+          .map((item) => item.url)
+          .filter((url): url is string => !!url),
+      );
+    } else {
+      toggleSelect(history);
+      lastClickedIndex = index;
+    }
+  }
+
+  function toggleSelectAll() {
+    if (batchActionLoading) return;
+    if (allSelected) {
+      clearSelection();
+    } else {
+      selectedUrls = new Set(
+        visibleHistoryItems
+          .map((item) => item.url)
+          .filter((url): url is string => !!url),
+      );
+    }
+  }
+
+  async function deleteSelected() {
+    if (!selectedCount || batchActionLoading) return;
+    confirmDelete = false;
+    batchActionLoading = true;
+    try {
+      await browser.runtime.sendMessage({
+        type: "deleteHistoryUrls",
+        payload: { urls: [...selectedUrls] },
+      });
+      clearSelection(true);
+      await reloadHistory();
+    } finally {
+      batchActionLoading = false;
+    }
   }
 
   async function reloadHistory() {
@@ -392,6 +516,18 @@
         </div>
       {/if}
     </div>
+    <div class="batch_bar_container" class:settings_open={settingsOpen}>
+      <BatchToolbar
+        show={multiSelectMode}
+        count={selectedCount}
+        {allSelected}
+        showDeleteText
+        disabled={batchActionLoading}
+        onselectall={toggleSelectAll}
+        ondelete={() => (confirmDelete = true)}
+        onclose={() => clearSelection()}
+      />
+    </div>
   {/if}
 </div>
 
@@ -407,7 +543,22 @@
         <T>{t("nt_add_to_pinned")}</T>
       </G>
     </Button>
+    <Button full onclick={enterMultiSelect}>
+      <G>
+        <T>{t("nt_multi_select")}</T>
+      </G>
+    </Button>
   </LinkContextMenu>
+{/if}
+
+{#if confirmDelete}
+  <ConfirmDialog
+    title={t("nt_confirm_delete_history_title")}
+    description={t("nt_delete_history_items_confirm", String(selectedCount))}
+    confirmText={t("nt_delete")}
+    onclickClose={() => (confirmDelete = false)}
+    onConfirm={deleteSelected}
+  />
 {/if}
 
 {#if clearRequestKey > handledClearRequestKey && hasHistory}
@@ -436,9 +587,19 @@
 {#snippet temHistoryItem(history: HistoryItem)}
   <a
     class="item"
+    class:selected={multiSelectMode && !!history.url && selectedUrls.has(history.url)}
     href={history.url}
     target={newTabOpen ? "_blank" : "_self"}
     rel={newTabOpen ? "noreferrer" : undefined}
+    onclick={multiSelectMode ? (e) => handleItemClick(e, history) : undefined}
+    onkeydown={multiSelectMode
+      ? (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggleSelect(history);
+          }
+        }
+      : undefined}
     oncontextmenu={(e) => showContextMenu(e, history)}
     class:ctx={showMenu && currentHistory === history}
   >
@@ -459,6 +620,7 @@
     flex-direction: column;
     width: 100%;
     align-items: center;
+    position: relative;
   }
   .history {
     display: flex;
@@ -508,6 +670,13 @@
   .item.ctx {
     outline: 2px var(--c-text) solid;
   }
+  .item.selected {
+    outline: 2px solid var(--c-main);
+    background-color: var(--c-main-3);
+  }
+  .item.selected:hover {
+    background-color: var(--c-main-3);
+  }
   .item:active {
     background-color: var(--c-mask1);
   }
@@ -518,5 +687,21 @@
   .more_trigger {
     display: flex;
     justify-content: center;
+  }
+  .batch_bar_container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    padding: var(--gap);
+    width: min(400px, calc(100% - var(--gap) * 4));
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 20;
+  }
+  .batch_bar_container.settings_open {
+    left: calc((100vw - 300px - var(--gap)) / 2);
   }
 </style>

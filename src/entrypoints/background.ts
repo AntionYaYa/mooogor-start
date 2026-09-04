@@ -25,6 +25,7 @@ import { buildDefaultEngines } from "../lib/DB/defaultEnginesFactory";
 import { buildDefaultEngineCategories } from "../lib/config/engineCategories";
 import {
   deleteHistoryRange,
+  deleteHistoryUrls,
   getFrequentSites,
   getHistoryItems,
   searchHistory,
@@ -127,6 +128,7 @@ export default defineBackground(() => {
         startTime?: number;
         endTime?: number;
         maxResults?: number;
+        urls?: string[];
       };
     };
     if (type === "updateLocalStorageHealth") {
@@ -162,6 +164,10 @@ export default defineBackground(() => {
         startTime: payload.startTime,
         endTime: payload.endTime,
       });
+    }
+    if (type === "deleteHistoryUrls") {
+      if (!payload?.urls?.length) return;
+      return deleteHistoryUrls(payload.urls);
     }
     if (type === "getFaviconData") return onGetFaviconData(payload);
     if (type === "saveFavicon") return onFavicon(payload);
