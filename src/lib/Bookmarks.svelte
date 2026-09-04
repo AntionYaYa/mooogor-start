@@ -8,7 +8,10 @@
   import T from "./components/T.svelte";
   import G from "./components/G.svelte";
   import { flip } from "svelte/animate";
-  import { dndzone } from "svelte-dnd-action";
+  import {
+    dndzone,
+    SHADOW_ITEM_MARKER_PROPERTY_NAME,
+  } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
   import type { BookmarkNode } from "@/lib/browser/bookmarks";
   import {
@@ -82,6 +85,8 @@
   let combineTargetId = $state<string | null>(null);
   let releasedCombineTargetId: string | null = null;
   let dragStartItems = $state<BookmarkNode[]>([]);
+  let batchDragIds = $state<string[]>([]);
+  let batchDragIconSnapshots: HTMLElement[] = [];
   let pendingReorderItems: BookmarkNode[] | null = null;
   let pendingReorderSignature = "";
   let reorderDelayId: ReturnType<typeof setTimeout> | null = null;
@@ -166,7 +171,32 @@
     onclickFolder(bkmk);
   }
 
-  function draggedel(el: HTMLElement | undefined) {
+  function isShadowItem(item: BookmarkNode) {
+    return !!(item as BookmarkNode & Record<string, unknown>)[
+      SHADOW_ITEM_MARKER_PROPERTY_NAME
+    ];
+  }
+
+  function captureBatchDragIcons(ids: string[]) {
+    if (!pageEl) return [];
+    const itemElements = Array.from(
+      pageEl.querySelectorAll<HTMLElement>(".item[data-bookmark-id]"),
+    );
+    const elementsById = new Map(
+      itemElements.map((item) => [item.dataset.bookmarkId ?? "", item]),
+    );
+    return ids.flatMap((id) => {
+      const icon = elementsById
+        .get(id)
+        ?.querySelector<HTMLElement>(".drag_icon_source");
+      return icon ? [icon.cloneNode(true) as HTMLElement] : [];
+    });
+  }
+
+  function draggedel(
+    el: HTMLElement | undefined,
+    draggedData?: Record<string, unknown>,
+  ) {
     if (!el) return;
     el.style.backgroundColor = "transparent";
     el.style.boxShadow = "none";
@@ -176,6 +206,88 @@
       child.style.backgroundColor = "transparent";
       child.style.boxShadow = "none";
     });
+
+    const sourceId = String(draggedData?.id ?? "");
+    if (!multiSelectMode || !selectedIds.has(sourceId) || selectedIds.size < 2) {
+      return;
+    }
+    const decorationKey = `${sourceId}:${selectedIds.size}`;
+    Object.assign(el.style, {
+      width: "56px",
+      height: "56px",
+      minWidth: "56px",
+      minHeight: "56px",
+      overflow: "visible",
+      border: "none",
+      outline: "none",
+      borderRadius: "0",
+      background: "transparent",
+      boxShadow: "none",
+    });
+    if (el.dataset.batchDragDecoration === decorationKey) return;
+
+    const fallbackIcon = el.querySelector<HTMLElement>(".drag_icon_source");
+    const iconSources = batchDragIconSnapshots.length
+      ? batchDragIconSnapshots
+      : fallbackIcon
+        ? [fallbackIcon]
+        : [];
+    el.replaceChildren();
+    el.dataset.batchDragDecoration = decorationKey;
+
+    if (iconSources.length) {
+      for (let index = iconSources.length - 1; index >= 0; index -= 1) {
+        const icon = iconSources[index].cloneNode(true) as HTMLElement;
+        const offset = Math.min(index, 6) * 3;
+        icon.setAttribute("aria-hidden", "true");
+        Object.assign(icon.style, {
+          position: "absolute",
+          left: "8px",
+          top: "8px",
+          width: "40px",
+          height: "40px",
+          minWidth: "40px",
+          minHeight: "40px",
+          opacity: index === 0 ? "1" : String(Math.max(0.34, 1 - index * 0.14)),
+          transform: `translate(${offset}px, ${offset}px)`,
+          filter: index === 0 ? "none" : "drop-shadow(0 2px 3px rgba(0, 0, 0, 0.18))",
+        });
+        const iconContent = icon.firstElementChild as HTMLElement | null;
+        if (iconContent) {
+          Object.assign(iconContent.style, {
+            width: "40px",
+            height: "40px",
+            minWidth: "40px",
+            minHeight: "40px",
+          });
+        }
+        icon.querySelectorAll<HTMLElement>("div, img, svg").forEach((child) => {
+          child.style.maxWidth = "100%";
+          child.style.maxHeight = "100%";
+        });
+        el.append(icon);
+      }
+    }
+
+    const count = document.createElement("div");
+    count.textContent = String(selectedIds.size);
+    count.setAttribute(
+      "aria-label",
+      `${t("nt_multi_select")} ${selectedIds.size}`,
+    );
+    Object.assign(count.style, {
+      position: "absolute",
+      top: "0",
+      right: "-4px",
+      zIndex: "20",
+      color: "var(--c-text)",
+      background: "transparent",
+      fontSize: "14px",
+      fontWeight: "700",
+      lineHeight: "1",
+      textShadow: "0 1px 3px var(--c-bg), 0 1px 5px var(--c-bg)",
+    });
+    el.append(count);
   }
 
   function handleDragPointerMove(event: PointerEvent) {
@@ -207,6 +319,10 @@
     for (const zone of zones) {
       const targetId = zone.dataset.bookmarkCombineHitId;
       if (!targetId || targetId === draggedBookmarkId) continue;
+      const target = dragStartItems.find((item) => item.id === targetId);
+      if (multiSelectMode && (!target || selectedIds.has(targetId))) {
+        continue;
+      }
       const rect = zone.getBoundingClientRect();
       if (
         clientX >= rect.left &&
@@ -253,8 +369,36 @@
       releasedCombineTargetId = null;
       draggedBookmarkId = e.detail.info.id;
       dragStartItems = [...items];
+      if (multiSelectMode && !selectedIds.has(e.detail.info.id)) {
+        const draggedItem = items.find(
+          (item) => item.id === e.detail.info.id,
+        );
+        if (draggedItem && !isProtectedRootFolder(draggedItem)) {
+          selectedIds = new Set([draggedItem.id]);
+        }
+      }
+      batchDragIds = multiSelectMode
+        ? dragStartItems
+            .filter((item) => selectedIds.has(item.id))
+            .map((item) => item.id)
+        : [];
+      batchDragIconSnapshots = captureBatchDragIcons(batchDragIds);
       sorting = true;
-      items = nextItems;
+      items = batchDragIds.length
+        ? nextItems.filter(
+            (item) => isShadowItem(item) || !batchDragIds.includes(item.id),
+          )
+        : nextItems;
+      return;
+    }
+
+    if (batchDragIds.length) {
+      pendingReorderItems = nextItems;
+      const nextSignature = nextItems.map((item) => item.id).join("|");
+      if (nextSignature !== pendingReorderSignature) {
+        pendingReorderSignature = nextSignature;
+        schedulePendingReorder();
+      }
       return;
     }
 
@@ -272,12 +416,50 @@
     pendingReorderSignature = "";
     const sourceId = draggedBookmarkId ?? e.detail.info.id;
     const targetId = releasedCombineTargetId ?? combineTargetId;
+    const activeBatchDragIds = [...batchDragIds];
+    const batchDrag = multiSelectMode && activeBatchDragIds.length > 0;
     sorting = false;
     items = e.detail.items;
     draggedBookmarkId = null;
     combineTargetId = null;
     releasedCombineTargetId = null;
+    batchDragIds = [];
+    batchDragIconSnapshots = [];
     if (!canSortItems) return;
+
+    if (batchDrag) {
+      const target = dragStartItems.find((item) => item.id === targetId);
+      const selected = dragStartItems.filter((item) =>
+        activeBatchDragIds.includes(item.id),
+      );
+      if (target && !activeBatchDragIds.includes(target.id)) {
+        await dropBatchOnTarget(selected, target);
+        return;
+      }
+
+      if (e.detail.info.trigger === "droppedOutsideOfAny") {
+        items = dragStartItems;
+        return;
+      }
+
+      const compactItems = e.detail.items.filter((item) => !isShadowItem(item));
+      const insertionIndex = Math.max(
+        0,
+        compactItems.findIndex((item) => item.id === sourceId),
+      );
+      const remainingItems = compactItems.filter(
+        (item) => !activeBatchDragIds.includes(item.id),
+      );
+      const reorderedItems = [
+        ...remainingItems.slice(0, insertionIndex),
+        ...selected,
+        ...remainingItems.slice(insertionIndex),
+      ];
+      items = reorderedItems;
+      await persistBookmarkOrder(reorderedItems);
+      await refreshCurrentFolder();
+      return;
+    }
 
     if (targetId && targetId !== sourceId) {
       const source = dragStartItems.find((item) => item.id === sourceId);
@@ -302,13 +484,79 @@
       }
     }
 
-    for (const [index, item] of items.entries()) {
-      await moveBookmark(item.id, {
-        parentId: bookmarkNode.id,
-        index,
-      });
-    }
+    await persistBookmarkOrder(items);
     await refreshCurrentFolder();
+  }
+
+  async function persistBookmarkOrder(orderedItems: BookmarkNode[]) {
+    for (const [index, item] of orderedItems.entries()) {
+      await moveBookmark(item.id, { parentId: bookmarkNode.id, index });
+    }
+  }
+
+  async function dropBatchOnTarget(
+    selected: BookmarkNode[],
+    target: BookmarkNode,
+  ) {
+    if (!selected.length || isProtectedRootFolder(target)) {
+      items = dragStartItems;
+      return;
+    }
+
+    batchActionLoading = true;
+    batchErrorMessage = "";
+    let failedCount = 0;
+    try {
+      let destinationId = target.id;
+      let nextIndex = 0;
+      if (target.url) {
+        const targetIndex = Math.max(
+          0,
+          dragStartItems.findIndex((item) => item.id === target.id),
+        );
+        const folder = await createBookmark({
+          parentId: bookmarkNode.id,
+          index: targetIndex,
+          title: t("nt_new_bookmark_folder"),
+        });
+        destinationId = folder.id;
+        await moveBookmark(target.id, { parentId: destinationId, index: 0 });
+        nextIndex = 1;
+      } else {
+        nextIndex = (await getBookmarkChildren(target.id)).length;
+      }
+
+      for (const item of selected) {
+        try {
+          await moveBookmark(item.id, {
+            parentId: destinationId,
+            index: nextIndex,
+          });
+          nextIndex += 1;
+        } catch {
+          failedCount += 1;
+        }
+      }
+      await refreshCurrentFolder();
+      if (failedCount) {
+        batchErrorMessage = t(
+          "nt_batch_bookmarks_action_failed",
+          String(failedCount),
+        );
+      } else {
+        clearSelection(true);
+      }
+    } catch {
+      failedCount = Math.max(failedCount, selected.length);
+      await refreshCurrentFolder();
+      batchErrorMessage = t(
+        "nt_batch_bookmarks_action_failed",
+        String(failedCount),
+      );
+    } finally {
+      batchActionLoading = false;
+      if (!selectedIds.size) clearSelection(true);
+    }
   }
 
   async function clickAddtoPinneds() {
@@ -725,8 +973,10 @@
               zoneTabIndex: -1,
               zoneItemTabIndex: -1,
               autoAriaDisabled: true,
-              transformDraggedElement: (e) => draggedel(e),
-              dragDisabled: multiSelectMode,
+              morphDisabled: multiSelectMode,
+              dropAnimationDisabled: multiSelectMode,
+              transformDraggedElement: (e, data) => draggedel(e, data),
+              dragDisabled: batchActionLoading,
               dropFromOthersDisabled: multiSelectMode,
             }
           : {
@@ -755,7 +1005,7 @@
               data-bookmark-combine-hit-id={bkmk.id}
               aria-hidden="true"
             ></div>
-            {#if sorting && bkmk.id !== draggedBookmarkId && dragStartItems.some((item) => item.id === bkmk.id)}
+            {#if sorting && bkmk.id !== draggedBookmarkId && dragStartItems.some((item) => item.id === bkmk.id) && (!multiSelectMode || (!selectedIds.has(bkmk.id) && !isProtectedRootFolder(bkmk)))}
               <div
                 class="combine_drop_zone"
                 class:combine_target={combineTargetId === bkmk.id}
@@ -828,11 +1078,13 @@
     {#if multiSelectMode && !isProtectedRootFolder(bkmk)}
       {#if list}
         <G align="c">
-          {#if bkmk.url}
-            <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" />
-          {:else}
-            <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" folderIcon />
-          {/if}
+          <div class="drag_icon_source">
+            {#if bkmk.url}
+              <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" />
+            {:else}
+              <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="s" folderIcon />
+            {/if}
+          </div>
         </G>
         <G full align="c">
           <T nowrap type="m">{bkmk.title}</T>
@@ -845,14 +1097,16 @@
           r="r1"
         >
           <G>
-            {#if bkmk.url}
-              <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="l" />
-            {:else}
-              <BookmarkFolderIcon
-                previewUrls={folderPreviewUrls[bkmk.id] ?? []}
-                size="l"
-              />
-            {/if}
+            <div class="drag_icon_source">
+              {#if bkmk.url}
+                <BkmkIcon imgUrl={bkmk.url} alt={bkmk.title} size="l" />
+              {:else}
+                <BookmarkFolderIcon
+                  previewUrls={folderPreviewUrls[bkmk.id] ?? []}
+                  size="l"
+                />
+              {/if}
+            </div>
           </G>
         </Button>
         <T nowrap align="c" type="s">{bkmk.title}</T>
@@ -1131,6 +1385,11 @@
     box-sizing: border-box;
     border-radius: var(--r);
     cursor: default !important;
+  }
+  .drag_icon_source {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .content {
     gap: var(--gap);
