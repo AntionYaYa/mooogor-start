@@ -200,11 +200,15 @@
     if (!el) return;
     el.style.backgroundColor = "transparent";
     el.style.boxShadow = "none";
+    el.style.border = "none";
+    el.style.outline = "none";
     el.querySelectorAll<HTMLElement>(
-      "a, .folder_card, .bkmk_v, .bkmk_h",
+      "a, button, .folder_card, .bkmk_v, .bkmk_h",
     ).forEach((child) => {
       child.style.backgroundColor = "transparent";
       child.style.boxShadow = "none";
+      child.style.border = "none";
+      child.style.outline = "none";
     });
 
     const sourceId = String(draggedData?.id ?? "");
@@ -1322,6 +1326,20 @@
 
   .bookmark_scroll.multi_select_frame {
     border: 2px solid var(--c-main-3);
+  }
+
+  :global(#dnd-action-dragged-el),
+  :global(#dnd-action-dragged-el:focus),
+  :global(#dnd-action-dragged-el:focus-visible),
+  :global([data-is-dnd-shadow-item-internal="true"]) {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  :global(#dnd-action-dragged-el *) {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
   }
 
   .multi_select {
