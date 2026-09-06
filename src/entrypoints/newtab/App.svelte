@@ -85,6 +85,9 @@
   let showNext = $state(false);
   let firstMount = $state(true);
   let settingsLoaded = $state(false);
+  let autoFocusSearch = $state(
+    new URLSearchParams(window.location.search).get("focus") === "search",
+  );
   let initializationFailed = $state(false);
   let configurationState: "loading" | "ready" | "fallback" = $state("loading");
   let websitesState: "loading" | "ready" | "fallback" = $state("loading");
@@ -145,6 +148,7 @@
       a.searchHistory === b.searchHistory &&
       a.recordSearchKeywords === b.recordSearchKeywords &&
       a.rememberSearchEngineCategory === b.rememberSearchEngineCategory &&
+      a.autoFocusSearch === b.autoFocusSearch &&
       a.injectRelatedSearch === b.injectRelatedSearch &&
       a.language === b.language &&
       a.theme === b.theme &&
@@ -916,6 +920,8 @@
       </div>
       {#if settingsLoaded}
         <Search
+          {autoFocusSearch}
+          onAutoFocusHandled={() => (autoFocusSearch = false)}
           newTabOpen={effectiveNewTabOpen}
           searchBookmarks={userSettings.searchBookmarks}
           searchHistory={userSettings.searchHistory}

@@ -227,6 +227,12 @@
   "nt_settings_search_remember_engine_category_tip": {
     "message": "开启后会保留上次选择的分类"
   },
+  "nt_settings_search_auto_focus": {
+    "message": "自动聚焦搜索框（Beta）"
+  },
+  "nt_settings_search_auto_focus_tip": {
+    "message": "新建标签页时尝试聚焦页面搜索框，兼容性可能因浏览器版本而异"
+  },
   "nt_settings_search_inject_related": {
     "message": "注入到相关网页"
   },

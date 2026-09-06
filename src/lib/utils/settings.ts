@@ -1,4 +1,8 @@
-import { getStoredConfig, updateStoredConfig } from "@/lib/DB/configStorage";
+import {
+  getStoredConfig,
+  readStoredConfigMetadata,
+  updateStoredConfig,
+} from "@/lib/DB/configStorage";
 
 export type AppLanguage =
   | "auto"
@@ -30,6 +34,7 @@ export type UserSettings = {
   searchHistory: boolean;
   recordSearchKeywords: boolean;
   rememberSearchEngineCategory: boolean;
+  autoFocusSearch: boolean;
   injectRelatedSearch: boolean;
   language: AppLanguage;
   theme: AppTheme;
@@ -46,6 +51,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   searchHistory: true,
   recordSearchKeywords: true,
   rememberSearchEngineCategory: false,
+  autoFocusSearch: false,
   injectRelatedSearch: true,
   language: "auto",
   theme: "default",
@@ -143,6 +149,8 @@ export async function loadSettings(): Promise<UserSettings> {
     rememberSearchEngineCategory:
       stored?.rememberSearchEngineCategory ??
       DEFAULT_SETTINGS.rememberSearchEngineCategory,
+    autoFocusSearch:
+      stored?.autoFocusSearch ?? DEFAULT_SETTINGS.autoFocusSearch,
     injectRelatedSearch:
       stored?.injectRelatedSearch ?? DEFAULT_SETTINGS.injectRelatedSearch,
     language: isLanguage(stored?.language)
@@ -151,6 +159,22 @@ export async function loadSettings(): Promise<UserSettings> {
     theme: isTheme(stored?.theme) ? stored.theme : DEFAULT_SETTINGS.theme,
     background: normalizeBackgroundSettings(stored?.background),
   };
+}
+
+export async function loadAutoFocusSearchSetting(): Promise<boolean> {
+  try {
+    const metadata = await readStoredConfigMetadata();
+    const stored = metadata?.[SETTINGS_KEY];
+    if (!stored || typeof stored !== "object" || Array.isArray(stored)) {
+      return DEFAULT_SETTINGS.autoFocusSearch;
+    }
+    const value = (stored as Partial<UserSettings>).autoFocusSearch;
+    return typeof value === "boolean"
+      ? value
+      : DEFAULT_SETTINGS.autoFocusSearch;
+  } catch {
+    return DEFAULT_SETTINGS.autoFocusSearch;
+  }
 }
 
 export async function saveSettings(next: UserSettings): Promise<void> {

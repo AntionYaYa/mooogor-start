@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { slide } from "svelte/transition";
     import { flip } from "svelte/animate";
     import { dndzone } from "svelte-dnd-action";
@@ -59,6 +59,8 @@
         configReady?: boolean;
         loading?: boolean;
         readOnly?: boolean;
+        autoFocusSearch?: boolean;
+        onAutoFocusHandled?: () => void;
     }
 
     let {
@@ -71,6 +73,8 @@
         configReady = true,
         loading = false,
         readOnly = false,
+        autoFocusSearch = false,
+        onAutoFocusHandled,
     }: Props = $props();
 
     let engineCategories: EngineCategoryItem[] = $state([]);
@@ -109,8 +113,31 @@
     let engineConfigRequestId = 0;
     let searchStorageReady = false;
     let suppressEngineToggleClick = false;
+    let autoFocusScheduled = false;
     let searchConfigLoading = $derived(loading || !engineConfigReady);
     let effectiveReadOnly = $derived(readOnly || !databaseConfigLoaded);
+
+    $effect(() => {
+        if (
+            !autoFocusSearch ||
+            autoFocusScheduled ||
+            searchConfigLoading ||
+            !searchEl
+        ) {
+            return;
+        }
+        autoFocusScheduled = true;
+        void tick().then(() => {
+            requestAnimationFrame(() => {
+                window.focus();
+                searchEl?.focus({ preventScroll: true });
+                const url = new URL(window.location.href);
+                url.searchParams.delete("focus");
+                window.history.replaceState(window.history.state, "", url);
+                onAutoFocusHandled?.();
+            });
+        });
+    });
     let showSearchKeys = $derived(
         !showMoreEngines &&
             recordSearchKeywords &&

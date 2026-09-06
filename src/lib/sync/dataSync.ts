@@ -44,6 +44,7 @@ type SyncedSettings = Pick<
   | "searchHistory"
   | "recordSearchKeywords"
   | "rememberSearchEngineCategory"
+  | "autoFocusSearch"
   | "injectRelatedSearch"
   | "language"
   | "theme"
@@ -195,6 +196,7 @@ function selectSyncedSettings(value: unknown): Partial<SyncedSettings> {
     | "searchHistory"
     | "recordSearchKeywords"
     | "rememberSearchEngineCategory"
+    | "autoFocusSearch"
     | "injectRelatedSearch"
   >)[] = [
     "newTabOpen",
@@ -202,6 +204,7 @@ function selectSyncedSettings(value: unknown): Partial<SyncedSettings> {
     "searchHistory",
     "recordSearchKeywords",
     "rememberSearchEngineCategory",
+    "autoFocusSearch",
     "injectRelatedSearch",
   ];
   for (const key of booleanKeys) {

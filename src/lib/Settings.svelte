@@ -721,6 +721,13 @@
         });
     }
 
+    function setAutoFocusSearch(value: boolean) {
+        onchangeUserSettings({
+            ...userSettings,
+            autoFocusSearch: value,
+        });
+    }
+
     function setInjectRelatedSearch(value: boolean) {
         onchangeUserSettings({
             ...userSettings,
@@ -1686,6 +1693,13 @@
         t("nt_settings_search_remember_engine_category_tip"),
         userSettings.rememberSearchEngineCategory,
         setRememberSearchEngineCategory,
+    )}
+    {@render temswithcItem(
+        undefined,
+        t("nt_settings_search_auto_focus"),
+        t("nt_settings_search_auto_focus_tip"),
+        userSettings.autoFocusSearch,
+        setAutoFocusSearch,
     )}
     {@render temswithcItem(
         undefined,

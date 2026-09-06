@@ -227,6 +227,12 @@
   "nt_settings_search_remember_engine_category_tip": {
     "message": "Keep the last selected category next time Quick Search opens"
   },
+  "nt_settings_search_auto_focus": {
+    "message": "Auto-focus search box (Beta)"
+  },
+  "nt_settings_search_auto_focus_tip": {
+    "message": "Try to focus the page search box in new tabs; compatibility may vary by browser version"
+  },
   "nt_settings_search_inject_related": {
     "message": "Inject into related pages"
   },

@@ -227,6 +227,12 @@
   "nt_settings_search_remember_engine_category_tip": {
     "message": "開啟後會保留上次選擇的分類"
   },
+  "nt_settings_search_auto_focus": {
+    "message": "自動聚焦搜尋框（Beta）"
+  },
+  "nt_settings_search_auto_focus_tip": {
+    "message": "新增分頁時嘗試聚焦頁面搜尋框，相容性可能因瀏覽器版本而異"
+  },
   "nt_settings_search_inject_related": {
     "message": "注入到相關網頁"
   },

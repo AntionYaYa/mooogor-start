@@ -138,6 +138,12 @@ export async function readStoredConfig(): Promise<StoredConfig | null> {
   return isConfigParts(value) ? toStoredConfig(value) : null;
 }
 
+export async function readStoredConfigMetadata(): Promise<Record<string, unknown> | null> {
+  const value = await getExtensionStorage().get(CONFIG_STORAGE_KEYS.metadata);
+  const metadata = value[CONFIG_STORAGE_KEYS.metadata];
+  return isRecord(metadata) ? metadata : null;
+}
+
 export async function writeStoredConfig(config: StoredConfig): Promise<void> {
   await getExtensionStorage().set(toStorageParts(config));
 }
