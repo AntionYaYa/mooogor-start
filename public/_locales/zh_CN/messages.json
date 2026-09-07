@@ -53,6 +53,12 @@
   "nt_settings_background_url": {
     "message": "添加背景图片 URL"
   },
+  "nt_settings_background_image_only": {
+    "message": "仅支持可直接访问的图片地址，不支持视频或网页链接"
+  },
+  "nt_settings_background_image_load_failed": {
+    "message": "图片加载失败，请检查地址后重试"
+  },
   "nt_settings_background_remove": {
     "message": "移除自定义背景"
   },

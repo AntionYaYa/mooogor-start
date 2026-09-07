@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { isBackgroundUrl } from "@/lib/background/background";
+  import {
+    canLoadBackgroundImage,
+    isBackgroundUrl,
+  } from "@/lib/background/background";
   import Button from "@/lib/components/Button.svelte";
   import G from "@/lib/components/G.svelte";
   import Input from "@/lib/components/Input.svelte";
@@ -17,6 +20,7 @@
   let { onclickClose, onConfirm }: Props = $props();
   let url = $state("");
   let urlInvalid = $state(false);
+  let urlError = $state("");
   let submitting = $state(false);
 
   function close() {
@@ -27,16 +31,26 @@
     if (submitting) return;
     const value = url.trim();
     urlInvalid = false;
+    urlError = "";
     if (!isBackgroundUrl(value)) {
       urlInvalid = true;
+      urlError = t("nt_settings_background_image_only");
       return;
     }
     submitting = true;
     try {
+      if (!(await canLoadBackgroundImage(value))) {
+        urlInvalid = true;
+        urlError = t("nt_settings_background_image_only");
+        return;
+      }
       await onConfirm(value);
+      onclickClose();
+    } catch {
+      urlInvalid = true;
+      urlError = t("nt_settings_background_image_load_failed");
     } finally {
       submitting = false;
-      onclickClose();
     }
   }
 </script>
@@ -50,6 +64,7 @@
         bind:value={url}
         placeholder={t("nt_settings_background_url")}
         disabled={submitting}
+        err={urlError}
       />
     </Shake>
     <G align="r" gap>

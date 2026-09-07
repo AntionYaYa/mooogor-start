@@ -158,10 +158,39 @@ export function isBackgroundUrl(value: unknown): value is string {
   if (typeof value !== "string" || !value.trim()) return false;
   try {
     const url = new URL(value.trim());
-    return url.protocol === "https:" || url.protocol === "http:";
+    if (url.protocol !== "https:" && url.protocol !== "http:") return false;
+    return !/\.(?:3g2|3gp|avi|m4v|mkv|mov|mp4|mpeg|mpg|ogv|webm)$/i.test(
+      url.pathname,
+    );
   } catch {
     return false;
   }
+}
+
+export async function canLoadBackgroundImage(
+  value: string,
+  timeoutMs = 12_000,
+): Promise<boolean> {
+  if (!isBackgroundUrl(value) || typeof Image === "undefined") return false;
+  return await new Promise<boolean>((resolve) => {
+    const image = new Image();
+    let settled = false;
+    const finish = (valid: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      image.onload = null;
+      image.onerror = null;
+      if (!valid) image.src = "";
+      resolve(valid);
+    };
+    const timeoutId = setTimeout(() => finish(false), timeoutMs);
+    image.referrerPolicy = "no-referrer";
+    image.decoding = "async";
+    image.onload = () => finish(image.naturalWidth > 0 && image.naturalHeight > 0);
+    image.onerror = () => finish(false);
+    image.src = value;
+  });
 }
 
 function clampNumber(

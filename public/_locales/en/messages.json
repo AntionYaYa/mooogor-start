@@ -53,6 +53,12 @@
   "nt_settings_background_url": {
     "message": "Add background image URL"
   },
+  "nt_settings_background_image_only": {
+    "message": "Only direct image URLs are supported; videos and webpage links are not allowed"
+  },
+  "nt_settings_background_image_load_failed": {
+    "message": "The image could not be loaded. Check the URL and try again"
+  },
   "nt_settings_background_remove": {
     "message": "Remove custom background"
   },
