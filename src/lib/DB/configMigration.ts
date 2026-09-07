@@ -19,7 +19,7 @@ const MIGRATION_LOG_PREFIX = "[Mooogor Config Migration]";
 
 function createConfig(
   source: StoredConfig["migration"]["source"],
-  data: Pick<StoredConfig, "websites" | "engines" | "engineCategories" | "metadata">,
+  data: Pick<StoredConfig, "websites" | "websiteFolders" | "engines" | "engineCategories" | "metadata">,
 ): StoredConfig {
   return {
     schemaVersion: 1,
@@ -34,6 +34,7 @@ async function validateStoredConfig(expected: StoredConfig): Promise<StoredConfi
   if (!written) throw new Error("Configuration migration validation failed");
   for (const key of [
     "websites",
+    "websiteFolders",
     "engines",
     "engineCategories",
     "backgrounds",
@@ -41,7 +42,9 @@ async function validateStoredConfig(expected: StoredConfig): Promise<StoredConfi
   ] as const) {
     const expectedValue = key === "backgrounds"
       ? expected.backgrounds ?? PRESET_BACKGROUNDS
-      : expected[key];
+      : key === "websiteFolders"
+        ? expected.websiteFolders ?? []
+        : expected[key];
     if (stableStringify(written[key]) !== stableStringify(expectedValue)) {
       throw new Error(`Configuration migration validation failed: ${key}`);
     }
@@ -53,12 +56,14 @@ async function removeLegacySources() {
   await db.transaction(
     "rw",
     db.webSites,
+    db.webSiteFolders,
     db.engines,
     db.engineCategories,
     db.settings,
     async () => {
       await Promise.all([
         db.webSites.clear(),
+        db.webSiteFolders.clear(),
         db.engines.clear(),
         db.engineCategories.clear(),
         db.settings.clear(),
@@ -83,16 +88,18 @@ async function migrateStoredConfig(): Promise<void> {
     return;
   }
 
-  const [websites, engines, engineCategories, settings] = await Promise.all([
+  const [websites, websiteFolders, engines, engineCategories, settings] = await Promise.all([
     db.webSites.toArray(),
+    db.webSiteFolders.toArray(),
     db.engines.toArray(),
     db.engineCategories.toArray(),
     db.settings.toArray(),
   ]);
   const hasDexieData =
-    websites.length || engines.length || engineCategories.length || settings.length;
+    websites.length || websiteFolders.length || engines.length || engineCategories.length || settings.length;
   const config = createConfig(hasDexieData ? "dexie-v2" : "fresh", {
     websites,
+    websiteFolders,
     engines,
     engineCategories,
     metadata: Object.fromEntries(settings.map((row) => [row.key, row.value])),
@@ -128,6 +135,7 @@ export async function initializeFreshStoredConfig(): Promise<void> {
   }
   const fresh = createConfig("fresh", {
     websites: [] as WebSite[],
+    websiteFolders: [],
     engines: [] as Engine[],
     engineCategories: [] as EngineCategoryItem[],
     metadata: {},

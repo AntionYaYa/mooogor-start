@@ -1,45 +1,230 @@
 {
   "en": [
-    { "title": "ChatGPT", "url": "https://chatgpt.com/" },
-    { "title": "Gmail", "url": "https://mail.google.com/mail/u/0/#inbox" },
-    { "title": "YouTube", "url": "https://www.youtube.com/feed/subscriptions" },
-    { "title": "LinkedIn", "url": "https://www.linkedin.com/feed/" },
-    { "title": "GitHub", "url": "https://github.com/" },
-    { "title": "Amazon", "url": "https://www.amazon.com/" },
-    { "title": "X", "url": "https://x.com/home" },
-    { "title": "Discord", "url": "https://discord.com/channels/@me" },
-    { "title": "Reddit", "url": "https://www.reddit.com/" },
-    { "title": "Netflix", "url": "https://www.netflix.com/browse" },
-    { "title": "Instagram", "url": "https://www.instagram.com/" },
-    { "title": "Spotify", "url": "https://open.spotify.com/" },
-    { "title": "TikTok", "url": "https://www.tiktok.com/foryou" },
-    { "title": "Temu", "url": "https://www.temu.com/" }
+    {
+      "title": "ChatGPT",
+      "url": "https://chatgpt.com/",
+      "backgroundColor": "#e2e1dd",
+      "backgroundColorAlt": "#d8d7d2"
+    },
+    {
+      "title": "Gmail",
+      "url": "https://mail.google.com/mail/u/0/#inbox",
+      "backgroundColor": "#dc443a",
+      "backgroundColorAlt": "#ef9f54"
+    },
+    {
+      "title": "YouTube",
+      "url": "https://www.youtube.com/feed/subscriptions",
+      "backgroundColor": "#fe0a14",
+      "backgroundColorAlt": "#e22952"
+    },
+    {
+      "title": "LinkedIn",
+      "url": "https://www.linkedin.com/feed/",
+      "backgroundColor": "#bbe2f3",
+      "backgroundColorAlt": "#84b7f7"
+    },
+    {
+      "title": "GitHub",
+      "url": "https://github.com/",
+      "backgroundColor": "#101114",
+      "backgroundColorAlt": "#0b0907"
+    },
+    {
+      "title": "Amazon",
+      "url": "https://www.amazon.com/",
+      "backgroundColor": "#dbd6c1",
+      "backgroundColorAlt": "#f9f4fc"
+    },
+    {
+      "title": "X",
+      "url": "https://x.com/home",
+      "backgroundColor": "#e4e2de",
+      "backgroundColorAlt": "#a8a7a3"
+    },
+    {
+      "title": "Discord",
+      "url": "https://discord.com/channels/@me",
+      "backgroundColor": "#5e62e8",
+      "backgroundColorAlt": "#7b86d2"
+    },
+    {
+      "title": "Reddit",
+      "url": "https://www.reddit.com/",
+      "backgroundColor": "#f9f9ff",
+      "backgroundColorAlt": "#f7fdf8"
+    },
+    {
+      "title": "Netflix",
+      "url": "https://www.netflix.com/browse",
+      "backgroundColor": "#f2f8ef",
+      "backgroundColorAlt": "#fdeefa"
+    },
+    {
+      "title": "Instagram",
+      "url": "https://www.instagram.com/",
+      "backgroundColor": "#ee2abb",
+      "backgroundColorAlt": "#fd4837"
+    },
+    {
+      "title": "Spotify",
+      "url": "https://open.spotify.com/",
+      "backgroundColor": "#0b2507",
+      "backgroundColorAlt": "#1c1210"
+    },
+    {
+      "title": "TikTok",
+      "url": "https://www.tiktok.com/foryou",
+      "backgroundColor": "#55efec",
+      "backgroundColorAlt": "#f1fdfa"
+    },
+    {
+      "title": "Temu",
+      "url": "https://www.temu.com/",
+      "backgroundColor": "#fff0d6",
+      "backgroundColorAlt": "#f7fdfb"
+    }
   ],
   "zh_CN": [
-    { "title": "DeepSeek", "url": "https://chat.deepseek.com/" },
-    { "title": "腾讯文档", "url": "https://docs.qq.com/desktop/" },
-    { "title": "哔哩哔哩", "url": "https://www.bilibili.com/" },
-    { "title": "知乎", "url": "https://www.zhihu.com/follow" },
-    { "title": "小红书", "url": "https://www.xiaohongshu.com/" },
-    { "title": "微博", "url": "https://weibo.com/" },
-    { "title": "抖音", "url": "https://www.douyin.com/" },
-    { "title": "淘宝", "url": "https://www.taobao.com/" },
-    { "title": "京东", "url": "https://www.jd.com/" },
-    { "title": "百度网盘", "url": "https://pan.baidu.com/" },
-    { "title": "豆瓣", "url": "https://www.douban.com/" }
+    {
+      "title": "DeepSeek",
+      "url": "https://chat.deepseek.com/",
+      "backgroundColor": "#6e77ea",
+      "backgroundColorAlt": "#6289e4"
+    },
+    {
+      "title": "腾讯文档",
+      "url": "https://docs.qq.com/desktop/",
+      "backgroundColor": "#def8f9",
+      "backgroundColorAlt": "#fcfcf6"
+    },
+    {
+      "title": "哔哩哔哩",
+      "url": "https://www.bilibili.com/",
+      "backgroundColor": "#f9cee5",
+      "backgroundColorAlt": "#d7c6b2"
+    },
+    {
+      "title": "知乎",
+      "url": "https://www.zhihu.com/follow",
+      "backgroundColor": "#4491c8",
+      "backgroundColorAlt": "#457cbf"
+    },
+    {
+      "title": "小红书",
+      "url": "https://www.xiaohongshu.com/",
+      "backgroundColor": "#fee0db",
+      "backgroundColorAlt": "#ffdbe7"
+    },
+    {
+      "title": "微博",
+      "url": "https://weibo.com/",
+      "backgroundColor": "#030402",
+      "backgroundColorAlt": "#aa233b"
+    },
+    {
+      "title": "抖音",
+      "url": "https://www.douyin.com/",
+      "backgroundColor": "#55efec",
+      "backgroundColorAlt": "#f1fdfa"
+    },
+    {
+      "title": "淘宝",
+      "url": "https://www.taobao.com/",
+      "backgroundColor": "#fff4e1",
+      "backgroundColorAlt": "#fcfaff"
+    },
+    {
+      "title": "京东",
+      "url": "https://www.jd.com/",
+      "backgroundColor": "#f13c33",
+      "backgroundColorAlt": "#e96e43"
+    },
+    {
+      "title": "百度网盘",
+      "url": "https://pan.baidu.com/",
+      "backgroundColor": "#f7958e",
+      "backgroundColorAlt": "#c49fbe"
+    },
+    {
+      "title": "豆瓣",
+      "url": "https://www.douban.com/",
+      "backgroundColor": "#34b51b",
+      "backgroundColorAlt": "#70db60"
+    }
   ],
   "zh_TW": [
-    { "title": "Yahoo 奇摩", "url": "https://tw.yahoo.com/" },
-    { "title": "LINE", "url": "https://line.me/" },
-    { "title": "Dcard", "url": "https://www.dcard.tw/f" },
-    { "title": "巴哈姆特", "url": "https://www.gamer.com.tw/" },
-    { "title": "蝦皮購物", "url": "https://shopee.tw/" },
-    { "title": "momo 購物", "url": "https://www.momoshop.com.tw/" },
-    { "title": "YouTube", "url": "https://www.youtube.com/" },
-    { "title": "Gmail", "url": "https://mail.google.com/mail/u/0/#inbox" },
-    { "title": "PTT", "url": "https://term.ptt.cc/" },
-    { "title": "Mobile01", "url": "https://www.mobile01.com/" },
-    { "title": "Instagram", "url": "https://www.instagram.com/" },
-    { "title": "TikTok", "url": "https://www.tiktok.com/foryou" }
+    {
+      "title": "Yahoo 奇摩",
+      "url": "https://tw.yahoo.com/",
+      "backgroundColor": "#5906d1",
+      "backgroundColorAlt": "#6612ea"
+    },
+    {
+      "title": "LINE",
+      "url": "https://line.me/",
+      "backgroundColor": "#00c265",
+      "backgroundColorAlt": "#96deaa"
+    },
+    {
+      "title": "Dcard",
+      "url": "https://www.dcard.tw/f",
+      "backgroundColor": "#e0f6f9",
+      "backgroundColorAlt": "#fbfbff"
+    },
+    {
+      "title": "巴哈姆特",
+      "url": "https://www.gamer.com.tw/",
+      "backgroundColor": "#2a7d91",
+      "backgroundColorAlt": "#1d759a"
+    },
+    {
+      "title": "蝦皮購物",
+      "url": "https://shopee.tw/",
+      "backgroundColor": "#e9552f",
+      "backgroundColorAlt": "#cd8171"
+    },
+    {
+      "title": "momo 購物",
+      "url": "https://www.momoshop.com.tw/",
+      "backgroundColor": "#d03cbf",
+      "backgroundColorAlt": "#e449bf"
+    },
+    {
+      "title": "YouTube",
+      "url": "https://www.youtube.com/",
+      "backgroundColor": "#fe0a14",
+      "backgroundColorAlt": "#e22952"
+    },
+    {
+      "title": "Gmail",
+      "url": "https://mail.google.com/mail/u/0/#inbox",
+      "backgroundColor": "#dc443a",
+      "backgroundColorAlt": "#ef9f54"
+    },
+    {
+      "title": "PTT",
+      "url": "https://term.ptt.cc/",
+      "backgroundColor": "#e23030",
+      "backgroundColorAlt": "#7d3169"
+    },
+    {
+      "title": "Mobile01",
+      "url": "https://www.mobile01.com/",
+      "backgroundColor": "#0fa356",
+      "backgroundColorAlt": "#50b189"
+    },
+    {
+      "title": "Instagram",
+      "url": "https://www.instagram.com/",
+      "backgroundColor": "#ee2abb",
+      "backgroundColorAlt": "#fd4837"
+    },
+    {
+      "title": "TikTok",
+      "url": "https://www.tiktok.com/foryou",
+      "backgroundColor": "#55efec",
+      "backgroundColorAlt": "#f1fdfa"
+    }
   ]
 }

@@ -6,6 +6,8 @@ import type { AppLanguage } from "@/lib/utils/settings";
 type DefaultWebSiteRaw = {
   title?: string;
   url: string;
+  backgroundColor?: string;
+  backgroundColorAlt?: string;
 };
 
 type DefaultWebSitesByLanguage = Record<
@@ -28,6 +30,8 @@ export function buildDefaultWebSites(
         domain: getDomainFromUrl(site.url),
         url: site.url,
         title: site.title,
+        backgroundColor: site.backgroundColor,
+        backgroundColorAlt: site.backgroundColorAlt,
         order: i,
       });
     } catch {

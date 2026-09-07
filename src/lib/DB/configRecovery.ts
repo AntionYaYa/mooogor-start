@@ -8,10 +8,12 @@ import {
   PRESET_BACKGROUNDS,
   cloneBackgroundItem,
 } from "@/lib/background/background";
+import { clearWebSiteScreenshots } from "./websiteScreenshots";
 
 export async function resetConfigurationToDefaults(
   language: AppLanguage = "auto",
 ): Promise<void> {
+  await clearWebSiteScreenshots();
   const now = Date.now();
   const effectiveLanguage = getEffectiveLanguage(language);
   const websites = buildDefaultWebSites(effectiveLanguage).map((site, index) => ({
@@ -44,6 +46,7 @@ export async function resetConfigurationToDefaults(
       completedAt: now,
     },
     websites,
+    websiteFolders: [],
     engines,
     engineCategories,
     backgrounds: PRESET_BACKGROUNDS.map(cloneBackgroundItem),

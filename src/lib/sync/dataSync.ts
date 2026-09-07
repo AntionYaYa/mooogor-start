@@ -1,4 +1,4 @@
-import type { Engine, EngineCategoryItem, WebSite } from "@/lib/DB/database";
+import type { Engine, EngineCategoryItem, WebSite, WebSiteFolder } from "@/lib/DB/database";
 import {
   normalizeBackgroundItems,
   type BackgroundItem,
@@ -22,6 +22,7 @@ const SETTINGS_KEY = "settings";
 const CHUNK_BYTE_LIMIT = 5_500;
 const SYNCED_LOCAL_KEYS = new Set([
   "mooogor.websites.v1",
+  "mooogor.website-folders.v1",
   "mooogor.engines.v1",
   "mooogor.engine-categories.v1",
   "mooogor.backgrounds.v1",
@@ -54,6 +55,7 @@ type SyncedSettings = Pick<
 type SyncedData = {
   schemaVersion: 1;
   websites: WebSite[];
+  websiteFolders?: WebSiteFolder[];
   engines: Engine[];
   engineCategories: EngineCategoryItem[];
   backgrounds?: BackgroundItem[];
@@ -176,6 +178,7 @@ function isSyncedData(value: unknown): value is SyncedData {
   return (
     value.schemaVersion === 1 &&
     Array.isArray(value.websites) &&
+    (value.websiteFolders === undefined || Array.isArray(value.websiteFolders)) &&
     Array.isArray(value.engines) &&
     Array.isArray(value.engineCategories) &&
     (value.backgrounds === undefined || Array.isArray(value.backgrounds)) &&
@@ -231,7 +234,9 @@ function selectSyncedSettings(value: unknown): Partial<SyncedSettings> {
 function buildSyncedData(config: NonNullable<Awaited<ReturnType<typeof readStoredConfig>>>): SyncedData {
   return {
     schemaVersion: 1,
+    // Screenshot blobs live in IndexedDB and never enter the sync payload.
     websites: config.websites,
+    websiteFolders: config.websiteFolders,
     engines: config.engines,
     engineCategories: config.engineCategories,
     backgrounds: normalizeBackgroundItems(config.backgrounds),
@@ -389,6 +394,7 @@ async function applyRemoteData(remote: Awaited<ReturnType<typeof readRemoteData>
       ? local.metadata[SETTINGS_KEY]
       : {};
     local.websites = remote.data.websites;
+    local.websiteFolders = remote.data.websiteFolders ?? [];
     local.engines = remote.data.engines;
     local.engineCategories = remote.data.engineCategories;
     if (remote.data.backgrounds) {

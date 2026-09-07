@@ -12,6 +12,7 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "check": "svelte-check --tsconfig ./tsconfig.json",
+    "colors:defaults": "node scripts/extract-default-site-colors.mjs --write",
     "postinstall": "wxt prepare"
   },
   "devDependencies": {

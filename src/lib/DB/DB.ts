@@ -11,10 +11,30 @@ export {
   deleteWebSite,
   getAllWebSite,
   getWebSite,
+  updateWebSiteScreenshot,
   updateWebSitesOrder,
+  moveWebSitesToFolder,
   ensureDefaultWebSites,
   resetWebSitesToDefault,
 } from "./websites";
+
+export type { WebSiteFolder } from "./database";
+export {
+  addWebSiteFolder,
+  updateWebSiteFolder,
+  deleteWebSiteFolder,
+  getAllWebSiteFolders,
+  updatePinnedItemsOrder,
+} from "./websiteFolders";
+export type { PinnedOrderItem } from "./websiteFolders";
+
+export type { WebSiteScreenshot } from "./database";
+export {
+  saveWebSiteScreenshot,
+  getWebSiteScreenshot,
+  deleteWebSiteScreenshot,
+  clearWebSiteScreenshots,
+} from "./websiteScreenshots";
 
 export type { Engine, EngineCategory } from "./database";
 export {

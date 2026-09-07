@@ -11,6 +11,7 @@
     import ManageEngineCategories from "./ManageEngineCategories.svelte";
     import AddPinned from "./AddPinned.svelte";
     import ConfirmDialog from "./ConfirmDialog.svelte";
+    import Popup from "./components/Popup.svelte";
     import BatchToolbar from "./components/BatchToolbar.svelte";
     import SettingsCommonSitesSection from "@/lib/settings/SettingsCommonSitesSection.svelte";
     import SettingsSearchEnginesSection from "@/lib/settings/SettingsSearchEnginesSection.svelte";
@@ -33,7 +34,7 @@
         OpenTab,
         UserSettings,
     } from "@/lib/utils/settings";
-    import type { Engine, EngineCategoryItem, WebSite } from "@/lib/DB/DB";
+    import type { Engine, EngineCategoryItem, PinnedOrderItem, WebSite, WebSiteFolder } from "@/lib/DB/DB";
     import {
         addEngine,
         deleteEngine,
@@ -44,6 +45,11 @@
         updateEngineCategoriesOrder,
         updateEngine,
         resetSearchEnginesToDefault,
+        getAllWebSiteFolders,
+        addWebSiteFolder,
+        moveWebSitesToFolder,
+        updatePinnedItemsOrder,
+        updateWebSitesOrder,
     } from "@/lib/DB/DB";
     import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
     import { t } from "@/lib/utils/i18n";
@@ -60,7 +66,6 @@
         deleteCommonSiteEntry,
         fetchCommonSites,
         getResetCommonSitesConfirmMessage,
-        persistCommonSitesOrder,
         resetCommonSitesToDefaultByLanguage,
         saveCommonSiteEntry,
     } from "@/lib/settings/commonSites";
@@ -185,6 +190,8 @@
     let searchEngineMoveMenuOpen = $state(false);
     let searchEngineMoveActionEl: HTMLDivElement | undefined = $state();
     let commonSites: WebSite[] = $state([]);
+    let commonSiteFolders: WebSiteFolder[] = $state([]);
+    let currentCommonFolderId: number | undefined = $state();
     let commonSitesLoading = $state(false);
     let commonSitesError = $state(false);
     let commonSitesRequestId = $state(0);
@@ -192,6 +199,7 @@
     let selectedCommonSiteIds = $state<Set<number>>(new Set());
     let showCommonEditor = $state(false);
     let editingCommonSite: WebSite | null = $state(null);
+    let showCommonMoveDialog = $state(false);
     let confirmOptions = $state<{
         title: string;
         description: string;
@@ -222,7 +230,13 @@
         selectedSearchEngineCount > 0 && !allSearchEnginesSelected,
     );
     let selectableCommonSiteIds = $derived(
-        commonSites.flatMap((site) => (site.id ? [site.id] : [])),
+        commonSites.flatMap((site) =>
+            site.id && (currentCommonFolderId == null
+                ? site.folderId == null || !commonSiteFolders.some((folder) => folder.id === site.folderId)
+                : site.folderId === currentCommonFolderId)
+                ? [site.id]
+                : [],
+        ),
     );
     let selectedCommonSiteCount = $derived(selectedCommonSiteIds.size);
     let allCommonSitesSelected = $derived(
@@ -356,6 +370,19 @@
         }
     }
 
+    async function moveSelectedCommonSites(folderId?: number) {
+        if (!selectedCommonSiteIds.size || commonSitesLoading) return;
+        commonSitesLoading = true;
+        try {
+            await moveWebSitesToFolder([...selectedCommonSiteIds], folderId);
+            setSelectedCommonSiteIds([]);
+            showCommonMoveDialog = false;
+            await loadCommonSites();
+        } finally {
+            commonSitesLoading = false;
+        }
+    }
+
     function pruneCommonSiteSelection() {
         const validIds = new Set(selectableCommonSiteIds);
         const nextIds = [...selectedCommonSiteIds].filter((id) =>
@@ -399,11 +426,17 @@
             void loadSearchSettingEngines(true);
         }
         if (page === "common") {
+            currentCommonFolderId = undefined;
             void loadCommonSites();
         }
     }
 
     function goBackSettingPage() {
+        if (settingPage === "common" && currentCommonFolderId != null) {
+            currentCommonFolderId = undefined;
+            setSelectedCommonSiteIds([]);
+            return;
+        }
         pageDirection = -1;
         closeCategoryManager();
         closeSearchEngineEditor();
@@ -415,7 +448,10 @@
         if (settingPage === "searchEngines") {
             return t("nt_settings_search_engines_title");
         }
-        if (settingPage === "common") return t("nt_tab_common");
+        if (settingPage === "common") {
+            return commonSiteFolders.find((folder) => folder.id === currentCommonFolderId)?.title
+                ?? t("nt_tab_common");
+        }
         if (settingPage === "background") {
             return t("nt_settings_background_title");
         }
@@ -784,14 +820,22 @@
         commonSitesLoading = true;
         commonSitesError = false;
         try {
-            const items = await fetchCommonSites();
+            const [items, folders] = await Promise.all([
+                fetchCommonSites(),
+                getAllWebSiteFolders(),
+            ]);
             if (requestId !== commonSitesRequestId) return;
             commonSites = items;
+            commonSiteFolders = folders;
+            if (currentCommonFolderId != null && !folders.some((folder) => folder.id === currentCommonFolderId)) {
+                currentCommonFolderId = undefined;
+            }
             pruneCommonSiteSelection();
             commonSitesDragging = false;
         } catch (error) {
             if (requestId !== commonSitesRequestId) return;
             commonSites = [];
+            commonSiteFolders = [];
             commonSitesError = true;
             console.error("[Mooogor Settings]", "common-sites:load-failed", error);
         } finally {
@@ -821,6 +865,12 @@
         await loadCommonSites();
     }
 
+    async function saveCommonSiteFolder(title: string) {
+        if (currentCommonFolderId != null) return;
+        await addWebSiteFolder({ title });
+        await loadCommonSites();
+    }
+
     async function removeEditingCommonSite() {
         if (!editingCommonSite?.id) return false;
         if (
@@ -837,18 +887,15 @@
         return true;
     }
 
-    function handleCommonSitesConsider(e: CustomEvent<DndEvent<WebSite>>) {
-        commonSitesDragging = true;
-        commonSites = e.detail.items;
+    async function handleCommonSitesRootReorder(items: PinnedOrderItem[]) {
+        await updatePinnedItemsOrder(items);
+        await loadCommonSites();
     }
 
-    async function handleCommonSitesFinalize(
-        e: CustomEvent<DndEvent<WebSite>>,
-    ) {
-        commonSitesDragging = false;
-        const items = e.detail.items;
-        commonSites = items;
-        await persistCommonSitesOrder(items);
+    async function handleCommonSitesFolderReorder(items: WebSite[]) {
+        const withIds = items.filter((item): item is WebSite & { id: number } => item.id != null);
+        if (withIds.length) await updateWebSitesOrder(withIds);
+        await loadCommonSites();
     }
 
     function getSearchEngineCategoryOptions(): SelectOption[] {
@@ -1423,15 +1470,22 @@
                         {:else if settingPage === "common"}
                             <SettingsCommonSitesSection
                                 {commonSites}
+                                folders={commonSiteFolders}
+                                currentFolderId={currentCommonFolderId}
                                 {commonSitesLoading}
                                 {commonSitesError}
                                 {commonSitesDragging}
                                 selectedSiteIds={selectedCommonSiteIds}
-                                onConsider={handleCommonSitesConsider}
-                                onFinalize={handleCommonSitesFinalize}
+                                onDragging={(dragging) => (commonSitesDragging = dragging)}
+                                onReorderRoot={handleCommonSitesRootReorder}
+                                onReorderFolder={handleCommonSitesFolderReorder}
                                 onAdd={openAddCommonSiteEditor}
                                 onEdit={openEditCommonSiteEditor}
                                 onToggleSelected={toggleCommonSiteSelected}
+                                onOpenFolder={(folder) => {
+                                    currentCommonFolderId = folder.id;
+                                    setSelectedCommonSiteIds([]);
+                                }}
                                 onReset={resetCommonSitesToDefaultConfirm}
                             />
                         {:else if settingPage === "background"}
@@ -1494,10 +1548,40 @@
         isEdit={!!editingCommonSite}
         urlValue={editingCommonSite?.url}
         titleValue={editingCommonSite?.title}
+        folderIdValue={editingCommonSite?.folderId ?? currentCommonFolderId}
+        folders={currentCommonFolderId == null ? commonSiteFolders : []}
         onSave={saveCommonSite}
+        onSaveFolder={!editingCommonSite && currentCommonFolderId == null ? saveCommonSiteFolder : undefined}
         onDelete={editingCommonSite ? removeEditingCommonSite : undefined}
         onclickClose={closeCommonEditor}
     />
+{/if}
+
+{#if showCommonMoveDialog}
+    <Popup
+        type="s"
+        title={t("nt_move")}
+        onclickClose={() => (showCommonMoveDialog = false)}
+    >
+        <div class="common_move_targets">
+            {#if currentCommonFolderId != null}
+                <Button full onclick={() => void moveSelectedCommonSites()}>
+                    <G full align="c">
+                        <Icon name="FolderOpen" color="var(--c-text)" />
+                        <T>{t("nt_no_folder")}</T>
+                    </G>
+                </Button>
+            {/if}
+            {#each commonSiteFolders.filter((folder) => folder.id !== currentCommonFolderId) as folder (folder.id)}
+                <Button full onclick={() => void moveSelectedCommonSites(folder.id)}>
+                    <G full align="c">
+                        <Icon name="Folder" color="var(--c-text)" />
+                        <T nowrap>{folder.title}</T>
+                    </G>
+                </Button>
+            {/each}
+        </div>
+    </Popup>
 {/if}
 
 {#if confirmOptions}
@@ -1597,6 +1681,7 @@
         disabled={commonSitesLoading}
         onselectall={toggleSelectAllCommonSites}
         ondelete={deleteSelectedCommonSites}
+        onmove={() => (showCommonMoveDialog = true)}
     />
 {/snippet}
 
@@ -2109,5 +2194,15 @@
         flex-direction: column;
         width: 100%;
         box-sizing: border-box;
+    }
+    .common_move_targets {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-height: 320px;
+        overflow-y: auto;
+        padding: var(--gap);
+        box-sizing: border-box;
+        gap: var(--gap);
     }
 </style>

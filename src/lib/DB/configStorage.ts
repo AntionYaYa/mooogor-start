@@ -1,4 +1,4 @@
-import type { Engine, EngineCategoryItem, WebSite } from "./database";
+import type { Engine, EngineCategoryItem, WebSite, WebSiteFolder } from "./database";
 import {
   PRESET_BACKGROUNDS,
   cloneBackgroundItem,
@@ -13,6 +13,7 @@ import {
 export const CONFIG_STORAGE_KEY = "mooogor.config.v1";
 const CONFIG_STORAGE_KEYS = {
   websites: "mooogor.websites.v1",
+  websiteFolders: "mooogor.website-folders.v1",
   engines: "mooogor.engines.v1",
   engineCategories: "mooogor.engine-categories.v1",
   backgrounds: "mooogor.backgrounds.v1",
@@ -28,6 +29,7 @@ export type StoredConfig = {
     completedAt: number;
   };
   websites: WebSite[];
+  websiteFolders: WebSiteFolder[];
   engines: Engine[];
   engineCategories: EngineCategoryItem[];
   backgrounds: BackgroundItem[];
@@ -112,6 +114,9 @@ function toStoredConfig(value: Record<string, unknown>): StoredConfig {
     schemaVersion: 1,
     migration: value[CONFIG_STORAGE_KEYS.migration] as StoredConfig["migration"],
     websites: value[CONFIG_STORAGE_KEYS.websites] as WebSite[],
+    websiteFolders: Array.isArray(value[CONFIG_STORAGE_KEYS.websiteFolders])
+      ? value[CONFIG_STORAGE_KEYS.websiteFolders] as WebSiteFolder[]
+      : [],
     engines: value[CONFIG_STORAGE_KEYS.engines] as Engine[],
     engineCategories: value[CONFIG_STORAGE_KEYS.engineCategories] as EngineCategoryItem[],
     backgrounds: Array.isArray(value[CONFIG_STORAGE_KEYS.backgrounds])
@@ -124,6 +129,7 @@ function toStoredConfig(value: Record<string, unknown>): StoredConfig {
 export function toStorageParts(config: StoredConfig): Record<string, unknown> {
   return {
     [CONFIG_STORAGE_KEYS.websites]: config.websites,
+    [CONFIG_STORAGE_KEYS.websiteFolders]: config.websiteFolders ?? [],
     [CONFIG_STORAGE_KEYS.engines]: config.engines,
     [CONFIG_STORAGE_KEYS.engineCategories]: config.engineCategories,
     [CONFIG_STORAGE_KEYS.backgrounds]: config.backgrounds ??

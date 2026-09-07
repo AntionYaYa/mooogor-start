@@ -1,5 +1,7 @@
 <script lang="ts">
   import BkmkIcon from "./BkmkIcon.svelte";
+  import WebsiteTile from "./WebsiteTile.svelte";
+  import WebsiteFolderTile from "./WebsiteFolderTile.svelte";
   import T from "./components/T.svelte";
   import G from "./components/G.svelte";
   import { flip } from "svelte/animate";
@@ -9,9 +11,13 @@
     addWebSite,
     updateWebSite,
     deleteWebSite,
+    updateWebSiteScreenshot,
+    addWebSiteFolder,
+    updatePinnedItemsOrder,
     updateWebSitesOrder,
+    moveWebSitesToFolder,
   } from "@/lib/DB/DB";
-  import type { WebSite } from "@/lib/DB/DB";
+  import type { WebSite, WebSiteFolder } from "@/lib/DB/DB";
   import type { FrequentSite } from "@/lib/browser/history";
   import { addToPinneds } from "@/lib/utils/pinneds";
   import Button from "./components/Button.svelte";
@@ -22,12 +28,12 @@
   import Icon from "./components/Icon.svelte";
   import Popup from "./components/Popup.svelte";
   import Divider from "./components/Divider.svelte";
-  import BatchToolbar from "./components/BatchToolbar.svelte";
   import ConfirmDialog from "./ConfirmDialog.svelte";
-  import { tick, onMount, onDestroy } from "svelte";
+  import { onMount, onDestroy } from "svelte";
 
   interface Props {
     allPinneds: WebSite[] | [];
+    webSiteFolders?: WebSiteFolder[];
     frequentSites?: FrequentSite[];
     newTabOpen?: boolean;
     list?: boolean;
@@ -44,6 +50,7 @@
 
   let {
     allPinneds,
+    webSiteFolders = [],
     frequentSites = [],
     newTabOpen = false,
     list = false,
@@ -65,14 +72,13 @@
   let menuX = $state(0);
   let menuY = $state(0);
 
-  let multiSelectMode = $state(false);
-  let selectedIds = $state<Set<number | string>>(new Set());
-  let lastClickedIndex = $state(-1);
-  let batchActionLoading = $state(false);
-
   let showPinnedMenu = $state(false);
   let showFrequentMenu = $state(false);
   let showFrequentInfo = $state(false);
+  let currentFolder: WebSiteFolder | undefined = $state();
+  let folderDropTargetId: number | undefined = $state();
+  let draggedGridItemId: string | undefined = $state();
+  let capturingWebsiteId: number | undefined = $state();
   let pageEl: HTMLElement | undefined = $state();
   let frequentTitleStuck = $state(false);
   let confirmOptions = $state<{
@@ -81,7 +87,53 @@
     confirmText?: string;
     resolve: (value: boolean) => void;
   } | null>(null);
-  const skeletonItems = Array.from({ length: 8 });
+  const skeletonItems = Array.from({ length: 6 });
+
+  const folderIds = $derived(new Set(webSiteFolders.flatMap((folder) =>
+    folder.id == null ? [] : [folder.id],
+  )));
+  const rootPinneds = $derived(
+    allPinneds.filter((site) => site.folderId == null || !folderIds.has(site.folderId)),
+  );
+
+  type PinnedGridItem =
+    | { id: string; kind: "website"; order: number; website: WebSite }
+    | { id: string; kind: "folder"; order: number; folder: WebSiteFolder };
+  let pinnedGridItems: PinnedGridItem[] = $state([]);
+
+  $effect(() => {
+    const activeFolder = currentFolder?.id == null
+      ? undefined
+      : webSiteFolders.find((folder) => folder.id === currentFolder?.id);
+    if (currentFolder && !activeFolder) currentFolder = undefined;
+    pinnedGridItems = activeFolder ? sitesInFolder(activeFolder).map((website, index) => ({
+      id: `website:${website.id ?? website.url}`,
+      kind: "website" as const,
+      order: website.order ?? index,
+      website,
+    })) : [
+      ...rootPinneds.map((website, index) => ({
+        id: `website:${website.id ?? website.url}`,
+        kind: "website" as const,
+        order: website.order ?? index,
+        website,
+      })),
+      ...webSiteFolders.map((folder, index) => ({
+        id: `folder:${folder.id ?? folder.title}`,
+        kind: "folder" as const,
+        order: folder.order ?? rootPinneds.length + index,
+        folder,
+      })),
+    ].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
+  });
+
+  function sitesInFolder(folder: WebSiteFolder) {
+    return folder.id == null
+      ? []
+      : allPinneds
+          .filter((site) => site.folderId === folder.id)
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
 
   const fixedDomains = $derived.by(() => {
     return new Set(
@@ -147,21 +199,54 @@
     el.style.backgroundColor = "var(--c-bg1)";
   }
 
-  function handleConsider(e: CustomEvent<DndEvent<WebSite>>) {
+  function handleConsider(e: CustomEvent<DndEvent<PinnedGridItem>>) {
     if (readOnly) return;
     isdarging = true;
-    onUpdate(e.detail.items);
+    draggedGridItemId = String(e.detail.info.id);
+    pinnedGridItems = e.detail.items;
   }
 
-  async function handleFinalize(e: CustomEvent<DndEvent<WebSite>>) {
+  async function handleFinalize(e: CustomEvent<DndEvent<PinnedGridItem>>) {
     if (readOnly) return;
     isdarging = false;
-    const items = e.detail.items;
-    onUpdate(items);
-    const withIds = items.filter((i): i is WebSite & { id: number } => !!i.id);
-    if (withIds.length > 0) {
-      await updateWebSitesOrder(withIds);
+    pinnedGridItems = e.detail.items;
+    const draggedItem = pinnedGridItems.find((item) => item.id === draggedGridItemId);
+    if (!currentFolder && folderDropTargetId != null && draggedItem?.kind === "website" && draggedItem.website.id != null) {
+      await moveWebSitesToFolder([draggedItem.website.id], folderDropTargetId);
+      folderDropTargetId = undefined;
+      draggedGridItemId = undefined;
+      await onUpdate();
+      return;
     }
+    if (currentFolder) {
+      const websites = pinnedGridItems.flatMap((item) =>
+        item.kind === "website" && item.website.id != null
+          ? [{ ...item.website, id: item.website.id }]
+          : [],
+      );
+      if (websites.length) await updateWebSitesOrder(websites);
+      folderDropTargetId = undefined;
+      draggedGridItemId = undefined;
+      await onUpdate();
+      return;
+    }
+    const orderItems = pinnedGridItems.flatMap((item) => {
+      const id = item.kind === "website" ? item.website.id : item.folder.id;
+      return id == null ? [] : [{ kind: item.kind, id }];
+    });
+    if (orderItems.length) await updatePinnedItemsOrder(orderItems);
+    folderDropTargetId = undefined;
+    draggedGridItemId = undefined;
+    await onUpdate();
+  }
+
+  function trackFolderDrop(event: PointerEvent) {
+    if (!isdarging || currentFolder) return;
+    const target = document.elementsFromPoint(event.clientX, event.clientY)
+      .map((element) => element.closest<HTMLElement>("[data-folder-drop-id]"))
+      .find((element): element is HTMLElement => element != null);
+    const id = Number(target?.dataset.folderDropId);
+    folderDropTargetId = Number.isFinite(id) ? id : undefined;
   }
 
   async function clickSaveWebSite(newWebSite: WebSite) {
@@ -171,6 +256,11 @@
       await addWebSite(newWebSite);
     }
     onUpdate();
+  }
+
+  async function clickSaveFolder(title: string) {
+    await addWebSiteFolder({ title });
+    await onUpdate();
   }
 
   function clickEditWebSite() {
@@ -208,119 +298,81 @@
     onUpdate();
   }
 
-  async function enterMultiSelect() {
-    showPinnedMenu = false;
-    multiSelectMode = true;
-    const id = currentPinned?.id ?? currentPinned?.url;
-    selectedIds = id != null ? new Set([id]) : new Set();
-    lastClickedIndex =
-      currentPinned && id != null
-        ? allPinneds.findIndex((p) => (p.id ?? p.url) === id)
-        : -1;
-    await tick();
-    const selectedBtn = pageEl?.querySelector(
-      ".item .sel",
-    ) as HTMLElement | null;
-    selectedBtn?.focus();
-  }
-
-  function clearSelection(force = false) {
-    if (batchActionLoading && !force) return;
-    multiSelectMode = false;
-    selectedIds = new Set();
-  }
-
-  function handleKeyDown(e: KeyboardEvent) {
-    if (e.key === "Escape" && multiSelectMode) {
-      clearSelection();
-    }
-  }
-
   onMount(() => {
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("pointermove", trackFolderDrop, { passive: true });
   });
 
   onDestroy(() => {
-    window.removeEventListener("keydown", handleKeyDown);
+    window.removeEventListener("pointermove", trackFolderDrop);
   });
 
-  function handleItemClick(_e: MouseEvent, pinned: WebSite, index: number) {
-    if (batchActionLoading) return;
-    if (_e.shiftKey && lastClickedIndex >= 0) {
-      _e.preventDefault();
-      const start = Math.min(lastClickedIndex, index);
-      const end = Math.max(lastClickedIndex, index);
-      const next = new Set<number | string>();
-      for (let i = start; i <= end; i++) {
-        const id = allPinneds[i].id ?? allPinneds[i].url;
-        next.add(id);
-      }
-      selectedIds = next;
-    } else {
-      toggleSelect(pinned);
-      lastClickedIndex = index;
-    }
-  }
-
-  function toggleSelect(pinned: WebSite) {
-    if (batchActionLoading) return;
-    const id = pinned.id ?? pinned.url;
-    const next = new Set(selectedIds);
-    if (next.has(id)) {
-      next.delete(id);
-    } else {
-      next.add(id);
-    }
-    if (next.size === 0) {
-      multiSelectMode = false;
-    }
-    selectedIds = next;
-  }
-
-  function isSelected(pinned: WebSite) {
-    const id = pinned.id ?? pinned.url;
-    return selectedIds.has(id);
-  }
-
-  const selectedCount = $derived(selectedIds.size);
-  const allSelected = $derived(
-    multiSelectMode &&
-      allPinneds.length > 0 &&
-      selectedCount === allPinneds.length,
-  );
-
-  function toggleSelectAll() {
-    if (batchActionLoading) return;
-    if (allSelected) {
-      clearSelection(true);
-    } else {
-      selectedIds = new Set(allPinneds.map((p) => p.id ?? p.url));
-    }
-  }
-
-  async function deleteSelected() {
-    if (!selectedCount || batchActionLoading) return;
-    if (
-      !(await requestConfirm(
-        t("nt_confirm_delete_common_sites_title"),
-        t("nt_settings_common_delete_sites_confirm", String(selectedCount)),
-      ))
-    ) {
-      return;
-    }
-    const selectedPinneds = allPinneds.filter((pinned) => {
-      const id = pinned.id ?? pinned.url;
-      return selectedIds.has(id) && !!pinned.id;
+  function resizeScreenshot(source: string) {
+    return new Promise<string>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => {
+        const targetWidth = Math.min(720, image.naturalWidth);
+        const targetHeight = Math.max(
+          1,
+          Math.round(targetWidth * 10 / 16),
+        );
+        const sourceRatio = image.naturalWidth / image.naturalHeight;
+        const targetRatio = 16 / 10;
+        const sourceWidth = sourceRatio > targetRatio
+          ? image.naturalHeight * targetRatio
+          : image.naturalWidth;
+        const sourceHeight = sourceRatio > targetRatio
+          ? image.naturalHeight
+          : image.naturalWidth / targetRatio;
+        const canvas = document.createElement("canvas");
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const context = canvas.getContext("2d");
+        if (!context) {
+          reject(new Error("Canvas is unavailable"));
+          return;
+        }
+        context.drawImage(
+          image,
+          (image.naturalWidth - sourceWidth) / 2,
+          (image.naturalHeight - sourceHeight) / 2,
+          sourceWidth,
+          sourceHeight,
+          0,
+          0,
+          targetWidth,
+          targetHeight,
+        );
+        resolve(canvas.toDataURL("image/jpeg", 0.76));
+      };
+      image.onerror = () => reject(new Error("Screenshot could not be decoded"));
+      image.src = source;
     });
-    batchActionLoading = true;
+  }
+
+  async function clickCaptureScreenshot() {
+    const site = currentPinned;
+    if (!site?.id || capturingWebsiteId != null) return;
+    showPinnedMenu = false;
+    capturingWebsiteId = site.id;
     try {
-      await Promise.allSettled(
-        selectedPinneds.map((pinned) => deleteWebSite(pinned.id!)),
-      );
-      clearSelection(true);
+      // captureVisibleTab runs against a newly created tab. activeTab only grants
+      // the original active tab, so this feature needs an explicit optional host grant.
+      const granted = await browser.permissions.request({ origins: ["<all_urls>"] });
+      if (!granted) return;
+      const response = await browser.runtime.sendMessage({
+        type: "captureWebSiteScreenshot",
+        payload: { websiteId: site.id, url: site.url },
+      }) as { ok?: boolean; screenshot?: string; error?: string };
+      if (!response?.ok || !response.screenshot) {
+        throw new Error(response?.error || "Screenshot failed");
+      }
+      const screenshot = await resizeScreenshot(response.screenshot);
+      await updateWebSiteScreenshot(site.id, screenshot);
       await onUpdate();
+    } catch (error) {
+      console.error("[Mooogor Screenshot]", error);
     } finally {
-      batchActionLoading = false;
+      capturingWebsiteId = undefined;
     }
   }
 
@@ -394,72 +446,67 @@
         </G>
       </Button>
     </section>
-  {:else if allPinneds.length}
-    <section class="section padding_section {multiSelectMode
-          ? 'multi_select'
-          : ''}">
+  {:else if allPinneds.length || webSiteFolders.length || currentFolder}
+    <section class="section padding_section">
+      {#if currentFolder}
+        <div class="folder_page_header">
+          <Button onclick={() => (currentFolder = undefined)}>
+            <G><Icon name="ChevronLeft" color="var(--c-text)" /></G>
+          </Button>
+          <T type="l" bold nowrap>{currentFolder.title}</T>
+        </div>
+      {/if}
+      {#if pinnedGridItems.length}
       <div
-        class="content grid {isdarging ? 'drag' : ''}"
+        class="content grid pinned_grid {isdarging ? 'drag' : ''}"
         use:dndzone={{
-          items: allPinneds,
+          items: pinnedGridItems,
           flipDurationMs: 200,
           type: "pinneds",
           dropTargetStyle: {},
           zoneTabIndex: -1,
           zoneItemTabIndex: -1,
           transformDraggedElement: (e) => draggedel(e),
-          dragDisabled: readOnly || multiSelectMode,
-          dropFromOthersDisabled: readOnly || multiSelectMode,
+          dragDisabled: readOnly,
+          dropFromOthersDisabled: readOnly,
         }}
         onconsider={handleConsider}
         onfinalize={handleFinalize}
       >
-        {#each allPinneds as pinned, i (pinned.id)}
+        {#each pinnedGridItems as gridItem (gridItem.id)}
           <div class="item" animate:flip={{ duration: 200 }}>
-            {#if multiSelectMode}
-              <Button
-                onclick={(e) => handleItemClick(e, pinned, i)}
-                sel={multiSelectMode && isSelected(pinned)}
-                outlined={!isSelected(pinned)}
-                r="r1"
-              >
-                <G>
-                  <BkmkIcon
-                    imgUrl={pinned.url}
-                    alt={pinned.title ?? ""}
-                    size="l"
-                  />
-                </G>
-              </Button>
-              <T nowrap align="c" type="s">{pinned.title}</T>
-            {:else}
+          {#if gridItem.kind === "folder"}
+            <button
+              class="folder_button"
+              class:folder_drop_target={folderDropTargetId === gridItem.folder.id}
+              type="button"
+              title={gridItem.folder.title}
+              data-folder-drop-id={gridItem.folder.id}
+              onclick={() => (currentFolder = gridItem.folder)}
+            >
+              <WebsiteFolderTile
+                folder={gridItem.folder}
+                sites={sitesInFolder(gridItem.folder)}
+              />
+            </button>
+          {:else}
+            {@const pinned = gridItem.website}
               <a
+                class="tile_link"
                 href={pinned.url}
                 target={newTabOpen ? "_blank" : "_self"}
                 rel={newTabOpen ? "noreferrer" : undefined}
                 oncontextmenu={(e) => showContextMenu(e, pinned)}
               >
-                <BkmkIcon
-                  imgUrl={pinned.url}
-                  alt={pinned.title ?? ""}
-                  size="l"
-                />
+                <WebsiteTile site={pinned} loading={capturingWebsiteId === pinned.id} />
               </a>
-              <T nowrap align="c" type="s">{pinned.title}</T>
-            {/if}
+          {/if}
           </div>
         {/each}
       </div>
-          <BatchToolbar
-            show={multiSelectMode}
-            count={selectedCount}
-            {allSelected}
-            showDeleteText
-            disabled={batchActionLoading}
-            onselectall={toggleSelectAll}
-            ondelete={deleteSelected}
-            onclose={() => clearSelection()}
-          />
+      {:else if currentFolder}
+        <div class="empty_folder">{currentFolder.title}</div>
+      {/if}
     </section>
   {:else}
     <NoData
@@ -469,7 +516,7 @@
     />
   {/if}
 
-  {#if filteredFrequentSites.length}
+  {#if !currentFolder && filteredFrequentSites.length}
     <section class="section">
       <G full>
         <Divider />
@@ -563,7 +610,10 @@
     isEdit={openByEdit}
     urlValue={openByEdit ? currentPinned?.url : undefined}
     titleValue={openByEdit ? currentPinned?.title : undefined}
+    folderIdValue={openByEdit ? currentPinned?.folderId : currentFolder?.id}
+    folders={currentFolder ? [] : webSiteFolders}
     onSave={clickSaveWebSite}
+    onSaveFolder={currentFolder ? undefined : clickSaveFolder}
     onDelete={clickDeleteWebSite}
     onclickClose={clickCloseAdd}
   />
@@ -576,9 +626,9 @@
     url={currentPinned.url}
     onClose={() => (showPinnedMenu = false)}
   >
-    <Button full onclick={enterMultiSelect}>
+    <Button full onclick={() => void clickCaptureScreenshot()}>
       <G>
-        <T>{t("nt_multi_select")}</T>
+        <T>{t("nt_get_screenshot")}</T>
       </G>
     </Button>
     <Button full onclick={clickEditWebSite}>
@@ -670,8 +720,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--gap);
-    padding: calc(var(--gap) * 2) var(--gap);
+    padding: 0;
   }
   .skeleton_icon,
   .skeleton_text {
@@ -680,13 +729,13 @@
     position: relative;
   }
   .skeleton_icon {
-    width: 48px;
-    height: 48px;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
     border-radius: var(--r1);
   }
   .skeleton_text {
-    width: 58px;
-    height: 10px;
+    display: none;
     border-radius: 999px;
   }
   .skeleton_shimmer::after {
@@ -718,8 +767,7 @@
     align-items: center;
     box-sizing: border-box;
     border-radius: var(--r);
-    gap: var(--gap);
-    padding: var(--gap);
+    padding: 0;
     position: relative;
     cursor: default !important;
   }
@@ -736,6 +784,19 @@
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
+  }
+  .folder_page_header {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
+    width: 100%;
+    padding: 0 var(--gap);
+    box-sizing: border-box;
+  }
+  .folder_drop_target {
+    outline: 3px solid var(--c-text);
+    outline-offset: 3px;
+    transform: translateY(-2px);
   }
   .frequent_title_sentinel {
     width: 100%;
@@ -773,6 +834,52 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
+  .pinned_grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: calc(var(--gap) * 2);
+  }
+  .skeleton_grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .folder_button,
+  .tile_link {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r1);
+    background: transparent;
+    color: inherit;
+    text-decoration: none;
+    cursor: default;
+  }
+  .folder_button:hover,
+  .tile_link:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.04);
+  }
+  .folder_button:focus-visible,
+  .tile_link:focus-visible {
+    outline: 2px solid var(--c-text);
+    outline-offset: 2px;
+  }
+  .empty_folder {
+    grid-column: 1 / -1;
+    min-height: 120px;
+    display: grid;
+    place-items: center;
+    color: var(--c-text-2);
+    border: 2px dashed var(--c-border1);
+    border-radius: var(--r1);
+  }
+  @media (max-width: 900px) {
+    .pinned_grid, .skeleton_grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 560px) {
+    .pinned_grid, .skeleton_grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
   .list {
     display: flex;
     flex-direction: column;
@@ -805,27 +912,22 @@
     padding: var(--gap);
     box-sizing: border-box;
   }
-  a:hover {
+  a:not(.tile_link):hover {
     background-color: var(--c-mask);
   }
-  a:focus-visible {
+  a:not(.tile_link):focus-visible {
     outline: var(--c-text) 2px solid;
   }
 
-  a:active {
+  a:not(.tile_link):active {
     background-color: var(--c-mask1);
   }
 
-  a:focus {
+  a:not(.tile_link):focus {
     outline: 2px var(--c-text) solid;
   }
   a.ctx {
     outline: 2px var(--c-text) solid;
   }
 
-  .multi_select {
-    box-shadow: inset 0 0 0 2px var(--c-main-3);
-    position: relative;
-    user-select: none;
-  }
 </style>

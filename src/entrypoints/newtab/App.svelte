@@ -17,8 +17,8 @@
   import type { BookmarkNode } from "@/lib/browser/bookmarks";
   import type { FrequentSite } from "@/lib/browser/history";
   import { ensureConfigReady } from "@/lib/browser/configReady";
-  import { getAllWebSite } from "@/lib/DB/DB";
-  import type { WebSite } from "@/lib/DB/DB";
+  import { getAllWebSite, getAllWebSiteFolders } from "@/lib/DB/DB";
+  import type { WebSite, WebSiteFolder } from "@/lib/DB/DB";
   import { fly, slide } from "svelte/transition";
   import { onMount, tick } from "svelte";
   import Icon from "@/lib/components/Icon.svelte";
@@ -66,6 +66,7 @@
 
   let showSetting = $state(false);
   let allPinneds: WebSite[] = $state([]);
+  let webSiteFolders: WebSiteFolder[] = $state([]);
   let frequentSites: FrequentSite[] = $state([]);
   let frequentSitesLoading = $state(false);
   let frequentSitesRequestId = $state(0);
@@ -294,6 +295,7 @@
     activeBackground = null;
     applyTheme(DEFAULT_SETTINGS.theme);
     allPinneds = [];
+    webSiteFolders = [];
     updateSelTab(tabs[0]);
     settingsLoaded = true;
     try {
@@ -584,9 +586,13 @@
     } else {
       const requestId = ++websitesRequestId;
       try {
-        const nextItems = await getAllWebSite();
+        const [nextItems, nextFolders] = await Promise.all([
+          getAllWebSite(),
+          getAllWebSiteFolders(),
+        ]);
         if (requestId !== websitesRequestId) return;
         allPinneds = nextItems;
+        webSiteFolders = nextFolders;
       } catch (error) {
         if (requestId !== websitesRequestId) return;
         console.error(
@@ -603,9 +609,13 @@
     if (configurationState !== "ready") return;
     const requestId = ++websitesRequestId;
     try {
-      const items = await getAllWebSite();
+      const [items, folders] = await Promise.all([
+        getAllWebSite(),
+        getAllWebSiteFolders(),
+      ]);
       if (requestId !== websitesRequestId) return;
       allPinneds = items;
+      webSiteFolders = folders;
       websitesState = "ready";
     } catch (error) {
       if (requestId !== websitesRequestId) return;
@@ -619,9 +629,13 @@
     const requestId = ++websitesRequestId;
     websitesState = "loading";
     try {
-      const items = await getAllWebSite();
+      const [items, folders] = await Promise.all([
+        getAllWebSite(),
+        getAllWebSiteFolders(),
+      ]);
       if (requestId !== websitesRequestId) return;
       allPinneds = items;
+      webSiteFolders = folders;
       websitesState = "ready";
     } catch (error) {
       if (requestId !== websitesRequestId) return;
@@ -652,6 +666,7 @@
 
   function applyWebsitesFailureState() {
     allPinneds = [];
+    webSiteFolders = [];
     websitesState = "fallback";
   }
 
@@ -660,9 +675,13 @@
     websitesState = "loading";
     try {
       await resetCommonSitesToDefaultByLanguage(userSettings.language);
-      const items = await getAllWebSite();
+      const [items, folders] = await Promise.all([
+        getAllWebSite(),
+        getAllWebSiteFolders(),
+      ]);
       if (requestId !== websitesRequestId) return;
       allPinneds = items;
+      webSiteFolders = folders;
       websitesState = "ready";
     } catch (error) {
       if (requestId !== websitesRequestId) return;
@@ -1187,6 +1206,7 @@
 {#snippet pinneds()}
   <Pinneds
     {allPinneds}
+    {webSiteFolders}
     newTabOpen={effectiveNewTabOpen}
     list={commonListView}
     {frequentSites}

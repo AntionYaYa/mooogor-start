@@ -19,6 +19,9 @@ export default defineConfig({
       "bookmarks",
       "history"
     ],
+    optional_host_permissions: [
+      "<all_urls>"
+    ],
     permissions: [
       "activeTab",
       "favicon",

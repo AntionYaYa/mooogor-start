@@ -13,7 +13,28 @@ export interface WebSite {
   domain: string;
   url: string;
   title?: string;
+  /** Dominant colors calculated when the screenshot is captured. */
+  backgroundColor?: string;
+  backgroundColorAlt?: string;
+  /** Undefined means the site lives at the root level. */
+  folderId?: number;
   order?: number; // 排序顺序，越小越靠前
+  createAt?: number;
+  updateAt?: number;
+}
+
+export interface WebSiteScreenshot {
+  websiteId: number;
+  /** Guards against a locally reused numeric id pointing at another site. */
+  url: string;
+  blob: Blob;
+  updatedAt: number;
+}
+
+export interface WebSiteFolder {
+  id?: number;
+  title: string;
+  order?: number;
   createAt?: number;
   updateAt?: number;
 }
@@ -48,6 +69,8 @@ export interface SettingRow {
 export const db = new Dexie("Mooogor") as Dexie & {
   favicons: EntityTable<Favicon, "domain">;
   webSites: EntityTable<WebSite, "id">;
+  webSiteFolders: EntityTable<WebSiteFolder, "id">;
+  webSiteScreenshots: EntityTable<WebSiteScreenshot, "websiteId">;
   engines: EntityTable<Engine, "id">;
   engineCategories: EntityTable<EngineCategoryItem, "id">;
   settings: EntityTable<SettingRow, "key">;
@@ -92,3 +115,22 @@ db.version(2)
       await table.bulkPut(updates);
     }
   });
+
+db.version(3).stores({
+  favicons: "domain",
+  webSites: "++id,domain,order,folderId",
+  webSiteFolders: "++id,order",
+  engines: "++id,domain,category,enabled,order",
+  engineCategories: "id,order",
+  settings: "key",
+});
+
+db.version(4).stores({
+  favicons: "domain",
+  webSites: "++id,domain,order,folderId",
+  webSiteFolders: "++id,order",
+  webSiteScreenshots: "websiteId,url,updatedAt",
+  engines: "++id,domain,category,enabled,order",
+  engineCategories: "id,order",
+  settings: "key",
+});

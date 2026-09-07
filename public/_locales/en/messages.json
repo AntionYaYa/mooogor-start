@@ -434,6 +434,12 @@
   "nt_add_pinned_title": {
     "message": "Add Common Site"
   },
+  "nt_website": { "message": "Website" },
+  "nt_folder": { "message": "Folder" },
+  "nt_create_folder": { "message": "Create folder" },
+  "nt_folder_name": { "message": "Folder name" },
+  "nt_folder_name_required": { "message": "Enter a folder name" },
+  "nt_no_folder": { "message": "No folder" },
   "nt_add_bookmark": {
     "message": "Add bookmark"
   },
@@ -514,6 +520,9 @@
   },
   "nt_copy_link": {
     "message": "Copy link"
+  },
+  "nt_get_screenshot": {
+    "message": "Get screenshot"
   },
   "nt_unnamed": {
     "message": "Untitled"

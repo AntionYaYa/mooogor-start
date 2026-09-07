@@ -434,6 +434,12 @@
   "nt_add_pinned_title": {
     "message": "新增常用網站"
   },
+  "nt_website": { "message": "網站" },
+  "nt_folder": { "message": "資料夾" },
+  "nt_create_folder": { "message": "新增資料夾" },
+  "nt_folder_name": { "message": "資料夾名稱" },
+  "nt_folder_name_required": { "message": "請輸入資料夾名稱" },
+  "nt_no_folder": { "message": "不放入資料夾" },
   "nt_add_bookmark": {
     "message": "新增書籤"
   },
@@ -514,6 +520,9 @@
   },
   "nt_copy_link": {
     "message": "複製連結"
+  },
+  "nt_get_screenshot": {
+    "message": "取得截圖"
   },
   "nt_unnamed": {
     "message": "未命名"
