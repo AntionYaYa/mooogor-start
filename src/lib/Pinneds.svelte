@@ -194,10 +194,6 @@
     confirmOptions = null;
   }
 
-  function draggedel(el: HTMLElement | undefined) {
-    if (!el) return;
-    el.style.backgroundColor = "var(--c-bg1)";
-  }
 
   function handleConsider(e: CustomEvent<DndEvent<PinnedGridItem>>) {
     if (readOnly) return;
@@ -310,7 +306,7 @@
     return new Promise<string>((resolve, reject) => {
       const image = new Image();
       image.onload = () => {
-        const targetWidth = Math.min(720, image.naturalWidth);
+        const targetWidth = Math.min(480, image.naturalWidth);
         const targetHeight = Math.max(
           1,
           Math.round(targetWidth * 10 / 16),
@@ -466,7 +462,6 @@
           dropTargetStyle: {},
           zoneTabIndex: -1,
           zoneItemTabIndex: -1,
-          transformDraggedElement: (e) => draggedel(e),
           dragDisabled: readOnly,
           dropFromOthersDisabled: readOnly,
         }}
@@ -767,13 +762,11 @@
     align-items: center;
     box-sizing: border-box;
     border-radius: var(--r);
-    padding: 0;
+    padding: var(--gap);
     position: relative;
     cursor: default !important;
   }
   .content {
-    gap: var(--gap);
-    padding: var(--gap);
     width: 100%;
     box-sizing: border-box;
     border-radius: var(--r1);
@@ -835,11 +828,10 @@
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
   .pinned_grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: calc(var(--gap) * 2);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
   .skeleton_grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
   .folder_button,
   .tile_link {
@@ -849,16 +841,10 @@
     margin: 0;
     padding: 0;
     border: 0;
-    border-radius: var(--r1);
     background: transparent;
     color: inherit;
     text-decoration: none;
     cursor: default;
-  }
-  .folder_button:hover,
-  .tile_link:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.04);
   }
   .folder_button:focus-visible,
   .tile_link:focus-visible {

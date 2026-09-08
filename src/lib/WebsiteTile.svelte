@@ -99,9 +99,7 @@
     min-width: 0;
     overflow: hidden;
     border-radius: var(--r1);
-    corner-shape: squircle;
     background: var(--c-card);
-    box-shadow: inset 0 0 0 1px var(--c-border);
     color: var(--c-text);
     isolation: isolate;
   }
