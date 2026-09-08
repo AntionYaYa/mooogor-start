@@ -411,7 +411,7 @@
     "message": "No Common Sites yet"
   },
   "nt_no_pinned_desc": {
-    "message": "Click + in the top-left to add a Common Site, or right-click in Bookmarks, History, or Frequent Sites to add one."
+    "message": "Click + in the top-right to add a Common Site, or right-click in Bookmarks, History, or Frequent Sites to add one."
   },
   "nt_frequent_section": {
     "message": "Frequently Visited"
