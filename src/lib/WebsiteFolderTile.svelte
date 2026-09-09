@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { WebSite, WebSiteFolder } from "@/lib/DB/DB";
   import WebsiteTile from "./WebsiteTile.svelte";
+  import T from "./components/T.svelte";
+  import G from "./components/G.svelte";
 
   interface Props {
     folder: WebSiteFolder;
@@ -24,8 +26,12 @@
     {/if}
   </div>
   <div class="folder_glass">
-    <span title={folder.title}>{folder.title}</span>
-    <small>{sites.length}</small>
+    <G full>
+      <T>{folder.title}</T>
+    </G>
+    <G>
+      <T color='var(--c-text-1)'>{sites.length}</T>
+    </G>
   </div>
 </div>
 
@@ -36,27 +42,42 @@
     aspect-ratio: 16 / 10;
     overflow: hidden;
     border-radius: var(--r1);
-    background: var(--c-card);
+    background: var(--c-bg1);
   }
   .preview_fan {
     position: absolute;
-    inset: 12px 12px 28%;
+    inset: 0 0 15%;
     display: flex;
     align-items: center;
     justify-content: center;
   }
   .preview_card {
     position: absolute;
-    width: 54%;
-    transform-origin: 50% 110%;
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.18));
+    width: 50%;
+    transform-origin: 50% 100%;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.2));
   }
-  .count_3 .card_0 { transform: translateX(-28%) rotate(-10deg); }
-  .count_3 .card_1 { transform: translateY(-5%) rotate(0); }
-  .count_3 .card_2 { transform: translateX(28%) rotate(10deg); }
-  .count_2 .card_0 { transform: translateX(-18%) rotate(-7deg); }
-  .count_2 .card_1 { transform: translateX(18%) rotate(7deg); }
-  .count_1 .card_0 { transform: translateY(-3%); }
+  .card_0 { z-index: 3; }
+  .card_1 { z-index: 2; }
+  .card_2 { z-index: 1; }
+  .count_3 .card_0 {
+    transform: translateX(-30%) rotate(-10deg);
+  }
+  .count_3 .card_1 {
+    transform: translateY(-10%) rotate(0);
+  }
+  .count_3 .card_2 {
+    transform: translateX(30%) rotate(10deg);
+  }
+  .count_2 .card_0 {
+    transform: translateX(-18%) rotate(-7deg);
+  }
+  .count_2 .card_1 {
+    transform: translateX(18%) rotate(7deg);
+  }
+  .count_1 .card_0 {
+    transform: translateY(-3%);
+  }
   .empty_preview {
     width: 54%;
     aspect-ratio: 4 / 3;
@@ -66,28 +87,16 @@
   }
   .folder_glass {
     position: absolute;
-    inset: 61% 0 0;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
     display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    padding: 10px;
+    padding: var(--gap);
     box-sizing: border-box;
-    color: var(--c-text);
-    background: color-mix(in srgb, var(--c-bg1) 62%, transparent);
-    border-top: 1px solid color-mix(in srgb, var(--c-text) 14%, transparent);
-    backdrop-filter: blur(14px) saturate(1.25);
-  }
-  span {
-    min-width: 0;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: var(--f-size-s);
-    font-weight: var(--f-bold);
-  }
-  small {
-    color: var(--c-text-1);
-    font-size: 10px;
+    background: var(--c-mask);
+    backdrop-filter: blur(10px);
+    align-items: end;
+    border-radius: var(--r1);
+    z-index: 4;
   }
 </style>

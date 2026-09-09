@@ -524,6 +524,9 @@
   "nt_get_screenshot": {
     "message": "取得截圖"
   },
+  "nt_remove_screenshot": {
+    "message": "移除截圖"
+  },
   "nt_unnamed": {
     "message": "未命名"
   },

@@ -86,15 +86,6 @@ export async function getWebSite(domain: string): Promise<WebSite | undefined> {
 }
 
 export async function updateWebSiteScreenshot(id: number, screenshot: string) {
-  let colors: Pick<WebSite, "backgroundColor" | "backgroundColorAlt"> = {};
-  try {
-    const { extractWebsiteCardColors } = await import(
-      "@/lib/background/backgroundColors"
-    );
-    colors = await extractWebsiteCardColors(screenshot);
-  } catch {
-    // A screenshot remains useful even when its palette cannot be extracted.
-  }
   const config = await getStoredConfig();
   const website = config.websites.find((site) => site.id === id);
   if (!website) return;
@@ -105,7 +96,19 @@ export async function updateWebSiteScreenshot(id: number, screenshot: string) {
     if (index < 0) return;
     nextConfig.websites[index] = {
       ...nextConfig.websites[index],
-      ...colors,
+      updateAt: Date.now(),
+    };
+  });
+  notifyWebSitesUpdated();
+}
+
+export async function removeWebSiteScreenshot(id: number) {
+  await deleteWebSiteScreenshot(id);
+  await updateStoredConfig((config) => {
+    const index = config.websites.findIndex((site) => site.id === id);
+    if (index < 0) return;
+    config.websites[index] = {
+      ...config.websites[index],
       updateAt: Date.now(),
     };
   });

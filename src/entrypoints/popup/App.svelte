@@ -28,6 +28,7 @@
   import Shake from "@/lib/components/Shake.svelte";
   import { t } from "@/lib/utils/i18n";
   import { resolvePublicAssetUrl } from "@/lib/utils/assetUrl";
+  import { getWebsiteCardColors } from "@/lib/utils/websiteCardColors";
 
   let inputUrlValue = $state("");
   let inputTitleValue = $state("");
@@ -52,10 +53,12 @@
   async function clickSave() {
     inputUrlValueErr = false;
     if (validator.isURL(inputUrlValue)) {
+      const domain = getDomainFromUrl(inputUrlValue);
       const newWebSite = {
-        domain: getDomainFromUrl(inputUrlValue),
+        domain,
         url: inputUrlValue,
         title: inputTitleValue.trim(),
+        ...(await getWebsiteCardColors(inputUrlValue, domain)),
       };
       await addWebSite(newWebSite);
       window.close();

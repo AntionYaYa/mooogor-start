@@ -13,7 +13,7 @@ export interface WebSite {
   domain: string;
   url: string;
   title?: string;
-  /** Dominant colors calculated when the screenshot is captured. */
+  /** Colors calculated from the site's icon when it is added. */
   backgroundColor?: string;
   backgroundColorAlt?: string;
   /** Undefined means the site lives at the root level. */

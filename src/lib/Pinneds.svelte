@@ -12,6 +12,8 @@
     updateWebSite,
     deleteWebSite,
     updateWebSiteScreenshot,
+    removeWebSiteScreenshot,
+    getWebSiteScreenshot,
     addWebSiteFolder,
     updatePinnedItemsOrder,
     updateWebSitesOrder,
@@ -46,6 +48,7 @@
     oncloseAdd: () => void;
     onUpdate: (items?: WebSite[]) => void;
     onToggleList: () => void;
+    currentFolder?: WebSiteFolder;
   }
 
   let {
@@ -63,6 +66,7 @@
     oncloseAdd,
     onUpdate,
     onToggleList,
+    currentFolder = $bindable(),
   }: Props = $props();
   let isdarging = $state(false);
   let currentPinned: WebSite | undefined = $state();
@@ -75,10 +79,10 @@
   let showPinnedMenu = $state(false);
   let showFrequentMenu = $state(false);
   let showFrequentInfo = $state(false);
-  let currentFolder: WebSiteFolder | undefined = $state();
   let folderDropTargetId: number | undefined = $state();
   let draggedGridItemId: string | undefined = $state();
   let capturingWebsiteId: number | undefined = $state();
+  let currentPinnedHasScreenshot = $state(false);
   let pageEl: HTMLElement | undefined = $state();
   let frequentTitleStuck = $state(false);
   let confirmOptions = $state<{
@@ -155,6 +159,14 @@
     menuY = e.clientY;
     showFrequentMenu = false;
     showPinnedMenu = true;
+    currentPinnedHasScreenshot = false;
+    if (pinned.id != null) {
+      void getWebSiteScreenshot(pinned.id, pinned.url).then((screenshot) => {
+        if (showPinnedMenu && currentPinned?.id === pinned.id) {
+          currentPinnedHasScreenshot = !!screenshot;
+        }
+      }).catch(() => undefined);
+    }
   }
 
   function showFrequentContextMenu(e: MouseEvent, site: FrequentSite) {
@@ -372,6 +384,15 @@
     }
   }
 
+  async function clickRemoveScreenshot() {
+    const site = currentPinned;
+    if (!site?.id) return;
+    showPinnedMenu = false;
+    await removeWebSiteScreenshot(site.id);
+    currentPinnedHasScreenshot = false;
+    await onUpdate();
+  }
+
   function trackStickyFrequentTitle(node: HTMLElement) {
     const scrollContainer = node.closest(".tabs_contents");
     const root =
@@ -444,14 +465,6 @@
     </section>
   {:else if allPinneds.length || webSiteFolders.length || currentFolder}
     <section class="section padding_section">
-      {#if currentFolder}
-        <div class="folder_page_header">
-          <Button onclick={() => (currentFolder = undefined)}>
-            <G><Icon name="ChevronLeft" color="var(--c-text)" /></G>
-          </Button>
-          <T type="l" bold nowrap>{currentFolder.title}</T>
-        </div>
-      {/if}
       {#if pinnedGridItems.length}
       <div
         class="content grid pinned_grid {isdarging ? 'drag' : ''}"
@@ -626,6 +639,13 @@
         <T>{t("nt_get_screenshot")}</T>
       </G>
     </Button>
+    {#if currentPinnedHasScreenshot}
+      <Button full onclick={() => void clickRemoveScreenshot()}>
+        <G>
+          <T>{t("nt_remove_screenshot")}</T>
+        </G>
+      </Button>
+    {/if}
     <Button full onclick={clickEditWebSite}>
       <G>
         <T>{t("nt_edit")}</T>
@@ -762,7 +782,6 @@
     align-items: center;
     box-sizing: border-box;
     border-radius: var(--r);
-    padding: var(--gap);
     position: relative;
     cursor: default !important;
   }
@@ -777,14 +796,6 @@
     width: 100%;
     box-sizing: border-box;
     padding: var(--gap);
-  }
-  .folder_page_header {
-    display: flex;
-    align-items: center;
-    gap: var(--gap);
-    width: 100%;
-    padding: 0 var(--gap);
-    box-sizing: border-box;
   }
   .folder_drop_target {
     outline: 3px solid var(--c-text);
@@ -833,23 +844,19 @@
   .skeleton_grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
+
   .folder_button,
   .tile_link {
-    display: block;
+    display: flex;
     width: 100%;
-    min-width: 0;
     margin: 0;
-    padding: 0;
+    padding: var(--gap);
     border: 0;
     background: transparent;
     color: inherit;
     text-decoration: none;
     cursor: default;
-  }
-  .folder_button:focus-visible,
-  .tile_link:focus-visible {
-    outline: 2px solid var(--c-text);
-    outline-offset: 2px;
+    border-radius: var(--r2);
   }
   .empty_folder {
     grid-column: 1 / -1;
@@ -898,18 +905,23 @@
     padding: var(--gap);
     box-sizing: border-box;
   }
-  a:not(.tile_link):hover {
+  .folder_button:hover,
+  a:hover {
     background-color: var(--c-mask);
   }
-  a:not(.tile_link):focus-visible {
+
+  .folder_button:focus-visible,
+  a:focus-visible {
     outline: var(--c-text) 2px solid;
   }
 
-  a:not(.tile_link):active {
+  .folder_button:active,
+  a:active {
     background-color: var(--c-mask1);
   }
 
-  a:not(.tile_link):focus {
+  .folder_button:focus,
+  a:focus {
     outline: 2px var(--c-text) solid;
   }
   a.ctx {

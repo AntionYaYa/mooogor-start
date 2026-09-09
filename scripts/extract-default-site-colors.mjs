@@ -51,10 +51,38 @@ configure({
   }),
 });
 
-function distance(left, right) {
-  const a = left.array();
-  const b = right.array();
-  return Math.sqrt(a.reduce((sum, value, index) => sum + (value - b[index]) ** 2, 0));
+function deriveAlternateColor(hex) {
+  const [red, green, blue] = [1, 3, 5].map((index) =>
+    Number.parseInt(hex.slice(index, index + 2), 16) / 255,
+  );
+  const max = Math.max(red, green, blue);
+  const min = Math.min(red, green, blue);
+  const lightness = (max + min) / 2;
+  const delta = max - min;
+  if (delta === 0) return hex;
+  const saturation = delta / (1 - Math.abs(2 * lightness - 1));
+  let hue = max === red
+    ? 60 * (((green - blue) / delta) % 6)
+    : max === green
+      ? 60 * ((blue - red) / delta + 2)
+      : 60 * ((red - green) / delta + 4);
+  if (hue < 0) hue += 360;
+  const blueHue = 240;
+  const hueDistance = ((blueHue - hue + 540) % 360) - 180;
+  hue = (hue + hueDistance * 0.08 + 360) % 360;
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+  const segment = hue / 60;
+  const secondary = chroma * (1 - Math.abs((segment % 2) - 1));
+  const [redPrime, greenPrime, bluePrime] = segment < 1 ? [chroma, secondary, 0]
+    : segment < 2 ? [secondary, chroma, 0]
+      : segment < 3 ? [0, chroma, secondary]
+        : segment < 4 ? [0, secondary, chroma]
+          : segment < 5 ? [secondary, 0, chroma]
+            : [chroma, 0, secondary];
+  const match = lightness - chroma / 2;
+  return `#${[redPrime, greenPrime, bluePrime].map((value) =>
+    Math.round((value + match) * 255).toString(16).padStart(2, "0"),
+  ).join("")}`;
 }
 
 const logoSource = readFileSync(logoMapPath, "utf8");
@@ -71,13 +99,15 @@ for (const sites of Object.values(defaults)) {
     const palette = await getPalette(new URL(`public/logos/${fileName}`, root).pathname, {
       colorCount: 8,
       quality: 4,
-      region: { x: 0.19, y: 0.19, width: 0.62, height: 0.62 },
+      alphaThreshold: 1,
     });
     if (!palette?.length) continue;
-    const main = palette[0];
-    const nearby = palette.slice(1).sort((a, b) => distance(main, a) - distance(main, b))[0] ?? main;
-    site.backgroundColor = main.hex().toLowerCase();
-    site.backgroundColorAlt = nearby.hex().toLowerCase();
+    const colors = [...new Set(palette
+      .sort((a, b) => b.population - a.population)
+      .map((color) => color.hex().toLowerCase()))];
+    const backgroundColor = colors[1] ?? colors[0];
+    site.backgroundColor = backgroundColor;
+    site.backgroundColorAlt = deriveAlternateColor(backgroundColor);
   }
 }
 

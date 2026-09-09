@@ -524,6 +524,9 @@
   "nt_get_screenshot": {
     "message": "Get screenshot"
   },
+  "nt_remove_screenshot": {
+    "message": "Remove screenshot"
+  },
   "nt_unnamed": {
     "message": "Untitled"
   },

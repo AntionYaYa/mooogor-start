@@ -67,6 +67,7 @@
   let showSetting = $state(false);
   let allPinneds: WebSite[] = $state([]);
   let webSiteFolders: WebSiteFolder[] = $state([]);
+  let currentCommonFolder: WebSiteFolder | undefined = $state();
   let frequentSites: FrequentSite[] = $state([]);
   let frequentSitesLoading = $state(false);
   let frequentSitesRequestId = $state(0);
@@ -508,12 +509,16 @@
   }
 
   function updateTabLabels() {
-    tabs[0].name = t("nt_tab_common");
+    tabs[0].name = currentCommonFolder?.title ?? t("nt_tab_common");
     if (historyStack.length <= 2) {
       tabs[1].name = t("nt_tab_bookmarks");
     }
     tabs[2].name = t("nt_tab_history");
   }
+
+  $effect(() => {
+    tabs[0].name = currentCommonFolder?.title ?? t("nt_tab_common");
+  });
 
   async function clickGetPermission(permission: Permission) {
     if (permission === "bookmarks") {
@@ -544,6 +549,11 @@
     //书签选中情况下再点击回到顶层，
     if (tab.sel) {
       if (tab.key === "0") {
+        if (currentCommonFolder) {
+          currentCommonFolder = undefined;
+          updateTabLabels();
+          return;
+        }
         await refreshCommonTab();
       }
       if (tab.key === "1" && historyStack.length > 1) {
@@ -955,7 +965,24 @@
       <div class="content">
         <div class="tabs">
           <div class="side side-left">
-            {#if selTab?.key === "1" && historyStack.length > 1}
+            {#if selTab?.key === "0" && currentCommonFolder}
+              <div in:fly={{ x: 50, duration: 300 }}>
+                <G align="c">
+                  <Button onclick={() => {
+                    currentCommonFolder = undefined;
+                    updateTabLabels();
+                  }}>
+                    <G align="c">
+                      <Icon
+                        name="ChevronLeft"
+                        color="var(--c-text)"
+                        opacity={0.6}
+                      />
+                    </G>
+                  </Button>
+                </G>
+              </div>
+            {:else if selTab?.key === "1" && historyStack.length > 1}
               <div in:fly={{ x: 50, duration: 300 }}>
                 <G align="c">
                   <Button onclick={goBack}>
@@ -1219,6 +1246,7 @@
     oncloseAdd={() => (showAdd = false)}
     onUpdate={(items) => clickUpdatePinneds(items)}
     onToggleList={() => (commonListView = !commonListView)}
+    bind:currentFolder={currentCommonFolder}
   />
 {/snippet}
 
