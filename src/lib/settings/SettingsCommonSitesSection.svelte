@@ -11,6 +11,7 @@
     import BkmkIcon from "@/lib/BkmkIcon.svelte";
     import Checkbox from "@/lib/components/Checkbox.svelte";
     import Divider from "../components/Divider.svelte";
+    import CommonGroupMenu from "../CommonGroupMenu.svelte";
 
     type ListItem =
         | { id: string; kind: "website"; order: number; website: WebSite }
@@ -32,15 +33,27 @@
         onToggleSelected: (site: WebSite) => void;
         onOpenFolder: (folder: WebSiteFolder) => void;
         onReset: () => void | Promise<void>;
+        onUpdate: () => void | Promise<void>;
     }
 
     let {
         commonSites, folders, currentFolderId, commonSitesLoading,
         commonSitesError, commonSitesDragging, selectedSiteIds, onDragging,
         onReorderRoot, onReorderFolder, onAdd, onEdit, onToggleSelected,
-        onOpenFolder, onReset,
+        onOpenFolder, onReset, onUpdate,
     }: Props = $props();
     let listItems: ListItem[] = $state([]);
+    let menuGroup: WebSiteFolder | undefined = $state();
+    let menuX = $state(0);
+    let menuY = $state(0);
+    function openGroupMenu(event: MouseEvent, group: WebSiteFolder) {
+        if (commonSitesLoading) return;
+        event.preventDefault();
+        event.stopPropagation();
+        menuX = event.clientX;
+        menuY = event.clientY;
+        menuGroup = group;
+    }
     const currentFolder = $derived(folders.find((folder) => folder.id === currentFolderId));
 
     $effect(() => {
@@ -73,6 +86,7 @@
 </script>
 
 <div class="setting_con">
+    <G full>
     <div class="common_list" class:drag={commonSitesDragging} use:dndzone={{ items: listItems, flipDurationMs: 200, type: "settings-common", zoneTabIndex: -1, zoneItemTabIndex: -1, dropTargetStyle: {}, dragDisabled: commonSitesLoading }} onconsider={handleConsider} onfinalize={handleFinalize}>
         {#if commonSitesLoading}
             <div class="settings_skeleton" aria-hidden="true">
@@ -85,14 +99,17 @@
                 <Icon name="Info" color="var(--c-text)" opacity={0.6} size={28} />
                 <T align="c" bold>{t("nt_websites_load_failed")}</T>
                 <T align="c" type="s">{t("nt_settings_common_load_failed_desc")}</T>
-                <Button onclick={() => void onReset()} bg="var(--c-text)"><G align="c"><Icon name="RotateCcw" color="var(--c-bg)" size={16} /><T color="var(--c-bg)">{t("nt_confirm_reset_common_sites_title")}</T></G></Button>
             </div>
         {:else}
             {#each listItems as item (item.id)}
-                <div class="common_row" class:common_selected={item.kind === "website" && isSiteSelected(item.website)} animate:flip={{ duration: 200 }}>
+                <div class="common_row" role="group" class:common_selected={item.kind === "website" && isSiteSelected(item.website)} animate:flip={{ duration: 200 }}
+                    oncontextmenu={(event) => { if (item.kind === "folder") openGroupMenu(event, item.folder); }}>
                     {#if item.kind === "folder"}
                         <Button full align="c" onclick={() => onOpenFolder(item.folder)}>
-                            <G full align="c"><Icon name="Folder" color="var(--c-text)" /><T nowrap>{item.folder.title}</T><Icon name="ChevronRight" color="var(--c-text)" opacity={0.5} /></G>
+                            <G full>
+                                <G full align="c"><Icon name="PlayingCardsFan" color="var(--c-text)" /><T nowrap>{item.folder.title}</T></G>
+                                <G align="c"><Icon name="ChevronRight" color="var(--c-text)" opacity={0.5} /></G>
+                            </G>
                         </Button>
                     {:else}
                         <Button full align="c" onclick={() => onEdit(item.website)}><G full><G full align="c"><BkmkIcon imgUrl={item.website.url} alt={item.website.title ?? item.website.url} size="m" /><T nowrap>{item.website.title ?? t("nt_unnamed")}</T></G></G></Button>
@@ -103,10 +120,15 @@
             {/each}
         {/if}
     </div>
+    </G>
     {#if !commonSitesLoading && !commonSitesError}
         <G full><Button full onclick={onAdd}><G align="c"><Icon name="Plus" color="var(--c-text)" opacity={0.5} /><T type="s">{t("nt_add_pinned_title")}</T></G></Button></G>
     {/if}
 </div>
+
+{#if menuGroup}
+    <CommonGroupMenu group={menuGroup} x={menuX} y={menuY} onClose={() => (menuGroup = undefined)} {onUpdate} />
+{/if}
 
 <style>
     .setting_con { width: 300px; display: flex; flex-direction: column; align-items: flex-start; }
@@ -120,6 +142,11 @@
     @media (prefers-reduced-motion: reduce) { .skeleton_shimmer::after { animation: none; } }
     .common_list { display: flex; flex-direction: column; width: 100%; box-sizing: border-box; padding: var(--gap); gap: var(--gap); min-height: 44px; }
     .common_list.drag { outline: var(--c-mask) 2px dashed; }
+    .common_list:empty {
+        min-height: 80px;
+        border: 2px dashed var(--c-border);
+        border-radius: var(--r1);
+    }
     .common_row { display: flex; align-items: center; width: 100%; box-sizing: border-box; border-radius: var(--r); background-color: var(--c-mask); }
     .common_selected { background-color: var(--c-mask1); }
 </style>

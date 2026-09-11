@@ -1,10 +1,9 @@
 <script lang="ts">
 	import Icon from "./Icon.svelte";
 	import Divider from "./Divider.svelte";
-	import { onMount, onDestroy } from "svelte";
+	import { onMount, onDestroy, tick } from "svelte";
 	import T from "./T.svelte";
 	import { t } from "@/lib/utils/i18n";
-	import { slide } from "svelte/transition";
 	import G from "./G.svelte";
 	import Button from "./Button.svelte";
 
@@ -24,14 +23,62 @@
 	let { options, onChange, disabled = false }: Props = $props();
 	let open = $state(false);
 	let rootEl: HTMLDivElement | null = null;
+	let menuEl: HTMLDivElement | null = $state(null);
+	let menuItemsEl: HTMLDivElement | null = $state(null);
+	let positioned = $state(false);
+	let menuLeft = $state(0);
+	let menuTop = $state(0);
+	let menuWidth = $state(0);
+	let menuMaxHeight = $state(268);
 	let selected = $derived(options.find((o) => o.sel));
 
-	$effect(() => {
-		if (disabled) open = false;
-	});
-
 	function setOpen(next: boolean) {
+		positioned = false;
+		if (next && rootEl) {
+			menuWidth = rootEl.getBoundingClientRect().width;
+		}
 		open = next;
+		if (next) {
+			void tick().then(updateMenuPosition);
+		}
+	}
+
+	function portal(node: HTMLElement) {
+		document.body.appendChild(node);
+		return {
+			destroy() {
+				// The disabled branch removes the menu; reset its state here too.
+				open = false;
+				node.remove();
+			},
+		};
+	}
+
+	async function updateMenuPosition() {
+		if (!open || !rootEl || !menuEl) return;
+		const currentMenu = menuEl;
+		// Commit the trigger width before measuring wrapped option content.
+		menuWidth = rootEl.getBoundingClientRect().width;
+		await tick();
+		if (!open || disabled || menuEl !== currentMenu || !rootEl || !menuItemsEl) return;
+
+		const viewportGap = 8;
+		const defaultMaxHeight = 268;
+		const anchor = rootEl.getBoundingClientRect();
+		// Include the trigger's own area so the menu opens over the button.
+		const availableBelow = Math.max(0, window.innerHeight - anchor.top - viewportGap);
+		const availableAbove = Math.max(0, anchor.bottom - viewportGap);
+		const desiredHeight = Math.min(menuItemsEl.scrollHeight, defaultMaxHeight);
+		const placeAbove = availableBelow < desiredHeight && availableAbove > availableBelow;
+		const availableHeight = placeAbove ? availableAbove : availableBelow;
+		const height = Math.min(desiredHeight, availableHeight);
+
+		menuLeft = anchor.left;
+		menuTop = placeAbove
+			? Math.max(viewportGap, anchor.bottom - height)
+			: anchor.top;
+		menuMaxHeight = Math.max(0, Math.min(defaultMaxHeight, availableHeight));
+		positioned = true;
 	}
 
 	function handleToggle() {
@@ -46,7 +93,8 @@
 	}
 
 	function handleMouseDown(e: MouseEvent) {
-		if (rootEl && rootEl.contains(e.target as Node)) return;
+		const target = e.target as Node;
+		if (rootEl?.contains(target) || menuEl?.contains(target)) return;
 		open = false;
 	}
 
@@ -57,11 +105,15 @@
 	onMount(() => {
 		window.addEventListener("mousedown", handleMouseDown);
 		window.addEventListener("keydown", handleKeyDown);
+		window.addEventListener("resize", updateMenuPosition);
+		window.addEventListener("scroll", updateMenuPosition, true);
 	});
 
 	onDestroy(() => {
 		window.removeEventListener("mousedown", handleMouseDown);
 		window.removeEventListener("keydown", handleKeyDown);
+		window.removeEventListener("resize", updateMenuPosition);
+		window.removeEventListener("scroll", updateMenuPosition, true);
 	});
 </script>
 
@@ -81,23 +133,38 @@
 		</G>
 	</Button>
 	{#if open && !disabled}
-		<div class="menu" transition:slide={{ duration: 100 }}>
-			<div class="menu_items">
+		<div
+			class="menu"
+			class:positioned
+			bind:this={menuEl}
+			use:portal
+			style:left="{menuLeft}px"
+			style:top="{menuTop}px"
+			style:width="{menuWidth}px"
+			style:max-height="{menuMaxHeight}px"
+		>
+			<div class="menu_items" bind:this={menuItemsEl}>
 				{#each options as option}
 					{#if option.dividerTop}
 						<Divider />
 					{/if}
 					<button class="option" onclick={() => handleSelect(option)}>
+						<G full align="c">
+							<G full>
 						{#if option.sel}
 							<T color="var(--c-main)">{option.label}</T>
+						{:else}
+							<T color="var(--c-text)">{option.label}</T>
+						{/if}
+							</G>
+						{#if option.sel}
 							<Icon
 								name="Check"
 								color="var(--c-main)"
 								opacity={0.6}
 							/>
-						{:else}
-							<T color="var(--c-text)">{option.label}</T>
 						{/if}
+						</G>
 					</button>
 				{/each}
 			</div>
@@ -115,7 +182,7 @@
 		background-color: unset;
 		border: none;
 		border-radius: var(--r);
-		padding: var(--gap);
+		padding: 0;
 		align-items: center;
 	}
 	.option:active {
@@ -130,20 +197,29 @@
 		opacity: 0.4;
 	}
 	.menu {
-		position: absolute;
-		left: 0;
-		top: 0;
-		right: 0;
+		visibility: hidden;
+		position: fixed;
 		display: flex;
 		flex-direction: column;
 		box-shadow: var(--shadow);
 		border-radius: var(--r1);
-		z-index: 10;
+		z-index: 1100;
 		overflow-y: auto;
 		box-sizing: border-box;
-		max-height: 268px;
+	}
+	.menu.positioned {
+		visibility: visible;
+		animation: menu-fade-in 100ms ease-out;
+	}
+	@keyframes menu-fade-in {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.menu.positioned { animation: none; }
 	}
 	.menu_items {
+		flex-shrink: 0;
 		display: flex;
 		flex-direction: column;
 		width: 100%;

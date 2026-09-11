@@ -1,5 +1,6 @@
 import type { WebSiteFolder } from "./database";
 import { getStoredConfig, updateStoredConfig } from "./configStorage";
+import { deleteWebSiteScreenshot } from "./websiteScreenshots";
 
 const WEBSITES_UPDATED_EVENT = "websites-updated";
 
@@ -57,14 +58,61 @@ export async function updateWebSiteFolder(folder: WebSiteFolder & { id: number }
   notifyUpdated();
 }
 
-export async function deleteWebSiteFolder(id: number) {
+/** Combine two root sites atomically, keeping the target's root position. */
+export async function combineRootWebSites(sourceId: number, targetId: number, title: string) {
   await updateStoredConfig((config) => {
-    config.websiteFolders = config.websiteFolders.filter((item) => item.id !== id);
-    config.websites = config.websites.map((site) =>
-      site.folderId === id ? { ...site, folderId: undefined, updateAt: Date.now() } : site,
-    );
+    const source = config.websites.find((site) => site.id === sourceId);
+    const target = config.websites.find((site) => site.id === targetId);
+    const isRoot = (folderId?: number) => folderId == null ||
+      !config.websiteFolders.some((folder) => folder.id === folderId);
+    if (!source || !target || sourceId === targetId ||
+        !isRoot(source.folderId) || !isRoot(target.folderId)) return;
+    const now = Date.now();
+    const id = nextId(config.websiteFolders);
+    config.websiteFolders.push({ id, title, order: target.order, createAt: now, updateAt: now });
+    target.folderId = source.folderId = id;
+    target.order = 0;
+    source.order = 1;
+    target.updateAt = source.updateAt = now;
   });
   notifyUpdated();
+}
+
+export async function deleteWebSiteFolder(id: number) {
+  await updateStoredConfig((config) => {
+    if (!config.websiteFolders.some((group) => group.id === id)) return;
+    const now = Date.now();
+    const folderIds = new Set(config.websiteFolders.map((group) => group.id));
+    const rootSites = config.websites.filter((site) => site.folderId == null || !folderIds.has(site.folderId));
+    const members = config.websites.filter((site) => site.folderId === id)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || (a.id ?? 0) - (b.id ?? 0));
+    const root = [
+      ...rootSites.map((site, index) => ({ key: `website:${site.id}`, order: site.order ?? index, item: site, expand: false })),
+      ...config.websiteFolders.map((group, index) => ({ key: `folder:${group.id}`, order: group.order ?? rootSites.length + index, item: group, expand: group.id === id })),
+    ].sort((a, b) => a.order - b.order || a.key.localeCompare(b.key));
+    const expanded = root.flatMap((entry) => entry.expand ? members : [entry.item]);
+    members.forEach((site) => { site.folderId = undefined; });
+    expanded.forEach((item, order) => { item.order = order; item.updateAt = now; });
+    config.websiteFolders = config.websiteFolders.filter((group) => group.id !== id);
+  });
+  notifyUpdated();
+}
+
+/** Delete a group and its members in one configuration write. */
+export async function deleteWebSiteGroupWithSites(id: number) {
+  const siteIds = await updateStoredConfig((config) => {
+    const ids = config.websites.flatMap((site) =>
+      site.folderId === id && site.id != null ? [site.id] : [],
+    );
+    config.websiteFolders = config.websiteFolders.filter((group) => group.id !== id);
+    config.websites = config.websites.filter((site) => site.folderId !== id);
+    return ids;
+  });
+  try {
+    await Promise.all(siteIds.map(deleteWebSiteScreenshot));
+  } finally {
+    notifyUpdated();
+  }
 }
 
 export type PinnedOrderItem = {

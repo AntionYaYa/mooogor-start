@@ -52,14 +52,14 @@
   <div class="type_switch" role="group" aria-label={t("nt_add_bookmark_type")}>
 
     <Button fill={type === "bookmark"} r="r_o" align='c' onclick={() => selectType("bookmark")}>
-      <G>
+      <G align="c">
         <Icon name="Bookmark" color="var(--c-text)" size={18} />
         <T nowrap>{t("nt_bookmark")}</T>
       </G>
     </Button>
 
      <Button fill={type === "folder"} r="r_o" align='c' onclick={() => selectType("folder")}>
-     <G>
+     <G align="c">
       <Icon name="Folder" color="var(--c-text)" size={18} />
       <T nowrap>{t("nt_bookmark_folder")}</T>
      </G>

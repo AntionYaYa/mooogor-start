@@ -19,6 +19,15 @@
 
 	let isZooming = $state(false);
 
+	function portal(node: HTMLElement) {
+		document.body.appendChild(node);
+		return {
+			destroy() {
+				node.remove();
+			},
+		};
+	}
+
 	onMount(() => {
 		window.addEventListener("keydown", handleKeyDown);
 	});
@@ -53,6 +62,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class="mask"
+	use:portal
 	transition:fade={{ duration: 200 }}
 	onclick={handleMaskClick}
 >
@@ -81,7 +91,7 @@
 	.content {
 		display: flex;
 		flex-direction: column;
-		height: 100%;
+		min-height: 0;
 		box-sizing: border-box;
 		overflow-y: auto;
 		width: 100%;
@@ -98,6 +108,8 @@
 	.panel {
 		width: 100%;
 		max-height: 100vh;
+		max-height: 100dvh;
+		box-sizing: border-box;
 		background-color: var(--c-bg);
 		padding: calc(var(--gap) * 2);
 		display: flex;
@@ -121,14 +133,11 @@
 	}
 	.mask {
 		position: fixed;
-		top: 0;
-		left: 0;
+		inset: 0;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		z-index: 10;
-		width: 100%;
-		height: 100%;
+		z-index: 1000;
 		background-color: rgba(0, 0, 0, 0.4);
 	}
 </style>

@@ -1,4 +1,6 @@
 {
+  "nt_common_action_failed": { "message": "Couldn't complete the action. Please try again." },
+  "nt_common_save_failed": { "message": "Couldn't save. Please try again." },
   "extName": {
     "message": "Mooogor Start – Efficient New Tab Launcher"
   },
@@ -435,11 +437,15 @@
     "message": "Add Common Site"
   },
   "nt_website": { "message": "Website" },
-  "nt_folder": { "message": "Folder" },
-  "nt_create_folder": { "message": "Create folder" },
-  "nt_folder_name": { "message": "Folder name" },
-  "nt_folder_name_required": { "message": "Enter a folder name" },
-  "nt_no_folder": { "message": "No folder" },
+  "nt_folder": { "message": "Group" },
+  "nt_create_folder": { "message": "Create group" },
+  "nt_folder_name": { "message": "Group name" },
+  "nt_folder_name_required": { "message": "Enter a group name" },
+  "nt_no_folder": { "message": "Ungrouped" },
+  "nt_group_rename": { "message": "Rename" },
+  "nt_group_ungroup": { "message": "Ungroup" },
+  "nt_group_delete": { "message": "Delete group and sites" },
+  "nt_group_delete_confirm": { "message": "Delete this group and all its sites? This cannot be undone." },
   "nt_add_bookmark": {
     "message": "Add bookmark"
   },

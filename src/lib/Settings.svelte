@@ -10,6 +10,8 @@
     import EditSearchEngine from "./EditSearchEngine.svelte";
     import ManageEngineCategories from "./ManageEngineCategories.svelte";
     import AddPinned from "./AddPinned.svelte";
+    import MoveCommonSites from "./MoveCommonSites.svelte";
+    import CommonGroupMenu from "./CommonGroupMenu.svelte";
     import ConfirmDialog from "./ConfirmDialog.svelte";
     import Popup from "./components/Popup.svelte";
     import BatchToolbar from "./components/BatchToolbar.svelte";
@@ -192,6 +194,18 @@
     let commonSites: WebSite[] = $state([]);
     let commonSiteFolders: WebSiteFolder[] = $state([]);
     let currentCommonFolderId: number | undefined = $state();
+    let headerGroupMenu: WebSiteFolder | undefined = $state();
+    let headerGroupMenuX = $state(0);
+    let headerGroupMenuY = $state(0);
+
+    function openHeaderGroupMenu(event: MouseEvent) {
+        const group = commonSiteFolders.find((folder) => folder.id === currentCommonFolderId);
+        if (!group || commonSitesLoading) return;
+        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+        headerGroupMenuX = rect.left;
+        headerGroupMenuY = rect.bottom;
+        headerGroupMenu = group;
+    }
     let commonSitesLoading = $state(false);
     let commonSitesError = $state(false);
     let commonSitesRequestId = $state(0);
@@ -433,6 +447,7 @@
 
     function goBackSettingPage() {
         if (settingPage === "common" && currentCommonFolderId != null) {
+            pageDirection = -1;
             currentCommonFolderId = undefined;
             setSelectedCommonSiteIds([]);
             return;
@@ -1435,7 +1450,7 @@
                 {@render temHeader()}
             </div>
             <div class="setting_body">
-                {#key settingPage}
+                {#key settingPage === "common" ? `common:${currentCommonFolderId ?? "root"}` : settingPage}
                     <div
                         class="setting_page"
                         in:fly={{
@@ -1480,9 +1495,11 @@
                                 onReorderRoot={handleCommonSitesRootReorder}
                                 onReorderFolder={handleCommonSitesFolderReorder}
                                 onAdd={openAddCommonSiteEditor}
+                                onUpdate={loadCommonSites}
                                 onEdit={openEditCommonSiteEditor}
                                 onToggleSelected={toggleCommonSiteSelected}
                                 onOpenFolder={(folder) => {
+                                    pageDirection = 1;
                                     currentCommonFolderId = folder.id;
                                     setSelectedCommonSiteIds([]);
                                 }}
@@ -1543,13 +1560,23 @@
     />
 {/if}
 
+{#if headerGroupMenu}
+    <CommonGroupMenu
+        group={headerGroupMenu}
+        x={headerGroupMenuX}
+        y={headerGroupMenuY}
+        onClose={() => (headerGroupMenu = undefined)}
+        onUpdate={loadCommonSites}
+    />
+{/if}
+
 {#if showCommonEditor}
     <AddPinned
         isEdit={!!editingCommonSite}
         urlValue={editingCommonSite?.url}
         titleValue={editingCommonSite?.title}
         folderIdValue={editingCommonSite?.folderId ?? currentCommonFolderId}
-        folders={currentCommonFolderId == null ? commonSiteFolders : []}
+        folders={commonSiteFolders}
         onSave={saveCommonSite}
         onSaveFolder={!editingCommonSite && currentCommonFolderId == null ? saveCommonSiteFolder : undefined}
         onDelete={editingCommonSite ? removeEditingCommonSite : undefined}
@@ -1558,32 +1585,9 @@
 {/if}
 
 {#if showCommonMoveDialog}
-    <Popup
-        type="s"
-        title={t("nt_move")}
-        onclickClose={() => (showCommonMoveDialog = false)}
-    >
-        <div class="common_move_targets">
-            {#if currentCommonFolderId != null}
-                <Button full onclick={() => void moveSelectedCommonSites()}>
-                    <G full align="c">
-                        <Icon name="FolderOpen" color="var(--c-text)" />
-                        <T>{t("nt_no_folder")}</T>
-                    </G>
-                </Button>
-            {/if}
-            {#each commonSiteFolders.filter((folder) => folder.id !== currentCommonFolderId) as folder (folder.id)}
-                <Button full onclick={() => void moveSelectedCommonSites(folder.id)}>
-                    <G full align="c">
-                        <Icon name="Folder" color="var(--c-text)" />
-                        <T nowrap>{folder.title}</T>
-                    </G>
-                </Button>
-            {/each}
-        </div>
-    </Popup>
+    <MoveCommonSites folders={commonSiteFolders} currentFolderId={currentCommonFolderId}
+        onSave={moveSelectedCommonSites} onclickClose={() => (showCommonMoveDialog = false)} />
 {/if}
-
 {#if confirmOptions}
     <ConfirmDialog
         title={confirmOptions.title}
@@ -1701,6 +1705,11 @@
     <div class="title_center">
         <T type="m" align="c" nowrap>{getSettingPageTitle()}</T>
     </div>
+    {#if settingPage === "common" && currentCommonFolderId != null}
+        <Button title={t("nt_edit")} disabled={commonSitesLoading} onclick={openHeaderGroupMenu}>
+            <G><Icon name="SquarePen" color="var(--c-text)" opacity={0.6} /></G>
+        </Button>
+    {:else}
     <Button
         onclick={settingPage === "searchEngines"
             ? resetSearchEnginesToDefaultConfirm
@@ -1730,6 +1739,7 @@
             />
         </G>
     </Button>
+    {/if}
 {/snippet}
 
 {#snippet temSettingRoot()}
@@ -2194,15 +2204,5 @@
         flex-direction: column;
         width: 100%;
         box-sizing: border-box;
-    }
-    .common_move_targets {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        max-height: 320px;
-        overflow-y: auto;
-        padding: var(--gap);
-        box-sizing: border-box;
-        gap: var(--gap);
     }
 </style>

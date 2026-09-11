@@ -1449,10 +1449,13 @@
     transition:
       opacity 120ms ease,
       transform 120ms ease,
+      outline-offset 120ms ease,
       background-color 120ms ease;
     pointer-events: none;
   }
   .combine_drop_zone.combine_target {
+    outline-offset: 4px;
+    outline-color: var(--c-main);
     opacity: 1;
     transform: translateX(-50%) scale(1.08);
     background-color: var(--c-main-3);

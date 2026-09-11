@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { slide } from "svelte/transition";
 	import G from "./G.svelte";
-	import { onMount, onDestroy, tick } from "svelte";
+	import { onMount, onDestroy } from "svelte";
 
 	interface Props {
 		children: any;
@@ -17,6 +16,21 @@
 	}: Props = $props();
 
 	let menuEl: HTMLDivElement | null = null;
+	let positioned = $state(false);
+
+	function portal(node: HTMLElement) {
+		document.body.appendChild(node);
+		return { destroy() { node.remove(); } };
+	}
+
+	function positionMenu() {
+		if (!menuEl) return;
+		const rect = menuEl.getBoundingClientRect();
+		const gap = 8;
+		menuEl.style.left = `${Math.max(gap, Math.min(x, window.innerWidth - rect.width - gap))}px`;
+		menuEl.style.top = `${Math.max(gap, Math.min(y, window.innerHeight - rect.height - gap))}px`;
+		positioned = true;
+	}
 
 	function handleMouseDown(e: MouseEvent) {
 		if (menuEl && menuEl.contains(e.target as Node)) return;
@@ -25,41 +39,36 @@
 
 	onMount(() => {
 		window.addEventListener("mousedown", handleMouseDown, true);
-		requestAnimationFrame(() => {
-			if (!menuEl) return;
-			const fullHeight = menuEl.scrollHeight;
-			const fullWidth = menuEl.scrollWidth;
-			const vw = window.innerWidth;
-			const vh = window.innerHeight;
-			const gap = 8;
-			let ax = x;
-			let ay = y;
-			if (ax + fullWidth > vw - gap) ax = Math.max(gap, vw - fullWidth - gap);
-			if (ay + fullHeight > vh - gap) ay = Math.max(gap, vh - fullHeight - gap);
-			ax = Math.max(gap, ax);
-			ay = Math.max(gap, ay);
-			if (ax !== x) menuEl.style.left = `${ax}px`;
-			if (ay !== y) menuEl.style.top = `${ay}px`;
-		});
+		window.addEventListener("resize", positionMenu);
+		positionMenu();
 	});
 
 	onDestroy(() => {
 		window.removeEventListener("mousedown", handleMouseDown, true);
+		window.removeEventListener("resize", positionMenu);
 	});
 </script>
 
 <div
+	class:positioned
 	bind:this={menuEl}
+	use:portal
 	style="top: {y}px; left:{x}px;"
-	transition:slide={{ duration: 200 }}
 >
-	<G vertical>
+	<G vertical full>
 		{@render children()}
 	</G>
 </div>
 
 <style>
 	div {
+		visibility: hidden;
+		width: max-content;
+		max-width: calc(100vw - 16px);
+		max-height: calc(100vh - 16px);
+		max-height: calc(100dvh - 16px);
+		box-sizing: border-box;
+		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-start;
@@ -70,6 +79,12 @@
 		backdrop-filter:  blur(50px);
 		box-shadow: var(--shadow);
 		position: fixed;
-		z-index: 10;
+		z-index: 1100;
 	}
+	div.positioned {
+		visibility: visible;
+		animation: menu-appear 100ms ease-out;
+	}
+	@keyframes menu-appear { from { opacity: 0; } to { opacity: 1; } }
+	@media (prefers-reduced-motion: reduce) { div.positioned { animation: none; } }
 </style>

@@ -1,4 +1,6 @@
 {
+  "nt_common_action_failed": { "message": "操作失败，请重试。" },
+  "nt_common_save_failed": { "message": "保存失败，请重试。" },
   "extName": {
     "message": "Mooogor Start - 高效启动新标签页"
   },
@@ -435,11 +437,15 @@
     "message": "添加常用网站"
   },
   "nt_website": { "message": "网站" },
-  "nt_folder": { "message": "文件夹" },
-  "nt_create_folder": { "message": "新建文件夹" },
-  "nt_folder_name": { "message": "文件夹名称" },
-  "nt_folder_name_required": { "message": "请输入文件夹名称" },
-  "nt_no_folder": { "message": "不放入文件夹" },
+  "nt_folder": { "message": "分组" },
+  "nt_create_folder": { "message": "新建分组" },
+  "nt_folder_name": { "message": "分组名称" },
+  "nt_folder_name_required": { "message": "请输入分组名称" },
+  "nt_no_folder": { "message": "不加入分组" },
+  "nt_group_rename": { "message": "重命名" },
+  "nt_group_ungroup": { "message": "解组" },
+  "nt_group_delete": { "message": "删除分组及网站" },
+  "nt_group_delete_confirm": { "message": "删除此分组及其中的所有网站？此操作无法撤销。" },
   "nt_add_bookmark": {
     "message": "添加书签"
   },

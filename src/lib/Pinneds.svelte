@@ -5,7 +5,9 @@
   import T from "./components/T.svelte";
   import G from "./components/G.svelte";
   import { flip } from "svelte/animate";
-  import { dndzone } from "svelte-dnd-action";
+  import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME } from "svelte-dnd-action";
+  import { combineRootWebSites } from "./DB/websiteFolders";
+  import CommonGroupMenu from "./CommonGroupMenu.svelte";
   import type { DndEvent } from "svelte-dnd-action";
   import {
     addWebSite,
@@ -24,6 +26,7 @@
   import { addToPinneds } from "@/lib/utils/pinneds";
   import Button from "./components/Button.svelte";
   import AddPinned from "./AddPinned.svelte";
+  import MoveCommonSites from "./MoveCommonSites.svelte";
   import LinkContextMenu from "./LinkContextMenu.svelte";
   import NoData from "./NoData.svelte";
   import { t } from "@/lib/utils/i18n";
@@ -77,9 +80,29 @@
   let menuY = $state(0);
 
   let showPinnedMenu = $state(false);
+  let movingSite: WebSite | undefined = $state();
+
+  function openMoveSite() {
+    if (readOnly || currentPinned?.id == null) return;
+    movingSite = currentPinned;
+    showPinnedMenu = false;
+  }
+
+  async function moveSite(folderId?: number) {
+    if (readOnly || movingSite?.id == null) return;
+    await moveWebSitesToFolder([movingSite.id], folderId);
+    await onUpdate();
+  }
+  let groupMenu: WebSiteFolder | undefined = $state();
   let showFrequentMenu = $state(false);
   let showFrequentInfo = $state(false);
-  let folderDropTargetId: number | undefined = $state();
+  let combineTargetId: string | undefined = $state();
+  let releasedTargetId: string | undefined;
+  let dragStartItems: PinnedGridItem[] = [];
+  let pendingReorderItems: PinnedGridItem[] | undefined;
+  let pendingReorderSignature = "";
+  let reorderTimer: ReturnType<typeof setTimeout> | undefined;
+  const REORDER_HOVER_DELAY_MS = 280;
   let draggedGridItemId: string | undefined = $state();
   let capturingWebsiteId: number | undefined = $state();
   let currentPinnedHasScreenshot = $state(false);
@@ -150,6 +173,7 @@
 
   function showContextMenu(e: MouseEvent, pinned: WebSite) {
     if (readOnly) return;
+    groupMenu = undefined;
     e.preventDefault();
     e.stopPropagation();
 
@@ -171,6 +195,7 @@
 
   function showFrequentContextMenu(e: MouseEvent, site: FrequentSite) {
     if (readOnly) return;
+    groupMenu = undefined;
     e.preventDefault();
     e.stopPropagation();
 
@@ -186,6 +211,16 @@
     return new Promise<boolean>((resolve) => {
       confirmOptions = { title, description, confirmText, resolve };
     });
+  }
+
+  function showGroupMenu(event: MouseEvent, group: WebSiteFolder) {
+    if (readOnly) return;
+    event.preventDefault();
+    event.stopPropagation();
+    showPinnedMenu = showFrequentMenu = false;
+    menuX = event.clientX;
+    menuY = event.clientY;
+    groupMenu = group;
   }
 
   async function resetWebsitesAfterFailure() {
@@ -209,21 +244,67 @@
 
   function handleConsider(e: CustomEvent<DndEvent<PinnedGridItem>>) {
     if (readOnly) return;
-    isdarging = true;
-    draggedGridItemId = String(e.detail.info.id);
-    pinnedGridItems = e.detail.items;
+    if (e.detail.info.trigger === "dragStarted") {
+      clearDragState();
+      dragStartItems = [...pinnedGridItems];
+      isdarging = true;
+      draggedGridItemId = String(e.detail.info.id);
+      pinnedGridItems = e.detail.items;
+      return;
+    }
+    if (currentFolder || dragStartItems.find((item) => item.id === draggedGridItemId)?.kind !== "website") {
+      pinnedGridItems = e.detail.items;
+      return;
+    }
+    pendingReorderItems = e.detail.items;
+    const signature = e.detail.items.map((item) => item.id).join("|");
+    if (signature !== pendingReorderSignature) {
+      pendingReorderSignature = signature;
+      scheduleReorder();
+    }
+  }
+
+  function cancelReorder() {
+    clearTimeout(reorderTimer);
+    reorderTimer = undefined;
+  }
+
+  function scheduleReorder() {
+    cancelReorder();
+    if (combineTargetId || !pendingReorderItems) return;
+    reorderTimer = setTimeout(() => {
+      reorderTimer = undefined;
+      if (isdarging && !combineTargetId && pendingReorderItems) {
+        pinnedGridItems = pendingReorderItems;
+      }
+    }, REORDER_HOVER_DELAY_MS);
+  }
+
+  function clearDragState() {
+    cancelReorder();
+    pendingReorderItems = undefined;
+    pendingReorderSignature = "";
+    combineTargetId = releasedTargetId = undefined;
+    draggedGridItemId = undefined;
+    isdarging = false;
   }
 
   async function handleFinalize(e: CustomEvent<DndEvent<PinnedGridItem>>) {
+    const draggedItem = dragStartItems.find((item) => item.id === draggedGridItemId);
+    const targetItem = dragStartItems.find((item) => item.id === (releasedTargetId ?? combineTargetId));
+    clearDragState();
     if (readOnly) return;
-    isdarging = false;
     pinnedGridItems = e.detail.items;
-    const draggedItem = pinnedGridItems.find((item) => item.id === draggedGridItemId);
-    if (!currentFolder && folderDropTargetId != null && draggedItem?.kind === "website" && draggedItem.website.id != null) {
-      await moveWebSitesToFolder([draggedItem.website.id], folderDropTargetId);
-      folderDropTargetId = undefined;
-      draggedGridItemId = undefined;
-      await onUpdate();
+    if (!currentFolder && targetItem && draggedItem?.kind === "website" && draggedItem.website.id != null) {
+      try {
+        if (targetItem.kind === "folder" && targetItem.folder.id != null) {
+          await moveWebSitesToFolder([draggedItem.website.id], targetItem.folder.id);
+        } else if (targetItem.kind === "website" && targetItem.website.id != null) {
+          await combineRootWebSites(draggedItem.website.id, targetItem.website.id, t("nt_folder"));
+        }
+      } finally {
+        await onUpdate();
+      }
       return;
     }
     if (currentFolder) {
@@ -233,8 +314,6 @@
           : [],
       );
       if (websites.length) await updateWebSitesOrder(websites);
-      folderDropTargetId = undefined;
-      draggedGridItemId = undefined;
       await onUpdate();
       return;
     }
@@ -243,18 +322,38 @@
       return id == null ? [] : [{ kind: item.kind, id }];
     });
     if (orderItems.length) await updatePinnedItemsOrder(orderItems);
-    folderDropTargetId = undefined;
-    draggedGridItemId = undefined;
     await onUpdate();
   }
 
   function trackFolderDrop(event: PointerEvent) {
-    if (!isdarging || currentFolder) return;
-    const target = document.elementsFromPoint(event.clientX, event.clientY)
-      .map((element) => element.closest<HTMLElement>("[data-folder-drop-id]"))
-      .find((element): element is HTMLElement => element != null);
-    const id = Number(target?.dataset.folderDropId);
-    folderDropTargetId = Number.isFinite(id) ? id : undefined;
+    if (!isdarging || currentFolder || !pageEl ||
+        dragStartItems.find((item) => item.id === draggedGridItemId)?.kind !== "website") return;
+    let targetId: string | undefined;
+    for (const zone of pageEl.querySelectorAll<HTMLElement>("[data-combine-id]")) {
+      const rect = zone.getBoundingClientRect();
+      if (event.clientX >= rect.left && event.clientX <= rect.right &&
+          event.clientY >= rect.top && event.clientY <= rect.bottom) {
+        targetId = zone.dataset.combineId;
+        break;
+      }
+    }
+    const previous = combineTargetId;
+    combineTargetId = targetId;
+    if (targetId) cancelReorder();
+    else if (previous) scheduleReorder();
+  }
+
+  function captureDropTarget(event: PointerEvent) {
+    trackFolderDrop(event);
+    releasedTargetId = combineTargetId;
+    cancelReorder();
+  }
+
+  function canCombineWith(item: PinnedGridItem) {
+    return isdarging && !currentFolder && item.id !== draggedGridItemId &&
+      !(item as PinnedGridItem & Record<string, unknown>)[SHADOW_ITEM_MARKER_PROPERTY_NAME] &&
+      dragStartItems.some((entry) => entry.id === item.id) &&
+      dragStartItems.find((entry) => entry.id === draggedGridItemId)?.kind === "website";
   }
 
   async function clickSaveWebSite(newWebSite: WebSite) {
@@ -308,10 +407,15 @@
 
   onMount(() => {
     window.addEventListener("pointermove", trackFolderDrop, { passive: true });
+    window.addEventListener("pointerup", captureDropTarget, true);
+    window.addEventListener("pointercancel", clearDragState);
   });
 
   onDestroy(() => {
     window.removeEventListener("pointermove", trackFolderDrop);
+    window.removeEventListener("pointerup", captureDropTarget, true);
+    window.removeEventListener("pointercancel", clearDragState);
+    cancelReorder();
   });
 
   function resizeScreenshot(source: string) {
@@ -483,13 +587,16 @@
       >
         {#each pinnedGridItems as gridItem (gridItem.id)}
           <div class="item" animate:flip={{ duration: 200 }}>
+          {#if canCombineWith(gridItem)}
+            <div class="combine_hit_zone" data-combine-id={gridItem.id} aria-hidden="true"></div>
+            <div class="combine_drop_zone" class:combine_target={combineTargetId === gridItem.id} aria-hidden="true"></div>
+          {/if}
           {#if gridItem.kind === "folder"}
             <button
               class="folder_button"
-              class:folder_drop_target={folderDropTargetId === gridItem.folder.id}
               type="button"
               title={gridItem.folder.title}
-              data-folder-drop-id={gridItem.folder.id}
+              oncontextmenu={(event) => showGroupMenu(event, gridItem.folder)}
               onclick={() => (currentFolder = gridItem.folder)}
             >
               <WebsiteFolderTile
@@ -513,7 +620,7 @@
         {/each}
       </div>
       {:else if currentFolder}
-        <div class="empty_folder">{currentFolder.title}</div>
+        <div class="empty_folder" aria-label={t("nt_no_pinned")}></div>
       {/if}
     </section>
   {:else}
@@ -619,12 +726,22 @@
     urlValue={openByEdit ? currentPinned?.url : undefined}
     titleValue={openByEdit ? currentPinned?.title : undefined}
     folderIdValue={openByEdit ? currentPinned?.folderId : currentFolder?.id}
-    folders={currentFolder ? [] : webSiteFolders}
+    folders={webSiteFolders}
     onSave={clickSaveWebSite}
     onSaveFolder={currentFolder ? undefined : clickSaveFolder}
     onDelete={clickDeleteWebSite}
     onclickClose={clickCloseAdd}
   />
+{/if}
+
+{#if groupMenu && !readOnly}
+  <CommonGroupMenu group={groupMenu} x={menuX} y={menuY} onClose={() => (groupMenu = undefined)} {onUpdate} />
+{/if}
+
+{#if movingSite && !readOnly}
+  <MoveCommonSites folders={webSiteFolders}
+    currentFolderId={webSiteFolders.some((folder) => folder.id === movingSite?.folderId) ? movingSite.folderId : undefined}
+    onSave={moveSite} onclickClose={() => (movingSite = undefined)} />
 {/if}
 
 {#if showPinnedMenu && currentPinned && !readOnly}
@@ -650,6 +767,9 @@
       <G>
         <T>{t("nt_edit")}</T>
       </G>
+    </Button>
+    <Button full onclick={openMoveSite}>
+      <G><T>{t("nt_move")}</T></G>
     </Button>
     <Button full onclick={() => void clickDeleteWebSite()}>
       <G>
@@ -797,10 +917,26 @@
     box-sizing: border-box;
     padding: var(--gap);
   }
-  .folder_drop_target {
-    outline: 3px solid var(--c-text);
-    outline-offset: 3px;
-    transform: translateY(-2px);
+  .combine_hit_zone {
+    position: absolute;
+    inset: 0 33.333%;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .combine_drop_zone {
+    position: absolute;
+    inset: var(--gap);
+    z-index: 6;
+    border: 2px solid var(--c-mask);
+    border-radius: var(--r1);
+    pointer-events: none;
+    transition: inset 120ms ease, border-radius 120ms ease, border-color 120ms ease, background-color 120ms ease;
+  }
+  .combine_drop_zone.combine_target {
+    inset: calc(var(--gap) - 4px);
+    border-radius: calc(var(--r1) + 4px);
+    border-color: var(--c-main);
+    background-color: var(--c-main-3);
   }
   .frequent_title_sentinel {
     width: 100%;
@@ -839,10 +975,10 @@
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
   .pinned_grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
   .skeleton_grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .folder_button,

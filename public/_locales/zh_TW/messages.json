@@ -1,4 +1,6 @@
 {
+  "nt_common_action_failed": { "message": "操作失敗，請重試。" },
+  "nt_common_save_failed": { "message": "儲存失敗，請重試。" },
   "extName": {
     "message": "Mooogor Start - 高效啟動新分頁"
   },
@@ -435,11 +437,15 @@
     "message": "新增常用網站"
   },
   "nt_website": { "message": "網站" },
-  "nt_folder": { "message": "資料夾" },
-  "nt_create_folder": { "message": "新增資料夾" },
-  "nt_folder_name": { "message": "資料夾名稱" },
-  "nt_folder_name_required": { "message": "請輸入資料夾名稱" },
-  "nt_no_folder": { "message": "不放入資料夾" },
+  "nt_folder": { "message": "群組" },
+  "nt_create_folder": { "message": "新增群組" },
+  "nt_folder_name": { "message": "群組名稱" },
+  "nt_folder_name_required": { "message": "請輸入群組名稱" },
+  "nt_no_folder": { "message": "不加入群組" },
+  "nt_group_rename": { "message": "重新命名" },
+  "nt_group_ungroup": { "message": "解散群組" },
+  "nt_group_delete": { "message": "刪除群組及網站" },
+  "nt_group_delete_confirm": { "message": "刪除此群組及其中的所有網站？此操作無法復原。" },
   "nt_add_bookmark": {
     "message": "新增書籤"
   },
