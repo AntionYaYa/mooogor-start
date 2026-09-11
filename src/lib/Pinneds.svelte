@@ -974,11 +974,9 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
-  .pinned_grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
+  .pinned_grid,
   .skeleton_grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, max(160px, calc(100% / 6))), 1fr));
   }
 
   .folder_button,
@@ -1002,12 +1000,6 @@
     color: var(--c-text-2);
     border: 2px dashed var(--c-border1);
     border-radius: var(--r1);
-  }
-  @media (max-width: 900px) {
-    .pinned_grid, .skeleton_grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  }
-  @media (max-width: 560px) {
-    .pinned_grid, .skeleton_grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   .list {
     display: flex;
