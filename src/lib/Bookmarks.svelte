@@ -656,6 +656,8 @@
   async function clickDeleteBookmark() {
     if (!currentBkmk) return false;
     if (isProtectedRootFolder(currentBkmk)) return false;
+    const bookmarkId = currentBkmk.id;
+    showMenu = false;
     const description = currentBkmk.url
       ? t("nt_delete_bookmark_confirm")
       : t("nt_delete_bookmark_folder_confirm");
@@ -664,9 +666,8 @@
       : t("nt_confirm_delete_bookmark_folder_title");
     if (!(await requestConfirm(title, description, t("nt_delete"))))
       return false;
-    await deleteBookmark(currentBkmk.id);
+    await deleteBookmark(bookmarkId);
     await refreshCurrentFolder();
-    showMenu = false;
     showEdit = false;
     currentBkmk = undefined;
     return true;

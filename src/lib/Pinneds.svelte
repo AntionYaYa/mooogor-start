@@ -383,6 +383,8 @@
   }
   async function clickDeleteWebSite() {
     if (!currentPinned?.id) return false;
+    const siteId = currentPinned.id;
+    showPinnedMenu = false;
     if (
       !(await requestConfirm(
         t("nt_confirm_delete_common_sites_title"),
@@ -391,9 +393,8 @@
     ) {
       return false;
     }
-    await deleteWebSite(currentPinned.id);
+    await deleteWebSite(siteId);
     onUpdate();
-    showPinnedMenu = false;
     return true;
   }
 
