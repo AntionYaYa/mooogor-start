@@ -1,4 +1,6 @@
 {
+  "nt_search_engine_custom": { "message": "自定义" },
+  "nt_search_engine_manage": { "message": "管理" },
   "nt_get_background_color": { "message": "获取背景色" },
   "nt_remove_background_color": { "message": "移除背景色" },
   "nt_common_action_failed": { "message": "操作失败，请重试。" },

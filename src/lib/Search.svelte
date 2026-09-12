@@ -11,6 +11,7 @@
     import {
         FALLBACK_ENGINE_CATEGORY_ID,
         getEngines,
+        addEngine,
         setEngineEnabled,
         reorderEngineCategory,
         getEngineCategories,
@@ -28,6 +29,8 @@
     import Tab from "./components/Tab.svelte";
     import type { TabItem } from "./components/Tab.svelte";
     import EngineIcon from "./EngineIcon.svelte";
+    import EditSearchEngine from "./EditSearchEngine.svelte";
+    import { buildEngineFaviconUrl } from "@/lib/settings/searchEngines";
     import {
         clearPersistedSelectedCategoryId,
         hydrateSearchStorage,
@@ -97,6 +100,7 @@
     let searchPanelEl: HTMLDivElement | undefined = $state();
     let inputValue: string = $state("");
     let showEngineDialog = $state(false);
+    let showCustomEngineEditor = $state(false);
     let searchSeq = $state(0);
     let historySeq = $state(0);
     let bookmarksDebounceId: ReturnType<typeof setTimeout> | null = null;
@@ -815,6 +819,29 @@
         showEngineDialog = true;
     }
 
+    async function addCustomEngine(payload: {
+        title: string;
+        engineUrl: string;
+        category: string;
+        enabled: boolean;
+    }) {
+        if (effectiveReadOnly || engineSaving) {
+            throw new Error("Search engine configuration is not editable");
+        }
+        engineSaving = true;
+        ++engineConfigRequestId;
+        try {
+            await addEngine({
+                ...payload,
+                faviconUrl: buildEngineFaviconUrl(payload.engineUrl),
+            });
+            window.dispatchEvent(new CustomEvent("engine-config-updated"));
+        } finally {
+            engineSaving = false;
+            refreshAfterEngineInteraction();
+        }
+    }
+
     function getResultEls() {
         if (!listEls) return [] as HTMLElement[];
         return Array.from(
@@ -934,7 +961,7 @@
     {/if}
 </div>
 
-{#if showEngineDialog && selectedCategory}
+{#if showEngineDialog && selectedCategory && !showCustomEngineEditor}
     <Popup
         type="s"
         title={selectedCategory.name}
@@ -944,6 +971,22 @@
     >
         {@render temEngineDialogContent()}
     </Popup>
+{/if}
+
+{#if showCustomEngineEditor}
+    <EditSearchEngine
+        categoryValue={selectedCategoryId}
+        categoryOptions={engineCategories.map((category) => ({
+            label: category.name,
+            value: category.id,
+            sel: false,
+        }))}
+        saving={engineSaving}
+        onSave={addCustomEngine}
+        onclickClose={() => {
+            if (!engineSaving) showCustomEngineEditor = false;
+        }}
+    />
 {/if}
 
 {#snippet temInputGroup()}
@@ -1125,20 +1168,29 @@
         {#if engineSaveError}
             <T type="s" color="var(--c-red)">{t("nt_common_save_failed")}</T>
         {/if}
-        <G full align="r">
+        <div class="engine_dialog_actions">
             <Button
-                full
+                fill
+                r="r1"
+                disabled={effectiveReadOnly || engineSaving || engineListDragging}
+                onclick={() => (showCustomEngineEditor = true)}
+            >
+                <G align="c">
+                    <G align="c">
+                        <T nowrap>{t("nt_search_engine_custom")}</T>
+                    </G>
+                </G>
+            </Button>
+            <Button
                 align="c"
                 fill
                 r="r1"
                 disabled={engineSaving || engineListDragging}
                 onclick={openSearchEngineSettings}
             >
-                <G full align="c">
-                    <G vertical full>
-                        <T>{t("nt_settings_search_engines_title")}</T>
-                    </G>
-                    <G>
+                <G align="c">
+                    <G align="c">
+                        <T nowrap>{t("nt_search_engine_manage")}</T>
                         <Icon
                             name="ArrowUpRight"
                             color="var(--c-text)"
@@ -1147,7 +1199,7 @@
                     </G>
                 </G>
             </Button>
-        </G>
+        </div>
     </G>
 {/snippet}
 
@@ -1337,6 +1389,13 @@
         padding: var(--gap);
         border: var(--border);
         border-radius: var(--r1);
+    }
+    .engine_dialog_actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--gap);
+        width: 100%;
     }
     .engine_row {
         display: grid;

@@ -1,4 +1,6 @@
 {
+  "nt_search_engine_custom": { "message": "Custom" },
+  "nt_search_engine_manage": { "message": "Manage" },
   "nt_get_background_color": { "message": "Get background color" },
   "nt_remove_background_color": { "message": "Remove background color" },
   "nt_common_action_failed": { "message": "Couldn't complete the action. Please try again." },

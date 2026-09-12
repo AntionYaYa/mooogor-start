@@ -85,14 +85,21 @@
   }
 
   async function clickSave() {
+    if (saving) return;
     inputError = validate();
     if (inputError) return;
-    await onSave({
-      title: inputTitleValue.trim(),
-      engineUrl: inputUrlValue.trim(),
-      category: selectedCategoryId,
-      enabled,
-    });
+    try {
+      await onSave({
+        title: inputTitleValue.trim(),
+        engineUrl: inputUrlValue.trim(),
+        category: selectedCategoryId,
+        enabled,
+      });
+    } catch (error) {
+      console.error("[Mooogor NewTab]", "search-engine:save-failed", error);
+      inputError = t("nt_common_save_failed");
+      return;
+    }
     onclickClose();
   }
 
