@@ -57,19 +57,18 @@ export async function addEngine(engine: Omit<Engine, "id">) {
   });
 }
 
-export async function updateEngine(engine: Engine & { id: number }) {
+export async function updateEngine(engine: Pick<Engine, "title" | "engineUrl" | "faviconUrl" | "category" | "enabled"> & { id: number }) {
   return await updateStoredConfig((config) => {
-    const index = config.engines.findIndex((item) => item.id === engine.id);
-    const existing = config.engines[index];
-    const next: Engine = {
-      ...engine,
-      category: normalizeEngineCategory(engine.category ?? existing?.category),
-      enabled: typeof engine.enabled === "boolean" ? engine.enabled : existing?.enabled ?? true,
-      createAt: existing?.createAt ?? engine.createAt ?? Date.now(),
+    const existing = config.engines.find((item) => item.id === engine.id);
+    if (!existing) throw new Error(`Search engine ${engine.id} does not exist`);
+    Object.assign(existing, {
+      title: engine.title,
+      engineUrl: engine.engineUrl,
+      faviconUrl: engine.faviconUrl,
+      category: normalizeEngineCategory(engine.category),
+      enabled: engine.enabled,
       updateAt: Date.now(),
-    };
-    if (index >= 0) config.engines[index] = next;
-    else config.engines.push(next);
+    });
     return engine.id;
   });
 }
@@ -107,7 +106,7 @@ export async function updateEnginesOrder(items: (Engine & { id: number })[]) {
   await updateEnginesLayout(items);
 }
 
-export async function updateEnginesLayout(items: (Engine & { id: number })[]) {
+export async function updateEnginesLayout(items: { id: number; category?: EngineCategory }[]) {
   await updateStoredConfig((config) => {
     const byId = new Map(items.map((item, index) => [item.id, { item, index }]));
     const now = Date.now();
@@ -118,7 +117,6 @@ export async function updateEnginesLayout(items: (Engine & { id: number })[]) {
             ...engine,
             order: next.index,
             category: normalizeEngineCategory(next.item.category),
-            enabled: next.item.enabled !== false,
             updateAt: now,
           }
         : engine;

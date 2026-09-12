@@ -1,5 +1,7 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
+    import { subscribeEngineConfigChanges } from "@/lib/search/engineConfigChanges";
+    import { getEngineConfigSnapshot } from "@/lib/DB/configStorage";
     import { slide } from "svelte/transition";
     import { flip } from "svelte/animate";
     import { dragHandle, dragHandleZone, SOURCES, TRIGGERS } from "svelte-dnd-action";
@@ -10,11 +12,9 @@
     } from "@/lib/DB/DB";
     import {
         FALLBACK_ENGINE_CATEGORY_ID,
-        getEngines,
         addEngine,
         setEngineEnabled,
         reorderEngineCategory,
-        getEngineCategories,
     } from "@/lib/DB/DB";
     import { searchBookmarks } from "@/lib/browser/bookmarks";
     import type { HistoryItem } from "@/lib/browser/history";
@@ -311,10 +311,7 @@
             return;
         }
         try {
-            const [categories, loadedEngines] = await Promise.all([
-                getEngineCategories(),
-                getEngines(),
-            ]);
+            const { categories, engines: loadedEngines } = await getEngineConfigSnapshot();
             if (requestId !== engineConfigRequestId) return;
             applyEngineCategories(categories);
             engines = loadedEngines;
@@ -337,14 +334,10 @@
     }
 
     onMount(() => {
-        const handleEngineConfigUpdated = () => {
+        const unsubscribe = subscribeEngineConfigChanges(() => {
             if (!configReady) return;
             void refreshEngineConfig();
-        };
-        window.addEventListener(
-            "engine-config-updated",
-            handleEngineConfigUpdated,
-        );
+        });
 
         mounted = true;
         inputValue = backPageInitInputValue();
@@ -362,10 +355,7 @@
             });
 
         return () => {
-            window.removeEventListener(
-                "engine-config-updated",
-                handleEngineConfigUpdated,
-            );
+            unsubscribe();
         };
     });
 
@@ -473,15 +463,13 @@
         void refreshEngineConfig();
     }
 
-    async function saveEngineChange(write: () => Promise<void>, apply: () => void) {
+    async function saveEngineChange(write: () => Promise<void>) {
         engineSaving = true;
         engineSaveError = false;
         ++engineConfigRequestId;
         try {
             await write();
-            apply();
-            syncSelectedEngine();
-            window.dispatchEvent(new CustomEvent("engine-config-updated"));
+            engineRefreshPending = true;
         } catch (error) {
             console.error("[Mooogor NewTab]", "search-engine:save-failed", error);
             engineSaveError = true;
@@ -526,13 +514,6 @@
         const ordered = dialogEngines.map((engine, order) => ({ ...engine, order }));
         await saveEngineChange(
             () => reorderEngineCategory(category, ordered.map(requireEngineId)),
-            () => {
-                engines = [
-                    ...engines.filter((engine) => engine.category !== category),
-                    ...ordered,
-                ];
-                dialogEngines = ordered;
-            },
         );
     }
 
@@ -778,12 +759,6 @@
         const enabled = engine.enabled === false;
         await saveEngineChange(
             () => setEngineEnabled(requireEngineId(engine), enabled),
-            () => {
-                engines = engines.map((item) =>
-                    item.id === engine.id ? { ...item, enabled } : item,
-                );
-                dialogEngines = [...categoryEngines];
-            },
         );
     }
 
@@ -835,7 +810,7 @@
                 ...payload,
                 faviconUrl: buildEngineFaviconUrl(payload.engineUrl),
             });
-            window.dispatchEvent(new CustomEvent("engine-config-updated"));
+            engineRefreshPending = true;
         } finally {
             engineSaving = false;
             refreshAfterEngineInteraction();

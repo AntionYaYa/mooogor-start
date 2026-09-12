@@ -1,6 +1,8 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte";
     import type { DndEvent } from "svelte-dnd-action";
+    import { SOURCES, TRIGGERS } from "svelte-dnd-action";
+    import { subscribeEngineConfigChanges } from "@/lib/search/engineConfigChanges";
     import { fly, slide } from "svelte/transition";
     import G from "./components/G.svelte";
     import T from "./components/T.svelte";
@@ -183,6 +185,8 @@
     let settingEnginesError = $state(false);
     let settingEnginesRequestId = 0;
     let settingEnginesSaving = $state(false);
+    let settingEnginesDragging = $state(false);
+    let engineRefreshPending = $state(false);
     let expandedCategoryIds = $state<Set<string>>(new Set());
     let pendingExpandCategoryId = $state<string | null>(null);
     let showCategoryManager = $state(false);
@@ -512,16 +516,16 @@
         expandedCategoryIds = new Set([resolvedId]);
     }
 
-    function notifyEngineConfigUpdated() {
-        if (typeof window === "undefined") return;
-        window.dispatchEvent(new CustomEvent("engine-config-updated"));
+    function handleEngineConfigUpdated() {
+        engineRefreshPending = true;
     }
 
-    function handleEngineConfigUpdated() {
-        if (!showSetting) return;
-        if (settingPage !== "searchEngines") return;
+    $effect(() => {
+        if (!engineRefreshPending || !showSetting || settingPage !== "searchEngines") return;
+        if (settingEnginesSaving || settingEnginesDragging || settingEnginesLoading || persistEngineLayoutTimer) return;
+        engineRefreshPending = false;
         void loadSearchSettingEngines(true);
-    }
+    });
 
     function handleWebSitesUpdated() {
         if (!showSetting) return;
@@ -975,14 +979,11 @@
     async function persistSearchEngineLayout() {
         settingEnginesSaving = true;
         try {
-            const nextState = await persistSearchEngineLayoutToDb(
+            await persistSearchEngineLayoutToDb(
                 settingEngineCategories,
                 settingEngineGroups,
             );
-            settingEngineGroups = nextState.groups;
-            settingEnabledEngines = nextState.enabledEngines;
-            settingDisabledEngines = nextState.disabledEngines;
-            notifyEngineConfigUpdated();
+            engineRefreshPending = true;
         } finally {
             settingEnginesSaving = false;
         }
@@ -992,6 +993,8 @@
         categoryId: CategoryId,
         e: CustomEvent<DndEvent<Engine>>,
     ) {
+        if (e.detail.info.trigger === TRIGGERS.DRAG_STARTED) settingEnginesDragging = true;
+        if (e.detail.info.trigger === TRIGGERS.DRAG_STOPPED) settingEnginesDragging = false;
         setSearchEngineGroupItems(categoryId, e.detail.items);
     }
 
@@ -999,6 +1002,7 @@
         categoryId: CategoryId,
         e: CustomEvent<DndEvent<Engine>>,
     ) {
+        if (e.detail.info.source === SOURCES.POINTER) settingEnginesDragging = false;
         setSearchEngineGroupItems(categoryId, e.detail.items);
         queuePersistSearchEngineLayout();
     }
@@ -1064,7 +1068,6 @@
         try {
             await Promise.all(engineIds.map((id) => deleteEngine(id)));
             await loadSearchSettingEngines(true);
-            notifyEngineConfigUpdated();
             return true;
         } finally {
             settingEnginesSaving = false;
@@ -1109,12 +1112,12 @@
     }
 
     async function loadSearchSettingEngines(force: boolean = false) {
+        if (settingEnginesDragging || persistEngineLayoutTimer) {
+            engineRefreshPending = true;
+            return;
+        }
         if (settingEnginesLoading) return;
         if (!force && settingEnginesLoaded) return;
-        if (persistEngineLayoutTimer) {
-            clearTimeout(persistEngineLayoutTimer);
-            persistEngineLayoutTimer = null;
-        }
         const requestId = ++settingEnginesRequestId;
         settingEnginesLoading = true;
         settingEnginesError = false;
@@ -1172,7 +1175,6 @@
         try {
             const newId = await addEngineCategory(name);
             await loadSearchSettingEngines(true);
-            notifyEngineConfigUpdated();
             return newId;
         } finally {
             settingEnginesSaving = false;
@@ -1184,7 +1186,6 @@
         try {
             await renameEngineCategory(id, name);
             await loadSearchSettingEngines(true);
-            notifyEngineConfigUpdated();
         } finally {
             settingEnginesSaving = false;
         }
@@ -1207,7 +1208,6 @@
             await deleteEngineCategory(id);
             await deleteSearchKeysForCategory(id);
             await loadSearchSettingEngines(true);
-            notifyEngineConfigUpdated();
         } finally {
             settingEnginesSaving = false;
         }
@@ -1232,7 +1232,6 @@
             settingEngineGroups = nextGroups;
             syncSearchSettingEnginesFromGroups(nextGroups);
             await updateEngineCategoriesOrder(items);
-            notifyEngineConfigUpdated();
         } finally {
             settingEnginesSaving = false;
         }
@@ -1248,22 +1247,11 @@
         settingEnginesSaving = true;
         try {
             if (editingSearchEngine?.id) {
-                const currentEngine =
-                    settingEnabledEngines.find(
-                        (item) => item.id === editingSearchEngine?.id,
-                    ) ??
-                    settingDisabledEngines.find(
-                        (item) => item.id === editingSearchEngine?.id,
-                    );
-                if (!currentEngine) return;
                 await updateEngine({
-                    ...currentEngine,
                     id: editingSearchEngine.id,
                     title: payload.title,
                     engineUrl: payload.engineUrl,
-                    faviconUrl:
-                        buildEngineFaviconUrl(payload.engineUrl) ||
-                        currentEngine.faviconUrl,
+                    faviconUrl: buildEngineFaviconUrl(payload.engineUrl),
                     category: normalizedCategory,
                     enabled: payload.enabled,
                 });
@@ -1277,7 +1265,6 @@
                 });
             }
             await loadSearchSettingEngines(true);
-            notifyEngineConfigUpdated();
         } finally {
             settingEnginesSaving = false;
         }
@@ -1292,7 +1279,6 @@
                 closeSearchEngineEditor();
             }
             await loadSearchSettingEngines(true);
-            notifyEngineConfigUpdated();
         } finally {
             settingEnginesSaving = false;
         }
@@ -1334,7 +1320,6 @@
                 defaultCategories.map((category) => category.id),
             );
             await loadSearchSettingEngines(true);
-            notifyEngineConfigUpdated();
         } catch (error) {
             settingEnginesError = true;
             console.error("[Mooogor Settings]", "search-engines:reset-failed", error);
@@ -1387,10 +1372,7 @@
     }
 
     onMount(() => {
-        window.addEventListener(
-            "engine-config-updated",
-            handleEngineConfigUpdated,
-        );
+        const unsubscribe = subscribeEngineConfigChanges(handleEngineConfigUpdated);
         window.addEventListener("websites-updated", handleWebSitesUpdated);
         window.addEventListener("bookmarks-updated", handleBookmarksUpdated);
         window.addEventListener(
@@ -1401,13 +1383,10 @@
             "open-settings-search-engines",
             handleOpenSearchEngines,
         );
+        return unsubscribe;
     });
 
     onDestroy(() => {
-        window.removeEventListener(
-            "engine-config-updated",
-            handleEngineConfigUpdated,
-        );
         window.removeEventListener("websites-updated", handleWebSitesUpdated);
         window.removeEventListener("bookmarks-updated", handleBookmarksUpdated);
         cancelBookmarkFolderChoicesRefresh();

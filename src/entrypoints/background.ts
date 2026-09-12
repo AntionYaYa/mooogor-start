@@ -4,7 +4,6 @@ import {
   getDomainFromUrl,
   getWebSite,
   getEngine,
-  getAllEnableEngine,
 } from "../lib/DB/DB";
 import type { Engine, Favicon } from "../lib/DB/DB";
 import type { AppLanguage } from "../lib/utils/settings";
@@ -16,10 +15,12 @@ import {
   initializeStoredConfig,
 } from "../lib/DB/configMigration";
 import {
-  ensureDefaultEngineCategories,
-  ensureDefaultEngines,
   ensureDefaultWebSites,
 } from "../lib/DB/DB";
+import { ensureDefaultEngines } from "../lib/DB/engines";
+import { ensureDefaultEngineCategories } from "../lib/DB/engineCategories";
+import { executeEngineCommand } from "../lib/DB/engineCommandHandler";
+import { getEngineConfigSnapshot } from "../lib/DB/configStorage";
 import { buildDefaultWebSites } from "../lib/config/defaultWebSites";
 import { buildDefaultEngines } from "../lib/DB/defaultEnginesFactory";
 import { buildDefaultEngineCategories } from "../lib/config/engineCategories";
@@ -41,7 +42,7 @@ import { persistLocalStorageHealthUpdate } from "../lib/storage/localStorageHeal
 
 type RelatedSearchEngine = Pick<
   Engine,
-  "id" | "title" | "engineUrl" | "faviconUrl" | "category" | "order"
+  "id" | "title" | "engineUrl" | "faviconUrl" | "category" | "order" | "enabled"
 > & {
   iconUrl?: string;
 };
@@ -49,6 +50,7 @@ type RelatedSearchEngine = Pick<
 type RelatedSearchPayload = {
   matchedEngine: RelatedSearchEngine;
   engines: RelatedSearchEngine[];
+  categoryName: string;
   theme: ReturnType<typeof resolveTheme>;
   language: AppLanguage;
   texts: RelatedSearchTexts;
@@ -58,6 +60,7 @@ type RelatedSearchTexts = {
   placeholder: string;
   searchShortcutTip: string;
   switchShortcutTip: string;
+  saveFailed: string;
 };
 
 type MessageMap = Record<string, { message?: string }>;
@@ -116,6 +119,13 @@ export default defineBackground(() => {
 
   browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!message || typeof message !== "object") return;
+    if (message.type === "mutateEngineConfig") {
+      executeEngineCommand(message.operation, message.args).then(
+        (value) => sendResponse({ ok: true, value }),
+        (error) => sendResponse({ ok: false, error: error instanceof Error ? error.message : String(error) }),
+      );
+      return true;
+    }
     const { type, payload, requestId, state } = message as {
       type?: string;
       requestId?: string;
@@ -286,18 +296,21 @@ async function onGetRelatedSearchEngines(data?: {
     return null;
   }
 
-  const enabledEngines = await getAllEnableEngine();
-  const matchedEngine = enabledEngines.find(
+  const { categories, engines: allEngines } = await getEngineConfigSnapshot();
+  const matchedEngine = allEngines.find(
     (engine) => getEngineHost(engine) === currentHost,
   );
   if (!matchedEngine) return null;
 
   const category = matchedEngine.category?.trim() || "1";
-  const engines = enabledEngines.filter(
+  const engines = allEngines.filter(
     (engine) => (engine.category?.trim() || "1") === category,
   );
+  const engineCategory = categories.find((item) => item.id === category);
+  if (!engineCategory) return null;
 
   return {
+    categoryName: engineCategory.name,
     matchedEngine: await withInjectableIcon(matchedEngine),
     engines: await Promise.all(engines.map(withInjectableIcon)),
     theme: resolveTheme(settings.theme),
@@ -308,6 +321,7 @@ async function onGetRelatedSearchEngines(data?: {
 
 function getRelatedSearchTexts(language: AppLanguage): RelatedSearchTexts {
   return {
+    saveFailed: getLocaleMessage(language, "nt_common_save_failed"),
     placeholder: getLocaleMessage(language, "nt_search_placeholder_fallback"),
     searchShortcutTip: getLocaleMessage(
       language,

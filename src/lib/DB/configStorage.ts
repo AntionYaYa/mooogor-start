@@ -11,7 +11,7 @@ import {
 } from "@/lib/storage/localStorageHealth";
 
 export const CONFIG_STORAGE_KEY = "mooogor.config.v1";
-const CONFIG_STORAGE_KEYS = {
+export const CONFIG_STORAGE_KEYS = {
   websites: "mooogor.websites.v1",
   websiteFolders: "mooogor.website-folders.v1",
   engines: "mooogor.engines.v1",
@@ -169,6 +169,14 @@ export async function getStoredConfig(): Promise<StoredConfig> {
   const config = await readStoredConfig();
   if (config) return config;
   throw new Error("Configuration is not ready");
+}
+
+export async function getEngineConfigSnapshot() {
+  const config = await getStoredConfig();
+  return {
+    categories: [...config.engineCategories].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    engines: [...config.engines].sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999)),
+  };
 }
 
 export async function updateStoredConfig<T>(

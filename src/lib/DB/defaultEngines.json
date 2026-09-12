@@ -145,7 +145,7 @@
       },
       {
         "title": "Freepik",
-        "engineUrl": "https://www.freepik.com/search?format=search&query=%s",
+        "engineUrl": "https://www.magnific.com/search?format=search&query=%s",
         "faviconKey": "Freepik",
         "enabledByLanguage": {
           "default": false,

@@ -1,10 +1,15 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
+  import { browser } from "wxt/browser";
+  import { setEngineEnabled } from "@/lib/DB/engineCommands";
+  import { subscribeEngineConfigChanges } from "@/lib/search/engineConfigChanges";
   import EngineIcon from "@/lib/EngineIcon.svelte";
   import Button from "@/lib/components/Button.svelte";
   import G from "@/lib/components/G.svelte";
   import Icon from "@/lib/components/Icon.svelte";
   import T from "@/lib/components/T.svelte";
+  import Popup from "@/lib/components/Popup.svelte";
+  import Switch from "@/lib/components/Switch.svelte";
   import { resolveEngineByDomain } from "./relatedSearchEngineMatch";
   import {
     readRelatedSearchPosition,
@@ -20,17 +25,20 @@
     iconUrl?: string;
     category?: string;
     order?: number;
+    enabled?: boolean;
   };
 
   export type RelatedSearchPayload = {
     matchedEngine: RelatedSearchEngine;
     engines: RelatedSearchEngine[];
+    categoryName: string;
     theme: "default" | "ocean" | "sunset" | "purple" | "yellow";
     language: "auto" | "zh_CN" | "zh_TW" | "en";
     texts: {
       placeholder: string;
       searchShortcutTip: string;
       switchShortcutTip: string;
+      saveFailed: string;
     };
   };
 
@@ -41,6 +49,7 @@
     searchShortcutTip: string;
     switchShortcutTip: string;
     onClose: () => void;
+    portalTarget: ShadowRoot;
   }
 
   let {
@@ -50,9 +59,18 @@
     searchShortcutTip,
     switchShortcutTip,
     onClose,
+    portalTarget,
   }: Props = $props();
 
   let keyword = $state("");
+  let engines = $state<RelatedSearchEngine[]>([]);
+  let showEngineDialog = $state(false);
+  let engineSaving = $state(false);
+  let engineRefreshPending = false;
+  let engineRequestId = 0;
+  let categoryName = $state("");
+  let saveError = $state("");
+  const enabledEngines = $derived(engines.filter((engine) => engine.enabled !== false));
   let selectedEngineUrl = $state("");
   let inputFocused = $state(false);
   let engineFocused = $state(false);
@@ -70,14 +88,64 @@
 
   onMount(() => {
     keyword = initialKeyword;
-    selectedEngineUrl = resolveEngineByDomain(
-      data.engines,
-      location.hostname,
-      data.matchedEngine,
-    ).engineUrl;
+    engines = [...data.engines];
+    categoryName = data.categoryName;
+    selectedEngineUrl = getSelectedEngine()?.engineUrl ?? "";
     void restorePosition();
     void syncInputWidth();
+    const unsubscribe = subscribeEngineConfigChanges(() => void refreshEngines());
+    void refreshEngines();
+    return () => {
+      unsubscribe();
+      ++engineRequestId;
+    };
   });
+
+  async function refreshEngines() {
+    if (engineSaving) {
+      engineRefreshPending = true;
+      return;
+    }
+    engineRefreshPending = false;
+    const requestId = ++engineRequestId;
+    try {
+      const next: RelatedSearchPayload | null = await browser.runtime.sendMessage({
+        type: "getRelatedSearchEngines",
+        payload: { url: location.href },
+      });
+      if (requestId !== engineRequestId) return;
+      if (!next) {
+        onClose();
+        return;
+      }
+      engines = next.engines;
+      categoryName = next.categoryName;
+      selectedEngineUrl = getSelectedEngine()?.engineUrl ?? "";
+      saveError = "";
+    } catch (error) {
+      if (requestId !== engineRequestId) return;
+      console.error("Failed to read related search engines", error);
+      saveError = data.texts.saveFailed;
+    }
+  }
+
+  async function toggleEngine(engine: RelatedSearchEngine) {
+    if (engineSaving || engine.id === undefined) return;
+    const enabled = engine.enabled === false;
+    engineSaving = true;
+    ++engineRequestId;
+    saveError = "";
+    try {
+      await setEngineEnabled(engine.id, enabled);
+      engineRefreshPending = true;
+    } catch (error) {
+      console.error("Failed to update related search engine", error);
+      saveError = data.texts.saveFailed;
+    } finally {
+      engineSaving = false;
+      if (engineRefreshPending) await refreshEngines();
+    }
+  }
 
   async function syncInputWidth() {
     await tick();
@@ -146,23 +214,24 @@
 
     event.preventDefault();
     event.stopPropagation();
-    const index = data.engines.findIndex(
+    const index = enabledEngines.findIndex(
       (item) => item.engineUrl === engine.engineUrl,
     );
     const nextIndex =
       event.key === "ArrowLeft"
-        ? (index - 1 + data.engines.length) % data.engines.length
-        : (index + 1) % data.engines.length;
-    const nextEngine = data.engines[nextIndex];
+        ? (index - 1 + enabledEngines.length) % enabledEngines.length
+        : (index + 1) % enabledEngines.length;
+    const nextEngine = enabledEngines[nextIndex];
     if (!nextEngine) return;
     selectEngine(nextEngine);
     getEngineButton(nextEngine.engineUrl)?.focus();
   }
 
   function getSelectedEngine() {
+    if (!enabledEngines.length) return undefined;
     return (
-      data.engines.find((engine) => engine.engineUrl === selectedEngineUrl) ??
-      resolveEngineByDomain(data.engines, location.hostname, data.matchedEngine)
+      enabledEngines.find((engine) => engine.engineUrl === selectedEngineUrl) ??
+      resolveEngineByDomain(enabledEngines, location.hostname, enabledEngines[0])
     );
   }
 
@@ -255,7 +324,7 @@
   }
 </script>
 
-<div class="search" bind:this={panelEl}>
+<div class="search" bind:this={panelEl} style:visibility={showEngineDialog ? "hidden" : "visible"}>
   <div class="close">
     <Button onclick={onClose}>
       <G>
@@ -309,7 +378,7 @@
             />
           </div>
           <div class="engines" bind:this={enginesEl}>
-            {#each data.engines as engine (engine.engineUrl)}
+            {#each enabledEngines as engine (engine.engineUrl)}
               <a
                 class="engine"
                 class:selected={engine.engineUrl === selectedEngineUrl}
@@ -332,6 +401,9 @@
               </a>
             {/each}
           </div>
+          <Button onclick={() => { saveError = ""; showEngineDialog = true; }}>
+            <G><Icon name="Plus" color="var(--c-text)" opacity={0.6} /></G>
+          </Button>
         </div>
       </div>
     </div>
@@ -344,6 +416,27 @@
   </div>
 </div>
 
+{#if showEngineDialog}
+  <Popup type="s" title={categoryName} {portalTarget} zIndex={2147483647} onclickClose={() => {
+    if (!engineSaving) showEngineDialog = false;
+  }}>
+    <G vertical full gap>
+      <div class="engine_list">
+        {#each engines as engine (engine.id)}
+          <div class="engine_row">
+            <EngineIcon alt={engine.title ?? ""} engineUrl={engine.engineUrl} src={engine.iconUrl} />
+            <div class="engine_name"><T nowrap>{engine.title ?? ""}</T></div>
+            <Switch turnOn={engine.enabled !== false} label={engine.title}
+              disabled={engineSaving || (engine.enabled !== false && enabledEngines.length === 1)}
+              onclick={() => void toggleEngine(engine)} />
+          </div>
+        {/each}
+      </div>
+      {#if saveError}<T>{saveError}</T>{/if}
+    </G>
+  </Popup>
+{/if}
+
 {#snippet tip(tip: string)}
   <div class="tip" transition:slide={{ duration: 200 }}>
     <T type="s" color="var(--c-text-1)" nowrap>{tip}</T>
@@ -351,6 +444,30 @@
 {/snippet}
 
 <style>
+  .engine_list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    width: 100%;
+    max-height: min(420px, calc(100vh - 220px));
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: var(--gap);
+    border: var(--border);
+    border-radius: var(--r1);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .engine_row {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
+    min-height: 44px;
+    padding: var(--gap);
+    border-radius: var(--r);
+    background-color: var(--c-mask);
+    box-sizing: border-box;
+  }
+  .engine_name { flex: 1; min-width: 0; }
   .search {
     position: fixed;
     top: 10px;
@@ -455,7 +572,7 @@
   .input_group {
     display: flex;
     align-items: center;
-    gap: var(--gap);
+    gap: 0;
     border-radius: calc(var(--r1) - 2px);
     background-color: var(--c-bg1);
     box-sizing: border-box;

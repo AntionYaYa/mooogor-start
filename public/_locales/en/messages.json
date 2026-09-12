@@ -240,10 +240,10 @@
     "message": "Keep the last selected category next time Quick Search opens"
   },
   "nt_settings_search_auto_focus": {
-    "message": "Auto-focus search box (Beta)"
+    "message": "Auto-focus search box"
   },
   "nt_settings_search_auto_focus_tip": {
-    "message": "Try to focus the page search box in new tabs; compatibility may vary by browser version"
+    "message": "Automatically focus the search box when opening a new tab"
   },
   "nt_settings_search_inject_related": {
     "message": "Inject into related pages"

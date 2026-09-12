@@ -14,13 +14,15 @@
 		shake?: boolean;
 		type: Type;
 		hideHeader?: boolean;
+		portalTarget?: HTMLElement | ShadowRoot;
+		zIndex?: number;
 	}
-	let { children, title, onclickClose, type, hideHeader = false }: Props = $props();
+	let { children, title, onclickClose, type, hideHeader = false, portalTarget = document.body, zIndex = 1000 }: Props = $props();
 
 	let isZooming = $state(false);
 
 	function portal(node: HTMLElement) {
-		document.body.appendChild(node);
+		portalTarget.appendChild(node);
 		return {
 			destroy() {
 				node.remove();
@@ -62,6 +64,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class="mask"
+	style:z-index={zIndex}
 	use:portal
 	transition:fade={{ duration: 200 }}
 	onclick={handleMaskClick}

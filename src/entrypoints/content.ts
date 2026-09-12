@@ -143,7 +143,7 @@ async function mountRelatedSearchPanel(
     append: "last",
     isolateEvents: true,
     css: getShadowSharedStyles(),
-    onMount(container, _shadow, shadowHost) {
+    onMount(container, shadow, shadowHost) {
       shadowHost.id = "mooogor-related-search";
       if (data.theme !== "default") {
         shadowHost.dataset.theme = data.theme;
@@ -152,6 +152,7 @@ async function mountRelatedSearchPanel(
         target: container,
         props: {
           data,
+          portalTarget: shadow,
           initialKeyword,
           placeholder: data.texts.placeholder,
           searchShortcutTip: data.texts.searchShortcutTip,
@@ -171,7 +172,7 @@ async function mountRelatedSearchPanel(
 }
 
 function getShadowSharedStyles() {
-  return `${baseStyles}\n${colorStyles}\nhtml, body { margin: 0; padding: 0; width: max-content; height: max-content; }`
+  return `${baseStyles}\n${colorStyles}\n:host { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }\nhtml, body { margin: 0; padding: 0; width: max-content; height: max-content; }`
     .replaceAll(":root", ":host");
 }
 

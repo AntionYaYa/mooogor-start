@@ -1,13 +1,9 @@
 import {
-  ensureDefaultEngineCategories,
   FALLBACK_ENGINE_CATEGORY_ID,
-  getDisabledEngines,
-  getEnabledEngines,
-  getEngineCategories,
   updateEnginesLayout,
 } from "@/lib/DB/DB";
 import type { Engine, EngineCategoryItem } from "@/lib/DB/DB";
-import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
+import { getEngineConfigSnapshot } from "@/lib/DB/configStorage";
 
 export type CategoryId = string;
 export type SearchEngineGroups = Record<CategoryId, Engine[]>;
@@ -116,13 +112,9 @@ export function buildEngineFaviconUrl(engineUrl: string): string {
 }
 
 export async function loadSearchEngineSettings(): Promise<SearchEngineSettingsData> {
-  await ensureDefaultEngineCategories(buildDefaultEngineCategories());
-
-  const [rawCategories, enabled, disabled] = await Promise.all([
-    getEngineCategories(),
-    getEnabledEngines(),
-    getDisabledEngines(),
-  ]);
+  const { categories: rawCategories, engines } = await getEngineConfigSnapshot();
+  const enabled = engines.filter((engine) => engine.enabled !== false);
+  const disabled = engines.filter((engine) => engine.enabled === false);
 
   const visibleCategories = rawCategories.filter(
     (item) => item.id !== FALLBACK_ENGINE_CATEGORY_ID,
@@ -157,7 +149,7 @@ export async function loadSearchEngineSettings(): Promise<SearchEngineSettingsDa
 export async function persistSearchEngineLayout(
   categories: EngineCategoryItem[],
   groups: SearchEngineGroups,
-): Promise<SearchEngineSettingsData> {
+): Promise<void> {
   const orderedEngines = categories.flatMap((category) =>
     (groups[category.id] ?? []).map((engine, index) => ({
       ...engine,
@@ -170,21 +162,7 @@ export async function persistSearchEngineLayout(
     (engine) => (engine.id ? [{ ...engine, id: engine.id }] : []),
   );
 
-  if (!orderedWithIds.length) {
-    return {
-      categories,
-      groups,
-      ...splitSearchEnginesByEnabled(categories, groups),
-    };
-  }
+  if (!orderedWithIds.length) return;
 
-  await updateEnginesLayout(orderedWithIds);
-
-  const syncedGroups = buildSearchEngineGroups(categories, orderedWithIds);
-
-  return {
-    categories,
-    groups: syncedGroups,
-    ...splitSearchEnginesByEnabled(categories, syncedGroups),
-  };
+  await updateEnginesLayout(orderedWithIds.map(({ id, category }) => ({ id, category })));
 }
