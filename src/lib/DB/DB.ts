@@ -8,6 +8,7 @@ export type { WebSite } from "./database";
 export {
   addWebSite,
   updateWebSite,
+  updateWebSiteBackgroundColor,
   deleteWebSite,
   getAllWebSite,
   getWebSite,

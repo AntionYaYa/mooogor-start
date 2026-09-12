@@ -1,4 +1,6 @@
 {
+  "nt_get_background_color": { "message": "取得背景色" },
+  "nt_remove_background_color": { "message": "移除背景色" },
   "nt_common_action_failed": { "message": "操作失敗，請重試。" },
   "nt_common_save_failed": { "message": "儲存失敗，請重試。" },
   "extName": {

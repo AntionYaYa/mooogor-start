@@ -16,6 +16,8 @@ export interface WebSite {
   /** Colors calculated from the site's icon when it is added. */
   backgroundColor?: string;
   backgroundColorAlt?: string;
+  /** Explicit removal must survive default-color backfills and ordinary edits. */
+  backgroundColorRemoved?: boolean;
   /** Undefined means the site lives at the root level. */
   folderId?: number;
   order?: number; // 排序顺序，越小越靠前

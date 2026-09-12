@@ -1,4 +1,6 @@
 {
+  "nt_get_background_color": { "message": "Get background color" },
+  "nt_remove_background_color": { "message": "Remove background color" },
   "nt_common_action_failed": { "message": "Couldn't complete the action. Please try again." },
   "nt_common_save_failed": { "message": "Couldn't save. Please try again." },
   "extName": {

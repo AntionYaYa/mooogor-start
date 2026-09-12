@@ -59,6 +59,11 @@ export async function updateWebSite(webSite: WebSite & { id: number }) {
       createAt: existing?.createAt ?? webSite.createAt ?? Date.now(),
       updateAt: Date.now(),
     };
+    if (existing?.backgroundColorRemoved) {
+      delete next.backgroundColor;
+      delete next.backgroundColorAlt;
+      next.backgroundColorRemoved = true;
+    }
     if (index >= 0) config.websites[index] = next;
     else config.websites.push(next);
     return webSite.id;
@@ -74,6 +79,28 @@ export async function deleteWebSite(id: number) {
   await deleteWebSiteScreenshot(id);
   notifyWebSitesUpdated();
   return id;
+}
+
+export async function updateWebSiteBackgroundColor(
+  id: number,
+  url: string,
+  colors: { backgroundColor: string; backgroundColorAlt?: string } | null,
+) {
+  await updateStoredConfig((config) => {
+    const site = config.websites.find((item) => item.id === id && item.url === url);
+    if (!site) return;
+    if (colors) {
+      site.backgroundColor = colors.backgroundColor;
+      site.backgroundColorAlt = colors.backgroundColorAlt;
+      delete site.backgroundColorRemoved;
+    } else {
+      delete site.backgroundColor;
+      delete site.backgroundColorAlt;
+      site.backgroundColorRemoved = true;
+    }
+    site.updateAt = Date.now();
+  });
+  notifyWebSitesUpdated();
 }
 
 export async function getAllWebSite(): Promise<WebSite[]> {
@@ -171,7 +198,7 @@ export async function ensureDefaultWebSites(defaults: Omit<WebSite, "id">[]) {
       const defaultsByDomain = new Map(defaults.map((site) => [site.domain, site]));
       config.websites = config.websites.map((site) => {
         const preset = defaultsByDomain.get(site.domain);
-        if (!preset || site.backgroundColor) return site;
+        if (!preset || site.backgroundColor || site.backgroundColorRemoved) return site;
         return {
           ...site,
           backgroundColor: preset.backgroundColor,

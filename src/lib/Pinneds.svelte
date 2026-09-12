@@ -12,6 +12,7 @@
   import {
     addWebSite,
     updateWebSite,
+    updateWebSiteBackgroundColor,
     deleteWebSite,
     updateWebSiteScreenshot,
     removeWebSiteScreenshot,
@@ -24,6 +25,7 @@
   import type { WebSite, WebSiteFolder } from "@/lib/DB/DB";
   import type { FrequentSite } from "@/lib/browser/history";
   import { addToPinneds } from "@/lib/utils/pinneds";
+  import { getWebsiteCardColors } from "@/lib/utils/websiteCardColors";
   import Button from "./components/Button.svelte";
   import AddPinned from "./AddPinned.svelte";
   import MoveCommonSites from "./MoveCommonSites.svelte";
@@ -83,7 +85,7 @@
   let movingSite: WebSite | undefined = $state();
 
   function openMoveSite() {
-    if (readOnly || currentPinned?.id == null) return;
+    if (readOnly || currentPinned?.id == null || !folderIds.size) return;
     movingSite = currentPinned;
     showPinnedMenu = false;
   }
@@ -105,7 +107,9 @@
   const REORDER_HOVER_DELAY_MS = 280;
   let draggedGridItemId: string | undefined = $state();
   let capturingWebsiteId: number | undefined = $state();
-  let currentPinnedHasScreenshot = $state(false);
+  let currentPinnedHasScreenshot = $state<boolean | undefined>();
+  let screenshotMenuRequest = 0;
+  let coloringWebsiteId: number | undefined = $state();
   let pageEl: HTMLElement | undefined = $state();
   let frequentTitleStuck = $state(false);
   let confirmOptions = $state<{
@@ -183,13 +187,19 @@
     menuY = e.clientY;
     showFrequentMenu = false;
     showPinnedMenu = true;
-    currentPinnedHasScreenshot = false;
+    const request = ++screenshotMenuRequest;
+    currentPinnedHasScreenshot = undefined;
     if (pinned.id != null) {
       void getWebSiteScreenshot(pinned.id, pinned.url).then((screenshot) => {
-        if (showPinnedMenu && currentPinned?.id === pinned.id) {
+        if (showPinnedMenu && request === screenshotMenuRequest) {
           currentPinnedHasScreenshot = !!screenshot;
         }
-      }).catch(() => undefined);
+      }).catch((error) => {
+        console.error("[Mooogor Screenshot]", error);
+        if (request === screenshotMenuRequest) showPinnedMenu = false;
+      });
+    } else {
+      currentPinnedHasScreenshot = false;
     }
   }
 
@@ -498,6 +508,34 @@
     await onUpdate();
   }
 
+  async function clickGetBackgroundColor() {
+    const site = currentPinned;
+    if (readOnly || site?.id == null || coloringWebsiteId != null) return;
+    showPinnedMenu = false;
+    coloringWebsiteId = site.id;
+    try {
+      const colors = await getWebsiteCardColors(site.url, site.domain);
+      if (!colors.backgroundColor) throw new Error("Background color unavailable");
+      await updateWebSiteBackgroundColor(site.id, site.url, {
+        backgroundColor: colors.backgroundColor,
+        backgroundColorAlt: colors.backgroundColorAlt,
+      });
+      await onUpdate();
+    } catch (error) {
+      console.error("[Mooogor Background Color]", error);
+    } finally {
+      coloringWebsiteId = undefined;
+    }
+  }
+
+  async function clickRemoveBackgroundColor() {
+    const site = currentPinned;
+    if (readOnly || site?.id == null) return;
+    showPinnedMenu = false;
+    await updateWebSiteBackgroundColor(site.id, site.url, null);
+    await onUpdate();
+  }
+
   function trackStickyFrequentTitle(node: HTMLElement) {
     const scrollContainer = node.closest(".tabs_contents");
     const root =
@@ -745,23 +783,31 @@
     onSave={moveSite} onclickClose={() => (movingSite = undefined)} />
 {/if}
 
-{#if showPinnedMenu && currentPinned && !readOnly}
+{#if showPinnedMenu && currentPinned && currentPinnedHasScreenshot !== undefined && !readOnly}
   <LinkContextMenu
     x={menuX}
     y={menuY}
     url={currentPinned.url}
     onClose={() => (showPinnedMenu = false)}
   >
-    <Button full onclick={() => void clickCaptureScreenshot()}>
-      <G>
-        <T>{t("nt_get_screenshot")}</T>
-      </G>
-    </Button>
     {#if currentPinnedHasScreenshot}
       <Button full onclick={() => void clickRemoveScreenshot()}>
         <G>
           <T>{t("nt_remove_screenshot")}</T>
         </G>
+      </Button>
+    {:else}
+      <Button full disabled={capturingWebsiteId != null} onclick={() => void clickCaptureScreenshot()}>
+        <G><T>{t("nt_get_screenshot")}</T></G>
+      </Button>
+    {/if}
+    {#if currentPinned.backgroundColor}
+      <Button full onclick={() => void clickRemoveBackgroundColor()}>
+        <G><T>{t("nt_remove_background_color")}</T></G>
+      </Button>
+    {:else}
+      <Button full disabled={coloringWebsiteId != null} onclick={() => void clickGetBackgroundColor()}>
+        <G><T>{t("nt_get_background_color")}</T></G>
       </Button>
     {/if}
     <Button full onclick={clickEditWebSite}>
@@ -769,9 +815,11 @@
         <T>{t("nt_edit")}</T>
       </G>
     </Button>
-    <Button full onclick={openMoveSite}>
-      <G><T>{t("nt_move")}</T></G>
-    </Button>
+    {#if folderIds.size > 0}
+      <Button full onclick={openMoveSite}>
+        <G><T>{t("nt_move")}</T></G>
+      </Button>
+    {/if}
     <Button full onclick={() => void clickDeleteWebSite()}>
       <G>
         <T color="var(--c-red)">{t("nt_delete")}</T>

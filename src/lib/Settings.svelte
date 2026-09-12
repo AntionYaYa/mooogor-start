@@ -1685,7 +1685,9 @@
         disabled={commonSitesLoading}
         onselectall={toggleSelectAllCommonSites}
         ondelete={deleteSelectedCommonSites}
-        onmove={() => (showCommonMoveDialog = true)}
+        onmove={commonSiteFolders.some((folder) => folder.id != null)
+            ? () => (showCommonMoveDialog = true)
+            : undefined}
     />
 {/snippet}
 

@@ -1,6 +1,10 @@
 import { getBuiltInWebsiteLogo } from "@/lib/DB/websiteLogos";
+import type { WebSite } from "@/lib/DB/database";
 
-export async function getWebsiteCardColors(url: string, domain: string) {
+export async function getWebsiteCardColors(
+  url: string,
+  domain: string,
+): Promise<Pick<WebSite, "backgroundColor" | "backgroundColorAlt">> {
   try {
     const builtInLogo = getBuiltInWebsiteLogo(domain);
     const getRuntimeUrl = browser.runtime.getURL as (path: string) => string;
