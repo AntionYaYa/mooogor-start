@@ -2,23 +2,24 @@
     import { onMount, tick } from "svelte";
     import { slide } from "svelte/transition";
     import { flip } from "svelte/animate";
-    import { dndzone } from "svelte-dnd-action";
+    import { dragHandle, dragHandleZone, SOURCES, TRIGGERS } from "svelte-dnd-action";
     import type { DndEvent } from "svelte-dnd-action";
     import type {
         Engine,
-        EngineCategory,
         EngineCategoryItem,
     } from "@/lib/DB/DB";
     import {
         FALLBACK_ENGINE_CATEGORY_ID,
-        getEnabledEngines,
-        getDisabledEngines,
+        getEngines,
+        setEngineEnabled,
+        reorderEngineCategory,
         getEngineCategories,
-        updateEnginesState,
     } from "@/lib/DB/DB";
     import { searchBookmarks } from "@/lib/browser/bookmarks";
     import type { HistoryItem } from "@/lib/browser/history";
     import Button from "./components/Button.svelte";
+    import Popup from "./components/Popup.svelte";
+    import Switch from "./components/Switch.svelte";
     import BkmkIcon from "./BkmkIcon.svelte";
     import Icon from "./components/Icon.svelte";
     import T from "./components/T.svelte";
@@ -80,8 +81,11 @@
     let engineCategories: EngineCategoryItem[] = $state([]);
     let selectedCategoryId = $state("1");
     let enginesGroup: TabItem[] = $state([]);
-    let enabledEngines: Engine[] = $state([]);
-    let disabledEngines: Engine[] = $state([]);
+    let engines: Engine[] = $state([]);
+    let dialogEngines: Engine[] = $state([]);
+    let engineSaving = $state(false);
+    let engineSaveError = $state(false);
+    let engineRefreshPending = false;
     let bookmarksResults: SearchItem[] = $state([]);
     let historyResults: SearchItem[] = $state([]);
     let historyLoading = $state(false);
@@ -92,7 +96,7 @@
     let listEls: HTMLDivElement | undefined = $state();
     let searchPanelEl: HTMLDivElement | undefined = $state();
     let inputValue: string = $state("");
-    let showMoreEngines = $state(false);
+    let showEngineDialog = $state(false);
     let searchSeq = $state(0);
     let historySeq = $state(0);
     let bookmarksDebounceId: ReturnType<typeof setTimeout> | null = null;
@@ -112,7 +116,7 @@
     let fallbackConfigApplied = $state(false);
     let engineConfigRequestId = 0;
     let searchStorageReady = false;
-    let suppressEngineToggleClick = false;
+    let engineListDragging = $state(false);
     let autoFocusScheduled = false;
     let searchConfigLoading = $derived(loading || !engineConfigReady);
     let effectiveReadOnly = $derived(readOnly || !databaseConfigLoaded);
@@ -139,8 +143,7 @@
         });
     });
     let showSearchKeys = $derived(
-        !showMoreEngines &&
-            recordSearchKeywords &&
+        recordSearchKeywords &&
             searchAreaFocused &&
             !inputValue.trim() &&
             !bookmarksResults.length &&
@@ -150,11 +153,9 @@
             searchKeys.length > 0,
     );
     let showSearchShortcutTip = $derived(
-        !showMoreEngines && searchInputFocused && !!inputValue.trim(),
+        searchInputFocused && !!inputValue.trim(),
     );
-    let showSwitchShortcutTip = $derived(
-        !showMoreEngines && searchEngineFocused,
-    );
+    let showSwitchShortcutTip = $derived(searchEngineFocused);
 
     const SEARCH_DEBOUNCE_MS = 200;
     let isComposing = $state(false);
@@ -162,34 +163,14 @@
         return engineCategories[0]?.id ?? "1";
     }
 
-    function normalizeEngineCategoryId(category?: string): EngineCategory {
-        const normalized = category?.trim();
-        if (
-            normalized &&
-            engineCategories.some((item) => item.id === normalized)
-        ) {
-            return normalized;
-        }
-        return getFallbackCategoryId();
-    }
-
-    let displayEnabledEngines = $derived(
-        !selectedCategoryId
-            ? enabledEngines
-            : enabledEngines.filter(
-                  (engine) =>
-                      normalizeEngineCategoryId(engine.category) ===
-                      selectedCategoryId,
-              ),
+    let categoryEngines = $derived(
+        engines.filter((engine) => engine.category === selectedCategoryId),
     );
-    let displayDisabledEngines = $derived(
-        !selectedCategoryId
-            ? disabledEngines
-            : disabledEngines.filter(
-                  (engine) =>
-                      normalizeEngineCategoryId(engine.category) ===
-                      selectedCategoryId,
-              ),
+    let displayEnabledEngines = $derived(
+        categoryEngines.filter((engine) => engine.enabled !== false),
+    );
+    let selectedCategory = $derived(
+        engineCategories.find((category) => category.id === selectedCategoryId),
     );
     let displayPlaceholderEngineTitle = $derived(
         getSelectedEngine()?.title ?? displayEnabledEngines[0]?.title,
@@ -227,7 +208,9 @@
     }
 
     function openSearchEngineSettings() {
+        if (engineSaving || engineListDragging) return;
         if (typeof window === "undefined") return;
+        showEngineDialog = false;
         const categoryId = selectedCategoryId || getFallbackCategoryId();
         window.dispatchEvent(
             new CustomEvent("open-settings-search-engines", {
@@ -265,7 +248,7 @@
                 engine.enabled !== false &&
                 fallbackCategoryIds.includes(engine.category ?? "1"),
         );
-        enabledEngines = fallbackCategoryIds
+        engines = fallbackCategoryIds
             .flatMap((categoryId) =>
                 languageEngines
                     .filter((engine) => (engine.category ?? "1") === categoryId)
@@ -276,7 +259,6 @@
                 id: -(index + 1),
                 order: index,
             }));
-        disabledEngines = [];
         if (!engineCategories.some((item) => item.id === selectedCategoryId)) {
             selectedCategoryId = engineCategories[0]?.id ?? "1";
         }
@@ -309,15 +291,11 @@
         syncEnginesGroupTabs();
     }
 
-    function applyEnabledEngines(enabled: Engine[]) {
-        enabledEngines = enabled.map((e) => ({ ...e, enabled: true }));
-    }
-
-    function applyDisabledEngines(disabled: Engine[]) {
-        disabledEngines = disabled.map((e) => ({ ...e, enabled: false }));
-    }
-
     async function refreshEngineConfig() {
+        if (engineSaving || engineListDragging) {
+            engineRefreshPending = true;
+            return;
+        }
         const requestId = ++engineConfigRequestId;
         if (!configReady) {
             if (!loading) {
@@ -328,20 +306,15 @@
             databaseConfigAttempted = false;
             return;
         }
-        // Keep an already rendered search panel mounted during background
-        // refreshes so its expand/collapse transitions are not interrupted.
         try {
-            const [categories, enabled, disabled] = await Promise.all([
+            const [categories, loadedEngines] = await Promise.all([
                 getEngineCategories(),
-                getEnabledEngines(),
-                showMoreEngines
-                    ? getDisabledEngines()
-                    : Promise.resolve([] as Engine[]),
+                getEngines(),
             ]);
             if (requestId !== engineConfigRequestId) return;
             applyEngineCategories(categories);
-            applyEnabledEngines(enabled);
-            applyDisabledEngines(disabled);
+            engines = loadedEngines;
+            if (showEngineDialog) dialogEngines = [...categoryEngines];
             syncSelectedEngine();
             void migrateAndLoadSearchKeys();
             databaseConfigLoaded = true;
@@ -485,162 +458,78 @@
         return searchEl.value;
     }
 
-    function mergeEnabledFromZone(zoneItems: Engine[]): Engine[] {
-        if (engineCategories.length <= 1) {
-            return zoneItems;
-        }
-
-        const otherEnabled = enabledEngines.filter(
-            (e) => normalizeEngineCategoryId(e.category) !== selectedCategoryId,
-        );
-
-        return [...otherEnabled, ...zoneItems];
+    function requireEngineId(engine: Engine): number {
+        if (engine.id === undefined) throw new Error("Search engine id is required");
+        return engine.id;
     }
 
-    function mergeDisabledFromZone(zoneItems: Engine[]): Engine[] {
-        if (engineCategories.length <= 1) {
-            return zoneItems;
-        }
-
-        const otherDisabled = disabledEngines.filter(
-            (e) => normalizeEngineCategoryId(e.category) !== selectedCategoryId,
-        );
-
-        return [...otherDisabled, ...zoneItems];
+    function refreshAfterEngineInteraction() {
+        if (!engineRefreshPending) return;
+        engineRefreshPending = false;
+        void refreshEngineConfig();
     }
 
-    function updateEnabledZoneOrder(zoneItems: Engine[]) {
-        enabledEngines = mergeEnabledFromZone(zoneItems);
-    }
-
-    function updateDisabledZoneOrder(zoneItems: Engine[]) {
-        disabledEngines = mergeDisabledFromZone(zoneItems);
-    }
-
-    async function persistEnginesState() {
-        if (effectiveReadOnly) return;
-        const enabledWithIds = enabledEngines.filter(
-            (i): i is Engine & { id: number } => !!i.id,
-        );
-        const enabledIds = new Set(enabledWithIds.map((item) => item.id));
-        const disabledWithIds = disabledEngines.filter(
-            (i): i is Engine & { id: number } =>
-                !!i.id && !enabledIds.has(i.id),
-        );
-        if (enabledWithIds.length || disabledWithIds.length) {
-            await updateEnginesState(enabledWithIds, disabledWithIds);
-            if (typeof window !== "undefined") {
-                window.dispatchEvent(new CustomEvent("engine-config-updated"));
-            }
+    async function saveEngineChange(write: () => Promise<void>, apply: () => void) {
+        engineSaving = true;
+        engineSaveError = false;
+        ++engineConfigRequestId;
+        try {
+            await write();
+            apply();
+            syncSelectedEngine();
+            window.dispatchEvent(new CustomEvent("engine-config-updated"));
+        } catch (error) {
+            console.error("[Mooogor NewTab]", "search-engine:save-failed", error);
+            engineSaveError = true;
+            dialogEngines = [...categoryEngines];
+        } finally {
+            engineSaving = false;
+            refreshAfterEngineInteraction();
         }
     }
 
-    async function enableEngine(engine: Engine) {
-        if (effectiveReadOnly) return;
-
-        const isSameEngine = (item: Engine) =>
-            engine.id
-                ? item.id === engine.id
-                : item.engineUrl === engine.engineUrl;
-
-        if (enabledEngines.some(isSameEngine)) return;
-
-        disabledEngines = disabledEngines.filter((item) => !isSameEngine(item));
-        enabledEngines = [...enabledEngines, { ...engine, enabled: true }];
-        await persistEnginesState();
+    function handleConsiderEngineList(e: CustomEvent<DndEvent<Engine>>) {
+        dialogEngines = e.detail.items;
+        if (e.detail.info.trigger === TRIGGERS.DRAG_STARTED) {
+            ++engineConfigRequestId;
+            engineRefreshPending = true;
+            engineListDragging = true;
+        }
+        if (e.detail.info.trigger === TRIGGERS.DRAG_STOPPED) {
+            void commitEngineOrder();
+        }
     }
 
-    async function disableEngine(engine: Engine) {
-        if (effectiveReadOnly) return;
+    function handleFinalizeEngineList(e: CustomEvent<DndEvent<Engine>>) {
+        dialogEngines = e.detail.items;
+        // Keyboard sorting emits finalize on each move; commit when dragging stops.
+        if (e.detail.info.source === SOURCES.POINTER) void commitEngineOrder();
+    }
 
-        const isSameEngine = (item: Engine) =>
-            engine.id
-                ? item.id === engine.id
-                : item.engineUrl === engine.engineUrl;
-
-        if (!enabledEngines.some(isSameEngine)) return;
-        if (
-            displayEnabledEngines.length <= 1 &&
-            displayEnabledEngines.some(isSameEngine)
-        ) {
+    async function commitEngineOrder() {
+        engineListDragging = false;
+        if (effectiveReadOnly || engineSaving) {
+            dialogEngines = [...categoryEngines];
+            refreshAfterEngineInteraction();
             return;
         }
-
-        enabledEngines = enabledEngines.filter((item) => !isSameEngine(item));
-        disabledEngines = [...disabledEngines, { ...engine, enabled: false }];
-        if (selectedEngineUrl === engine.engineUrl) {
-            const nextEngine = displayEnabledEngines[0];
-            if (nextEngine) selectEngine(nextEngine);
+        if (dialogEngines.every((engine, index) => engine.id === categoryEngines[index]?.id) &&
+            dialogEngines.length === categoryEngines.length) {
+            refreshAfterEngineInteraction();
+            return;
         }
-        await persistEnginesState();
-    }
-
-    function markEngineDragging() {
-        suppressEngineToggleClick = true;
-    }
-
-    function clearEngineDragging() {
-        window.setTimeout(() => {
-            suppressEngineToggleClick = false;
-        }, 0);
-    }
-
-    function disableKeyboardDnd(node: HTMLElement) {
-        const stopKeyboardDrag = (event: KeyboardEvent) => {
-            const target = event.target;
-            if (!(target instanceof HTMLElement)) return;
-            const item = target.closest<HTMLElement>(".engine_item");
-            if (!item || item.parentElement !== node) return;
-
-            const control = target.closest<HTMLElement>(".more_item");
-            if (control && (event.key === "Enter" || event.key === " ")) {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                control.click();
-                return;
-            }
-            if (
-                event.key !== "Enter" &&
-                event.key !== " " &&
-                event.key !== "ArrowUp" &&
-                event.key !== "ArrowDown" &&
-                event.key !== "ArrowLeft" &&
-                event.key !== "ArrowRight"
-            ) {
-                return;
-            }
-            event.preventDefault();
-            event.stopImmediatePropagation();
-        };
-
-        node.addEventListener("keydown", stopKeyboardDrag, true);
-        return {
-            destroy() {
-                node.removeEventListener("keydown", stopKeyboardDrag, true);
+        const category = selectedCategoryId;
+        const ordered = dialogEngines.map((engine, order) => ({ ...engine, order }));
+        await saveEngineChange(
+            () => reorderEngineCategory(category, ordered.map(requireEngineId)),
+            () => {
+                engines = [
+                    ...engines.filter((engine) => engine.category !== category),
+                    ...ordered,
+                ];
+                dialogEngines = ordered;
             },
-        };
-    }
-
-    function handleConsiderEnabled(e: CustomEvent<DndEvent<Engine>>) {
-        markEngineDragging();
-        updateEnabledZoneOrder(e.detail.items);
-    }
-
-    function handleConsiderDisabled(e: CustomEvent<DndEvent<Engine>>) {
-        markEngineDragging();
-        updateDisabledZoneOrder(e.detail.items);
-    }
-
-    async function handleFinalizeEnabled(e: CustomEvent<DndEvent<Engine>>) {
-        updateEnabledZoneOrder(e.detail.items);
-        clearEngineDragging();
-        await persistEnginesState();
-    }
-
-    async function handleFinalizeDisabled(e: CustomEvent<DndEvent<Engine>>) {
-        updateDisabledZoneOrder(e.detail.items);
-        clearEngineDragging();
-        await persistEnginesState();
+        );
     }
 
     async function searchInput(value: string) {
@@ -804,15 +693,6 @@
     }
 
     function handleEngineClick(event: MouseEvent, engine: Engine) {
-        if (suppressEngineToggleClick) {
-            event.preventDefault();
-            return;
-        }
-        if (showMoreEngines) {
-            event.preventDefault();
-            void disableEngine(engine);
-            return;
-        }
         selectEngine(engine);
         const keyword = normalizeSearchKey(inputValue);
         if (!keyword) {
@@ -854,12 +734,6 @@
     }
 
     function handleEngineKeydown(e: KeyboardEvent, engine: Engine) {
-        if (showMoreEngines && (e.key === "Enter" || e.key === " ")) {
-            e.preventDefault();
-            e.stopPropagation();
-            void disableEngine(engine);
-            return;
-        }
         if (e.key === "Enter") {
             e.stopPropagation();
             return;
@@ -894,9 +768,19 @@
         getEngineLink(nextEngine.engineUrl)?.focus();
     }
 
-    function handleDisabledEngineClick(engine: Engine) {
-        if (suppressEngineToggleClick) return;
-        void enableEngine(engine);
+    async function toggleEngine(engine: Engine) {
+        if (effectiveReadOnly || engineSaving || engineListDragging) return;
+        if (engine.enabled !== false && displayEnabledEngines.length <= 1) return;
+        const enabled = engine.enabled === false;
+        await saveEngineChange(
+            () => setEngineEnabled(requireEngineId(engine), enabled),
+            () => {
+                engines = engines.map((item) =>
+                    item.id === engine.id ? { ...item, enabled } : item,
+                );
+                dialogEngines = [...categoryEngines];
+            },
+        );
     }
 
     function handleResultKeydown(e: KeyboardEvent) {
@@ -924,10 +808,11 @@
         }
     }
 
-    async function clickEditeEngines() {
+    function openEngineDialog() {
         if (effectiveReadOnly) return;
-        showMoreEngines = !showMoreEngines;
-        await refreshEngineConfig();
+        dialogEngines = [...categoryEngines];
+        engineSaveError = false;
+        showEngineDialog = true;
     }
 
     function getResultEls() {
@@ -993,15 +878,14 @@
             class="search_g"
             bind:this={searchPanelEl}
             class:search_g_hidden={!engineConfigReady}
-            class:bg={showMoreEngines ||
-                (searchAreaFocused &&
+            class:bg={searchAreaFocused &&
                     ((searchBookmarksEnabled &&
                         (bookmarksResults.length || bookmarksLoading)) ||
                         (searchHistoryEnabled &&
                             (historyResults.length || historyLoading)) ||
                         showSearchKeys ||
                         showSearchShortcutTip ||
-                        showSwitchShortcutTip))}
+                        showSwitchShortcutTip)}
             class:top0={enginesGroup.length <= 1}
         >
             {@render temInputGroup()}
@@ -1011,10 +895,10 @@
             {#if showSwitchShortcutTip}
                 {@render temShortcutTip(t("nt_related_search_shortcut_switch"))}
             {/if}
-            {#if !showMoreEngines && showSearchKeys}
+            {#if showSearchKeys}
                 {@render temSearchKeys()}
             {/if}
-            {#if !showMoreEngines && searchAreaFocused && ((searchBookmarksEnabled && (bookmarksResults.length || bookmarksLoading)) || (searchHistoryEnabled && (historyResults.length || historyLoading)))}
+            {#if searchAreaFocused && ((searchBookmarksEnabled && (bookmarksResults.length || bookmarksLoading)) || (searchHistoryEnabled && (historyResults.length || historyLoading)))}
                 <div
                     class="list"
                     bind:this={listEls}
@@ -1050,61 +934,63 @@
     {/if}
 </div>
 
+{#if showEngineDialog && selectedCategory}
+    <Popup
+        type="s"
+        title={selectedCategory.name}
+        onclickClose={() => {
+            if (!engineSaving && !engineListDragging) showEngineDialog = false;
+        }}
+    >
+        {@render temEngineDialogContent()}
+    </Popup>
+{/if}
+
 {#snippet temInputGroup()}
     <div class="input_group_border">
         <div class="input_group">
-            {#if !showMoreEngines}
-                <div class="input_box">
-                    <input
-                        name="Search"
-                        class="input"
-                        bind:this={searchEl}
-                        bind:value={inputValue}
-                        type="search"
-                        placeholder={displayPlaceholderEngineTitle
-                            ? t(
-                                  "nt_search_placeholder",
-                                  displayPlaceholderEngineTitle,
-                              )
-                            : t("nt_search_placeholder_fallback")}
-                        oncompositionstart={() => (isComposing = true)}
-                        oncompositionend={(e) => {
-                            isComposing = false;
-                            searchInput(
-                                (e.currentTarget as HTMLInputElement).value,
-                            );
+            <div class="input_box">
+                <input
+                    name="Search"
+                    class="input"
+                    bind:this={searchEl}
+                    bind:value={inputValue}
+                    type="search"
+                    placeholder={displayPlaceholderEngineTitle
+                        ? t("nt_search_placeholder", displayPlaceholderEngineTitle)
+                        : t("nt_search_placeholder_fallback")}
+                    oncompositionstart={() => (isComposing = true)}
+                    oncompositionend={(e) => {
+                        isComposing = false;
+                        searchInput((e.currentTarget as HTMLInputElement).value);
+                    }}
+                    onfocus={handleInputFocus}
+                    onblur={handleInputBlur}
+                    oninput={() => searchInput(inputValue)}
+                    onkeydown={inputKey}
+                />
+                {#if inputValue.length}
+                    <Button
+                        onclick={() => {
+                            inputValue = "";
+                            searchInput("");
+                            searchEl?.focus();
                         }}
-                        onfocus={handleInputFocus}
-                        onblur={handleInputBlur}
-                        oninput={() => searchInput(inputValue)}
-                        onkeydown={inputKey}
-                    />
-                    {#if inputValue.length}
-                        <Button
-                            onclick={() => {
-                                inputValue = "";
-                                searchInput("");
-                                searchEl?.focus();
-                            }}
-                        >
-                            <G>
-                                <Icon
-                                    name="X"
-                                    color="var(--c-text)"
-                                    opacity={0.4}
-                                    size={16}
-                                />
-                            </G>
-                        </Button>
-                    {/if}
-                </div>
-            {/if}
+                    >
+                        <G>
+                            <Icon
+                                name="X"
+                                color="var(--c-text)"
+                                opacity={0.4}
+                                size={16}
+                            />
+                        </G>
+                    </Button>
+                {/if}
+            </div>
             {@render temEngines()}
         </div>
     </div>
-    {#if showMoreEngines}
-        {@render temMoreEngines()}
-    {/if}
 {/snippet}
 
 {#snippet temSearchKeys()}
@@ -1142,25 +1028,8 @@
 {/snippet}
 
 {#snippet temEngines()}
-    <div class="engines_M" class:w100={showMoreEngines}>
-        <div
-            bind:this={engineEls}
-            class="engines"
-            class:drag={showMoreEngines}
-            data-dnd-hint={t("nt_engine_active")}
-            use:dndzone={{
-                items: displayEnabledEngines,
-                flipDurationMs: 200,
-                type: `enabled-engines-${selectedCategoryId}`,
-                zoneTabIndex: -1,
-                zoneItemTabIndex: -1,
-                dropTargetStyle: {},
-                dragDisabled: effectiveReadOnly,
-                dropFromOthersDisabled: true,
-            }}
-            onconsider={handleConsiderEnabled}
-            onfinalize={handleFinalizeEnabled}
-        >
+    <div class="engines_M">
+        <div bind:this={engineEls} class="engines">
             {#each displayEnabledEngines as engine (engine.id)}
                 <div class="engine_item" animate:flip={{ duration: 200 }}>
                     <a
@@ -1190,10 +1059,10 @@
             {/each}
         </div>
         {#if !effectiveReadOnly}
-            <Button onclick={clickEditeEngines}>
+            <Button onclick={openEngineDialog}>
                 <G>
                     <Icon
-                        name={showMoreEngines ? "X" : "Plus"}
+                        name="Plus"
                         color="var(--c-text)"
                         opacity={0.6}
                     />
@@ -1209,61 +1078,77 @@
     </div>
 {/snippet}
 
-{#snippet temMoreEngines()}
-    <div class="more_engines_M" transition:slide={{ duration: 200 }}>
-        <div class="more_engines_row">
-            <div
-                class="more_g"
-                class:drag={showMoreEngines}
-                data-dnd-hint={t("nt_engine_disabled")}
-                use:disableKeyboardDnd
-                use:dndzone={{
-                    items: displayDisabledEngines,
-                    flipDurationMs: 200,
-                    type: `disabled-engines-${selectedCategoryId}`,
-                    zoneTabIndex: -1,
-                    zoneItemTabIndex: -1,
-                    dropTargetStyle: {},
-                    dragDisabled: effectiveReadOnly,
-                    dropFromOthersDisabled: true,
-                }}
-                onconsider={handleConsiderDisabled}
-                onfinalize={handleFinalizeDisabled}
-            >
-                {#each displayDisabledEngines as engine (engine.id)}
-                    <div class="engine_item" animate:flip={{ duration: 200 }}>
-                        <button
-                            type="button"
-                            class="more_item"
-                            aria-label={t(
-                                "nt_click_to_enable",
-                                engine.title ?? "",
-                            )}
-                            onclick={() => handleDisabledEngineClick(engine)}
-                        >
-                            <EngineIcon
-                                alt={engine.title ?? ""}
-                                engineUrl={engine.engineUrl}
-                                src={engine.faviconUrl}
-                            />
-                        </button>
+{#snippet temEngineDialogContent()}
+    <G vertical full gap>
+        <div
+            class="engine_list"
+            use:dragHandleZone={{
+                items: dialogEngines,
+                flipDurationMs: 200,
+                type: `category-engines-${selectedCategoryId}`,
+                zoneTabIndex: -1,
+                zoneItemTabIndex: -1,
+                dropTargetStyle: {},
+                dragDisabled: effectiveReadOnly || engineSaving,
+                dropFromOthersDisabled: true,
+            }}
+            onconsider={handleConsiderEngineList}
+            onfinalize={handleFinalizeEngineList}
+        >
+            {#each dialogEngines as engine (engine.id)}
+                <div class="engine_row" animate:flip={{ duration: 200 }}>
+                    <div class="engine_drag_handle" use:dragHandle>
+                        <Icon
+                            name="GripHorizontal"
+                            color="var(--c-text-2)"
+                            size={16}
+                        />
                     </div>
-                {/each}
-            </div>
-            <Button onclick={openSearchEngineSettings}>
-                <G>
-                    <Icon
-                        name="SquarePen"
-                        color="var(--c-text)"
-                        opacity={0.6}
+                    <EngineIcon
+                        alt={engine.title ?? ""}
+                        engineUrl={engine.engineUrl}
+                        src={engine.faviconUrl}
                     />
+                    <div class="engine_name">
+                        <T nowrap>{engine.title ?? t("nt_unnamed")}</T>
+                    </div>
+                    <Switch
+                        turnOn={engine.enabled !== false}
+                        disabled={effectiveReadOnly || engineSaving || engineListDragging ||
+                            (engine.enabled !== false && displayEnabledEngines.length <= 1)}
+                        onclick={() => void toggleEngine(engine)}
+                        label={t("nt_settings_search_engine_enabled") + ": " + engine.title}
+                    />
+                </div>
+            {/each}
+        </div>
+        {#if engineSaveError}
+            <T type="s" color="var(--c-red)">{t("nt_common_save_failed")}</T>
+        {/if}
+        <G full align="r">
+            <Button
+                full
+                align="c"
+                fill
+                r="r1"
+                disabled={engineSaving || engineListDragging}
+                onclick={openSearchEngineSettings}
+            >
+                <G full align="c">
+                    <G vertical full>
+                        <T>{t("nt_settings_search_engines_title")}</T>
+                    </G>
+                    <G>
+                        <Icon
+                            name="ArrowUpRight"
+                            color="var(--c-text)"
+                            opacity={0.6}
+                        />
+                    </G>
                 </G>
             </Button>
-        </div>
-        <T type="s" color="var(--c-text-2)">
-            {t("nt_engine_edit_hint")}
-        </T>
-    </div>
+        </G>
+    </G>
 {/snippet}
 
 {#snippet temBkmk(bookmark: SearchItem)}
@@ -1441,46 +1326,42 @@
         flex-direction: row;
         flex: 0 0 auto;
     }
-    .w100 {
-        width: 100%;
-        flex: none;
-        max-width: none;
-        box-sizing: border-box;
-        justify-content: flex-end;
-    }
-    .w100 .engines {
-        width: 100%;
-    }
-    .more_engines_M {
+    .engine_list {
         display: flex;
         flex-direction: column;
-        padding: var(--gap);
+        gap: var(--gap);
         width: 100%;
+        max-height: min(420px, calc(100vh - 220px));
+        overflow-y: auto;
         box-sizing: border-box;
-        background-color: var(--c-bg1);
+        padding: var(--gap);
+        border: var(--border);
         border-radius: var(--r1);
     }
-    .more_engines_row {
-        display: flex;
-        flex-direction: row;
+    .engine_row {
+        display: grid;
+        grid-template-columns: auto auto minmax(0, 1fr) auto;
         align-items: center;
+        gap: var(--gap);
         width: 100%;
+        min-height: 44px;
+        padding: var(--gap);
+        border-radius: var(--r);
+        background-color: var(--c-mask);
+        box-sizing: border-box;
     }
-    .more_item {
+    .engine_drag_handle {
         display: flex;
-        background-color: unset;
-        border: none;
-        padding: 0;
-        border-radius: calc(var(--r) / 2 + 2px);
-        filter: grayscale();
         align-items: center;
-        overflow: hidden;
-        cursor: pointer;
-        min-width: 30px;
-        flex: 0 0 auto;
+        justify-content: center;
+        cursor: grab;
     }
-    .more_item:focus-visible {
-        outline: 2px var(--c-main) solid;
+    .engine_drag_handle:active {
+        cursor: grabbing;
+    }
+    .engine_name {
+        min-width: 0;
+        overflow: hidden;
     }
     .search_g {
         display: flex;
@@ -1601,31 +1482,6 @@
         outline: none;
     }
 
-    .more_g {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: var(--gap);
-        padding: var(--gap);
-        border-radius: var(--r);
-        min-height: 40px;
-        width: 100%;
-        box-sizing: border-box;
-        flex-wrap: wrap;
-        position: relative;
-    }
-    .more_g.drag::after {
-        content: attr(data-dnd-hint);
-        position: absolute;
-        top: 0;
-        left: 0;
-        line-height: 30px;
-        padding: var(--gap) calc(var(--gap) * 2);
-        color: var(--c-text-2);
-        font-size: var(--f-size-s);
-        pointer-events: none;
-    }
-
     .engines {
         display: inline-flex;
         flex-direction: row;
@@ -1640,21 +1496,6 @@
         box-sizing: border-box;
         position: relative;
         flex-wrap: nowrap;
-    }
-    .engines.drag::after {
-        content: attr(data-dnd-hint);
-        position: absolute;
-        top: 0;
-        left: 0;
-        line-height: 30px;
-        padding: var(--gap) calc(var(--gap) * 2);
-        color: var(--c-text-2);
-        font-size: var(--f-size-s);
-        pointer-events: none;
-    }
-
-    .drag {
-        border: 2px var(--c-mask) dashed;
     }
     .engine_item {
         display: flex;

@@ -3,8 +3,10 @@
 	interface Props {
 		turnOn: boolean;
 		disabled?: boolean;
+		onclick?: () => void;
+		label?: string;
 	}
-	let { turnOn, disabled = false }: Props = $props();
+	let { turnOn, disabled = false, onclick, label = t("nt_switch") }: Props = $props();
 </script>
 
 <button
@@ -12,7 +14,11 @@
 	title={t("nt_switch")}
 	class="outside"
 	{disabled}
-	tabindex="-1"
+	{onclick}
+	role="switch"
+	aria-checked={turnOn}
+	aria-label={label}
+	tabindex={onclick ? 0 : -1}
 >
 	<div class="ball {turnOn ? 'ball_on' : 'ball_off'}"></div>
 </button>
@@ -37,6 +43,10 @@
 	}
 	.outside:active {
 		background-color: var(--c-mask);
+	}
+	.outside:focus-visible {
+		outline: 2px solid var(--c-text);
+		outline-offset: 2px;
 	}
 	.ball {
 		width: 20px;

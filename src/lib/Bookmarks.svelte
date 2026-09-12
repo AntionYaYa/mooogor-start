@@ -1329,15 +1329,15 @@
     border: 2px solid var(--c-main-3);
   }
 
-  :global(#dnd-action-dragged-el),
-  :global(#dnd-action-dragged-el:focus),
-  :global(#dnd-action-dragged-el:focus-visible),
-  :global([data-is-dnd-shadow-item-internal="true"]) {
+  :global(#dnd-action-dragged-el[data-bookmark-id]),
+  :global(#dnd-action-dragged-el[data-bookmark-id]:focus),
+  :global(#dnd-action-dragged-el[data-bookmark-id]:focus-visible),
+  :global([data-is-dnd-shadow-item-internal="true"][data-bookmark-id]) {
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
   }
-  :global(#dnd-action-dragged-el *) {
+  :global(#dnd-action-dragged-el[data-bookmark-id] *) {
     border: none !important;
     outline: none !important;
     box-shadow: none !important;

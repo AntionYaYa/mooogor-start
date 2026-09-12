@@ -11,6 +11,35 @@ function nextId(items: Engine[]) {
 
 const byOrder = (a: Engine, b: Engine) => (a.order ?? 999999) - (b.order ?? 999999);
 
+export async function getEngines() {
+  return [...(await getStoredConfig()).engines].sort(byOrder);
+}
+
+export async function setEngineEnabled(id: number, enabled: boolean) {
+  await updateStoredConfig((config) => {
+    const engine = config.engines.find((item) => item.id === id);
+    if (!engine) throw new Error(`Search engine ${id} does not exist`);
+    engine.enabled = enabled;
+    engine.updateAt = Date.now();
+  });
+}
+
+export async function reorderEngineCategory(category: string, ids: number[]) {
+  await updateStoredConfig((config) => {
+    const engines = config.engines.filter((engine) => engine.category === category);
+    const positions = new Map(ids.map((id, index) => [id, index]));
+    if (positions.size !== ids.length || engines.length !== ids.length ||
+        engines.some((engine) => engine.id === undefined || !positions.has(engine.id))) {
+      throw new Error(`Search engine category ${category} changed before sorting was saved`);
+    }
+    const now = Date.now();
+    for (const engine of engines) {
+      engine.order = positions.get(engine.id!);
+      engine.updateAt = now;
+    }
+  });
+}
+
 export async function addEngine(engine: Omit<Engine, "id">) {
   return await updateStoredConfig((config) => {
     const now = Date.now();
