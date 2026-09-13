@@ -29,6 +29,7 @@
 		TriangleAlert,
 		Coffee,
 		Search,
+		QrCode,
 		Globe,
 		Bolt,
 		Sparkles,
@@ -65,6 +66,7 @@
 		| "Info"
 		| "TriangleAlert"
 		| "Search"
+		| "QrCode"
 		| "Globe"
 		| "Bolt"
 		| "Sparkles"
@@ -176,6 +178,9 @@
 	{/if}
 	{#if name === "Search"}
 		<Search {size} {strokeWidth} />
+	{/if}
+	{#if name === "QrCode"}
+		<QrCode {size} {strokeWidth} />
 	{/if}
 	{#if name === "Globe"}
 		<Globe {size} {strokeWidth} />
