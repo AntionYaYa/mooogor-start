@@ -9,8 +9,9 @@
     disabled?: boolean;
     engineUrl?: string;
     src?: string;
+    size?: number;
   }
-  let { alt, disabled, engineUrl, src }: Props = $props();
+  let { alt, disabled, engineUrl, src, size = 26 }: Props = $props();
   let localSrc = $state<string | null>(null);
 
   function resolveEngineDomain(url?: string) {
@@ -53,7 +54,7 @@
   });
 </script>
 
-<div class="engine_icon">
+<div class="engine_icon" style:width={`${size}px`} style:min-width={`${size}px`} style:height={`${size}px`} style:min-height={`${size}px`}>
   {#if localSrc}
     <img src={localSrc} {alt} draggable="false" />
   {:else}

@@ -474,6 +474,18 @@
   "nt_popup_add_to_common": {
     "message": "Add this site to Common Sites"
   },
+  "nt_popup_search_engines": {
+    "message": "Search engines"
+  },
+  "nt_popup_add_to_search": {
+    "message": "Add search engine"
+  },
+  "nt_popup_search_parameter": {
+    "message": "Select the search keyword parameter"
+  },
+  "nt_popup_search_no_parameters": {
+    "message": "This URL has no query parameters. Enter %s in the search URL manually."
+  },
   "nt_popup_add": {
     "message": "Add"
   },

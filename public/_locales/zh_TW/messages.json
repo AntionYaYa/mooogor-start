@@ -474,6 +474,18 @@
   "nt_popup_add_to_common": {
     "message": "加入此網站到常用網站"
   },
+  "nt_popup_search_engines": {
+    "message": "搜尋引擎"
+  },
+  "nt_popup_add_to_search": {
+    "message": "新增搜尋引擎"
+  },
+  "nt_popup_search_parameter": {
+    "message": "選擇搜尋關鍵字參數"
+  },
+  "nt_popup_search_no_parameters": {
+    "message": "目前網址沒有查詢參數，請手動在搜尋網址中填入 %s"
+  },
   "nt_popup_add": {
     "message": "添加"
   },
