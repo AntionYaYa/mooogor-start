@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getBuiltInEngineIcon, withoutGoogleFavicon } from "./DB/engineFavicons";
   import T from "./components/T.svelte";
   import { browser } from "wxt/browser";
   import { getDomainFromUrl } from "../lib/DB/utils";
@@ -14,49 +15,64 @@
   let { alt, disabled, engineUrl, src, size = 26 }: Props = $props();
   let localSrc = $state<string | null>(null);
 
-  function resolveEngineDomain(url?: string) {
-    if (!url) return undefined;
-    try {
-      return getDomainFromUrl(url.replace("%s", "search"));
-    } catch {
-      return undefined;
-    }
-  }
+  let advanceIcon = $state<() => void>(() => {});
 
   $effect(() => {
-    if (src) {
-      localSrc = src;
-      return;
+    const initialSrc = withoutGoogleFavicon(src) || getBuiltInEngineIcon(engineUrl);
+    const url = engineUrl?.replace("%s", "search");
+    let domain: string | undefined;
+    try {
+      domain = url ? getDomainFromUrl(url) : undefined;
+    } catch {
+      domain = undefined;
     }
-
-    const domain = resolveEngineDomain(engineUrl);
-    if (!domain) {
-      localSrc = null;
-      return;
-    }
-    localSrc = null;
     let cancelled = false;
-    void (async () => {
-      const response = await browser.runtime.sendMessage({
-        type: "getFaviconData",
-        payload: { domain },
-      }) as { dataUrl?: string } | null;
+    let stage = 0;
+    localSrc = initialSrc || null;
+
+    const next = async () => {
       if (cancelled) return;
-      if (!response?.dataUrl) {
-        localSrc = null;
-        return;
+      if (stage === 0) {
+        stage = 1;
+        if (domain) {
+          try {
+            const response = await browser.runtime.sendMessage({
+              type: "getFaviconData",
+              payload: { domain },
+            }) as { dataUrl?: string } | null;
+            if (cancelled) return;
+            if (response?.dataUrl) {
+              localSrc = response.dataUrl;
+              return;
+            }
+          } catch {
+            // A missing/unavailable cache must not prevent browser fallback.
+          }
+        }
       }
-      localSrc = response.dataUrl;
-    })();
-    return () => {
-      cancelled = true;
+      if (cancelled) return;
+      if (stage === 1) {
+        stage = 2;
+        // Firefox does not provide Chromium's local favicon endpoint.
+        if (domain && url && !import.meta.env.FIREFOX) {
+          const getURL = browser.runtime.getURL as (path: string) => string;
+          localSrc = getURL(`/_favicon/?pageUrl=${encodeURIComponent(url)}&size=128`);
+          return;
+        }
+      }
+      localSrc = null;
     };
+    advanceIcon = () => { void next(); };
+    if (!initialSrc) void next();
+    return () => { cancelled = true; };
   });
 </script>
 
 <div class="engine_icon" style:width={`${size}px`} style:min-width={`${size}px`} style:height={`${size}px`} style:min-height={`${size}px`}>
   {#if localSrc}
-    <img src={localSrc} {alt} draggable="false" />
+    {#key localSrc}
+      <img src={localSrc} {alt} draggable="false" onerror={advanceIcon} />
+    {/key}
   {:else}
     <span >
       <T type="s" align="c">{alt?.slice(0, 1) ?? "?"}</T>

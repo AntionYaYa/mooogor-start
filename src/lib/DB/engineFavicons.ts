@@ -1,3 +1,4 @@
+import defaultEngineGroups from "./defaultEngines.json";
 import { resolvePublicAssetUrl } from "@/lib/utils/assetUrl";
 
 const logo = (fileName: string) =>
@@ -42,3 +43,31 @@ export const faviconMap: Record<string, string> = {
   YouTube: logo("YouTube.jpg"),
   YouTubeMusic: logo("YouTubeMusic.jpg"),
 };
+
+const builtInIconsByHostname = new Map(
+  defaultEngineGroups.flatMap((group) => group.engines.map((engine) => [
+    new URL(engine.engineUrl.replace("%s", "search")).hostname,
+    faviconMap[engine.faviconKey],
+  ] as const)),
+);
+
+export function getBuiltInEngineIcon(engineUrl?: string): string {
+  try {
+    return builtInIconsByHostname.get(new URL((engineUrl ?? "").replace("%s", "search")).hostname) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+// Ignore legacy Google service URLs, including those restored from backups.
+export function withoutGoogleFavicon(src?: string): string {
+  if (!src) return "";
+  try {
+    const url = new URL(src);
+    if ((url.hostname === "www.google.com" || url.hostname === "google.com") &&
+        /^\/s2\/favicons\/?$/.test(url.pathname)) return "";
+  } catch {
+    // Preserve other existing icon sources.
+  }
+  return src;
+}

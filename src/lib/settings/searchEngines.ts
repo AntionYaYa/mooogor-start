@@ -102,14 +102,7 @@ export function getGroupedSearchEngines(
   }));
 }
 
-export function buildEngineFaviconUrl(engineUrl: string): string {
-  try {
-    const previewUrl = new URL(engineUrl.replace("%s", "search"));
-    return `https://www.google.com/s2/favicons?domain=${previewUrl.hostname}&sz=64`;
-  } catch {
-    return "";
-  }
-}
+export { getBuiltInEngineIcon as buildEngineFaviconUrl } from "@/lib/DB/engineFavicons";
 
 export async function loadSearchEngineSettings(): Promise<SearchEngineSettingsData> {
   const { categories: rawCategories, engines } = await getEngineConfigSnapshot();

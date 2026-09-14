@@ -1,3 +1,4 @@
+import { getBuiltInEngineIcon, withoutGoogleFavicon } from "../lib/DB/engineFavicons";
 import {
   saveFavicon,
   getFavicon,
@@ -344,7 +345,7 @@ async function withInjectableIcon(
 ): Promise<RelatedSearchEngine> {
   return {
     ...engine,
-    iconUrl: await toInjectableIconUrl(engine.faviconUrl),
+    iconUrl: await toInjectableIconUrl(withoutGoogleFavicon(engine.faviconUrl) || getBuiltInEngineIcon(engine.engineUrl)),
   };
 }
 
