@@ -3,7 +3,7 @@ import type * as Engines from "./engines";
 import type * as Categories from "./engineCategories";
 import type * as Reset from "./resetSearchEngines";
 
-export type EngineOperations = Pick<typeof Engines, "addEngine" | "updateEngine" | "deleteEngine" | "setEngineEnabled" | "reorderEngineCategory" | "updateEnginesLayout" | "updateEnginesOrder" | "updateEnginesState" | "updateEngineCategory" | "ensureDefaultEngines" | "resetEnginesToDefault"> &
+export type EngineOperations = Pick<typeof Engines, "addEngine" | "updateEngine" | "deleteEngine" | "deleteEngines" | "setEngineEnabled" | "reorderEngineCategory" | "updateEnginesLayout" | "updateEnginesOrder" | "updateEnginesState" | "updateEngineCategory" | "ensureDefaultEngines" | "resetEnginesToDefault"> &
   Pick<typeof Categories, "ensureDefaultEngineCategories" | "ensureEngineCategory" | "addEngineCategory" | "renameEngineCategory" | "deleteEngineCategory" | "updateEngineCategoriesOrder"> & typeof Reset;
 
 function command<K extends keyof EngineOperations>(operation: K) {
@@ -23,6 +23,7 @@ function command<K extends keyof EngineOperations>(operation: K) {
 export const addEngine = command("addEngine");
 export const updateEngine = command("updateEngine");
 export const deleteEngine = command("deleteEngine");
+export const deleteEngines = command("deleteEngines");
 export const setEngineEnabled = command("setEngineEnabled");
 export const reorderEngineCategory = command("reorderEngineCategory");
 export const updateEnginesLayout = command("updateEnginesLayout");

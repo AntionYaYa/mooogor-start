@@ -356,6 +356,9 @@
   "nt_engine_category_font": {
     "message": "Fonts"
   },
+  "nt_engine_category_creative": {
+    "message": "Creative assets"
+  },
   "nt_engine_category_music": {
     "message": "Music"
   },

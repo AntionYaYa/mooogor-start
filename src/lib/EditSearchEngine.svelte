@@ -104,9 +104,14 @@
   }
 
   async function clickDelete() {
-    if (!onDelete) return;
-    const deleted = await onDelete();
-    if (deleted !== false) onclickClose();
+    if (!onDelete || saving) return;
+    try {
+      const deleted = await onDelete();
+      if (deleted !== false) onclickClose();
+    } catch (error) {
+      console.error("[Mooogor NewTab]", "search-engine:delete-failed", error);
+      inputError = t("nt_common_save_failed");
+    }
   }
 </script>
 
@@ -123,7 +128,7 @@
         {t("nt_settings_search_engine_category")}
       </T>
     </G>
-    <Select options={popupCategoryOptions} onChange={setCategory} />
+    <Select options={popupCategoryOptions} onChange={setCategory} disabled={saving} />
   </G>
 
   <G full>
@@ -159,7 +164,7 @@
 
   <div class:has_delete={isEdit && !!onDelete} class="actions">
     {#if isEdit && onDelete}
-      <Button fill r="r1" onclick={() => void clickDelete()}>
+      <Button fill r="r1" disabled={saving} onclick={() => void clickDelete()}>
         <G align="c">
           <G>
             <T align="c" color="var(--c-red)">{t("nt_delete")}</T>

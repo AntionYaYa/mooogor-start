@@ -39,10 +39,11 @@
         normalizeSearchKey,
         persistSearchKeys,
         persistSelectedCategoryId,
-        persistSelectedEngineUrl,
+        persistSelectedEngineId,
         readSearchKeys,
         readSelectedCategoryId,
         readSelectedEngineUrl,
+        readSelectedEngineId,
     } from "@/lib/search/searchStorage";
     import {
         mapBookmarkResults,
@@ -106,7 +107,7 @@
     let bookmarksDebounceId: ReturnType<typeof setTimeout> | null = null;
     let historyDebounceId: ReturnType<typeof setTimeout> | null = null;
     let bookmarksLoading = $state(false);
-    let selectedEngineUrl = $state("");
+    let selectedEngineId = $state<number | undefined>();
     let selectedEngineCategoryId = $state("");
     let searchAreaFocused = $state(false);
     let searchInputFocused = $state(false);
@@ -183,32 +184,17 @@
     function syncSelectedEngine() {
         const categoryId = selectedCategoryId || "all";
         if (!displayEnabledEngines.length) {
-            selectedEngineUrl = "";
+            selectedEngineId = undefined;
             selectedEngineCategoryId = categoryId;
             return;
         }
-        const savedEngineUrl = readSelectedEngineUrl(categoryId);
-        const savedEngine = displayEnabledEngines.find(
-            (engine) => engine.engineUrl === savedEngineUrl,
-        );
-        if (selectedEngineCategoryId !== categoryId) {
-            selectedEngineCategoryId = categoryId;
-            selectedEngineUrl =
-                savedEngine?.engineUrl ??
-                displayEnabledEngines[0]?.engineUrl ??
-                "";
-            return;
-        }
-        if (
-            selectedEngineUrl &&
-            displayEnabledEngines.some(
-                (engine) => engine.engineUrl === selectedEngineUrl,
-            )
-        ) {
-            return;
-        }
-        selectedEngineUrl =
-            savedEngine?.engineUrl ?? displayEnabledEngines[0]?.engineUrl ?? "";
+        const savedId = readSelectedEngineId(categoryId);
+        const savedUrl = readSelectedEngineUrl(categoryId);
+        const savedEngine = displayEnabledEngines.find((engine) => engine.id === savedId) ??
+            displayEnabledEngines.find((engine) => engine.engineUrl === savedUrl);
+        if (selectedEngineCategoryId === categoryId && displayEnabledEngines.some((engine) => engine.id === selectedEngineId)) return;
+        selectedEngineCategoryId = categoryId;
+        selectedEngineId = savedEngine?.id ?? displayEnabledEngines[0]?.id;
     }
 
     function openSearchEngineSettings() {
@@ -243,7 +229,7 @@
     }
 
     function applyFallbackEngineConfig() {
-        const fallbackCategoryIds = ["1", "2", "3"];
+        const fallbackCategoryIds = ["1", "2", "3", "6"];
         engineCategories = buildDefaultEngineCategories()
             .filter((item) => fallbackCategoryIds.includes(item.id))
             .map((item, index) => ({ ...item, order: index }));
@@ -274,9 +260,7 @@
         const visibleCategories = categories.filter(
             (item) => item.id !== FALLBACK_ENGINE_CATEGORY_ID,
         );
-        engineCategories = visibleCategories.length
-            ? visibleCategories
-            : categories;
+        engineCategories = visibleCategories.length ? visibleCategories : categories;
         if (!engineCategories.length) {
             selectedCategoryId = "1";
             enginesGroup = [];
@@ -313,8 +297,8 @@
         try {
             const { categories, engines: loadedEngines } = await getEngineConfigSnapshot();
             if (requestId !== engineConfigRequestId) return;
-            applyEngineCategories(categories);
             engines = loadedEngines;
+            applyEngineCategories(categories);
             if (showEngineDialog) dialogEngines = [...categoryEngines];
             syncSelectedEngine();
             void migrateAndLoadSearchKeys();
@@ -631,27 +615,27 @@
     function getSelectedEngine() {
         return (
             displayEnabledEngines.find(
-                (engine) => engine.engineUrl === selectedEngineUrl,
+                (engine) => engine.id === selectedEngineId,
             ) ?? displayEnabledEngines[0]
         );
     }
 
     function selectEngine(engine: Engine) {
         const categoryId = selectedCategoryId || "all";
-        selectedEngineUrl = engine.engineUrl;
+        selectedEngineId = engine.id;
         selectedEngineCategoryId = categoryId;
-        persistSelectedEngineUrl(engine.engineUrl, categoryId);
+        if (engine.id !== undefined) persistSelectedEngineId(engine.id, categoryId, engine.engineUrl);
     }
 
-    function getEngineLink(engineUrl: string) {
+    function getEngineLink(engineId: number | undefined) {
         if (!engineEls) return null;
         return engineEls.querySelector<HTMLAnchorElement>(
-            `.engine[data-engine-url="${CSS.escape(engineUrl)}"]`,
+            `.engine[data-engine-id="${engineId}"]`,
         );
     }
 
     function getSelectedEngineLink() {
-        return selectedEngineUrl ? getEngineLink(selectedEngineUrl) : null;
+        return selectedEngineId ? getEngineLink(selectedEngineId) : null;
     }
 
     function getEngineSearchUrl(engine: Engine) {
@@ -740,7 +724,7 @@
         e.preventDefault();
         e.stopPropagation();
         const index = displayEnabledEngines.findIndex(
-            (item) => item.engineUrl === engine.engineUrl,
+            (item) => item.id === engine.id,
         );
         const nextIndex =
             e.key === "ArrowLeft"
@@ -750,12 +734,11 @@
         const nextEngine = displayEnabledEngines[nextIndex];
         if (!nextEngine) return;
         selectEngine(nextEngine);
-        getEngineLink(nextEngine.engineUrl)?.focus();
+        getEngineLink(nextEngine.id)?.focus();
     }
 
     async function toggleEngine(engine: Engine) {
         if (effectiveReadOnly || engineSaving || engineListDragging) return;
-        if (engine.enabled !== false && displayEnabledEngines.length <= 1) return;
         const enabled = engine.enabled === false;
         await saveEngineChange(
             () => setEngineEnabled(requireEngineId(engine), enabled),
@@ -1052,8 +1035,8 @@
                 <div class="engine_item" animate:flip={{ duration: 200 }}>
                     <a
                         class="engine"
-                        class:selected={engine.engineUrl === selectedEngineUrl}
-                        data-engine-url={engine.engineUrl}
+                        class:selected={engine.id === selectedEngineId}
+                        data-engine-id={engine.id}
                         href={getEngineSearchUrl(engine)}
                         draggable="false"
                         target={newTabOpen ? "_blank" : "_self"}
@@ -1132,8 +1115,7 @@
                     </div>
                     <Switch
                         turnOn={engine.enabled !== false}
-                        disabled={effectiveReadOnly || engineSaving || engineListDragging ||
-                            (engine.enabled !== false && displayEnabledEngines.length <= 1)}
+                        disabled={effectiveReadOnly || engineSaving || engineListDragging}
                         onclick={() => void toggleEngine(engine)}
                         label={t("nt_settings_search_engine_enabled") + ": " + engine.title}
                     />

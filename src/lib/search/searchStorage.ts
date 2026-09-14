@@ -9,6 +9,7 @@ export const MAX_SEARCH_KEYS = 10;
 type SearchUiState = {
   selectedCategoryId?: string;
   selectedEngineUrls: Record<string, string>;
+  selectedEngineIds?: Record<string, number>;
   searchKeysByCategory: Record<string, string[]>;
   searchKeys?: string[];
 };
@@ -76,6 +77,7 @@ function normalizeState(value: unknown): SearchUiState {
     selectedCategoryId:
       typeof candidate.selectedCategoryId === "string" ? candidate.selectedCategoryId : undefined,
     selectedEngineUrls,
+    selectedEngineIds: Object.fromEntries(Object.entries(candidate.selectedEngineIds ?? {}).filter(([, id]) => Number.isSafeInteger(id))),
     searchKeysByCategory,
     ...(legacySearchKeys.length ? { searchKeys: legacySearchKeys } : {}),
   };
@@ -123,6 +125,17 @@ export function persistSelectedCategoryId(categoryId: string) {
 
 export function clearPersistedSelectedCategoryId() {
   state.selectedCategoryId = undefined;
+  void persistState();
+}
+
+export function readSelectedEngineId(categoryId: string) {
+  return state.selectedEngineIds?.[categoryId || "all"];
+}
+
+export function persistSelectedEngineId(id: number, categoryId: string, engineUrl?: string) {
+  state.selectedEngineIds ??= {};
+  state.selectedEngineIds[categoryId || "all"] = id;
+  if (engineUrl !== undefined) state.selectedEngineUrls[categoryId || "all"] = engineUrl;
   void persistState();
 }
 

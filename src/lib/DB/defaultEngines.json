@@ -29,7 +29,7 @@
         "enabledByLanguage": {
           "default": true,
           "zh_CN": false,
-          "zh_TW": true
+          "zh_TW": false
         }
       },
       {
@@ -38,6 +38,7 @@
         "faviconKey": "Yahoo",
         "enabledByLanguage": {
           "default": false,
+          "zh_CN": false,
           "zh_TW": true
         }
       },
@@ -67,6 +68,7 @@
         "faviconKey": "Yandex",
         "enabledByLanguage": {
           "default": false,
+          "zh_CN": false,
           "zh_TW": false
         }
       },
@@ -76,6 +78,7 @@
         "faviconKey": "DuckDuckGo",
         "enabledByLanguage": {
           "default": false,
+          "zh_CN": false,
           "zh_TW": false
         }
       },
@@ -95,6 +98,7 @@
         "faviconKey": "Naver",
         "enabledByLanguage": {
           "default": false,
+          "zh_CN": false,
           "zh_TW": false
         }
       }
@@ -128,9 +132,9 @@
         "engineUrl": "https://huaban.com/search?q=%s",
         "faviconKey": "Huaban",
         "enabledByLanguage": {
-          "default": true,
+          "default": false,
           "zh_CN": true,
-          "zh_TW": true
+          "zh_TW": false
         }
       },
       {
@@ -138,19 +142,9 @@
         "engineUrl": "https://www.pinterest.com/search/pins/?q=%s",
         "faviconKey": "Pinterest",
         "enabledByLanguage": {
-          "default": false,
+          "default": true,
           "zh_CN": false,
           "zh_TW": true
-        }
-      },
-      {
-        "title": "Freepik",
-        "engineUrl": "https://www.magnific.com/search?format=search&query=%s",
-        "faviconKey": "Freepik",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
         }
       }
     ]
@@ -163,7 +157,7 @@
         "engineUrl": "https://www.youtube.com/results?search_query=%s",
         "faviconKey": "YouTube",
         "enabledByLanguage": {
-          "default": false,
+          "default": true,
           "zh_CN": false,
           "zh_TW": true
         }
@@ -183,7 +177,7 @@
         "engineUrl": "https://www.douyin.com/search/%s",
         "faviconKey": "Douyin",
         "enabledByLanguage": {
-          "default": true,
+          "default": false,
           "zh_CN": true,
           "zh_TW": false
         }
@@ -192,116 +186,6 @@
         "title": "Vimeo",
         "engineUrl": "https://vimeo.com/search?q=%s",
         "faviconKey": "Vimeo",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": true
-        }
-      },
-      {
-        "title": "Mixkit Video",
-        "engineUrl": "https://mixkit.co/free-stock-video/%s/",
-        "faviconKey": "Mixkit",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
-      }
-    ]
-  },
-  {
-    "category": "4",
-    "engines": [
-      {
-        "title": "Iconfont",
-        "engineUrl": "https://www.iconfont.cn/search/index?q=%s",
-        "faviconKey": "Iconfont",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": true,
-          "zh_TW": false
-        }
-      },
-      {
-        "title": "Font Awesome",
-        "engineUrl": "https://fontawesome.com/search?q=%s",
-        "faviconKey": "FontAwesome",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": false,
-          "zh_TW": true
-        }
-      },
-      {
-        "title": "Lucide",
-        "engineUrl": "https://lucide.dev/?search=%s",
-        "faviconKey": "Lucide",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
-      },
-      {
-        "title": "Phosphor Icons",
-        "engineUrl": "https://phosphoricons.com/?q=%s",
-        "faviconKey": "PhosphorIcons",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
-      },
-      {
-        "title": "Flaticon",
-        "engineUrl": "https://www.flaticon.com/search?word=%s",
-        "faviconKey": "Flaticon",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
-      }
-    ]
-  },
-  {
-    "category": "5",
-    "engines": [
-      {
-        "title": "Google Fonts",
-        "engineUrl": "https://fonts.google.com/?query=%s",
-        "faviconKey": "GoogleFonts",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": false,
-          "zh_TW": true
-        }
-      },
-      {
-        "title": "Fontshare",
-        "engineUrl": "https://www.fontshare.com/?q=%s",
-        "faviconKey": "Fontshare",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
-      },
-      {
-        "title": "Adobe Fonts",
-        "engineUrl": "https://fonts.adobe.com/search?query=%s",
-        "faviconKey": "AdobeFonts",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
-      },
-      {
-        "title": "Font Squirrel",
-        "engineUrl": "https://www.fontsquirrel.com/fonts/list/search?q=%s",
-        "faviconKey": "FontSquirrel",
         "enabledByLanguage": {
           "default": false,
           "zh_CN": false,
@@ -372,6 +256,131 @@
           "zh_CN": false,
           "zh_TW": false
         }
+      }
+    ]
+  },
+  {
+    "category": "4",
+    "engines": [
+      {
+        "title": "Iconfont",
+        "engineUrl": "https://www.iconfont.cn/search/index?q=%s",
+        "faviconKey": "Iconfont",
+        "enabledByLanguage": {
+          "default": true,
+          "zh_CN": true,
+          "zh_TW": true
+        }
+      },
+      {
+        "title": "Font Awesome",
+        "engineUrl": "https://fontawesome.com/search?q=%s",
+        "faviconKey": "FontAwesome",
+        "enabledByLanguage": {
+          "default": false,
+          "zh_CN": false,
+          "zh_TW": false
+        }
+      },
+      {
+        "title": "Lucide",
+        "engineUrl": "https://lucide.dev/?search=%s",
+        "faviconKey": "Lucide",
+        "enabledByLanguage": {
+          "default": false,
+          "zh_CN": false,
+          "zh_TW": false
+        }
+      },
+      {
+        "title": "Phosphor Icons",
+        "engineUrl": "https://phosphoricons.com/?q=%s",
+        "faviconKey": "PhosphorIcons",
+        "enabledByLanguage": {
+          "default": false,
+          "zh_CN": false,
+          "zh_TW": false
+        }
+      },
+      {
+        "title": "Flaticon",
+        "engineUrl": "https://www.flaticon.com/search?word=%s",
+        "faviconKey": "Flaticon",
+        "enabledByLanguage": {
+          "default": false,
+          "zh_CN": false,
+          "zh_TW": false
+        }
+      }
+    ]
+  },
+  {
+    "category": "5",
+    "engines": [
+      {
+        "title": "Google Fonts",
+        "engineUrl": "https://fonts.google.com/?query=%s",
+        "faviconKey": "GoogleFonts",
+        "enabledByLanguage": {
+          "default": true,
+          "zh_CN": true,
+          "zh_TW": true
+        }
+      },
+      {
+        "title": "Fontshare",
+        "engineUrl": "https://www.fontshare.com/?q=%s",
+        "faviconKey": "Fontshare",
+        "enabledByLanguage": {
+          "default": false,
+          "zh_CN": false,
+          "zh_TW": false
+        }
+      },
+      {
+        "title": "Adobe Fonts",
+        "engineUrl": "https://fonts.adobe.com/search?query=%s",
+        "faviconKey": "AdobeFonts",
+        "enabledByLanguage": {
+          "default": false,
+          "zh_CN": false,
+          "zh_TW": false
+        }
+      },
+      {
+        "title": "Font Squirrel",
+        "engineUrl": "https://www.fontsquirrel.com/fonts/list/search?q=%s",
+        "faviconKey": "FontSquirrel",
+        "enabledByLanguage": {
+          "default": false,
+          "zh_CN": false,
+          "zh_TW": false
+        }
+      }
+    ]
+  },
+  {
+    "category": "7",
+    "engines": [
+      {
+        "title": "Freepik",
+        "engineUrl": "https://www.magnific.com/search?format=search&query=%s",
+        "faviconKey": "Freepik",
+        "enabledByLanguage": {
+          "default": true,
+          "zh_CN": true,
+          "zh_TW": true
+        }
+      },
+      {
+        "title": "Mixkit Video",
+        "engineUrl": "https://mixkit.co/free-stock-video/%s/",
+        "faviconKey": "Mixkit",
+        "enabledByLanguage": {
+          "default": false,
+          "zh_CN": false,
+          "zh_TW": false
+        }
       },
       {
         "title": "Bensound",
@@ -388,9 +397,9 @@
         "engineUrl": "https://uppbeat.io/browse/search/%s",
         "faviconKey": "Uppbeat",
         "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
+          "default": false,
+          "zh_CN": false,
+          "zh_TW": false
         }
       }
     ]

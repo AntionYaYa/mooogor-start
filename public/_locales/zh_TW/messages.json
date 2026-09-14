@@ -356,6 +356,9 @@
   "nt_engine_category_font": {
     "message": "字體"
   },
+  "nt_engine_category_creative": {
+    "message": "創作素材"
+  },
   "nt_engine_category_music": {
     "message": "音樂"
   },

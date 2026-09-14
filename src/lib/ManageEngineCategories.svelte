@@ -16,7 +16,7 @@
     lockedIds?: string[];
     onAdd: (name: string) => void | Promise<string | void>;
     onRename: (id: string, name: string) => void | Promise<void>;
-    onDelete: (id: string) => void | Promise<void>;
+    onDelete: (id: string) => boolean | void | Promise<boolean | void>;
     onReorder: (
       items: (EngineCategoryItem & { id: string })[],
     ) => void | Promise<void>;
@@ -47,6 +47,7 @@
     Object.fromEntries(categories.map((item) => [item.id, item.name])),
   );
   let newCategoryName = $state("");
+  let actionError = $state("");
 
   function setDraftName(id: string, value: string) {
     draftNameMap = {
@@ -62,7 +63,15 @@
       return;
     }
     if (nextName === category.name) return;
-    await onRename(category.id, nextName);
+    actionError = "";
+    try {
+      await onRename(category.id, nextName);
+      draftCategories = draftCategories.map((item) => item.id === category.id ? { ...item, name: nextName } : item);
+    } catch (error) {
+      console.error("Failed to rename search category", error);
+      setDraftName(category.id, category.name);
+      actionError = t("nt_common_save_failed");
+    }
   }
 
   async function handleAddCategory() {
@@ -82,11 +91,18 @@
   }
 
   async function handleDeleteCategory(id: string) {
-    await onDelete(id);
-    draftCategories = draftCategories.filter((item) => item.id !== id);
-    const next = { ...draftNameMap };
-    delete next[id];
-    draftNameMap = next;
+    actionError = "";
+    try {
+      const deleted = await onDelete(id);
+      if (deleted === false) return;
+      draftCategories = draftCategories.filter((item) => item.id !== id);
+      const next = { ...draftNameMap };
+      delete next[id];
+      draftNameMap = next;
+    } catch (error) {
+      console.error("Failed to delete search category", error);
+      actionError = t("nt_common_save_failed");
+    }
   }
 
   function handleCategoryKeydown(e: KeyboardEvent) {
@@ -121,6 +137,7 @@
 </script>
 
 <Popup type="m" title={t("nt_settings_search_categories_title")} {onclickClose}>
+  {#if actionError}<T type="s" color="var(--c-red)">{actionError}</T>{/if}
   <div
     class="category_list"
     use:dndzone={{

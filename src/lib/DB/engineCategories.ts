@@ -68,7 +68,9 @@ export async function renameEngineCategory(id: string, name: string) {
 
 export async function deleteEngineCategory(id: string) {
   await updateStoredConfig((config) => {
-    config.engines = config.engines.filter((engine) => engine.category !== id);
+    if (!config.engineCategories.some((category) => category.id === id)) return;
+    if (config.engineCategories.length <= 1) throw new Error("At least one search category is required");
+    config.engines = config.engines.filter((engine) => (engine.category?.trim() || "1") !== id);
     config.engineCategories = config.engineCategories.filter((item) => item.id !== id).sort(byOrder);
     const now = Date.now();
     config.engineCategories.forEach((item, index) => { item.order = index; item.updateAt = now; });

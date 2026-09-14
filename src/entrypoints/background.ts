@@ -18,8 +18,7 @@ import {
 import {
   ensureDefaultWebSites,
 } from "../lib/DB/DB";
-import { ensureDefaultEngines } from "../lib/DB/engines";
-import { ensureDefaultEngineCategories } from "../lib/DB/engineCategories";
+import { initializeDefaultSearchConfig } from "../lib/DB/defaultSearchConfig";
 import { executeEngineCommand } from "../lib/DB/engineCommandHandler";
 import { getEngineConfigSnapshot } from "../lib/DB/configStorage";
 import { buildDefaultWebSites } from "../lib/config/defaultWebSites";
@@ -91,8 +90,7 @@ function prepareConfiguration(
     }
     const language = getEffectiveLanguage("auto");
     await ensureDefaultWebSites(buildDefaultWebSites(language));
-    await ensureDefaultEngineCategories(buildDefaultEngineCategories());
-    await ensureDefaultEngines(buildDefaultEngines(language));
+    await initializeDefaultSearchConfig(buildDefaultEngineCategories(), buildDefaultEngines(language));
     await initializeDataSync();
   })().catch((error) => {
     configurationReadyPromise = null;

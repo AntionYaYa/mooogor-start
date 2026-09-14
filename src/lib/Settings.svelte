@@ -42,6 +42,7 @@
     import {
         addEngine,
         deleteEngine,
+        deleteEngines,
         FALLBACK_ENGINE_CATEGORY_ID,
         renameEngineCategory,
         addEngineCategory,
@@ -984,6 +985,11 @@
                 settingEngineGroups,
             );
             engineRefreshPending = true;
+            return true;
+        } catch (error) {
+            console.error("Failed to save search engine layout", error);
+            await loadSearchSettingEngines(true);
+            return false;
         } finally {
             settingEnginesSaving = false;
         }
@@ -1044,8 +1050,7 @@
             clearTimeout(persistEngineLayoutTimer);
             persistEngineLayoutTimer = null;
         }
-        await persistSearchEngineLayout();
-        return true;
+        return await persistSearchEngineLayout();
     }
 
     async function batchDeleteSearchEngines(
@@ -1066,9 +1071,13 @@
         }
         settingEnginesSaving = true;
         try {
-            await Promise.all(engineIds.map((id) => deleteEngine(id)));
+            await deleteEngines(engineIds);
             await loadSearchSettingEngines(true);
             return true;
+        } catch (error) {
+            console.error("Failed to delete search engines", error);
+            await loadSearchSettingEngines(true);
+            return false;
         } finally {
             settingEnginesSaving = false;
         }
@@ -1192,22 +1201,23 @@
     }
 
     async function deleteSearchCategoryById(id: string) {
-        if (settingEngineCategories.length <= 1) return;
-        if (id === FALLBACK_ENGINE_CATEGORY_ID) return;
+        if (settingEngineCategories.length <= 1) return false;
+        if (id === FALLBACK_ENGINE_CATEGORY_ID) return false;
         const category = settingEngineCategories.find((item) => item.id === id);
-        if (!category) return;
+        if (!category) return false;
         const engineCount = (settingEngineGroups[id] ?? []).length;
         const title = `${t("nt_confirm_delete_search_category_title")}「${category.name}」`;
         const description = t(
             "nt_settings_search_delete_category_confirm",
             String(engineCount),
         );
-        if (!(await requestConfirm(title, description, t("nt_delete")))) return;
+        if (!(await requestConfirm(title, description, t("nt_delete")))) return false;
         settingEnginesSaving = true;
         try {
             await deleteEngineCategory(id);
             await deleteSearchKeysForCategory(id);
             await loadSearchSettingEngines(true);
+            return true;
         } finally {
             settingEnginesSaving = false;
         }
@@ -1300,7 +1310,7 @@
     }
 
     async function resetSearchEnginesToDefaultConfirm() {
-        if (settingEnginesSaving) return;
+        if (settingEnginesSaving || settingEnginesDragging) return;
         if (
             !(await requestConfirm(
                 t("nt_confirm_reset_search_engines_title"),
@@ -1308,6 +1318,14 @@
             ))
         )
             return;
+        if (settingEnginesSaving || settingEnginesDragging) return;
+        if (persistEngineLayoutTimer) {
+            clearTimeout(persistEngineLayoutTimer);
+            persistEngineLayoutTimer = null;
+        }
+        closeSearchEngineEditor();
+        closeCategoryManager();
+        setSelectedSearchEngineIds([]);
         settingEnginesSaving = true;
         try {
             const defaultCategories = buildDefaultEngineCategories();

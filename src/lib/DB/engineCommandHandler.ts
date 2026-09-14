@@ -7,6 +7,7 @@ const operations: EngineOperations = {
   addEngine: engines.addEngine,
   updateEngine: engines.updateEngine,
   deleteEngine: engines.deleteEngine,
+  deleteEngines: engines.deleteEngines,
   setEngineEnabled: engines.setEngineEnabled,
   reorderEngineCategory: engines.reorderEngineCategory,
   updateEnginesLayout: engines.updateEnginesLayout,

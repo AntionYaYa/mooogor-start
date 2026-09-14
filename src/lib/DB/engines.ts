@@ -1,3 +1,4 @@
+import { createEngineId } from "./engineIdentity";
 import type { Engine, EngineCategory } from "./database";
 import { getStoredConfig, updateStoredConfig } from "./configStorage";
 
@@ -5,8 +6,10 @@ function normalizeEngineCategory(category?: string): EngineCategory {
   return category?.trim() || "1";
 }
 
-function nextId(items: Engine[]) {
-  return Math.max(0, ...items.map((item) => item.id ?? 0)) + 1;
+function requireCategory(categories: { id: string }[], category?: string) {
+  const id = normalizeEngineCategory(category);
+  if (!categories.some((item) => item.id === id)) throw new Error("Search category no longer exists");
+  return id;
 }
 
 const byOrder = (a: Engine, b: Engine) => (a.order ?? 999999) - (b.order ?? 999999);
@@ -43,11 +46,11 @@ export async function reorderEngineCategory(category: string, ids: number[]) {
 export async function addEngine(engine: Omit<Engine, "id">) {
   return await updateStoredConfig((config) => {
     const now = Date.now();
-    const id = nextId(config.engines);
+    const id = createEngineId(config.engines);
     config.engines.push({
       ...engine,
       id,
-      category: normalizeEngineCategory(engine.category),
+      category: requireCategory(config.engineCategories, engine.category),
       enabled: engine.enabled ?? true,
       order: engine.order ?? config.engines.length,
       createAt: now,
@@ -65,7 +68,7 @@ export async function updateEngine(engine: Pick<Engine, "title" | "engineUrl" | 
       title: engine.title,
       engineUrl: engine.engineUrl,
       faviconUrl: engine.faviconUrl,
-      category: normalizeEngineCategory(engine.category),
+      category: requireCategory(config.engineCategories, engine.category),
       enabled: engine.enabled,
       updateAt: Date.now(),
     });
@@ -74,10 +77,15 @@ export async function updateEngine(engine: Pick<Engine, "title" | "engineUrl" | 
 }
 
 export async function deleteEngine(id: number) {
-  await updateStoredConfig((config) => {
-    config.engines = config.engines.filter((item) => item.id !== id);
-  });
+  await deleteEngines([id]);
   return id;
+}
+
+export async function deleteEngines(ids: number[]) {
+  const selected = new Set(ids);
+  await updateStoredConfig((config) => {
+    config.engines = config.engines.filter((item) => item.id === undefined || !selected.has(item.id));
+  });
 }
 
 export async function getEnabledEngines() {
@@ -116,7 +124,7 @@ export async function updateEnginesLayout(items: { id: number; category?: Engine
         ? {
             ...engine,
             order: next.index,
-            category: normalizeEngineCategory(next.item.category),
+            category: requireCategory(config.engineCategories, next.item.category),
             updateAt: now,
           }
         : engine;
@@ -142,7 +150,7 @@ export async function updateEngineCategory(id: number, category: EngineCategory)
   await updateStoredConfig((config) => {
     const engine = config.engines.find((item) => item.id === id);
     if (engine) {
-      engine.category = normalizeEngineCategory(category);
+      engine.category = requireCategory(config.engineCategories, category);
       engine.updateAt = Date.now();
     }
   });
@@ -152,10 +160,13 @@ export async function ensureDefaultEngines(defaults: Omit<Engine, "id">[]) {
   await updateStoredConfig((config) => {
     if (config.engines.length) return;
     const now = Date.now();
-    config.engines = defaults.map((engine, index) => ({
-      ...engine, id: index + 1, category: normalizeEngineCategory(engine.category),
-      enabled: engine.enabled ?? true, order: index, createAt: now, updateAt: now,
-    }));
+    const allocated = [...config.engines];
+    config.engines = defaults.map((engine, index) => {
+      const id = createEngineId(allocated);
+      allocated.push({ ...engine, id });
+      return { ...engine, id, category: requireCategory(config.engineCategories, engine.category),
+        enabled: engine.enabled ?? true, order: index, createAt: now, updateAt: now };
+    });
   });
 }
 
@@ -166,9 +177,12 @@ export async function clearAllEngines() {
 export async function resetEnginesToDefault(defaults: Omit<Engine, "id">[]) {
   await updateStoredConfig((config) => {
     const now = Date.now();
-    config.engines = defaults.map((engine, index) => ({
-      ...engine, id: index + 1, category: normalizeEngineCategory(engine.category),
-      enabled: engine.enabled ?? true, order: index, createAt: now, updateAt: now,
-    }));
+    const allocated = [...config.engines];
+    config.engines = defaults.map((engine, index) => {
+      const id = createEngineId(allocated);
+      allocated.push({ ...engine, id });
+      return { ...engine, id, category: requireCategory(config.engineCategories, engine.category),
+        enabled: engine.enabled ?? true, order: index, createAt: now, updateAt: now };
+    });
   });
 }

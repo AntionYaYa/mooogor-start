@@ -71,7 +71,7 @@
   let categoryName = $state("");
   let saveError = $state("");
   const enabledEngines = $derived(engines.filter((engine) => engine.enabled !== false));
-  let selectedEngineUrl = $state("");
+  let selectedEngineId = $state<number | undefined>();
   let inputFocused = $state(false);
   let engineFocused = $state(false);
   let isComposing = $state(false);
@@ -90,7 +90,7 @@
     keyword = initialKeyword;
     engines = [...data.engines];
     categoryName = data.categoryName;
-    selectedEngineUrl = getSelectedEngine()?.engineUrl ?? "";
+    selectedEngineId = getSelectedEngine()?.id;
     void restorePosition();
     void syncInputWidth();
     const unsubscribe = subscribeEngineConfigChanges(() => void refreshEngines());
@@ -120,7 +120,7 @@
       }
       engines = next.engines;
       categoryName = next.categoryName;
-      selectedEngineUrl = getSelectedEngine()?.engineUrl ?? "";
+      selectedEngineId = getSelectedEngine()?.id;
       saveError = "";
     } catch (error) {
       if (requestId !== engineRequestId) return;
@@ -155,7 +155,7 @@
   }
 
   function selectEngine(engine: RelatedSearchEngine) {
-    selectedEngineUrl = engine.engineUrl;
+    selectedEngineId = engine.id;
   }
 
   function searchWithEngine(engine: RelatedSearchEngine) {
@@ -215,7 +215,7 @@
     event.preventDefault();
     event.stopPropagation();
     const index = enabledEngines.findIndex(
-      (item) => item.engineUrl === engine.engineUrl,
+      (item) => item.id === engine.id,
     );
     const nextIndex =
       event.key === "ArrowLeft"
@@ -224,25 +224,25 @@
     const nextEngine = enabledEngines[nextIndex];
     if (!nextEngine) return;
     selectEngine(nextEngine);
-    getEngineButton(nextEngine.engineUrl)?.focus();
+    getEngineButton(nextEngine.id)?.focus();
   }
 
   function getSelectedEngine() {
     if (!enabledEngines.length) return undefined;
     return (
-      enabledEngines.find((engine) => engine.engineUrl === selectedEngineUrl) ??
+      enabledEngines.find((engine) => engine.id === selectedEngineId) ??
       resolveEngineByDomain(enabledEngines, location.hostname, enabledEngines[0])
     );
   }
 
   function getSelectedEngineButton() {
-    return selectedEngineUrl ? getEngineButton(selectedEngineUrl) : null;
+    return selectedEngineId ? getEngineButton(selectedEngineId) : null;
   }
 
-  function getEngineButton(engineUrl: string) {
+  function getEngineButton(engineId: number | undefined) {
     if (!enginesEl) return null;
     return enginesEl.querySelector<HTMLAnchorElement>(
-      `.engine[data-engine-url="${CSS.escape(engineUrl)}"]`,
+      `.engine[data-engine-id="${engineId}"]`,
     );
   }
 
@@ -378,11 +378,11 @@
             />
           </div>
           <div class="engines" bind:this={enginesEl}>
-            {#each enabledEngines as engine (engine.engineUrl)}
+            {#each enabledEngines as engine (engine.id)}
               <a
                 class="engine"
-                class:selected={engine.engineUrl === selectedEngineUrl}
-                data-engine-url={engine.engineUrl}
+                class:selected={engine.id === selectedEngineId}
+                data-engine-id={engine.id}
                 href={getEngineSearchUrl(engine)}
                 title={engine.title ?? ""}
                 onfocus={() => {
@@ -427,7 +427,7 @@
             <EngineIcon alt={engine.title ?? ""} engineUrl={engine.engineUrl} src={engine.iconUrl} />
             <div class="engine_name"><T nowrap>{engine.title ?? ""}</T></div>
             <Switch turnOn={engine.enabled !== false} label={engine.title}
-              disabled={engineSaving || (engine.enabled !== false && enabledEngines.length === 1)}
+              disabled={engineSaving}
               onclick={() => void toggleEngine(engine)} />
           </div>
         {/each}

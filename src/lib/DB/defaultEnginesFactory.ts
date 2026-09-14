@@ -40,6 +40,7 @@ function resolveEngineCategory(category?: EngineCategory): EngineCategory {
   if (category === "4") return "4";
   if (category === "5") return "5";
   if (category === "6") return "6";
+  if (category === "7") return "7";
   return "1";
 }
 

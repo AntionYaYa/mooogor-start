@@ -1,3 +1,4 @@
+import { createDefaultSearchConfig } from "./defaultSearchConfig";
 import { buildDefaultWebSites } from "@/lib/config/defaultWebSites";
 import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
 import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
@@ -23,20 +24,9 @@ export async function resetConfigurationToDefaults(
     createAt: now,
     updateAt: now,
   }));
-  const engines = buildDefaultEngines(language).map((engine, index) => ({
-    ...engine,
-    id: index + 1,
-    order: index,
-    createAt: now,
-    updateAt: now,
-  }));
-  const engineCategories = buildDefaultEngineCategories().map(
-    (category, index) => ({
-      ...category,
-      order: index,
-      createAt: now,
-      updateAt: now,
-    }),
+  const previous = await readStoredConfig();
+  const { engines, engineCategories } = createDefaultSearchConfig(
+    buildDefaultEngineCategories(), buildDefaultEngines(language), previous?.engines,
   );
   const config: StoredConfig = {
     schemaVersion: 1,
