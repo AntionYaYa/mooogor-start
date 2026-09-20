@@ -110,7 +110,6 @@
     let selectedEngineId = $state<number | undefined>();
     let selectedEngineCategoryId = $state("");
     let searchAreaFocused = $state(false);
-    let searchInputFocused = $state(false);
     let searchEngineFocused = $state(false);
     let lastSearchScope = $state<string | null>(null);
     let engineConfigReady = $state(false);
@@ -147,6 +146,13 @@
             });
         });
     });
+    let showSearchResults = $derived(
+        inputValue.length > 0 &&
+            ((searchBookmarksEnabled &&
+                (bookmarksResults.length > 0 || bookmarksLoading)) ||
+                (searchHistoryEnabled &&
+                    (historyResults.length > 0 || historyLoading))),
+    );
     let showSearchKeys = $derived(
         recordSearchKeywords &&
             searchAreaFocused &&
@@ -156,9 +162,6 @@
             !bookmarksLoading &&
             !historyLoading &&
             searchKeys.length > 0,
-    );
-    let showSearchShortcutTip = $derived(
-        searchInputFocused && !!inputValue.trim(),
     );
     let showSwitchShortcutTip = $derived(searchEngineFocused);
 
@@ -808,12 +811,10 @@
     }
 
     function handleInputFocus() {
-        searchInputFocused = true;
         searchAreaFocused = true;
     }
 
     function handleInputBlur(e: FocusEvent) {
-        searchInputFocused = false;
         const next = e.relatedTarget as Node | null;
         if (next && searchPanelEl?.contains(next)) return;
         searchAreaFocused = false;
@@ -863,18 +864,13 @@
             class="search_g"
             bind:this={searchPanelEl}
             class:search_g_hidden={!engineConfigReady}
-            class:bg={searchAreaFocused &&
-                    ((searchBookmarksEnabled &&
-                        (bookmarksResults.length || bookmarksLoading)) ||
-                        (searchHistoryEnabled &&
-                            (historyResults.length || historyLoading)) ||
-                        showSearchKeys ||
-                        showSearchShortcutTip ||
-                        showSwitchShortcutTip)}
+            class:bg={showSearchResults ||
+                (searchAreaFocused &&
+                    (showSearchKeys || showSwitchShortcutTip))}
             class:top0={enginesGroup.length <= 1}
         >
             {@render temInputGroup()}
-            {#if showSearchShortcutTip}
+            {#if showSearchResults}
                 {@render temShortcutTip(t("nt_related_search_shortcut_search"))}
             {/if}
             {#if showSwitchShortcutTip}
@@ -883,7 +879,7 @@
             {#if showSearchKeys}
                 {@render temSearchKeys()}
             {/if}
-            {#if searchAreaFocused && ((searchBookmarksEnabled && (bookmarksResults.length || bookmarksLoading)) || (searchHistoryEnabled && (historyResults.length || historyLoading)))}
+            {#if showSearchResults}
                 <div
                     class="list"
                     bind:this={listEls}
