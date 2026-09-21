@@ -4,12 +4,14 @@
     import { getEngineConfigSnapshot } from "@/lib/DB/configStorage";
     import { slide } from "svelte/transition";
     import { flip } from "svelte/animate";
-    import { dragHandle, dragHandleZone, SOURCES, TRIGGERS } from "svelte-dnd-action";
+    import {
+        dragHandle,
+        dragHandleZone,
+        SOURCES,
+        TRIGGERS,
+    } from "svelte-dnd-action";
     import type { DndEvent } from "svelte-dnd-action";
-    import type {
-        Engine,
-        EngineCategoryItem,
-    } from "@/lib/DB/DB";
+    import type { Engine, EngineCategoryItem } from "@/lib/DB/DB";
     import {
         FALLBACK_ENGINE_CATEGORY_ID,
         addEngine,
@@ -123,6 +125,7 @@
     let engineListDragging = $state(false);
     let autoFocusScheduled = false;
     let searchConfigLoading = $derived(loading || !engineConfigReady);
+
     let effectiveReadOnly = $derived(readOnly || !databaseConfigLoaded);
 
     $effect(() => {
@@ -193,9 +196,18 @@
         }
         const savedId = readSelectedEngineId(categoryId);
         const savedUrl = readSelectedEngineUrl(categoryId);
-        const savedEngine = displayEnabledEngines.find((engine) => engine.id === savedId) ??
-            displayEnabledEngines.find((engine) => engine.engineUrl === savedUrl);
-        if (selectedEngineCategoryId === categoryId && displayEnabledEngines.some((engine) => engine.id === selectedEngineId)) return;
+        const savedEngine =
+            displayEnabledEngines.find((engine) => engine.id === savedId) ??
+            displayEnabledEngines.find(
+                (engine) => engine.engineUrl === savedUrl,
+            );
+        if (
+            selectedEngineCategoryId === categoryId &&
+            displayEnabledEngines.some(
+                (engine) => engine.id === selectedEngineId,
+            )
+        )
+            return;
         selectedEngineCategoryId = categoryId;
         selectedEngineId = savedEngine?.id ?? displayEnabledEngines[0]?.id;
     }
@@ -263,7 +275,9 @@
         const visibleCategories = categories.filter(
             (item) => item.id !== FALLBACK_ENGINE_CATEGORY_ID,
         );
-        engineCategories = visibleCategories.length ? visibleCategories : categories;
+        engineCategories = visibleCategories.length
+            ? visibleCategories
+            : categories;
         if (!engineCategories.length) {
             selectedCategoryId = "1";
             enginesGroup = [];
@@ -298,7 +312,8 @@
             return;
         }
         try {
-            const { categories, engines: loadedEngines } = await getEngineConfigSnapshot();
+            const { categories, engines: loadedEngines } =
+                await getEngineConfigSnapshot();
             if (requestId !== engineConfigRequestId) return;
             engines = loadedEngines;
             applyEngineCategories(categories);
@@ -325,7 +340,6 @@
             if (!configReady) return;
             void refreshEngineConfig();
         });
-
         mounted = true;
         inputValue = backPageInitInputValue();
         void hydrateSearchStorage()
@@ -440,7 +454,8 @@
     }
 
     function requireEngineId(engine: Engine): number {
-        if (engine.id === undefined) throw new Error("Search engine id is required");
+        if (engine.id === undefined)
+            throw new Error("Search engine id is required");
         return engine.id;
     }
 
@@ -458,7 +473,11 @@
             await write();
             engineRefreshPending = true;
         } catch (error) {
-            console.error("[Mooogor NewTab]", "search-engine:save-failed", error);
+            console.error(
+                "[Mooogor NewTab]",
+                "search-engine:save-failed",
+                error,
+            );
             engineSaveError = true;
             dialogEngines = [...categoryEngines];
         } finally {
@@ -492,15 +511,22 @@
             refreshAfterEngineInteraction();
             return;
         }
-        if (dialogEngines.every((engine, index) => engine.id === categoryEngines[index]?.id) &&
-            dialogEngines.length === categoryEngines.length) {
+        if (
+            dialogEngines.every(
+                (engine, index) => engine.id === categoryEngines[index]?.id,
+            ) &&
+            dialogEngines.length === categoryEngines.length
+        ) {
             refreshAfterEngineInteraction();
             return;
         }
         const category = selectedCategoryId;
-        const ordered = dialogEngines.map((engine, order) => ({ ...engine, order }));
-        await saveEngineChange(
-            () => reorderEngineCategory(category, ordered.map(requireEngineId)),
+        const ordered = dialogEngines.map((engine, order) => ({
+            ...engine,
+            order,
+        }));
+        await saveEngineChange(() =>
+            reorderEngineCategory(category, ordered.map(requireEngineId)),
         );
     }
 
@@ -627,7 +653,8 @@
         const categoryId = selectedCategoryId || "all";
         selectedEngineId = engine.id;
         selectedEngineCategoryId = categoryId;
-        if (engine.id !== undefined) persistSelectedEngineId(engine.id, categoryId, engine.engineUrl);
+        if (engine.id !== undefined)
+            persistSelectedEngineId(engine.id, categoryId, engine.engineUrl);
     }
 
     function getEngineLink(engineId: number | undefined) {
@@ -743,8 +770,8 @@
     async function toggleEngine(engine: Engine) {
         if (effectiveReadOnly || engineSaving || engineListDragging) return;
         const enabled = engine.enabled === false;
-        await saveEngineChange(
-            () => setEngineEnabled(requireEngineId(engine), enabled),
+        await saveEngineChange(() =>
+            setEngineEnabled(requireEngineId(engine), enabled),
         );
     }
 
@@ -844,7 +871,7 @@
                 {/each}
             </div>
             <div class="skeleton_search_box" aria-hidden="true">
-                <div class="skeleton_input skeleton_shimmer"></div>
+                <div class="skeleton_input"></div>
                 <div class="skeleton_engines">
                     {#each Array.from({ length: 4 }) as _}
                         <div class="skeleton_engine skeleton_shimmer"></div>
@@ -954,12 +981,17 @@
                     bind:value={inputValue}
                     type="search"
                     placeholder={displayPlaceholderEngineTitle
-                        ? t("nt_search_placeholder", displayPlaceholderEngineTitle)
+                        ? t(
+                              "nt_search_placeholder",
+                              displayPlaceholderEngineTitle,
+                          )
                         : t("nt_search_placeholder_fallback")}
                     oncompositionstart={() => (isComposing = true)}
                     oncompositionend={(e) => {
                         isComposing = false;
-                        searchInput((e.currentTarget as HTMLInputElement).value);
+                        searchInput(
+                            (e.currentTarget as HTMLInputElement).value,
+                        );
                     }}
                     onfocus={handleInputFocus}
                     onblur={handleInputBlur}
@@ -1058,11 +1090,7 @@
         {#if !effectiveReadOnly}
             <Button onclick={openEngineDialog}>
                 <G>
-                    <Icon
-                        name="Plus"
-                        color="var(--c-text)"
-                        opacity={0.6}
-                    />
+                    <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
                 </G>
             </Button>
         {/if}
@@ -1111,9 +1139,13 @@
                     </div>
                     <Switch
                         turnOn={engine.enabled !== false}
-                        disabled={effectiveReadOnly || engineSaving || engineListDragging}
+                        disabled={effectiveReadOnly ||
+                            engineSaving ||
+                            engineListDragging}
                         onclick={() => void toggleEngine(engine)}
-                        label={t("nt_settings_search_engine_enabled") + ": " + engine.title}
+                        label={t("nt_settings_search_engine_enabled") +
+                            ": " +
+                            engine.title}
                     />
                 </div>
             {/each}
@@ -1125,7 +1157,9 @@
             <Button
                 fill
                 r="r1"
-                disabled={effectiveReadOnly || engineSaving || engineListDragging}
+                disabled={effectiveReadOnly ||
+                    engineSaving ||
+                    engineListDragging}
                 onclick={() => (showCustomEngineEditor = true)}
             >
                 <G align="c">
@@ -1193,7 +1227,6 @@
         height: 36px;
     }
     .skeleton_tab,
-    .skeleton_input,
     .skeleton_engine {
         position: relative;
         overflow: hidden;
@@ -1201,7 +1234,7 @@
     }
     .skeleton_tab {
         width: 64px;
-        height: 12px;
+        height: 20px;
         border-radius: 999px;
     }
     .skeleton_search_box {
@@ -1212,17 +1245,18 @@
         box-sizing: border-box;
     }
     .skeleton_input {
-        height: 14px;
+        height: 20px;
         flex: 1;
         border-radius: 999px;
     }
     .skeleton_engines {
         flex: 0 0 auto;
+        padding: var(--gap);
     }
     .skeleton_engine {
         width: 28px;
         height: 28px;
-        border-radius: 50%;
+        border-radius: 10px;
     }
     .skeleton_shimmer::after {
         content: "";
