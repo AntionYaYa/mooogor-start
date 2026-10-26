@@ -683,5 +683,26 @@
   },
   "nt_config_reset_all_confirm": {
     "message": "確定要重設全部設定嗎？這會清除自訂常用網站、搜尋引擎、分類和偏好設定，且無法復原。書籤、瀏覽記錄和已快取圖示不會被刪除。"
+  },
+  "nt_about_open_source_title": {
+    "message": "原始碼與開源致謝"
+  },
+  "nt_about_open_source_desc": {
+    "message": "感謝開源社群為 Mooogor Start 提供的框架、工具與靈感。你可以在 Gitee 查看原始碼、回報問題，也歡迎參與改進。"
+  },
+  "nt_about_source_code": {
+    "message": "查看原始碼"
+  },
+  "nt_about_feedback": {
+    "message": "問題與建議"
+  },
+  "nt_about_project_license": {
+    "message": "專案授權條款尚未聲明；第三方相依套件遵循各自的授權條款。"
+  },
+  "nt_about_third_party_title": {
+    "message": "使用的開源專案"
+  },
+  "nt_about_third_party_notices": {
+    "message": "查看第三方授權條款與版權聲明"
   }
 }

@@ -683,5 +683,26 @@
   },
   "nt_config_reset_all_confirm": {
     "message": "确定要重置全部配置吗？这会清除自定义常用网站、搜索引擎、分类和偏好设置，且无法撤销。收藏夹、历史记录和已缓存图标不会被删除。"
+  },
+  "nt_about_open_source_title": {
+    "message": "源码与开源致谢"
+  },
+  "nt_about_open_source_desc": {
+    "message": "感谢开源社区为 Mooogor Start 提供的框架、工具与灵感。你可以在 Gitee 查看源码、反馈问题，也欢迎参与改进。"
+  },
+  "nt_about_source_code": {
+    "message": "查看源码"
+  },
+  "nt_about_feedback": {
+    "message": "问题与建议"
+  },
+  "nt_about_project_license": {
+    "message": "项目许可证尚未声明；第三方依赖遵循各自的许可证。"
+  },
+  "nt_about_third_party_title": {
+    "message": "使用的开源项目"
+  },
+  "nt_about_third_party_notices": {
+    "message": "查看第三方许可证与版权声明"
   }
 }

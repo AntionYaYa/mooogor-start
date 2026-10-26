@@ -683,5 +683,26 @@
   },
   "nt_config_reset_all_confirm": {
     "message": "Reset all configuration? This permanently removes custom common sites, search engines, categories, and preferences. Bookmarks, history, and cached icons won't be deleted."
+  },
+  "nt_about_open_source_title": {
+    "message": "Source code & acknowledgements"
+  },
+  "nt_about_open_source_desc": {
+    "message": "Thanks to the open-source community for the frameworks, tools, and inspiration behind Mooogor Start. Explore the source on Gitee, report issues, or help improve the project."
+  },
+  "nt_about_source_code": {
+    "message": "Source code"
+  },
+  "nt_about_feedback": {
+    "message": "Issues & suggestions"
+  },
+  "nt_about_project_license": {
+    "message": "A project license has not yet been declared. Third-party dependencies retain their own licenses."
+  },
+  "nt_about_third_party_title": {
+    "message": "Open-source projects used"
+  },
+  "nt_about_third_party_notices": {
+    "message": "Third-party licenses & copyright notices"
   }
 }

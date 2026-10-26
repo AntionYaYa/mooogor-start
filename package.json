@@ -7,13 +7,14 @@
   "scripts": {
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox",
-    "build": "wxt build",
-    "build:firefox": "wxt build -b firefox",
-    "zip": "wxt zip",
-    "zip:firefox": "wxt zip -b firefox",
+    "build": "pnpm licenses:generate && wxt build",
+    "build:firefox": "pnpm licenses:generate && wxt build -b firefox",
+    "zip": "pnpm licenses:generate && wxt zip",
+    "zip:firefox": "pnpm licenses:generate && wxt zip -b firefox",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "colors:defaults": "node scripts/extract-default-site-colors.mjs --write",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "licenses:generate": "node scripts/generate-third-party-notices.mjs"
   },
   "devDependencies": {
     "@tsconfig/svelte": "^5.0.6",
@@ -33,5 +34,13 @@
     "qr-code-styling": "1.9.2",
     "validator": "^13.15.26",
     "webext-bridge": "^6.0.1"
+  },
+  "homepage": "https://gitee.com/antion666/mooogor_new_tab",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/antion666/mooogor_new_tab.git"
+  },
+  "bugs": {
+    "url": "https://gitee.com/antion666/mooogor_new_tab/issues"
   }
 }
