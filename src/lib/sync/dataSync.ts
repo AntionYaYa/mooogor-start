@@ -98,6 +98,12 @@ let lastAppliedHash = "";
 let readyForLocalUploads = false;
 let initializationPromise: Promise<boolean> | null = null;
 
+// Shared by extension pages and the service worker, so deleting a copy cannot
+// race an upload or initialization in another extension context.
+async function withSyncLock<T>(operation: () => Promise<T>): Promise<T> {
+  return await navigator.locks.request("mooogor-data-sync", operation);
+}
+
 function getSyncStorage() {
   return browser.storage.sync as SyncStorageArea;
 }
@@ -436,56 +442,79 @@ export async function getDataSyncState(): Promise<DataSyncState> {
 }
 
 export async function setDataSyncEnabled(enabled: boolean) {
-  const storage = getSyncStorage();
-  if (!enabled) {
-    const manifest = await readManifest();
+  return withSyncLock(async () => {
+    const storage = getSyncStorage();
+    if (!enabled) {
+      const manifest = await readManifest();
+      await storage.set({
+        [ENABLED_KEY]: {
+          enabled: false,
+          contentHash: manifest?.contentHash,
+          updatedAt: Date.now(),
+        } satisfies SyncActivation,
+      });
+      await writeRuntimeState({ phase: "idle" });
+      return getDataSyncState();
+    }
+    const config = await readStoredConfig();
+    if (!config) throw new Error("Configuration is not ready");
+    const manifest = await writeRemoteData(buildSyncedData(config));
     await storage.set({
-      [ENABLED_KEY]: {
-        enabled: false,
-        contentHash: manifest?.contentHash,
-        updatedAt: Date.now(),
-      } satisfies SyncActivation,
-    });
-    await writeRuntimeState({ phase: "idle" });
-    return getDataSyncState();
-  }
-  const config = await readStoredConfig();
-  if (!config) throw new Error("Configuration is not ready");
-  const manifest = await writeRemoteData(buildSyncedData(config));
-  await storage.set({
-    [ENABLED_KEY]: {
-      enabled: true,
-      contentHash: manifest.contentHash,
-      updatedAt: Date.now(),
-    } satisfies SyncActivation,
-  });
-  return getDataSyncState();
-}
-
-export async function retryDataSync() {
-  const activation = await readActivation();
-  if (!activation.enabled) return getDataSyncState();
-  const config = await readStoredConfig();
-  if (!config) throw new Error("Configuration is not ready");
-  const manifest = await writeRemoteData(buildSyncedData(config));
-  const latestActivation = await readActivation();
-  if (
-    latestActivation.enabled &&
-    latestActivation.contentHash !== manifest.contentHash
-  ) {
-    await getSyncStorage().set({
       [ENABLED_KEY]: {
         enabled: true,
         contentHash: manifest.contentHash,
         updatedAt: Date.now(),
       } satisfies SyncActivation,
     });
-  }
-  return getDataSyncState();
+    return getDataSyncState();
+  });
+}
+
+export async function retryDataSync() {
+  return withSyncLock(async () => {
+    const activation = await readActivation();
+    if (!activation.enabled) return getDataSyncState();
+    const config = await readStoredConfig();
+    if (!config) throw new Error("Configuration is not ready");
+    const manifest = await writeRemoteData(buildSyncedData(config));
+    const latestActivation = await readActivation();
+    if (
+      latestActivation.enabled &&
+      latestActivation.contentHash !== manifest.contentHash
+    ) {
+      await getSyncStorage().set({
+        [ENABLED_KEY]: {
+          enabled: true,
+          contentHash: manifest.contentHash,
+          updatedAt: Date.now(),
+        } satisfies SyncActivation,
+      });
+    }
+    return getDataSyncState();
+  });
+}
+
+export async function deleteDataSyncCopy() {
+  return withSyncLock(async () => {
+    const storage = getSyncStorage();
+    // Keep a disabled marker: removing it would restore the default (enabled)
+    // and cause initialization to upload the local configuration again.
+    await storage.set({
+      [ENABLED_KEY]: { enabled: false, updatedAt: Date.now() } satisfies SyncActivation,
+    });
+    const stored = await storage.get(null);
+    const keys = Object.keys(stored).filter(
+      key => key === MANIFEST_KEY || key.startsWith(CHUNK_KEY_PREFIX),
+    );
+    if (keys.length) await storage.remove(keys);
+    lastAppliedHash = "";
+    await writeRuntimeState({ phase: "idle" });
+    return getDataSyncState();
+  });
 }
 
 export function queueDataSyncFromLocal() {
-  const task = syncQueue.then(async () => {
+  const task = syncQueue.then(() => withSyncLock(async () => {
     if (!readyForLocalUploads) return;
     const activation = await readActivation();
     if (!activation.enabled) return;
@@ -509,7 +538,7 @@ export function queueDataSyncFromLocal() {
         updatedAt: Date.now(),
       } satisfies SyncActivation,
     });
-  });
+  }));
   syncQueue = task.then(
     () => undefined,
     () => undefined,
@@ -519,7 +548,7 @@ export function queueDataSyncFromLocal() {
 
 export async function initializeDataSync() {
   if (initializationPromise) return initializationPromise;
-  initializationPromise = (async () => {
+  initializationPromise = withSyncLock(async () => {
     const activation = await readActivation();
     if (!activation.enabled) return false;
     const manifest = await readManifest();
@@ -569,7 +598,7 @@ export async function initializeDataSync() {
       } satisfies SyncActivation,
     });
     return false;
-  })().finally(() => {
+  }).finally(() => {
     readyForLocalUploads = true;
     initializationPromise = null;
   });

@@ -10,9 +10,11 @@
     getDataSyncState,
     retryDataSync,
     setDataSyncEnabled,
+    deleteDataSyncCopy,
     type DataSyncState,
   } from "@/lib/sync/dataSync";
   import { browser } from "wxt/browser";
+  import ConfirmDialog from "@/lib/ConfirmDialog.svelte";
   import Divider from "../components/Divider.svelte";
 
   let syncState = $state<DataSyncState>({
@@ -28,6 +30,9 @@
   let loading = $state(true);
   let saving = $state(false);
   let error = $state(false);
+  let showDeleteConfirm = $state(false);
+  let copyDeleted = $state(false);
+  let deleteFailed = $state(false);
 
   onMount(() => {
     void refresh();
@@ -60,6 +65,8 @@
     if (loading || saving) return;
     saving = true;
     error = false;
+    copyDeleted = false;
+    deleteFailed = false;
     try {
       syncState = await setDataSyncEnabled(!syncState.enabled);
     } catch (cause) {
@@ -74,11 +81,37 @@
     if (loading || saving) return;
     saving = true;
     error = false;
+    copyDeleted = false;
+    deleteFailed = false;
     try {
       syncState = await retryDataSync();
     } catch (cause) {
       error = true;
       console.error("[Mooogor Data Sync]", "retry:failed", cause);
+    } finally {
+      saving = false;
+    }
+  }
+
+  async function deleteSyncCopy() {
+    if (loading || saving) return;
+    showDeleteConfirm = false;
+    saving = true;
+    error = false;
+    copyDeleted = false;
+    deleteFailed = false;
+    try {
+      syncState = await deleteDataSyncCopy();
+      copyDeleted = true;
+    } catch (cause) {
+      deleteFailed = true;
+      console.error("[Mooogor Data Sync]", "delete:failed", cause);
+      // Deletion may have disabled sync before a later storage operation failed.
+      try {
+        syncState = await getDataSyncState();
+      } catch {
+        error = true;
+      }
     } finally {
       saving = false;
     }
@@ -130,7 +163,7 @@
   </G>
   <Divider />
 
-  <G vertical>
+  <G vertical full>
     <Button full fill r="r1" disabled={loading || saving} onclick={toggleSync}>
       <G full>
         <G full align="c">
@@ -144,67 +177,96 @@
         {t("nt_settings_data_sync_syncs")}
       </T>
     </G>
-  </G>
 
-  <G vertical full>
-    <T type="s" color="var(--c-text-1)">
-      {t("nt_settings_data_sync_usage")}
-    </T>
     <G vertical full>
-      <progress
-        class:warning={usagePercent(
-          syncState.usedBytes,
-          syncState.quotaBytes,
-        ) >= 80}
-        max={syncState.quotaBytes}
-        value={syncState.usedBytes}
-        aria-label={t("nt_settings_data_sync_usage")}
-      ></progress>
-    </G>
-    <T type="s" color="var(--c-text-2)" nowrap>
-      {formatBytes(syncState.usedBytes)} / {formatBytes(syncState.quotaBytes)}
-      ({usagePercentLabel(syncState.usedBytes, syncState.quotaBytes)})
-    </T>
-  </G>
-
-  {#if syncState.enabled}
-    {#if syncState.phase === "pending"}
-      <G>
-        <Icon name="Loading" color="var(--c-text)" />
-        <T>{t("nt_settings_data_sync_pending")}</T>
+      <T type="s" color="var(--c-text-1)">
+        {t("nt_settings_data_sync_usage")}
+      </T>
+      <G vertical full>
+        <progress
+          class:warning={usagePercent(
+            syncState.usedBytes,
+            syncState.quotaBytes,
+          ) >= 80}
+          max={syncState.quotaBytes}
+          value={syncState.usedBytes}
+          aria-label={t("nt_settings_data_sync_usage")}
+        ></progress>
       </G>
-    {:else if syncState.phase === "error"}
+      <T type="s" color="var(--c-text-2)" nowrap>
+        {formatBytes(syncState.usedBytes)} / {formatBytes(syncState.quotaBytes)}
+        ({usagePercentLabel(syncState.usedBytes, syncState.quotaBytes)})
+      </T>
+    </G>
+
+    {#if syncState.enabled}
+      {#if syncState.phase === "pending"}
+        <G>
+          <Icon name="Loading" color="var(--c-text)" />
+          <T>{t("nt_settings_data_sync_pending")}</T>
+        </G>
+      {:else if syncState.phase === "error"}
+        <G vertical>
+          <G>
+            <Icon name="TriangleAlert" color="var(--c-red)" />
+          </G>
+          <T>{t("nt_settings_data_sync_error")}</T>
+          <G>
+            <Button fill r="r1" onclick={retrySync} disabled={saving}>
+              <G>
+                <T>{t("nt_settings_data_sync_retry")}</T>
+              </G>
+            </Button>
+          </G>
+        </G>
+      {:else}
+        <G vertical>
+          <T type="s" color="var(--c-text-1)">{t("nt_settings_data_sync_last")}</T
+          >
+          <T>{formatLastSync(syncState.lastSyncedAt)}</T>
+        </G>
+      {/if}
+    {/if}
+
+    {#if error && syncState.phase !== "error"}
       <G vertical>
         <G>
           <Icon name="TriangleAlert" color="var(--c-red)" />
         </G>
         <T>{t("nt_settings_data_sync_error")}</T>
-        <G>
-          <Button fill r="r1" onclick={retrySync} disabled={saving}>
-            <G>
-              <T>{t("nt_settings_data_sync_retry")}</T>
-            </G>
-          </Button>
-        </G>
-      </G>
-    {:else}
-      <G vertical>
-        <T type="s" color="var(--c-text-1)">{t("nt_settings_data_sync_last")}</T
-        >
-        <T>{formatLastSync(syncState.lastSyncedAt)}</T>
       </G>
     {/if}
-  {/if}
 
-  {#if error && syncState.phase !== "error"}
-    <G vertical>
-      <G>
-        <Icon name="TriangleAlert" color="var(--c-red)" />
+    {#if !loading && !error && !syncState.enabled}
+      <G vertical full>
+        <Button fill r="r1" full disabled={loading || saving} onclick={() => (showDeleteConfirm = true)}>
+          <G full>
+          <G full>
+            <T color="var(--c-red)">{t("nt_settings_data_sync_delete")}</T>
+          </G>
+          </G>
+        </Button>
+        <T type="s">{t("nt_settings_data_sync_delete_tip")}</T>
+        {#if copyDeleted}
+          <div role="status"><T type="s">{t("nt_settings_data_sync_deleted")}</T></div>
+        {/if}
+        {#if deleteFailed}
+          <div role="alert"><T type="s" color="var(--c-red)">{t("nt_settings_data_sync_delete_failed")}</T></div>
+        {/if}
       </G>
-      <T>{t("nt_settings_data_sync_error")}</T>
-    </G>
-  {/if}
+    {/if}
+  </G>
 </div>
+
+{#if showDeleteConfirm}
+  <ConfirmDialog
+    title={t("nt_settings_data_sync_delete")}
+    description={t("nt_settings_data_sync_delete_confirm")}
+    confirmText={t("nt_delete")}
+    onclickClose={() => (showDeleteConfirm = false)}
+    onConfirm={deleteSyncCopy}
+  />
+{/if}
 
 <style>
   .data_sync_settings {

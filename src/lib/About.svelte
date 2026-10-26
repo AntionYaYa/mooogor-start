@@ -5,7 +5,23 @@
   import Popup from "./components/Popup.svelte";
   import { t } from "@/lib/utils/i18n";
   import T from "./components/T.svelte";
-  import { openSourceProjects, repositoryUrl } from "./openSource";
+
+const repositoryUrl = 'https://gitee.com/antion666/mooogor_new_tab';
+
+// License identifiers verified against the installed packages. Full texts are
+// generated separately so copyright and NOTICE statements ship with the app.
+const openSourceProjects = [
+  { name: 'WXT', url: 'https://wxt.dev', license: 'MIT' },
+  { name: 'Svelte', url: 'https://svelte.dev', license: 'MIT' },
+  { name: 'Lucide', url: 'https://lucide.dev', license: 'ISC' },
+  { name: 'Dexie.js', url: 'https://dexie.org', license: 'Apache-2.0' },
+  { name: 'svelte-dnd-action', url: 'https://github.com/isaacHagoel/svelte-dnd-action', license: 'MIT' },
+  { name: 'Color Thief', url: 'https://github.com/lokesh/color-thief', license: 'MIT' },
+  { name: 'QR Code Styling', url: 'https://qr-code-styling.com', license: 'MIT' },
+  { name: 'validator.js', url: 'https://github.com/validatorjs/validator.js', license: 'MIT' },
+  { name: 'webext-bridge', url: 'https://github.com/zikaari/webext-bridge', license: 'MIT' },
+];
+
 
   interface Props {
     onclickClose: () => void;
@@ -62,11 +78,12 @@
       </div>
       <div class="source_links">
         <a href={repositoryUrl} target="_blank" rel="noopener noreferrer">{t("nt_about_source_code")}</a>
-        <a href={`${repositoryUrl}/blob/main/PRIVACY.md`} target="_blank" rel="noopener noreferrer">{t("nt_about_privacy")}</a>
-        <a href={`${repositoryUrl}/blob/main/PERMISSIONS.md`} target="_blank" rel="noopener noreferrer">{t("nt_about_permissions")}</a>
+        <a href={`${repositoryUrl}/blob/main/README.md#隐私与权限`} target="_blank" rel="noopener noreferrer">{t("nt_about_privacy")}</a>
         <a href={`${repositoryUrl}/issues`} target="_blank" rel="noopener noreferrer">{t("nt_about_feedback")}</a>
       </div>
-      <T type="s">{t("nt_about_project_license")}</T>
+      <a href="/third-party-notices.txt" target="_blank" rel="noopener noreferrer">
+        <T type="s">{t("nt_about_project_license")}</T>
+      </a>
       <details>
         <summary>{t("nt_about_third_party_title")}</summary>
         <ul>
@@ -88,7 +105,7 @@
       </Button>
     </G>
     <G full>
-      <T type="m" bold align='r'>Ashton</T>
+      <T type="m" bold align='r'>Antion</T>
     </G>
   </G>
 </Popup>

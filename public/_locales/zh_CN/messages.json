@@ -159,7 +159,7 @@
     "message": "跨设备同步"
   },
   "nt_settings_data_sync_syncs": {
-    "message": "默认开启，通过浏览器同步常用网站、搜索引擎、分类、背景配置及偏好设置。实际跨设备同步取决于 Chrome 的同步设置。关闭不会删除已有同步副本。"
+    "message": "同步常用网站、搜索引擎、分类、背景和偏好设置，需开启浏览器同步。"
   },
   "nt_settings_data_sync_usage": {
     "message": "同步空间"
@@ -697,7 +697,7 @@
     "message": "问题与建议"
   },
   "nt_about_project_license": {
-    "message": "项目许可证尚未声明；第三方依赖遵循各自的许可证。"
+    "message": "采用 MIT 许可证。Copyright (c) 2026 Antion。第三方依赖遵循各自的许可证。"
   },
   "nt_about_third_party_title": {
     "message": "使用的开源项目"
@@ -706,9 +706,21 @@
     "message": "查看第三方许可证与版权声明"
   },
   "nt_about_privacy": {
-    "message": "隐私与数据"
+    "message": "隐私与权限"
   },
-  "nt_about_permissions": {
-    "message": "权限用途"
+  "nt_settings_data_sync_delete": {
+    "message": "删除同步副本"
+  },
+  "nt_settings_data_sync_delete_tip": {
+    "message": "本地数据保留。重新开启同步后会再次上传。"
+  },
+  "nt_settings_data_sync_delete_confirm": {
+    "message": "将删除已保存的同步配置，本地数据不受影响。此操作无法撤销。"
+  },
+  "nt_settings_data_sync_deleted": {
+    "message": "同步副本已删除。"
+  },
+  "nt_settings_data_sync_delete_failed": {
+    "message": "未能完全删除，请重试。"
   }
 }

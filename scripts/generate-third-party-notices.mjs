@@ -15,7 +15,10 @@ for (const name of ['wxt', 'svelte', 'svelte-dnd-action']) {
 }
 
 const notices = [
-  'Mooogor Start — Third-party notices',
+  'Mooogor Start — Licenses and notices',
+  readFileSync(resolve(root, 'LICENSE'), 'utf8').trim(),
+  '\n' + '='.repeat(72),
+  'Third-party notices',
   'Generated with pnpm licenses:generate from installed dependencies.',
   'Includes production dependencies and the WXT, Svelte and drag-and-drop frameworks.',
   'These licenses apply to the named third-party packages, not to Mooogor Start itself.',

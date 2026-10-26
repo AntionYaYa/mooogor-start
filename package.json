@@ -2,7 +2,7 @@
   "name": "mooogor-start",
   "description": "A fast, offline-first new tab launcher with common sites, multi-engine search, bookmarks, and history.",
   "private": true,
-  "version": "1.7.7",
+  "version": "1.7.8",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -42,5 +42,7 @@
   },
   "bugs": {
     "url": "https://gitee.com/antion666/mooogor_new_tab/issues"
-  }
+  },
+  "author": "Antion",
+  "license": "MIT"
 }

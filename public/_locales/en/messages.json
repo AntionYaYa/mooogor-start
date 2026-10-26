@@ -159,7 +159,7 @@
     "message": "Sync across devices"
   },
   "nt_settings_data_sync_syncs": {
-    "message": "Enabled by default. Uses browser sync for common sites, engines, categories, background configuration, and preferences. Cross-device transfer depends on Chrome sync settings. Turning it off does not delete existing sync copies."
+    "message": "Sync common sites, engines, categories, backgrounds, and preferences. Requires browser sync."
   },
   "nt_settings_data_sync_usage": {
     "message": "Sync storage"
@@ -697,7 +697,7 @@
     "message": "Issues & suggestions"
   },
   "nt_about_project_license": {
-    "message": "A project license has not yet been declared. Third-party dependencies retain their own licenses."
+    "message": "Licensed under MIT. Copyright (c) 2026 Antion. Third-party dependencies retain their own licenses."
   },
   "nt_about_third_party_title": {
     "message": "Open-source projects used"
@@ -706,9 +706,21 @@
     "message": "Third-party licenses & copyright notices"
   },
   "nt_about_privacy": {
-    "message": "Privacy & data"
+    "message": "Privacy & permissions"
   },
-  "nt_about_permissions": {
-    "message": "Permission purposes"
+  "nt_settings_data_sync_delete": {
+    "message": "Delete sync copy"
+  },
+  "nt_settings_data_sync_delete_tip": {
+    "message": "Local data stays on this device. Turning sync back on uploads it again."
+  },
+  "nt_settings_data_sync_delete_confirm": {
+    "message": "This removes the saved sync configuration without affecting local data. This cannot be undone."
+  },
+  "nt_settings_data_sync_deleted": {
+    "message": "Sync copy deleted."
+  },
+  "nt_settings_data_sync_delete_failed": {
+    "message": "Could not complete deletion. Please retry."
   }
 }

@@ -159,7 +159,7 @@
     "message": "跨裝置同步"
   },
   "nt_settings_data_sync_syncs": {
-    "message": "預設開啟，透過瀏覽器同步常用網站、搜尋引擎、分類、背景設定及偏好設定。實際跨裝置同步取決於 Chrome 的同步設定。關閉不會刪除既有同步副本。"
+    "message": "同步常用網站、搜尋引擎、分類、背景及偏好設定，需開啟瀏覽器同步。"
   },
   "nt_settings_data_sync_usage": {
     "message": "同步空間"
@@ -697,7 +697,7 @@
     "message": "問題與建議"
   },
   "nt_about_project_license": {
-    "message": "專案授權條款尚未聲明；第三方相依套件遵循各自的授權條款。"
+    "message": "採用 MIT 授權條款。Copyright (c) 2026 Antion。第三方相依套件遵循各自的授權條款。"
   },
   "nt_about_third_party_title": {
     "message": "使用的開源專案"
@@ -706,9 +706,21 @@
     "message": "查看第三方授權條款與版權聲明"
   },
   "nt_about_privacy": {
-    "message": "隱私與資料"
+    "message": "隱私與權限"
   },
-  "nt_about_permissions": {
-    "message": "權限用途"
+  "nt_settings_data_sync_delete": {
+    "message": "刪除同步副本"
+  },
+  "nt_settings_data_sync_delete_tip": {
+    "message": "本機資料保留。重新開啟同步後會再次上傳。"
+  },
+  "nt_settings_data_sync_delete_confirm": {
+    "message": "將刪除已儲存的同步設定，本機資料不受影響。此操作無法復原。"
+  },
+  "nt_settings_data_sync_deleted": {
+    "message": "同步副本已刪除。"
+  },
+  "nt_settings_data_sync_delete_failed": {
+    "message": "未能完全刪除，請重試。"
   }
 }
