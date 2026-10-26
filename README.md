@@ -2,6 +2,8 @@
 
 [English](#english) · [简体中文](#简体中文)
 
+![Mooogor Start home page / 首页预览](docs/screenshot/home.png)
+
 ## English
 
 A new tab extension designed for Chrome. Mooogor Start brings common sites, multi-engine search, bookmarks, and history into a simple entry point so you can get started faster.
