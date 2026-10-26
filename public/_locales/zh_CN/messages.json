@@ -159,7 +159,7 @@
     "message": "跨设备同步"
   },
   "nt_settings_data_sync_syncs": {
-    "message": "开启后会同步常用网站、搜索引擎、搜索分类、背景及偏好设置。"
+    "message": "默认开启，通过浏览器同步常用网站、搜索引擎、分类、背景配置及偏好设置。实际跨设备同步取决于 Chrome 的同步设置。关闭不会删除已有同步副本。"
   },
   "nt_settings_data_sync_usage": {
     "message": "同步空间"
@@ -649,7 +649,7 @@
     "message": "免费吗？"
   },
   "nt_about_free_desc": {
-    "message": "Mooogor Start 是免费的。\n如果未来有必须依赖云端服务的功能（比如跨设备同步），可能会提供可选的付费方案，因为云服务本身会产生持续成本。出于安全和隐私考虑，我会优先采用本地离线的实现方式。\n如果 Mooogor Start 能帮你节省时间，也欢迎支持一下，让我有更大的动力持续改进这个产品。"
+    "message": "Mooogor Start 是免费的，目前的跨设备同步使用浏览器提供的同步服务。\n如果未来新增需要独立云服务的功能，可能会提供可选的付费方案。数据处理方式发生变化时，会同步更新说明。\n如果 Mooogor Start 能帮你节省时间，也欢迎支持它的持续改进。"
   },
   "nt_about_support_button": {
     "message": "支持 Mooogor Start"
@@ -685,10 +685,10 @@
     "message": "确定要重置全部配置吗？这会清除自定义常用网站、搜索引擎、分类和偏好设置，且无法撤销。收藏夹、历史记录和已缓存图标不会被删除。"
   },
   "nt_about_open_source_title": {
-    "message": "源码与开源致谢"
+    "message": "源码与透明说明"
   },
   "nt_about_open_source_desc": {
-    "message": "感谢开源社区为 Mooogor Start 提供的框架、工具与灵感。你可以在 Gitee 查看源码、反馈问题，也欢迎参与改进。"
+    "message": "Mooogor Start 公开源码，是希望你能了解它如何工作、访问哪些数据，以及为什么需要这些权限。欢迎查看，也欢迎反馈使用中不顺手的地方。"
   },
   "nt_about_source_code": {
     "message": "查看源码"
@@ -704,5 +704,11 @@
   },
   "nt_about_third_party_notices": {
     "message": "查看第三方许可证与版权声明"
+  },
+  "nt_about_privacy": {
+    "message": "隐私与数据"
+  },
+  "nt_about_permissions": {
+    "message": "权限用途"
   }
 }

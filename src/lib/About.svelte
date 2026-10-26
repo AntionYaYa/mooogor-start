@@ -62,6 +62,8 @@
       </div>
       <div class="source_links">
         <a href={repositoryUrl} target="_blank" rel="noopener noreferrer">{t("nt_about_source_code")}</a>
+        <a href={`${repositoryUrl}/blob/main/PRIVACY.md`} target="_blank" rel="noopener noreferrer">{t("nt_about_privacy")}</a>
+        <a href={`${repositoryUrl}/blob/main/PERMISSIONS.md`} target="_blank" rel="noopener noreferrer">{t("nt_about_permissions")}</a>
         <a href={`${repositoryUrl}/issues`} target="_blank" rel="noopener noreferrer">{t("nt_about_feedback")}</a>
       </div>
       <T type="s">{t("nt_about_project_license")}</T>

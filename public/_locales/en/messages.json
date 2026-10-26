@@ -159,7 +159,7 @@
     "message": "Sync across devices"
   },
   "nt_settings_data_sync_syncs": {
-    "message": "Once enabled, common sites, search engines, search categories, backgrounds, and preferences are synced."
+    "message": "Enabled by default. Uses browser sync for common sites, engines, categories, background configuration, and preferences. Cross-device transfer depends on Chrome sync settings. Turning it off does not delete existing sync copies."
   },
   "nt_settings_data_sync_usage": {
     "message": "Sync storage"
@@ -649,7 +649,7 @@
     "message": "Is it free?"
   },
   "nt_about_free_desc": {
-    "message": "Mooogor Start is free.\nIf future features must rely on cloud services (such as cross-device sync), there may be an optional paid plan because cloud services have ongoing costs. For security and privacy, I will prioritize local offline implementations.\nIf Mooogor Start helps you save time, you are also welcome to support it, which gives me more motivation to keep improving this product."
+    "message": "Mooogor Start is free. Its current cross-device sync uses the sync service provided by your browser.\nFuture features that require a separate cloud service may offer an optional paid plan. Changes to data handling will be reflected in the documentation.\nIf Mooogor Start saves you time, you are welcome to support its continued improvement."
   },
   "nt_about_support_button": {
     "message": "Support Mooogor Start"
@@ -685,10 +685,10 @@
     "message": "Reset all configuration? This permanently removes custom common sites, search engines, categories, and preferences. Bookmarks, history, and cached icons won't be deleted."
   },
   "nt_about_open_source_title": {
-    "message": "Source code & acknowledgements"
+    "message": "Source & transparency"
   },
   "nt_about_open_source_desc": {
-    "message": "Thanks to the open-source community for the frameworks, tools, and inspiration behind Mooogor Start. Explore the source on Gitee, report issues, or help improve the project."
+    "message": "Mooogor Start publishes its source so you can understand how it works, what data it accesses, and why it needs its permissions. You are welcome to inspect it and share anything that feels awkward to use."
   },
   "nt_about_source_code": {
     "message": "Source code"
@@ -704,5 +704,11 @@
   },
   "nt_about_third_party_notices": {
     "message": "Third-party licenses & copyright notices"
+  },
+  "nt_about_privacy": {
+    "message": "Privacy & data"
+  },
+  "nt_about_permissions": {
+    "message": "Permission purposes"
   }
 }
