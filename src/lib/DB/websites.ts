@@ -1,5 +1,5 @@
 import type { WebSite } from "./database";
-import { getStoredConfig, updateStoredConfig } from "./configStorage";
+import { getStoredConfigParts, updateStoredConfig } from "./configStorage";
 import {
   clearWebSiteScreenshots,
   deleteWebSiteScreenshot,
@@ -104,16 +104,16 @@ export async function updateWebSiteBackgroundColor(
 }
 
 export async function getAllWebSite(): Promise<WebSite[]> {
-  const config = await getStoredConfig();
+  const config = await getStoredConfigParts("websites");
   return [...config.websites].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }
 
 export async function getWebSite(domain: string): Promise<WebSite | undefined> {
-  return (await getStoredConfig()).websites.find((item) => item.domain === domain);
+  return (await getStoredConfigParts("websites")).websites.find((item) => item.domain === domain);
 }
 
 export async function updateWebSiteScreenshot(id: number, screenshot: string) {
-  const config = await getStoredConfig();
+  const config = await getStoredConfigParts("websites");
   const website = config.websites.find((site) => site.id === id);
   if (!website) return;
   const blob = await (await fetch(screenshot)).blob();

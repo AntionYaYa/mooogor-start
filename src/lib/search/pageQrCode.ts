@@ -1,6 +1,6 @@
-import QRCodeStyling from "qr-code-styling";
 
 export async function createPageQrCode(url: string): Promise<Blob> {
+  const { default: QRCodeStyling } = await import("qr-code-styling");
   const code = new QRCodeStyling({
     type: "canvas",
     shape: "square",

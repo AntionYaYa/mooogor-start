@@ -96,6 +96,7 @@ export type DataSyncState = {
 let syncQueue = Promise.resolve();
 let lastAppliedHash = "";
 let readyForLocalUploads = false;
+let localUploadPending = false;
 let initializationPromise: Promise<boolean> | null = null;
 
 // Shared by extension pages and the service worker, so deleting a copy cannot
@@ -390,9 +391,12 @@ async function writeRemoteData(data: SyncedData) {
   }
 }
 
-async function applyRemoteData(remote: Awaited<ReturnType<typeof readRemoteData>>) {
+async function applyRemoteData(remote: Awaited<ReturnType<typeof readRemoteData>>, expectedLocal?: string) {
   if (!remote || remote.manifest.contentHash === lastAppliedHash) return false;
   const changed = await updateStoredConfig((local) => {
+    // The page can now be edited while sync initializes. Prefer those new local
+    // edits over a remote snapshot fetched before the edit.
+    if (expectedLocal !== undefined && JSON.stringify(buildSyncedData(local)) !== expectedLocal) return null;
     if (hashString(JSON.stringify(buildSyncedData(local))) === remote.manifest.contentHash) {
       return false;
     }
@@ -412,7 +416,7 @@ async function applyRemoteData(remote: Awaited<ReturnType<typeof readRemoteData>
     };
     return true;
   });
-  lastAppliedHash = remote.manifest.contentHash;
+  if (changed !== null) lastAppliedHash = remote.manifest.contentHash;
   return changed;
 }
 
@@ -514,8 +518,15 @@ export async function deleteDataSyncCopy() {
 }
 
 export function queueDataSyncFromLocal() {
+  if (!readyForLocalUploads) {
+    localUploadPending = true;
+    return Promise.resolve();
+  }
   const task = syncQueue.then(() => withSyncLock(async () => {
-    if (!readyForLocalUploads) return;
+    if (!readyForLocalUploads) {
+      localUploadPending = true;
+      return;
+    }
     const activation = await readActivation();
     if (!activation.enabled) return;
     const currentManifest = await readManifest();
@@ -548,9 +559,12 @@ export function queueDataSyncFromLocal() {
 
 export async function initializeDataSync() {
   if (initializationPromise) return initializationPromise;
+  readyForLocalUploads = false;
   initializationPromise = withSyncLock(async () => {
     const activation = await readActivation();
     if (!activation.enabled) return false;
+    const initialConfig = await readStoredConfig();
+    const expectedLocal = initialConfig ? JSON.stringify(buildSyncedData(initialConfig)) : undefined;
     const manifest = await readManifest();
     if (
       activation.contentHash &&
@@ -565,7 +579,11 @@ export async function initializeDataSync() {
         await writeRuntimeState({ phase: "pending" });
         return false;
       }
-      const changed = await applyRemoteData(remote);
+      const changed = await applyRemoteData(remote, expectedLocal);
+      if (changed === null) {
+        localUploadPending = true;
+        return false;
+      }
       let lastSuccessfulWriteAt = manifest.updatedAt;
       if (remote.data.backgrounds === undefined) {
         const config = await readStoredConfig();
@@ -601,6 +619,12 @@ export async function initializeDataSync() {
   }).finally(() => {
     readyForLocalUploads = true;
     initializationPromise = null;
+    if (localUploadPending) {
+      localUploadPending = false;
+      void queueDataSyncFromLocal().catch((error) => {
+        console.error("[Mooogor Data Sync]", "deferred-upload:failed", error);
+      });
+    }
   });
   return initializationPromise;
 }

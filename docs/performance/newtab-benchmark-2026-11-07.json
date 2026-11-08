@@ -1,0 +1,1185 @@
+{
+  "date": "2026-11-07",
+  "baselineRevision": "bccb646",
+  "notes": [
+    "Real unpacked extension in Chrome for Testing; no browser API mocks.",
+    "Default configuration, autofocus off, fresh isolated profiles; initial install excluded.",
+    "Times are milliseconds from document navigation, not physical browser + click.",
+    "Service worker stopped before each cold sample; browser process and disk cache remain warm.",
+    "Eight samples per version and scenario; exploratory local measurements, not a cross-device guarantee."
+  ],
+  "baseline": {
+    "extension": "/tmp/mooogor-baseline.3yX6Kh/.output/chrome-mv3",
+    "browser": "151.0.7922.34",
+    "summary": [
+      {
+        "mode": "warm",
+        "runs": 8,
+        "inputMs": 55.8,
+        "enginesMs": 55.8,
+        "sitesMs": 53.1,
+        "retainedInputRuns": 8,
+        "maxInputMounts": 1
+      },
+      {
+        "mode": "service-worker-stopped",
+        "runs": 8,
+        "inputMs": 87.5,
+        "enginesMs": 87.5,
+        "sitesMs": 84.7,
+        "retainedInputRuns": 8,
+        "maxInputMounts": 1
+      }
+    ],
+    "errors": [],
+    "samples": [
+      {
+        "cold": false,
+        "run": 0,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 66.3
+          },
+          {
+            "name": "sites",
+            "at": 72.5
+          },
+          {
+            "name": "input",
+            "at": 74
+          },
+          {
+            "name": "engines",
+            "at": 74
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 100
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 100
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 1,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 44.6
+          },
+          {
+            "name": "sites",
+            "at": 52.3
+          },
+          {
+            "name": "input",
+            "at": 54
+          },
+          {
+            "name": "engines",
+            "at": 54
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 72
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 88
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 2,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 52.2
+          },
+          {
+            "name": "sites",
+            "at": 57.8
+          },
+          {
+            "name": "input",
+            "at": 59.2
+          },
+          {
+            "name": "engines",
+            "at": 59.2
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 72
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 72
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 3,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 47.8
+          },
+          {
+            "name": "sites",
+            "at": 53.1
+          },
+          {
+            "name": "input",
+            "at": 54.5
+          },
+          {
+            "name": "engines",
+            "at": 54.5
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 64
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 80
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 4,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 46.7
+          },
+          {
+            "name": "sites",
+            "at": 52.7
+          },
+          {
+            "name": "input",
+            "at": 56.4
+          },
+          {
+            "name": "engines",
+            "at": 56.4
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 96
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 96
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 5,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 47.1
+          },
+          {
+            "name": "sites",
+            "at": 54
+          },
+          {
+            "name": "input",
+            "at": 55.8
+          },
+          {
+            "name": "engines",
+            "at": 55.8
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 68
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 68
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 6,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 45.7
+          },
+          {
+            "name": "sites",
+            "at": 50.5
+          },
+          {
+            "name": "input",
+            "at": 52
+          },
+          {
+            "name": "engines",
+            "at": 52
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 60
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 80
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 7,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 46.7
+          },
+          {
+            "name": "sites",
+            "at": 51.9
+          },
+          {
+            "name": "input",
+            "at": 53.5
+          },
+          {
+            "name": "engines",
+            "at": 53.5
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 64
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 84
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 0,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 68.7
+          },
+          {
+            "name": "sites",
+            "at": 84.6
+          },
+          {
+            "name": "input",
+            "at": 89.3
+          },
+          {
+            "name": "engines",
+            "at": 89.3
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 72
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 88
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 1,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 67.2
+          },
+          {
+            "name": "sites",
+            "at": 83.6
+          },
+          {
+            "name": "input",
+            "at": 86.1
+          },
+          {
+            "name": "engines",
+            "at": 86.1
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 76
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 92
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 2,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 67.9
+          },
+          {
+            "name": "sites",
+            "at": 85.3
+          },
+          {
+            "name": "input",
+            "at": 87.5
+          },
+          {
+            "name": "engines",
+            "at": 87.5
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 100
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 100
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 3,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 65.7
+          },
+          {
+            "name": "sites",
+            "at": 82
+          },
+          {
+            "name": "input",
+            "at": 86.5
+          },
+          {
+            "name": "engines",
+            "at": 86.5
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 72
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 104
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 4,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 66.4
+          },
+          {
+            "name": "sites",
+            "at": 82.9
+          },
+          {
+            "name": "input",
+            "at": 85.2
+          },
+          {
+            "name": "engines",
+            "at": 85.2
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 76
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 96
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 5,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 68.6
+          },
+          {
+            "name": "sites",
+            "at": 85.1
+          },
+          {
+            "name": "input",
+            "at": 87.8
+          },
+          {
+            "name": "engines",
+            "at": 87.8
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 80
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 100
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 6,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 67.1
+          },
+          {
+            "name": "sites",
+            "at": 84.7
+          },
+          {
+            "name": "input",
+            "at": 87.4
+          },
+          {
+            "name": "engines",
+            "at": 87.4
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 68
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 100
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 7,
+        "url": "chrome-extension://dmngnlmllhncfbnkghhghcbdhnhlliai/newtab.html",
+        "events": [
+          {
+            "name": "ensureConfigReady",
+            "at": 67.8
+          },
+          {
+            "name": "sites",
+            "at": 85.5
+          },
+          {
+            "name": "input",
+            "at": 88.2
+          },
+          {
+            "name": "engines",
+            "at": 88.2
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 68
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 104
+          }
+        ]
+      }
+    ]
+  },
+  "optimized": {
+    "extension": "/Users/a122/mooogor/mooogor_new/mooogor_new_tab/.output/chrome-mv3",
+    "browser": "151.0.7922.34",
+    "summary": [
+      {
+        "mode": "warm",
+        "runs": 8,
+        "inputMs": 49.2,
+        "enginesMs": 54.5,
+        "sitesMs": 54.5,
+        "retainedInputRuns": 8,
+        "maxInputMounts": 1
+      },
+      {
+        "mode": "service-worker-stopped",
+        "runs": 8,
+        "inputMs": 60.3,
+        "enginesMs": 73.4,
+        "sitesMs": 73.4,
+        "retainedInputRuns": 8,
+        "maxInputMounts": 1
+      }
+    ],
+    "errors": [],
+    "samples": [
+      {
+        "cold": false,
+        "run": 0,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 55.2
+          },
+          {
+            "name": "engines",
+            "at": 63.2
+          },
+          {
+            "name": "sites",
+            "at": 63.2
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 64.9
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 236
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 236
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 1,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 48
+          },
+          {
+            "name": "engines",
+            "at": 52.3
+          },
+          {
+            "name": "sites",
+            "at": 52.3
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 53.8
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 64
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 96
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 2,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 47.8
+          },
+          {
+            "name": "engines",
+            "at": 52.8
+          },
+          {
+            "name": "sites",
+            "at": 52.8
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 54.4
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 68
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 100
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 3,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 50.6
+          },
+          {
+            "name": "engines",
+            "at": 55.4
+          },
+          {
+            "name": "sites",
+            "at": 55.4
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 57
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 80
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 100
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 4,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 46
+          },
+          {
+            "name": "engines",
+            "at": 50.4
+          },
+          {
+            "name": "sites",
+            "at": 50.4
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 51.6
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 64
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 100
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 5,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 49.2
+          },
+          {
+            "name": "engines",
+            "at": 54.5
+          },
+          {
+            "name": "sites",
+            "at": 54.5
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 56.1
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 64
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 84
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 6,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 47.9
+          },
+          {
+            "name": "engines",
+            "at": 52
+          },
+          {
+            "name": "sites",
+            "at": 52
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 53.2
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 68
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 100
+          }
+        ]
+      },
+      {
+        "cold": false,
+        "run": 7,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 52.8
+          },
+          {
+            "name": "engines",
+            "at": 56.9
+          },
+          {
+            "name": "sites",
+            "at": 56.9
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 58.4
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 68
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 84
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 0,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 60.8
+          },
+          {
+            "name": "engines",
+            "at": 73.4
+          },
+          {
+            "name": "sites",
+            "at": 73.4
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 75.2
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 76
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 108
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 1,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 64.6
+          },
+          {
+            "name": "engines",
+            "at": 78.6
+          },
+          {
+            "name": "sites",
+            "at": 78.6
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 80.4
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 88
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 108
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 2,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 57.8
+          },
+          {
+            "name": "engines",
+            "at": 71
+          },
+          {
+            "name": "sites",
+            "at": 71
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 74.3
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 68
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 104
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 3,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 57.2
+          },
+          {
+            "name": "engines",
+            "at": 69.4
+          },
+          {
+            "name": "sites",
+            "at": 69.4
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 71.2
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 72
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 104
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 4,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 60.3
+          },
+          {
+            "name": "engines",
+            "at": 73.2
+          },
+          {
+            "name": "sites",
+            "at": 73.2
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 75
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 76
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 108
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 5,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 59.5
+          },
+          {
+            "name": "engines",
+            "at": 73.4
+          },
+          {
+            "name": "sites",
+            "at": 73.4
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 74.6
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 80
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 100
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 6,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 59.2
+          },
+          {
+            "name": "engines",
+            "at": 73.4
+          },
+          {
+            "name": "sites",
+            "at": 73.4
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 75.1
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 80
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 96
+          }
+        ]
+      },
+      {
+        "cold": true,
+        "run": 7,
+        "url": "chrome-extension://hhjglehpmabdpadkjikdgopjobhcmjic/newtab.html",
+        "events": [
+          {
+            "name": "input",
+            "at": 67.5
+          },
+          {
+            "name": "engines",
+            "at": 80.2
+          },
+          {
+            "name": "sites",
+            "at": 80.2
+          },
+          {
+            "name": "ensureConfigReady",
+            "at": 83.6
+          }
+        ],
+        "inputMounts": 1,
+        "retainedInput": "startup input retained",
+        "firstPaint": [
+          {
+            "name": "first-paint",
+            "at": 96
+          },
+          {
+            "name": "first-contentful-paint",
+            "at": 112
+          }
+        ]
+      }
+    ]
+  }
+}

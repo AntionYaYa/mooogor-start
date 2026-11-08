@@ -1,3 +1,8 @@
+<script module lang="ts">
+  // Remember recent folders without retaining their bookmark data.
+  const folderScrollPositions = new Map<string, number>();
+</script>
+
 <script lang="ts">
   import EditBookmark from "./EditBookmark.svelte";
   import AddBookmark from "./AddBookmark.svelte";
@@ -12,10 +17,13 @@
     dndzone,
     SHADOW_ITEM_MARKER_PROPERTY_NAME,
   } from "svelte-dnd-action";
+  import type { ActionReturn } from "svelte/action";
+  import type { Options, DndZoneAttributes } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
   import type { BookmarkNode } from "@/lib/browser/bookmarks";
   import {
     getBookmarks,
+    moveBookmarksBefore,
     getBookmarkChildren,
     createBookmark,
     deleteBookmark,
@@ -29,7 +37,8 @@
   import { t } from "@/lib/utils/i18n";
   import Icon from "./components/Icon.svelte";
   import BatchToolbar from "./components/BatchToolbar.svelte";
-  import { tick, onMount, onDestroy } from "svelte";
+  import { bookmarkWindow } from "@/lib/browser/virtualBookmarks";
+  import { tick, onMount, onDestroy, untrack } from "svelte";
 
   interface Props {
     bookmarkNode: BookmarkNode;
@@ -52,9 +61,19 @@
     onback,
     onChanged,
   }: Props = $props();
+  const folderId = untrack(() => bookmarkNode.id);
   let currentBkmk: BookmarkNode | undefined = $state();
   // svelte-ignore state_referenced_locally -- 父级通过 {#key currentNode.id} 在切换目录时重挂本组件，items 只需初始化一次
   let items = $state<BookmarkNode[]>([...(bookmarkNode.children ?? [])]);
+
+  let lastExternalChildren = untrack(() => bookmarkNode.children);
+  $effect(() => {
+    const children = bookmarkNode.children;
+    if (children !== lastExternalChildren) {
+      lastExternalChildren = children;
+      if (children) items = [...children];
+    }
+  });
 
   let showMenu = $state(false);
   let showEdit = $state(false);
@@ -92,6 +111,126 @@
   let reorderDelayId: ReturnType<typeof setTimeout> | null = null;
   const REORDER_HOVER_DELAY_MS = 280;
 
+  let scrollEl: HTMLDivElement | undefined = $state();
+  let scrollTop = $state(untrack(() => folderScrollPositions.get(folderId) ?? 0));
+  let viewportWidth = $state(1000);
+  let viewportHeight = $state(600);
+  const virtualized = $derived(items.length > 200);
+  const windowRange = $derived(bookmarkWindow(items.length, viewportWidth, viewportHeight, scrollTop, !!list));
+  const renderedItems = $derived.by(() => {
+    if (!virtualized) return items.map((item, index) => ({ item, index }));
+    const visible = items.slice(windowRange.start, windowRange.end).map((item, offset) => ({ item, index: windowRange.start + offset }));
+    // Keep the native drag source mounted while scrolling across windows.
+    const draggedIndex = draggedBookmarkId ? items.findIndex(item => item.id === draggedBookmarkId) : -1;
+    if (draggedIndex >= 0 && (draggedIndex < windowRange.start || draggedIndex >= windowRange.end)) visible.push({ item: items[draggedIndex], index: draggedIndex });
+    return visible;
+  });
+
+  function virtualItemStyle(index: number) {
+    if (!virtualized) return undefined;
+    const { columns, pitch, cellWidth, cellHeight } = windowRange;
+    return `position:absolute;left:${5 + (index % columns) * (cellWidth + 5)}px;top:${5 + Math.floor(index / columns) * pitch}px;width:${cellWidth}px;height:${cellHeight}px`;
+  }
+
+  function bookmarkDnd(node: HTMLElement, options: Options<BookmarkNode>): ActionReturn<Options<BookmarkNode>, DndZoneAttributes<BookmarkNode>> {
+    let action: ActionReturn<Options<BookmarkNode>, DndZoneAttributes<BookmarkNode>> | undefined;
+    const update = (next: Options<BookmarkNode>) => {
+      if (virtualized) { action?.destroy?.(); action = undefined; }
+      else if (action) action.update?.(next);
+      else action = dndzone(node, next);
+    };
+    update(options);
+    return { update, destroy: () => action?.destroy?.() };
+  }
+
+  function nativeDragStart(event: DragEvent, item: BookmarkNode) {
+    if (!virtualized) return;
+    if (!canSortItems || batchActionLoading || isProtectedRootFolder(item)) { event.preventDefault(); return; }
+    draggedBookmarkId = item.id;
+    dragStartItems = [...items];
+    if (multiSelectMode && !selectedIds.has(item.id)) selectedIds = new Set([item.id]);
+    batchDragIds = multiSelectMode ? items.filter(node => selectedIds.has(node.id)).map(node => node.id) : [];
+    sorting = true;
+    event.dataTransfer?.setData("text/plain", item.id);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+  }
+
+  function nativeDragOver(event: DragEvent) {
+    if (!virtualized || !draggedBookmarkId) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+    combineTargetId = findCombineTarget(event.clientX, event.clientY)?.id ?? null;
+    if (scrollEl) {
+      const rect = scrollEl.getBoundingClientRect();
+      if (event.clientY < rect.top + 45) scrollEl.scrollTop -= 35;
+      else if (event.clientY > rect.bottom - 45) scrollEl.scrollTop += 35;
+    }
+  }
+
+  function nativeDragEnd() {
+    if (!virtualized) return;
+    sorting = false;
+    draggedBookmarkId = null;
+    combineTargetId = null;
+    batchDragIds = [];
+  }
+
+  async function nativeDrop(event: DragEvent) {
+    if (!virtualized || !draggedBookmarkId) return;
+    event.preventDefault();
+    const sourceId = draggedBookmarkId;
+    const selected = batchDragIds.length ? [...batchDragIds] : [sourceId];
+    const selectedSet = new Set(selected);
+    const targetElement = (event.target as HTMLElement).closest<HTMLElement>("[data-bookmark-id]");
+    const target = items.find(node => node.id === targetElement?.dataset.bookmarkId);
+    if (!target || selectedSet.has(target.id)) { nativeDragEnd(); return; }
+    batchActionLoading = true;
+    try {
+      if (combineTargetId) {
+        await handleFinalize(new CustomEvent("finalize", { detail: { items: [...items], info: { id: sourceId, trigger: "droppedIntoZone" } } }) as CustomEvent<DndEvent<BookmarkNode>>);
+      } else {
+        const remaining = items.filter(node => !selectedSet.has(node.id));
+        const rect = targetElement!.getBoundingClientRect();
+        const after = list ? event.clientY > rect.top + rect.height / 2 : event.clientX > rect.left + rect.width / 2;
+        const insertion = remaining.findIndex(node => node.id === target.id) + (after ? 1 : 0);
+        await moveBookmarksBefore(selected, bookmarkNode.id, remaining[insertion]?.id);
+        await refreshCurrentFolder();
+      }
+    } catch (error) {
+      console.error("[Mooogor Bookmarks]", "drag:failed", error);
+      batchErrorMessage = t("nt_batch_bookmarks_action_failed", "1");
+      await refreshCurrentFolder();
+    } finally { batchActionLoading = false; nativeDragEnd(); }
+  }
+
+  function virtualKeyboardEvents(node: HTMLElement) {
+    node.addEventListener("keydown", virtualKeyboard);
+    return { destroy: () => node.removeEventListener("keydown", virtualKeyboard) };
+  }
+
+  async function virtualKeyboard(event: KeyboardEvent) {
+    if (!virtualized || !["Tab", "ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    const element = (event.target as HTMLElement).closest<HTMLElement>("[data-bookmark-id]");
+    if (!element) return;
+    const index = items.findIndex(item => item.id === element.dataset.bookmarkId);
+    let next = index;
+    if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = items.length - 1;
+    else if (event.key === "ArrowUp") next -= windowRange.columns;
+    else if (event.key === "ArrowDown") next += windowRange.columns;
+    else next += event.key === "ArrowLeft" || (event.key === "Tab" && event.shiftKey) ? -1 : 1;
+    if (next < 0 || next >= items.length) return;
+    event.preventDefault();
+    const top = 5 + Math.floor(next / windowRange.columns) * windowRange.pitch;
+    if (scrollEl && (top < scrollTop || top + windowRange.cellHeight > scrollTop + viewportHeight)) {
+      scrollEl.scrollTop = Math.max(0, top - viewportHeight / 2);
+      scrollTop = scrollEl.scrollTop;
+    }
+    await tick();
+    const row = pageEl?.querySelector<HTMLElement>(`[data-bookmark-id="${items[next].id}"]`);
+    row?.querySelector<HTMLElement>("a,button,[tabindex='0']")?.focus({ preventScroll: true });
+  }
+
   function notifyBookmarksUpdated() {
     if (typeof window === "undefined") return;
     window.dispatchEvent(new CustomEvent("bookmarks-updated"));
@@ -119,7 +258,7 @@
 
   async function refreshCurrentFolder() {
     items = await getBookmarkChildren(bookmarkNode.id);
-    await loadFolderPreviews(items);
+    await loadFolderPreviews(renderedItems.map(entry => entry.item));
     pruneSelection();
     await onChanged?.();
     notifyBookmarksUpdated();
@@ -127,7 +266,8 @@
 
   async function loadFolderPreviews(nodes: BookmarkNode[] = items) {
     const requestId = ++folderPreviewRequestId;
-    const folders = nodes.filter((node) => !node.url);
+    const folders = nodes.filter((node) => !node.url && !(node.id in folderPreviewUrls));
+    if (!folders.length) return;
     const entries = await Promise.all(
       folders.map(async (folder) => {
         try {
@@ -143,8 +283,13 @@
       }),
     );
     if (requestId !== folderPreviewRequestId) return;
-    folderPreviewUrls = Object.fromEntries(entries);
+    folderPreviewUrls = { ...folderPreviewUrls, ...Object.fromEntries(entries) };
   }
+
+  $effect(() => {
+    const visible = renderedItems.map(entry => entry.item);
+    void loadFolderPreviews(visible);
+  });
 
   function isProtectedRootFolder(node: BookmarkNode) {
     return !node.url && !!node.folderType;
@@ -168,6 +313,7 @@
   }
 
   function clickFolder(bkmk: BookmarkNode) {
+    folderScrollPositions.set(folderId, scrollEl?.scrollTop ?? scrollTop);
     onclickFolder(bkmk);
   }
 
@@ -798,10 +944,21 @@
     window.addEventListener("pointermove", handleDragPointerMove);
     window.addEventListener("pointerup", handleDragPointerUp);
     window.addEventListener("mouseup", handleDragPointerUp, true);
-    void loadFolderPreviews();
+    if (!scrollEl) return;
+    const measure = () => { viewportWidth = scrollEl!.clientWidth; viewportHeight = scrollEl!.clientHeight; };
+    const observer = new ResizeObserver(measure);
+    observer.observe(scrollEl);
+    measure();
+    void tick().then(() => {
+      if (scrollEl) scrollEl.scrollTop = scrollTop;
+    });
+    return () => observer.disconnect();
   });
 
   onDestroy(() => {
+    if (!folderScrollPositions.has(folderId)) folderScrollPositions.set(folderId, scrollTop);
+    if (folderScrollPositions.size > 100) folderScrollPositions.delete(folderScrollPositions.keys().next().value!);
+    folderPreviewRequestId += 1;
     window.removeEventListener("keydown", handleKeyDown);
     window.removeEventListener("pointermove", handleDragPointerMove);
     window.removeEventListener("pointerup", handleDragPointerUp);
@@ -961,6 +1118,12 @@
 <div class="page" bind:this={pageEl}>
   <div
     class="bookmark_scroll"
+    role="region"
+    aria-label={t("nt_tab_bookmarks")}
+    tabindex="-1"
+    bind:this={scrollEl}
+    onscroll={() => { scrollTop = scrollEl?.scrollTop ?? 0; folderScrollPositions.set(folderId, scrollTop); }}
+    use:virtualKeyboardEvents
     class:multi_select_frame={multiSelectMode}
   >
     {#if items.length}
@@ -969,7 +1132,12 @@
           ? 'sorting'
           : ''} {multiSelectMode ? 'multi_select' : ''}"
         use:disableKeyboardDnd
-        use:dndzone={canSortItems
+        role="list"
+        class:virtual={virtualized}
+        style:height={virtualized ? `${windowRange.height}px` : undefined}
+        ondragover={nativeDragOver}
+        ondrop={nativeDrop}
+        use:bookmarkDnd={canSortItems
           ? {
               items,
               flipDurationMs: 200,
@@ -999,11 +1167,16 @@
         onconsider={handleConsider}
         onfinalize={handleFinalize}
       >
-        {#each items as bkmk, i (bkmk.id)}
+        {#each renderedItems as { item: bkmk, index: i } (bkmk.id)}
           <div
             class="item"
+            role="listitem"
             data-bookmark-id={bkmk.id}
-            animate:flip={{ duration: 200 }}
+            style={virtualItemStyle(i)}
+            draggable={virtualized && canSortItems && !batchActionLoading && !isProtectedRootFolder(bkmk)}
+            ondragstart={(event) => nativeDragStart(event, bkmk)}
+            ondragend={nativeDragEnd}
+            animate:flip={{ duration: virtualized ? 0 : 200 }}
           >
             <div
               class="combine_hit_zone"
@@ -1416,6 +1589,10 @@
     width: 100%;
     box-sizing: border-box;
     border-radius: var(--r1);
+  }
+  .content.virtual {
+    display: block;
+    position: relative;
   }
   .content.sorting {
     outline: 2px dashed var(--c-mask);

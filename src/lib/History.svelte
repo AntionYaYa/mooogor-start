@@ -576,7 +576,10 @@
       class:history_group_title_stuck={stuckHistoryGroupKeys.has(group.key)}
       use:trackStickyTitle={group.key}
     >
-      <T type="s">{group.label}</T>
+      <T type="s">{group.key === "recent" ? t("nt_history_recent")
+        : group.key === "one-hour" ? t("nt_history_1h")
+        : group.key === "today" ? t("nt_history_today")
+        : group.key === "day-1" ? t("nt_history_yesterday") : group.label}</T>
     </div>
     {#each group.items as history}
       {@render temHistoryItem(history)}

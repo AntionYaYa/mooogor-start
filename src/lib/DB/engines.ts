@@ -1,6 +1,6 @@
 import { createEngineId } from "./engineIdentity";
 import type { Engine, EngineCategory } from "./database";
-import { getStoredConfig, updateStoredConfig } from "./configStorage";
+import { getStoredConfigParts, updateStoredConfig } from "./configStorage";
 
 function normalizeEngineCategory(category?: string): EngineCategory {
   return category?.trim() || "1";
@@ -15,7 +15,7 @@ function requireCategory(categories: { id: string }[], category?: string) {
 const byOrder = (a: Engine, b: Engine) => (a.order ?? 999999) - (b.order ?? 999999);
 
 export async function getEngines() {
-  return [...(await getStoredConfig()).engines].sort(byOrder);
+  return [...(await getStoredConfigParts("engines")).engines].sort(byOrder);
 }
 
 export async function setEngineEnabled(id: number, enabled: boolean) {
@@ -89,19 +89,19 @@ export async function deleteEngines(ids: number[]) {
 }
 
 export async function getEnabledEngines() {
-  return (await getStoredConfig()).engines.filter((item) => item.enabled !== false).sort(byOrder);
+  return (await getStoredConfigParts("engines")).engines.filter((item) => item.enabled !== false).sort(byOrder);
 }
 
 export async function getDisabledEngines() {
-  return (await getStoredConfig()).engines.filter((item) => item.enabled === false).sort(byOrder);
+  return (await getStoredConfigParts("engines")).engines.filter((item) => item.enabled === false).sort(byOrder);
 }
 
 export async function getAllEnableEngine() {
-  return (await getStoredConfig()).engines.filter((item) => item.enabled !== false).sort(byOrder);
+  return (await getStoredConfigParts("engines")).engines.filter((item) => item.enabled !== false).sort(byOrder);
 }
 
 export async function getEngine(domain: string) {
-  return (await getStoredConfig()).engines.find((item) => {
+  return (await getStoredConfigParts("engines")).engines.find((item) => {
     try {
       return new URL(item.engineUrl.replace("%s", "search")).hostname === domain;
     } catch {

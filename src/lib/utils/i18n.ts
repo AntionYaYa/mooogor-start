@@ -1,3 +1,4 @@
+import { localeState } from "./i18nState.svelte";
 import type { AppLanguage } from "@/lib/utils/settings";
 import { browser } from "wxt/browser";
 
@@ -28,8 +29,6 @@ const INTL_LOCALE_BY_LANGUAGE: Record<
   en: "en",
 };
 
-let currentLanguage: AppLanguage = "auto";
-let currentMessages: MessageMap | null = readInitialMessages();
 let languageRequestSeq = 0;
 
 function isLanguage(value: unknown): value is AppLanguage {
@@ -59,12 +58,12 @@ function resolveAutoLanguage(): Exclude<AppLanguage, "auto"> {
 }
 
 export function getEffectiveLanguage(
-  language: AppLanguage = currentLanguage,
+  language: AppLanguage = localeState.language,
 ): Exclude<AppLanguage, "auto"> {
   return language === "auto" ? resolveAutoLanguage() : language;
 }
 
-export function getIntlLocale(language: AppLanguage = currentLanguage): string {
+export function getIntlLocale(language: AppLanguage = localeState.language): string {
   return INTL_LOCALE_BY_LANGUAGE[getEffectiveLanguage(language)];
 }
 
@@ -76,10 +75,6 @@ export function formatDateTime(
   },
 ): string {
   return new Intl.DateTimeFormat(getIntlLocale(), options).format(value);
-}
-
-function readInitialMessages(): MessageMap | null {
-  return null;
 }
 
 function getRuntimeApi() {
@@ -103,45 +98,34 @@ function applySubstitutions(
   );
 }
 
-async function fetchMessages(
-  language: Exclude<AppLanguage, "auto">,
-): Promise<MessageMap> {
+const messageRequests = new Map<string, Promise<MessageMap>>();
+
+function fetchMessages(language: Exclude<AppLanguage, "auto">): Promise<MessageMap> {
+  const existing = messageRequests.get(language);
+  if (existing) return existing;
   const path = `/_locales/${language}/messages.json`;
-  const runtime = getRuntimeApi();
-  const url = runtime?.runtime?.getURL?.(path) ?? path;
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to load locale messages: ${language}`);
-  }
-  return (await response.json()) as MessageMap;
+  const url = getRuntimeApi()?.runtime?.getURL?.(path) ?? path;
+  const request = fetch(url).then(async (response) => {
+    if (!response.ok) throw new Error(`Failed to load locale messages: ${language}`);
+    return (await response.json()) as MessageMap;
+  }).catch((error) => {
+    messageRequests.delete(language);
+    throw error;
+  });
+  messageRequests.set(language, request);
+  return request;
 }
 
-async function setLanguageState(
-  language: AppLanguage,
-): Promise<void> {
+async function setLanguageState(language: AppLanguage): Promise<void> {
   const requestSeq = ++languageRequestSeq;
   const nextLanguage = isLanguage(language) ? language : "auto";
-  currentLanguage = nextLanguage;
-  if (nextLanguage === "auto") {
-    const autoLanguage = resolveAutoLanguage();
-    if (requestSeq !== languageRequestSeq) return;
-    currentMessages = null;
-    try {
-      const messages = await fetchMessages(autoLanguage);
-      if (requestSeq !== languageRequestSeq) return;
-      currentMessages = messages;
-    } catch {
-      if (requestSeq !== languageRequestSeq) return;
-    }
-    return;
-  }
-  if (requestSeq !== languageRequestSeq) return;
   try {
-    const messages = await fetchMessages(nextLanguage);
+    const messages = await fetchMessages(getEffectiveLanguage(nextLanguage));
     if (requestSeq !== languageRequestSeq) return;
-    currentMessages = messages;
+    localeState.language = nextLanguage;
+    localeState.messages = messages;
   } catch {
-    if (requestSeq !== languageRequestSeq) return;
+    // Keep the current translations visible if loading another language fails.
   }
 }
 
@@ -154,11 +138,11 @@ export async function setRuntimeLanguage(language: AppLanguage): Promise<void> {
 }
 
 export function getLanguage(): AppLanguage {
-  return currentLanguage;
+  return localeState.language;
 }
 
 export function t(key: string, substitutions?: string | string[]): string {
-  const localMessage = currentMessages?.[key]?.message;
+  const localMessage = localeState.messages?.[key]?.message;
   if (localMessage) return applySubstitutions(localMessage, substitutions);
 
   const api = getI18nApi();

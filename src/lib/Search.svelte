@@ -121,7 +121,7 @@
     let databaseConfigAttempted = $state(false);
     let fallbackConfigApplied = $state(false);
     let engineConfigRequestId = 0;
-    let searchStorageReady = false;
+    let searchStorageReady = $state(false);
     let engineListDragging = $state(false);
     let autoFocusScheduled = false;
     let searchConfigLoading = $derived(loading || !engineConfigReady);
@@ -132,7 +132,6 @@
         if (
             !autoFocusSearch ||
             autoFocusScheduled ||
-            searchConfigLoading ||
             !searchEl
         ) {
             return;
@@ -312,8 +311,13 @@
             return;
         }
         try {
-            const { categories, engines: loadedEngines } =
-                await getEngineConfigSnapshot();
+            const [{ categories, engines: loadedEngines }] = await Promise.all([
+                getEngineConfigSnapshot(),
+                hydrateSearchStorage().catch(() => undefined),
+            ]);
+            if (rememberSearchEngineCategory) {
+                selectedCategoryId = readSelectedCategoryId() ?? selectedCategoryId;
+            }
             if (requestId !== engineConfigRequestId) return;
             engines = loadedEngines;
             applyEngineCategories(categories);
@@ -398,7 +402,7 @@
     }
 
     $effect(() => {
-        if (!settingsReady) return;
+        if (!settingsReady || !searchStorageReady) return;
         if (rememberSearchEngineCategory) {
             if (!syncedRememberedCategory) {
                 syncedRememberedCategory = true;
@@ -429,9 +433,11 @@
     });
 
     $effect(() => {
+        if (!settingsReady) return;
         const scope = `${searchBookmarksEnabled}-${searchHistoryEnabled}`;
         if (lastSearchScope === null) {
             lastSearchScope = scope;
+            if (inputValue) void searchInput(inputValue);
             return;
         }
         if (lastSearchScope === scope) return;
@@ -531,7 +537,7 @@
     }
 
     async function searchInput(value: string) {
-        if (isComposing) return;
+        if (isComposing || !settingsReady) return;
         if (!value) {
             searchSeq += 1;
             historySeq += 1;
@@ -859,87 +865,65 @@
     class="search"
     class:hided_tab={!searchConfigLoading && enginesGroup.length <= 1}
 >
-    {#if searchConfigLoading}
-        <div
-            class="search_skeleton"
-            role="status"
-            aria-label="Loading search configuration"
-        >
-            <div class="skeleton_tabs" aria-hidden="true">
-                {#each Array.from({ length: 4 }) as _}
-                    <div class="skeleton_tab skeleton_shimmer"></div>
-                {/each}
-            </div>
-            <div class="skeleton_search_box" aria-hidden="true">
-                <div class="skeleton_input"></div>
-                <div class="skeleton_engines">
-                    {#each Array.from({ length: 4 }) as _}
-                        <div class="skeleton_engine skeleton_shimmer"></div>
-                    {/each}
-                </div>
-            </div>
-        </div>
-    {:else}
-        {#if engineConfigReady && enginesGroup.length > 1}
-            <Tab
-                tabs={enginesGroup}
-                onclick={clickEngineGroup}
-                selectedBg={false}
-            />
-        {/if}
-        <div
-            class="search_g"
-            bind:this={searchPanelEl}
-            class:search_g_hidden={!engineConfigReady}
-            class:bg={showSearchResults ||
-                (searchAreaFocused &&
-                    (showSearchKeys || showSwitchShortcutTip))}
-            class:top0={enginesGroup.length <= 1}
-        >
-            {@render temInputGroup()}
-            {#if showSearchResults}
-                {@render temShortcutTip(t("nt_related_search_shortcut_search"))}
-            {/if}
-            {#if showSwitchShortcutTip}
-                {@render temShortcutTip(t("nt_related_search_shortcut_switch"))}
-            {/if}
-            {#if showSearchKeys}
-                {@render temSearchKeys()}
-            {/if}
-            {#if showSearchResults}
-                <div
-                    class="list"
-                    bind:this={listEls}
-                    onfocusout={handleListFocusOut}
-                    transition:slide={{ duration: 200 }}
-                >
-                    {#if searchBookmarksEnabled && bookmarksResults.length}
-                        <G>
-                            <T type="s">{t("nt_label_bookmarks")}</T>
-                        </G>
-                        {#each bookmarksResults as bookmark}
-                            {@render temBkmk(bookmark)}
-                        {/each}
-                    {/if}
-
-                    {#if searchHistoryEnabled && historyResults.length}
-                        <G>
-                            <T type="s">{t("nt_label_history")}</T>
-                        </G>
-                        {#each historyResults as history}
-                            {@render temBkmk(history)}
-                        {/each}
-                    {/if}
-
-                    {#if (searchHistoryEnabled && historyLoading) || (searchBookmarksEnabled && bookmarksLoading)}
-                        <div class="more_trigger">
-                            <Icon name="Loading" color="var(--c-text)" />
-                        </div>
-                    {/if}
-                </div>
-            {/if}
-        </div>
+    {#if engineConfigReady && enginesGroup.length > 1}
+        <Tab
+            tabs={enginesGroup}
+            onclick={clickEngineGroup}
+            selectedBg={false}
+        />
     {/if}
+    <div
+        class="search_g"
+        bind:this={searchPanelEl}
+        class:bg={showSearchResults ||
+            (searchAreaFocused &&
+                (showSearchKeys || showSwitchShortcutTip))}
+        class:top0={enginesGroup.length <= 1}
+    >
+        {@render temInputGroup()}
+        {#if showSearchResults}
+            {@render temShortcutTip(t("nt_related_search_shortcut_search"))}
+        {/if}
+        {#if showSwitchShortcutTip}
+            {@render temShortcutTip(t("nt_related_search_shortcut_switch"))}
+        {/if}
+        {#if showSearchKeys}
+            {@render temSearchKeys()}
+        {/if}
+        {#if showSearchResults}
+            <div
+                class="list"
+                bind:this={listEls}
+                onfocusout={handleListFocusOut}
+                transition:slide={{ duration: 200 }}
+            >
+                {#if searchBookmarksEnabled && bookmarksResults.length}
+                    <G>
+                        <T type="s">{t("nt_label_bookmarks")}</T>
+                    </G>
+                    {#each bookmarksResults as bookmark}
+                        {@render temBkmk(bookmark)}
+                    {/each}
+                {/if}
+
+                {#if searchHistoryEnabled && historyResults.length}
+                    <G>
+                        <T type="s">{t("nt_label_history")}</T>
+                    </G>
+                    {#each historyResults as history}
+                        {@render temBkmk(history)}
+                    {/each}
+                {/if}
+
+                {#if (searchHistoryEnabled && historyLoading) || (searchBookmarksEnabled && bookmarksLoading)}
+                    <div class="more_trigger">
+                        <Icon name="Loading" color="var(--c-text)" />
+                    </div>
+                {/if}
+            </div>
+        {/if}
+    </div>
+
 </div>
 
 {#if showEngineDialog && selectedCategory && !showCustomEngineEditor}
@@ -1017,7 +1001,15 @@
                     </Button>
                 {/if}
             </div>
-            {@render temEngines()}
+            {#if searchConfigLoading}
+                <div class="skeleton_engines" aria-busy="true" aria-label="Loading search configuration">
+                    {#each Array.from({ length: 4 }) as _}
+                        <div class="skeleton_engine skeleton_shimmer"></div>
+                    {/each}
+                </div>
+            {:else}
+                {@render temEngines()}
+            {/if}
         </div>
     </div>
 {/snippet}
@@ -1209,47 +1201,15 @@
 {/snippet}
 
 <style>
-    .search_skeleton {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        gap: var(--gap);
-    }
-    .skeleton_tabs,
     .skeleton_engines,
-    .skeleton_search_box {
-        display: flex;
-        align-items: center;
-        gap: var(--gap);
-    }
-    .skeleton_tabs {
-        justify-content: center;
-        height: 36px;
-    }
-    .skeleton_tab,
     .skeleton_engine {
         position: relative;
         overflow: hidden;
         background: var(--c-mask);
     }
-    .skeleton_tab {
-        width: 64px;
-        height: 20px;
-        border-radius: 999px;
-    }
-    .skeleton_search_box {
-        height: 58px;
-        padding: var(--gap);
-        border-radius: var(--r2);
-        background: var(--c-card);
-        box-sizing: border-box;
-    }
-    .skeleton_input {
-        height: 20px;
-        flex: 1;
-        border-radius: 999px;
-    }
     .skeleton_engines {
+        display: flex;
+        gap: var(--gap);
         flex: 0 0 auto;
         padding: var(--gap);
     }
@@ -1436,9 +1396,6 @@
         transition:
             opacity 180ms ease,
             transform 180ms ease;
-    }
-    .search_g_hidden {
-        visibility: hidden;
     }
     .top0 {
         top: 0;

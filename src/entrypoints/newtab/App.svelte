@@ -7,20 +7,17 @@
   import Tab from "@/lib/components/Tab.svelte";
   import type { TabItem } from "@/lib/components/Tab.svelte";
   import Bookmarks from "@/lib/Bookmarks.svelte";
-  import History from "@/lib/History.svelte";
   import Pinneds from "@/lib/Pinneds.svelte";
-  import About from "@/lib/About.svelte";
-  import Support from "@/lib/Support.svelte";
   import { hasPermission, requestPermission } from "@/lib/browser/permissions";
   import type { Permission } from "@/lib/browser/permissions";
-  import { getBookmarkChildren, getBookmarks } from "@/lib/browser/bookmarks";
+  import { getBookmarkChildren, getBookmark, getBookmarkFolderView, getInitialBookmarkFolderId } from "@/lib/browser/bookmarks";
   import type { BookmarkNode } from "@/lib/browser/bookmarks";
   import type { FrequentSite } from "@/lib/browser/history";
   import { ensureConfigReady } from "@/lib/browser/configReady";
   import { getAllWebSite, getAllWebSiteFolders } from "@/lib/DB/DB";
   import type { WebSite, WebSiteFolder } from "@/lib/DB/DB";
   import { fly, slide } from "svelte/transition";
-  import { onMount, tick } from "svelte";
+  import { onMount, tick, untrack } from "svelte";
   import Icon from "@/lib/components/Icon.svelte";
   import type { IconName } from "@/lib/components/Icon.svelte";
   import {
@@ -64,6 +61,8 @@
     tabKeyToOpenTab,
   } from "@/lib/config/newtabTabs";
 
+  let { startupSettings = null }: { startupSettings?: UserSettings | null } = $props();
+  let initialSettings = untrack(() => startupSettings);
   let showSetting = $state(false);
   let allPinneds: WebSite[] = $state([]);
   let webSiteFolders: WebSiteFolder[] = $state([]);
@@ -83,10 +82,12 @@
 
   let tabs: TabItem[] = $state(buildNewTabTabs());
 
-  let selTab: TabItem | undefined = $state();
+  const initialOpen = initialSettings?.defaultOpen === "last"
+    ? initialSettings.lastOpenTab : initialSettings?.defaultOpen ?? "common";
+  tabs[openTabToIndex(initialOpen)].sel = true;
+  let selTab: TabItem | undefined = $state(tabs[openTabToIndex(initialOpen)]);
   let showNext = $state(false);
   let firstMount = $state(true);
-  let settingsLoaded = $state(false);
   let autoFocusSearch = $state(
     new URLSearchParams(window.location.search).get("focus") === "search",
   );
@@ -94,7 +95,7 @@
   let configurationState: "loading" | "ready" | "fallback" = $state("loading");
   let websitesState: "loading" | "ready" | "fallback" = $state("loading");
   let websitesRequestId = 0;
-  let i18nRenderKey = $state(0);
+  let initializationTask: Promise<void> | null = null;
   const NEW_TAB_LOG_PREFIX = "[Mooogor NewTab]";
   const debugConfigFallback =
     import.meta.env.DEV &&
@@ -102,7 +103,7 @@
     new URLSearchParams(window.location.search).get("debug") ===
       "config-fallback";
 
-  let userSettings: UserSettings = $state(DEFAULT_SETTINGS);
+  let userSettings: UserSettings = $state(initialSettings ?? DEFAULT_SETTINGS);
   let backgroundItems: BackgroundItem[] = $state(
     PRESET_BACKGROUNDS.map(cloneBackgroundItem),
   );
@@ -281,89 +282,70 @@
     }
   }
 
-  async function initializePage() {
+  function initializePage(): Promise<void> {
+    // Sync notifications can arrive during startup; finish this pass first.
+    const task = (initializationTask ?? Promise.resolve()).then(initializePageData);
+    initializationTask = task;
+    return task;
+  }
+
+  async function initializePageData() {
     const startedAt = Date.now();
-    configurationState = "loading";
-    websitesState = "loading";
     initializationFailed = false;
-    showSetting = false;
-    showAdd = false;
-    showAddBookmark = false;
-    // Render the page shell immediately. Data-dependent areas use skeletons
-    // until persisted configuration is available.
-    userSettings = DEFAULT_SETTINGS;
-    backgroundItems = PRESET_BACKGROUNDS.map(cloneBackgroundItem);
-    activeBackground = null;
-    applyTheme(DEFAULT_SETTINGS.theme);
-    allPinneds = [];
-    webSiteFolders = [];
-    updateSelTab(tabs[0]);
-    settingsLoaded = true;
     try {
-      await setLanguage(DEFAULT_SETTINGS.language);
-      updateTabLabels();
-      i18nRenderKey += 1;
-    } catch (error) {
-      console.warn(NEW_TAB_LOG_PREFIX, "fallback:language-load-failed", error);
-    }
-    await tick();
-    firstMount = false;
-    try {
-      if (debugConfigFallback) {
-        throw new Error("Debug configuration fallback");
+      if (debugConfigFallback) throw new Error("Debug configuration fallback");
+      // Existing local data can render without waiting for a service-worker
+      // wakeup. A missing/migrating store still goes through background recovery.
+      try {
+        userSettings = initialSettings ?? await loadSettings();
+      } catch {
+        await ensureConfigReady();
+        userSettings = await loadSettings();
       }
-      await ensureConfigReady();
-      [userSettings, backgroundItems] = await Promise.all([
-        loadSettings(),
-        loadBackgroundItems(),
-      ]);
-      activeBackground = userSettings.background.enabled
-        ? resolveBackgroundItem(backgroundItems, userSettings.background.id)
-        : null;
-      if (userSettings.background.enabled && !activeBackground) {
-        userSettings = {
-          ...userSettings,
-          background: { enabled: false, id: null },
-        };
-        await saveSettings(userSettings);
-      }
-      applyTheme(userSettings.theme);
-      await refreshCurrentTabPinnedState();
-      await setLanguage(userSettings.language);
-      settingsLoaded = true;
-      updateTabLabels();
-      i18nRenderKey += 1;
-      const startOpenTab: OpenTab =
-        userSettings.defaultOpen === "last"
-          ? userSettings.lastOpenTab
-          : userSettings.defaultOpen;
+      if (!firstMount || !initialSettings) applyTheme(userSettings.theme);
+      initialSettings = null;
+      const languageTask = setLanguage(userSettings.language).then(updateTabLabels);
+      const backgroundSettings = userSettings.background;
+      const backgroundTask = loadBackgroundItems().then((items) => {
+        backgroundItems = items;
+        if (userSettings.background !== backgroundSettings) return;
+        activeBackground = backgroundSettings.enabled
+          ? resolveBackgroundItem(items, backgroundSettings.id) : null;
+        if (backgroundSettings.enabled && !activeBackground) {
+          userSettings = { ...userSettings, background: { enabled: false, id: null } };
+          void saveSettings(userSettings).catch((error) => {
+            console.warn(NEW_TAB_LOG_PREFIX, "background:repair-failed", error);
+          });
+        }
+      }).catch((error) => {
+        console.warn(NEW_TAB_LOG_PREFIX, "background:load-failed", error);
+      });
+      void refreshCurrentTabPinnedState();
+      const startOpenTab: OpenTab = userSettings.defaultOpen === "last"
+        ? userSettings.lastOpenTab : userSettings.defaultOpen;
       const defaultIndex = openTabToIndex(startOpenTab);
-      const bookmarkFolderId =
-        startOpenTab !== "bookmark"
-          ? undefined
-          : userSettings.defaultOpen === "last"
-            ? userSettings.lastBookmarkFolderId
-            : userSettings.defaultBookmarkFolderId;
-      // From this point persisted stores are available, so tab loaders and edits
-      // may safely switch from the local fallback to real data.
+      const bookmarkFolderId = startOpenTab !== "bookmark" ? undefined
+        : userSettings.defaultOpen === "last"
+          ? userSettings.lastBookmarkFolderId : userSettings.defaultBookmarkFolderId;
       configurationState = "ready";
       await clickTab(tabs[defaultIndex], defaultIndex, {
-        rememberLast: false,
-        bookmarkFolderId,
+        rememberLast: false, bookmarkFolderId, forceLoad: true,
       });
+      firstMount = false;
+      // Maintenance and sync no longer gate the local first screen.
+      void ensureConfigReady().catch((error) => {
+        console.warn(NEW_TAB_LOG_PREFIX, "background:maintenance-failed", error);
+      });
+      await Promise.all([languageTask, backgroundTask]);
     } catch (error) {
-      // Keep an extension-page failure from leaving Edge with a blank new tab.
       console.error(NEW_TAB_LOG_PREFIX, "initialization:failed", {
-        durationMs: Date.now() - startedAt,
-        error,
+        durationMs: Date.now() - startedAt, error,
       });
       initializationFailed = true;
       configurationState = "fallback";
       applyWebsitesFailureState();
       updateTabLabels();
       updateSelTab(tabs[0]);
-    } finally {
-      await tick();
     }
   }
 
@@ -464,7 +446,6 @@
     if (languageChanged) {
       await Promise.all([saveSettings(next), setLanguage(next.language)]);
       updateTabLabels();
-      i18nRenderKey += 1;
       if (relatedSearchChanged) {
         await refreshRelatedSearchPanels();
       }
@@ -542,12 +523,13 @@
     i: number,
     options: {
       rememberLast?: boolean;
+      forceLoad?: boolean;
       bookmarkFolderId?: string | null;
     } = {},
   ) {
-    const { rememberLast = true, bookmarkFolderId } = options;
+    const { rememberLast = true, bookmarkFolderId, forceLoad = false } = options;
     //书签选中情况下再点击回到顶层，
-    if (tab.sel) {
+    if (tab.sel && !forceLoad) {
       if (tab.key === "0") {
         if (currentCommonFolder) {
           currentCommonFolder = undefined;
@@ -565,7 +547,7 @@
     updateShowNext(i);
     updateSelTab(tab);
     if (rememberLast && configurationState === "ready") {
-      await rememberLastOpenTab(tab);
+      void rememberLastOpenTab(tab).catch(error => console.warn(NEW_TAB_LOG_PREFIX, "settings:last-tab-failed", error));
     }
 
     if (tab.key === "0") {
@@ -798,14 +780,10 @@
 
   async function refreshBookmarkViewFromSettings() {
     if (!bookmarksPermission || !currentNode) return;
-    const [root] = await getBookmarks();
-    if (!root) return;
-    const currentPath = findBookmarkPath(root as BookmarkNode, currentNode.id);
-    const nextPath =
-      currentPath ?? getInitialBookmarkPath(root as BookmarkNode);
-    currentNode = nextPath[nextPath.length - 1];
-    historyStack = nextPath;
-    await repairMissingBookmarkFolderSettings(root as BookmarkNode);
+    const view = await getBookmarkFolderView(currentNode.id);
+    currentNode = view.node;
+    historyStack = view.path;
+    await repairMissingBookmarkFolderSettings();
     if (!currentNode.url && currentNode.title) {
       tabs[1].name = currentNode.title;
     } else {
@@ -835,73 +813,38 @@
     }
   }
 
-  function findBookmarkPath(
-    node: BookmarkNode,
-    id: string,
-    parents: BookmarkNode[] = [],
-  ): BookmarkNode[] | undefined {
-    const path = [...parents, node];
-    if (node.id === id && !node.url) return path;
-    for (const child of node.children ?? []) {
-      if (child.url) continue;
-      const found = findBookmarkPath(child as BookmarkNode, id, path);
-      if (found) return found;
-    }
-    return undefined;
-  }
-
-  function getInitialBookmarkPath(root: BookmarkNode) {
-    const initialFolder = root.children?.find((child) => !child.url);
-    return initialFolder ? [root, initialFolder as BookmarkNode] : [root];
-  }
-
-  async function repairMissingBookmarkFolderSettings(root: BookmarkNode) {
-    const initialFolderId = getInitialBookmarkPath(root).at(-1)?.id;
-    if (!initialFolderId) return;
-    const defaultFolderMissing =
-      userSettings.defaultOpen === "bookmark" &&
-      (!userSettings.defaultBookmarkFolderId ||
-        !findBookmarkPath(root, userSettings.defaultBookmarkFolderId));
-    const lastFolderMissing =
-      !!userSettings.lastBookmarkFolderId &&
-      !findBookmarkPath(root, userSettings.lastBookmarkFolderId);
-    if (!defaultFolderMissing && !lastFolderMissing) return;
-    const nextSettings: UserSettings = {
+  async function repairMissingBookmarkFolderSettings() {
+    const isFolder = async (id?: string | null) => {
+      if (!id) return false;
+      try { const node = await getBookmark(id); return !!node && !node.url; }
+      catch { return false; }
+    };
+    const [defaultValid, lastValid] = await Promise.all([
+      userSettings.defaultOpen !== "bookmark" ? true : isFolder(userSettings.defaultBookmarkFolderId),
+      !userSettings.lastBookmarkFolderId ? true : isFolder(userSettings.lastBookmarkFolderId),
+    ]);
+    if (defaultValid && lastValid) return;
+    const fallbackId = await getInitialBookmarkFolderId();
+    const nextSettings = {
       ...userSettings,
-      defaultBookmarkFolderId: defaultFolderMissing
-        ? initialFolderId
-        : userSettings.defaultBookmarkFolderId,
-      lastBookmarkFolderId: lastFolderMissing
-        ? initialFolderId
-        : userSettings.lastBookmarkFolderId,
+      defaultBookmarkFolderId: defaultValid ? userSettings.defaultBookmarkFolderId : fallbackId,
+      lastBookmarkFolderId: lastValid ? userSettings.lastBookmarkFolderId : fallbackId,
     };
     userSettings = nextSettings;
     await saveSettings(nextSettings);
   }
 
   async function initBookmarkView(folderId?: string | null) {
-    const [root] = await getBookmarks();
-    if (!root) return undefined;
-    const fallbackPath = getInitialBookmarkPath(root as BookmarkNode);
-    const requestedPath = folderId
-      ? findBookmarkPath(root as BookmarkNode, folderId)
-      : undefined;
-    const path = requestedPath ?? fallbackPath;
-    const target = path[path.length - 1];
-    historyStack = path;
-    currentNode = target;
-    updateBookmarkTabName(target);
-    await repairMissingBookmarkFolderSettings(root as BookmarkNode);
-    return target.id;
+    const view = await getBookmarkFolderView(folderId);
+    historyStack = view.path;
+    currentNode = view.node;
+    updateBookmarkTabName(view.node);
+    void repairMissingBookmarkFolderSettings().catch(error => console.warn(NEW_TAB_LOG_PREFIX, "bookmarks:repair-failed", error));
+    return view.node.id;
   }
 
   async function clickFolder(bkmk: BookmarkNode) {
-    const node = bkmk.children
-      ? bkmk
-      : {
-          ...bkmk,
-          children: await getBookmarkChildren(bkmk.id),
-        };
+    const node = { ...bkmk, children: await getBookmarkChildren(bkmk.id) };
     bkmk = node;
     tabs[1].name = bkmk.title;
     historyStack.push(bkmk);
@@ -917,7 +860,8 @@
   async function goBack() {
     if (historyStack.length <= 1) return;
     historyStack.pop()!;
-    currentNode = historyStack[historyStack.length - 1];
+    const previous = historyStack[historyStack.length - 1];
+    currentNode = { ...previous, children: await getBookmarkChildren(previous.id) };
     if (currentNode) {
       updateBookmarkTabName(currentNode);
       await rememberBookmarkFolder(currentNode.id);
@@ -930,7 +874,6 @@
 </svelte:head>
 
 <main>
-  {#key i18nRenderKey}
     <Settings
       {showSetting}
       {userSettings}
@@ -947,7 +890,6 @@
       <div class="top">
         {@render headBar()}
       </div>
-      {#if settingsLoaded}
         <Search
           {autoFocusSearch}
           onAutoFocusHandled={() => (autoFocusSearch = false)}
@@ -961,7 +903,6 @@
           loading={configurationState === "loading"}
           readOnly={configurationState !== "ready"}
         />
-      {/if}
       <div class="content">
         <div class="tabs">
           <div class="side side-left">
@@ -1091,21 +1032,24 @@
         </div>
       </div>
     </Settings>
-  {/key}
 </main>
 
 {#if showAbout}
-  <About
-    onclickClose={() => (showAbout = false)}
-    onclickSupport={() => {
-      showAbout = false;
-      showSupport = true;
-    }}
-  />
+  {#await import("@/lib/About.svelte") then { default: About }}
+    <About
+      onclickClose={() => (showAbout = false)}
+      onclickSupport={() => {
+        showAbout = false;
+        showSupport = true;
+      }}
+    />
+  {/await}
 {/if}
 
 {#if showSupport}
-  <Support onclickClose={() => (showSupport = false)} />
+  {#await import("@/lib/Support.svelte") then { default: Support }}
+    <Support onclickClose={() => (showSupport = false)} />
+  {/await}
 {/if}
 
 {#if showDataSyncIssue && dataSyncState.enabled}
@@ -1283,12 +1227,14 @@
       "history",
     )}
   {:else}
-    <History
-      newTabOpen={effectiveNewTabOpen}
-      settingsOpen={showSetting}
-      clearRequestKey={clearHistoryRequestKey}
-      onClearableChange={(clearable) => (historyClearable = clearable)}
-    />
+    {#await import("@/lib/History.svelte") then { default: History }}
+      <History
+        newTabOpen={effectiveNewTabOpen}
+        settingsOpen={showSetting}
+        clearRequestKey={clearHistoryRequestKey}
+        onClearableChange={(clearable) => (historyClearable = clearable)}
+      />
+    {/await}
   {/if}
 {/snippet}
 

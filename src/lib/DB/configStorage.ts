@@ -171,12 +171,65 @@ export async function getStoredConfig(): Promise<StoredConfig> {
   throw new Error("Configuration is not ready");
 }
 
+// Coalesce reads made in the same turn without keeping a stale persistent cache.
+type ConfigPart = keyof typeof CONFIG_STORAGE_KEYS;
+let pendingReads: { keys: ConfigPart[]; resolve: (value: Record<string, unknown>) => void; reject: (error: unknown) => void }[] = [];
+
+function readConfigParts(keys: ConfigPart[]): Promise<Record<string, unknown>> {
+  return new Promise((resolve, reject) => {
+    pendingReads.push({ keys, resolve, reject });
+    if (pendingReads.length !== 1) return;
+    queueMicrotask(async () => {
+      const batch = pendingReads;
+      pendingReads = [];
+      const storageKeys = [...new Set(batch.flatMap((request) => request.keys.map((key) => CONFIG_STORAGE_KEYS[key])))];
+      try {
+        const values = await getExtensionStorage().get(storageKeys);
+        for (const request of batch) request.resolve(values);
+      } catch (error) {
+        for (const request of batch) request.reject(error);
+      }
+    });
+  });
+}
+
+export async function getStoredConfigParts<K extends ConfigPart>(...keys: K[]): Promise<Pick<StoredConfig, K>> {
+  const values = await readConfigParts([...keys, "migration"]);
+  if (!isMigration(values[CONFIG_STORAGE_KEYS.migration])) throw new Error("Configuration is not ready");
+  const result: Partial<StoredConfig> = {};
+  for (const key of keys) {
+    let value = values[CONFIG_STORAGE_KEYS[key]];
+    if (key === "backgrounds" && !Array.isArray(value)) value = PRESET_BACKGROUNDS.map(cloneBackgroundItem);
+    if (key === "websiteFolders" && !Array.isArray(value)) value = [];
+    const valid = key === "metadata" ? isRecord(value)
+      : key === "migration" ? isMigration(value) : Array.isArray(value);
+    if (!valid) throw new Error(`Invalid configuration part: ${key}`);
+    Object.assign(result, { [key]: value });
+  }
+  return result as Pick<StoredConfig, K>;
+}
+
 export async function getEngineConfigSnapshot() {
-  const config = await getStoredConfig();
+  const config = await getStoredConfigParts("engineCategories", "engines");
   return {
     categories: [...config.engineCategories].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
     engines: [...config.engines].sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999)),
   };
+}
+
+/** Share the write queue with full transactions without reading unrelated stores. */
+export async function updateStoredMetadata<T>(mutate: (metadata: StoredConfig["metadata"]) => T): Promise<T> {
+  const task = writeQueue.then(async () => {
+    const { metadata } = await getStoredConfigParts("metadata");
+    const next = structuredClone(metadata);
+    const result = mutate(next);
+    if (stableStringify(next) !== stableStringify(metadata)) {
+      await getExtensionStorage().set({ [CONFIG_STORAGE_KEYS.metadata]: next });
+    }
+    return result;
+  });
+  writeQueue = task.then(() => undefined, () => undefined);
+  return task;
 }
 
 export async function updateStoredConfig<T>(

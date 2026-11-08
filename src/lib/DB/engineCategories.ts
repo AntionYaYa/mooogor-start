@@ -1,5 +1,5 @@
 import type { EngineCategoryItem } from "./database";
-import { getStoredConfig, updateStoredConfig } from "./configStorage";
+import { getStoredConfigParts, updateStoredConfig } from "./configStorage";
 
 export const FALLBACK_ENGINE_CATEGORY_ID = "__fallback__";
 
@@ -13,7 +13,7 @@ function generateCategoryId() {
 }
 
 export async function getEngineCategories() {
-  return [...(await getStoredConfig()).engineCategories].sort(byOrder);
+  return [...(await getStoredConfigParts("engineCategories")).engineCategories].sort(byOrder);
 }
 
 export async function ensureDefaultEngineCategories(defaults: Pick<EngineCategoryItem, "id" | "name">[]) {

@@ -1,7 +1,7 @@
 import { mount } from 'svelte';
-import App from './App.svelte';
 import { resolvePublicAssetUrl } from '@/lib/utils/assetUrl';
-import { loadAutoFocusSearchSetting } from '@/lib/utils/settings';
+import { loadSettings, loadAutoFocusSearchSetting } from '@/lib/utils/settings';
+import { applyTheme } from '@/lib/utils/theme';
 import '../../lib/style/base.css';
 import '../../lib/style/color.css';
 
@@ -9,9 +9,9 @@ async function bootstrap() {
   const currentUrl = new URL(window.location.href);
   const explicitFocusRequested =
     currentUrl.searchParams.get('focus') === 'search';
-  const autoFocusEnabled = explicitFocusRequested
-    ? true
-    : await loadAutoFocusSearchSetting();
+  const startupSettings = await loadSettings().catch(() => null);
+  const autoFocusEnabled = explicitFocusRequested ||
+    (startupSettings?.autoFocusSearch ?? await loadAutoFocusSearchSetting());
 
   if (autoFocusEnabled && !explicitFocusRequested) {
     const explicitNewTabUrl = new URL(resolvePublicAssetUrl('newtab.html'));
@@ -20,8 +20,11 @@ async function bootstrap() {
     return undefined;
   }
 
+  if (startupSettings) applyTheme(startupSettings.theme);
+  const { default: App } = await import('./App.svelte');
   return mount(App, {
       target: document.getElementById('app')!,
+      props: { startupSettings },
     });
 }
 

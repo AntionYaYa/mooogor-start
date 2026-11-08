@@ -1,5 +1,5 @@
 import {
-  getStoredConfig,
+  getStoredConfigParts,
   updateStoredConfig,
 } from "@/lib/DB/configStorage";
 import {
@@ -14,7 +14,7 @@ import {
 } from "@/lib/utils/settings";
 
 export async function loadBackgroundItems() {
-  const config = await getStoredConfig();
+  const config = await getStoredConfigParts("backgrounds", "metadata");
   const settings = config.metadata[SETTINGS_KEY] as Partial<UserSettings> & {
     background?: {
       enabled?: unknown;

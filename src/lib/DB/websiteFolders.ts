@@ -1,5 +1,5 @@
 import type { WebSiteFolder } from "./database";
-import { getStoredConfig, updateStoredConfig } from "./configStorage";
+import { getStoredConfigParts, updateStoredConfig } from "./configStorage";
 import { deleteWebSiteScreenshot } from "./websiteScreenshots";
 
 const WEBSITES_UPDATED_EVENT = "websites-updated";
@@ -15,7 +15,7 @@ function nextId(items: WebSiteFolder[]) {
 }
 
 export async function getAllWebSiteFolders(): Promise<WebSiteFolder[]> {
-  const config = await getStoredConfig();
+  const config = await getStoredConfigParts("websiteFolders");
   return [...config.websiteFolders].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }
 

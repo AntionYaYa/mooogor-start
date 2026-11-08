@@ -1,7 +1,7 @@
 import {
-  getStoredConfig,
+  getStoredConfigParts,
   readStoredConfigMetadata,
-  updateStoredConfig,
+  updateStoredMetadata,
 } from "@/lib/DB/configStorage";
 
 export type AppLanguage =
@@ -120,7 +120,7 @@ function normalizeBackgroundSettings(value: unknown): BackgroundSettings {
 }
 
 async function loadStoredSettings(): Promise<Partial<UserSettings> | undefined> {
-  return (await getStoredConfig()).metadata[SETTINGS_KEY] as
+  return (await getStoredConfigParts("metadata")).metadata[SETTINGS_KEY] as
     | Partial<UserSettings>
     | undefined;
 }
@@ -178,7 +178,7 @@ export async function loadAutoFocusSearchSetting(): Promise<boolean> {
 }
 
 export async function saveSettings(next: UserSettings): Promise<void> {
-  await updateStoredConfig((config) => {
-    config.metadata[SETTINGS_KEY] = next;
+  await updateStoredMetadata((metadata) => {
+    metadata[SETTINGS_KEY] = next;
   });
 }

@@ -1,0 +1,366 @@
+{
+  "extension": "/Users/a122/mooogor/mooogor_new/mooogor_new_tab/.output/chrome-mv3",
+  "notes": [
+    "Real extension APIs. Test-copy manifest pregrants bookmarks/history.",
+    "Sync disabled. Built-in GitHub icons; no screenshot blobs or remote image network.",
+    "All sites and bookmarks in one folder/root, all history added today.",
+    "Three warm runs per tier; navigation timings, not physical + click.",
+    "Fill timing includes automation overhead; long-task measurements are separate."
+  ],
+  "results": [
+    {
+      "counts": {
+        "sites": 20,
+        "engines": 20,
+        "bookmarks": 200,
+        "history": 1000
+      },
+      "summary": {
+        "inputMs": 52.099999994039536,
+        "sitesMs": 57.69999998807907,
+        "enginesMs": 57.69999998807907,
+        "fillMs": 3.7970840000000408,
+        "maxStartupTaskMs": 0,
+        "domNodes": 321,
+        "bookmarkOpenMs": 37.19999998807907,
+        "bookmarkRows": 200,
+        "historyOpenMs": 124.40000000596046,
+        "historyRows": 1001
+      },
+      "errors": [],
+      "runs": [
+        {
+          "fillMs": 7.883041999999932,
+          "startup": {
+            "events": [
+              {
+                "name": "input",
+                "at": 68.7000000178814
+              },
+              {
+                "name": "sites",
+                "at": 76.90000000596046
+              },
+              {
+                "name": "engines",
+                "at": 77
+              }
+            ],
+            "tasks": [],
+            "domNodes": 321,
+            "siteNodes": 20
+          },
+          "bookmarks": {
+            "ms": 37.19999998807907,
+            "rows": 200
+          },
+          "history": {
+            "ms": 109.7999999821186,
+            "rows": 1001
+          }
+        },
+        {
+          "fillMs": 3.7970840000000408,
+          "startup": {
+            "events": [
+              {
+                "name": "input",
+                "at": 48.5
+              },
+              {
+                "name": "sites",
+                "at": 55.10000002384186
+              },
+              {
+                "name": "engines",
+                "at": 55.10000002384186
+              }
+            ],
+            "tasks": [],
+            "domNodes": 321,
+            "siteNodes": 20
+          },
+          "bookmarks": {
+            "ms": 36.79999998211861,
+            "rows": 200
+          },
+          "history": {
+            "ms": 131.90000000596046,
+            "rows": 1001
+          }
+        },
+        {
+          "fillMs": 3.062750000000051,
+          "startup": {
+            "events": [
+              {
+                "name": "input",
+                "at": 52.099999994039536
+              },
+              {
+                "name": "sites",
+                "at": 57.69999998807907
+              },
+              {
+                "name": "engines",
+                "at": 57.69999998807907
+              }
+            ],
+            "tasks": [],
+            "domNodes": 321,
+            "siteNodes": 20
+          },
+          "bookmarks": {
+            "ms": 38.80000001192093,
+            "rows": 200
+          },
+          "history": {
+            "ms": 124.40000000596046,
+            "rows": 1001
+          }
+        }
+      ]
+    },
+    {
+      "counts": {
+        "sites": 500,
+        "engines": 100,
+        "bookmarks": 5000,
+        "history": 10000
+      },
+      "summary": {
+        "inputMs": 47,
+        "sitesMs": 79.40000000596046,
+        "enginesMs": 79.40000000596046,
+        "fillMs": 11.964791000000332,
+        "maxStartupTaskMs": 0,
+        "domNodes": 4001,
+        "bookmarkOpenMs": 471,
+        "bookmarkRows": 5000,
+        "historyOpenMs": 163.2999999821186,
+        "historyRows": 2000
+      },
+      "errors": [],
+      "runs": [
+        {
+          "fillMs": 15.66308299999946,
+          "startup": {
+            "events": [
+              {
+                "name": "input",
+                "at": 57.30000001192093
+              },
+              {
+                "name": "sites",
+                "at": 92.5
+              },
+              {
+                "name": "engines",
+                "at": 92.5
+              }
+            ],
+            "tasks": [],
+            "domNodes": 4001,
+            "siteNodes": 500
+          },
+          "bookmarks": {
+            "ms": 471,
+            "rows": 5000
+          },
+          "history": {
+            "ms": 171.80000001192093,
+            "rows": 2000
+          }
+        },
+        {
+          "fillMs": 11.964791000000332,
+          "startup": {
+            "events": [
+              {
+                "name": "input",
+                "at": 47
+              },
+              {
+                "name": "sites",
+                "at": 79.40000000596046
+              },
+              {
+                "name": "engines",
+                "at": 79.40000000596046
+              }
+            ],
+            "tasks": [],
+            "domNodes": 4001,
+            "siteNodes": 500
+          },
+          "bookmarks": {
+            "ms": 460.5,
+            "rows": 5000
+          },
+          "history": {
+            "ms": 163.2999999821186,
+            "rows": 2000
+          }
+        },
+        {
+          "fillMs": 11.393582999999126,
+          "startup": {
+            "events": [
+              {
+                "name": "input",
+                "at": 45.400000005960464
+              },
+              {
+                "name": "sites",
+                "at": 77.59999999403954
+              },
+              {
+                "name": "engines",
+                "at": 77.69999998807907
+              }
+            ],
+            "tasks": [],
+            "domNodes": 4001,
+            "siteNodes": 500
+          },
+          "bookmarks": {
+            "ms": 484.09999999403954,
+            "rows": 5000
+          },
+          "history": {
+            "ms": 151.40000000596046,
+            "rows": 2000
+          }
+        }
+      ]
+    },
+    {
+      "counts": {
+        "sites": 2000,
+        "engines": 300,
+        "bookmarks": 20000,
+        "history": 30000
+      },
+      "summary": {
+        "inputMs": 85.60000002384186,
+        "sitesMs": 196,
+        "enginesMs": 196,
+        "fillMs": 40.442957999999635,
+        "maxStartupTaskMs": 114,
+        "domNodes": 15301,
+        "bookmarkOpenMs": 2396.5999999940395,
+        "bookmarkRows": 20000,
+        "historyOpenMs": 298.90000000596046,
+        "historyRows": 2000
+      },
+      "errors": [],
+      "runs": [
+        {
+          "fillMs": 39.61254199999894,
+          "startup": {
+            "events": [
+              {
+                "name": "input",
+                "at": 106.09999999403954
+              },
+              {
+                "name": "sites",
+                "at": 209.19999998807907
+              },
+              {
+                "name": "engines",
+                "at": 209.19999998807907
+              }
+            ],
+            "tasks": [
+              {
+                "start": 110.40000000596046,
+                "duration": 105
+              }
+            ],
+            "domNodes": 15301,
+            "siteNodes": 2000
+          },
+          "bookmarks": {
+            "ms": 2286.2000000178814,
+            "rows": 20000
+          },
+          "history": {
+            "ms": 322.60000002384186,
+            "rows": 2000
+          }
+        },
+        {
+          "fillMs": 40.442957999999635,
+          "startup": {
+            "events": [
+              {
+                "name": "input",
+                "at": 54
+              },
+              {
+                "name": "sites",
+                "at": 163.39999997615814
+              },
+              {
+                "name": "engines",
+                "at": 163.39999997615814
+              }
+            ],
+            "tasks": [
+              {
+                "start": 60.099999994039536,
+                "duration": 114
+              }
+            ],
+            "domNodes": 15301,
+            "siteNodes": 2000
+          },
+          "bookmarks": {
+            "ms": 2398.699999988079,
+            "rows": 20000
+          },
+          "history": {
+            "ms": 298.90000000596046,
+            "rows": 2000
+          }
+        },
+        {
+          "fillMs": 45.940332999998645,
+          "startup": {
+            "events": [
+              {
+                "name": "input",
+                "at": 85.60000002384186
+              },
+              {
+                "name": "sites",
+                "at": 196
+              },
+              {
+                "name": "engines",
+                "at": 196
+              }
+            ],
+            "tasks": [
+              {
+                "start": 94.40000000596046,
+                "duration": 107
+              }
+            ],
+            "domNodes": 15301,
+            "siteNodes": 2000
+          },
+          "bookmarks": {
+            "ms": 2396.5999999940395,
+            "rows": 20000
+          },
+          "history": {
+            "ms": 298.80000001192093,
+            "rows": 2000
+          }
+        }
+      ]
+    }
+  ]
+}

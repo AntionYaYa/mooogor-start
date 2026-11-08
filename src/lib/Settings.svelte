@@ -17,10 +17,6 @@
     import ConfirmDialog from "./ConfirmDialog.svelte";
     import Popup from "./components/Popup.svelte";
     import BatchToolbar from "./components/BatchToolbar.svelte";
-    import SettingsCommonSitesSection from "@/lib/settings/SettingsCommonSitesSection.svelte";
-    import SettingsSearchEnginesSection from "@/lib/settings/SettingsSearchEnginesSection.svelte";
-    import SettingsBackgroundSection from "@/lib/settings/SettingsBackgroundSection.svelte";
-    import SettingsDataSyncSection from "@/lib/settings/SettingsDataSyncSection.svelte";
     import SettingsThemePicker from "@/lib/settings/SettingsThemePicker.svelte";
     import BackgroundUrlDialog from "@/lib/settings/BackgroundUrlDialog.svelte";
     import BackgroundLayer from "@/lib/background/BackgroundLayer.svelte";
@@ -116,19 +112,19 @@
         currentTabPinned = false,
     }: Props = $props();
 
-    const openPosBase = [
+    const openPosBase = $derived([
         { label: t("nt_default_common"), value: "common" },
         { label: t("nt_default_bookmark"), value: "bookmark" },
         { label: t("nt_default_history"), value: "history" },
         { label: t("nt_default_last"), value: "last", dividerTop: true },
-    ] as const;
+    ] as const);
 
-    const languageBase = [
+    const languageBase = $derived([
         { label: t("nt_lang_auto"), value: "auto" },
         { label: "简体中文", value: "zh_CN", dividerTop: true },
         { label: "繁體中文", value: "zh_TW" },
         { label: "English", value: "en" },
-    ] as const;
+    ] as const);
 
     let openPosOptions = $derived(
         openPosBase.map((o) => ({
@@ -1462,58 +1458,66 @@
                         {#if settingPage === "root"}
                             {@render temSettingRoot()}
                         {:else if settingPage === "searchEngines"}
-                            <SettingsSearchEnginesSection
-                                {settingEnginesLoading}
-                                {settingEnginesLoaded}
-                                {settingEnginesError}
-                                {settingEnginesSaving}
-                                {expandedCategoryIds}
-                                selectedEngineIds={selectedSearchEngineIds}
-                                groups={getGroupedSearchEngines()}
-                                onOpenCategoryManager={openCategoryManager}
-                                onToggleCategoryExpanded={toggleCategoryExpanded}
-                                onConsiderGroup={handleSearchEngineGroupConsider}
-                                onFinalizeGroup={handleSearchEngineGroupFinalize}
-                                onEditEngine={openEditSearchEngineEditor}
-                                onAddEngineToCategory={openAddSearchEngineEditorForCategory}
-                                onToggleEngineSelected={toggleSearchEngineSelected}
-                                onReset={resetSearchEnginesToDefaultConfirm}
-                            />
+                            {#await import("@/lib/settings/SettingsSearchEnginesSection.svelte") then { default: SettingsSearchEnginesSection }}
+                              <SettingsSearchEnginesSection
+                                  {settingEnginesLoading}
+                                  {settingEnginesLoaded}
+                                  {settingEnginesError}
+                                  {settingEnginesSaving}
+                                  {expandedCategoryIds}
+                                  selectedEngineIds={selectedSearchEngineIds}
+                                  groups={getGroupedSearchEngines()}
+                                  onOpenCategoryManager={openCategoryManager}
+                                  onToggleCategoryExpanded={toggleCategoryExpanded}
+                                  onConsiderGroup={handleSearchEngineGroupConsider}
+                                  onFinalizeGroup={handleSearchEngineGroupFinalize}
+                                  onEditEngine={openEditSearchEngineEditor}
+                                  onAddEngineToCategory={openAddSearchEngineEditorForCategory}
+                                  onToggleEngineSelected={toggleSearchEngineSelected}
+                                  onReset={resetSearchEnginesToDefaultConfirm}
+                              />
+                            {/await}
                         {:else if settingPage === "common"}
-                            <SettingsCommonSitesSection
-                                {commonSites}
-                                folders={commonSiteFolders}
-                                currentFolderId={currentCommonFolderId}
-                                {commonSitesLoading}
-                                {commonSitesError}
-                                {commonSitesDragging}
-                                selectedSiteIds={selectedCommonSiteIds}
-                                onDragging={(dragging) => (commonSitesDragging = dragging)}
-                                onReorderRoot={handleCommonSitesRootReorder}
-                                onReorderFolder={handleCommonSitesFolderReorder}
-                                onAdd={openAddCommonSiteEditor}
-                                onUpdate={loadCommonSites}
-                                onEdit={openEditCommonSiteEditor}
-                                onToggleSelected={toggleCommonSiteSelected}
-                                onOpenFolder={(folder) => {
-                                    pageDirection = 1;
-                                    currentCommonFolderId = folder.id;
-                                    setSelectedCommonSiteIds([]);
-                                }}
-                                onReset={resetCommonSitesToDefaultConfirm}
-                            />
+                            {#await import("@/lib/settings/SettingsCommonSitesSection.svelte") then { default: SettingsCommonSitesSection }}
+                              <SettingsCommonSitesSection
+                                  {commonSites}
+                                  folders={commonSiteFolders}
+                                  currentFolderId={currentCommonFolderId}
+                                  {commonSitesLoading}
+                                  {commonSitesError}
+                                  {commonSitesDragging}
+                                  selectedSiteIds={selectedCommonSiteIds}
+                                  onDragging={(dragging) => (commonSitesDragging = dragging)}
+                                  onReorderRoot={handleCommonSitesRootReorder}
+                                  onReorderFolder={handleCommonSitesFolderReorder}
+                                  onAdd={openAddCommonSiteEditor}
+                                  onUpdate={loadCommonSites}
+                                  onEdit={openEditCommonSiteEditor}
+                                  onToggleSelected={toggleCommonSiteSelected}
+                                  onOpenFolder={(folder) => {
+                                      pageDirection = 1;
+                                      currentCommonFolderId = folder.id;
+                                      setSelectedCommonSiteIds([]);
+                                  }}
+                                  onReset={resetCommonSitesToDefaultConfirm}
+                              />
+                            {/await}
                         {:else if settingPage === "background"}
-                            <SettingsBackgroundSection
-                                config={backgroundDraft}
-                                onPreview={previewBackground}
-                                onCommit={commitBackground}
-                                onOpenAdd={() =>
-                                    (showBackgroundUrlDialog = true)}
-                                onRemove={(url) =>
-                                    void removeBackgroundUrl(url)}
-                            />
+                            {#await import("@/lib/settings/SettingsBackgroundSection.svelte") then { default: SettingsBackgroundSection }}
+                              <SettingsBackgroundSection
+                                  config={backgroundDraft}
+                                  onPreview={previewBackground}
+                                  onCommit={commitBackground}
+                                  onOpenAdd={() =>
+                                      (showBackgroundUrlDialog = true)}
+                                  onRemove={(url) =>
+                                      void removeBackgroundUrl(url)}
+                              />
+                            {/await}
                         {:else if settingPage === "dataSync"}
-                            <SettingsDataSyncSection />
+                            {#await import("@/lib/settings/SettingsDataSyncSection.svelte") then { default: SettingsDataSyncSection }}
+                              <SettingsDataSyncSection />
+                            {/await}
                         {/if}
                     </div>
                 {/key}

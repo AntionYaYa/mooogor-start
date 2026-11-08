@@ -91,7 +91,13 @@ function prepareConfiguration(
     const language = getEffectiveLanguage("auto");
     await ensureDefaultWebSites(buildDefaultWebSites(language));
     await initializeDefaultSearchConfig(buildDefaultEngineCategories(), buildDefaultEngines(language));
-    await initializeDataSync();
+    // Local configuration is sufficient to render the new tab. Sync can finish
+    // afterward and notify open pages when it applies a different snapshot.
+    void initializeDataSync().then((changed) => {
+      if (changed) return browser.runtime.sendMessage({ type: "dataSyncApplied" }).catch(() => undefined);
+    }).catch((error) => {
+      console.error("[Mooogor Data Sync]", "initialization:failed", error);
+    });
   })().catch((error) => {
     configurationReadyPromise = null;
     console.error(CONFIG_LOG_PREFIX, "initialization:failed", {
