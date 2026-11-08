@@ -7,7 +7,7 @@
     import Icon from "./components/Icon.svelte";
 
   interface Props {
-    site: WebSite;
+    site?: WebSite;
     preview?: boolean;
     loading?: boolean;
   }
@@ -16,10 +16,10 @@
   let screenshotFailed = $state(false);
   let screenshotUrl = $state<string | null>(null);
   let hasScreenshot = $derived(!!screenshotUrl && !screenshotFailed);
-  let hasColor = $derived(!!site.backgroundColor);
-  let title = $derived(site.title?.trim() || site.domain);
+  let hasColor = $derived(!!site?.backgroundColor);
+  let title = $derived(site?.title?.trim() || site?.domain);
   let tileStyle = $derived(
-    site.backgroundColor
+    site?.backgroundColor
       ? (() => {
           const colors = createWebsiteCardThemeColors(site.backgroundColor);
           return `--tile-light:${colors.light};--tile-light-alt:${colors.lightAlt};--tile-dark:${colors.dark};--tile-dark-alt:${colors.darkAlt}`;
@@ -28,6 +28,7 @@
   );
 
   $effect(() => {
+    if (!site) return;
     const websiteId = site.id;
     const websiteUrl = site.url;
     // updateAt changes after a new screenshot is saved and refreshes this URL.
@@ -52,14 +53,21 @@
 </script>
 
 <div
-  class="website_tile"
+  class="tile_frame"
+  class:website_tile={!!site}
   class:has_screenshot={hasScreenshot}
   class:has_color={hasColor}
+  class:skeleton={!site}
   class:preview
   aria-busy={loading}
   style={tileStyle}
 >
-  {#if hasScreenshot}
+  {#if !site}
+    <div class="center_identity" aria-hidden="true">
+      <div class="placeholder_icon"></div>
+      <T align="c" nowrap><span class="placeholder_title"></span></T>
+    </div>
+  {:else if hasScreenshot}
     <img
       class="screenshot"
       src={screenshotUrl ?? ""}
@@ -89,7 +97,7 @@
 </div>
 
 <style>
-  .website_tile {
+  .tile_frame {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 10;
@@ -99,6 +107,32 @@
     background: var(--c-card);
     color: var(--c-text);
     isolation: isolate;
+  }
+  .skeleton {
+    background: linear-gradient(90deg, transparent, var(--c-card), transparent)
+      200% 0 / 50% 100% no-repeat var(--c-mask);
+    animation: tile-shimmer 1.25s ease-in-out infinite;
+  }
+  .placeholder_icon,
+  .placeholder_title {
+    display: inline-block;
+    background: var(--c-mask1);
+  }
+  .placeholder_icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r);
+  }
+  .placeholder_title {
+    width: 55%;
+    height: 12px;
+    border-radius: var(--r);
+  }
+  @keyframes tile-shimmer {
+    to { background-position-x: -100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton { animation: none; }
   }
   .capture_loading {
     position: absolute;

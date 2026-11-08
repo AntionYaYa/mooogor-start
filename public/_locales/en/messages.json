@@ -41,6 +41,12 @@
   "nt_authorize": {
     "message": "Authorize"
   },
+  "nt_scroll_to_top": {
+    "message": "Back to top"
+  },
+  "nt_settings_close": {
+    "message": "Close settings"
+  },
   "nt_settings_language": {
     "message": "Language"
   },

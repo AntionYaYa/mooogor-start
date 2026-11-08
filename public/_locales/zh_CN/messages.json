@@ -41,6 +41,12 @@
   "nt_authorize": {
     "message": "授权"
   },
+  "nt_scroll_to_top": {
+    "message": "回到顶部"
+  },
+  "nt_settings_close": {
+    "message": "关闭设置"
+  },
   "nt_settings_language": {
     "message": "语言设置"
   },

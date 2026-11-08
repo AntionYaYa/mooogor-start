@@ -11,17 +11,20 @@
 		tabs: TabItem[];
 		onclick: (tab: TabItem,i:number) => void;
 		selectedBg?: boolean;
+		loading?: boolean;
 	}
-	let { tabs, onclick, selectedBg = true }: Props = $props();
+	let { tabs, onclick, selectedBg = true, loading = false }: Props = $props();
 </script>
 
-<div>
+<div aria-hidden={loading}>
 	{#each tabs as tab,i}
 		<button
 			class={tab.sel ? (selectedBg ? "sel" : "sel_nobg") : "unsel"}
+			class:skeleton={loading}
+			disabled={loading}
 			onclick={() => onclick(tab,i)}
 		>
-			<T color={tab.sel ? "var(--c-text)" : selectedBg?"var(--c-text-1)":'var(--c-text-2)'} nowrap
+			<T color={loading ? "transparent" : tab.sel ? "var(--c-text)" : selectedBg?"var(--c-text-1)":'var(--c-text-2)'} nowrap
 				>{tab.name}</T
 			>
 		</button>
@@ -61,5 +64,8 @@
 	}
 	.unsel {
 		background-color: unset;
+	}
+	.skeleton {
+		background-color: var(--c-mask);
 	}
 </style>

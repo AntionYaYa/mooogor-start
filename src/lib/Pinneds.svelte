@@ -25,6 +25,7 @@
   import type { WebSite, WebSiteFolder } from "@/lib/DB/DB";
   import type { FrequentSite } from "@/lib/browser/history";
   import { addToPinneds } from "@/lib/utils/pinneds";
+  import { createDragCombineHover, DRAG_HOVER_DELAY_MS } from "@/lib/utils/dragCombineHover";
   import { getWebsiteCardColors } from "@/lib/utils/websiteCardColors";
   import Button from "./components/Button.svelte";
   import AddPinned from "./AddPinned.svelte";
@@ -40,6 +41,7 @@
 
   interface Props {
     allPinneds: WebSite[] | [];
+    scrollRoot?: HTMLElement;
     webSiteFolders?: WebSiteFolder[];
     frequentSites?: FrequentSite[];
     newTabOpen?: boolean;
@@ -58,6 +60,7 @@
 
   let {
     allPinneds,
+    scrollRoot,
     webSiteFolders = [],
     frequentSites = [],
     newTabOpen = false,
@@ -99,12 +102,11 @@
   let showFrequentMenu = $state(false);
   let showFrequentInfo = $state(false);
   let combineTargetId: string | undefined = $state();
-  let releasedTargetId: string | undefined;
+  const combineHover = createDragCombineHover((id) => (combineTargetId = id));
   let dragStartItems: PinnedGridItem[] = [];
   let pendingReorderItems: PinnedGridItem[] | undefined;
   let pendingReorderSignature = "";
   let reorderTimer: ReturnType<typeof setTimeout> | undefined;
-  const REORDER_HOVER_DELAY_MS = 280;
   let draggedGridItemId: string | undefined = $state();
   let capturingWebsiteId: number | undefined = $state();
   let currentPinnedHasScreenshot = $state<boolean | undefined>();
@@ -281,27 +283,27 @@
 
   function scheduleReorder() {
     cancelReorder();
-    if (combineTargetId || !pendingReorderItems) return;
+    if (combineHover.released || combineHover.hoveredId || !pendingReorderItems) return;
     reorderTimer = setTimeout(() => {
       reorderTimer = undefined;
-      if (isdarging && !combineTargetId && pendingReorderItems) {
+      if (isdarging && !combineHover.hoveredId && pendingReorderItems) {
         pinnedGridItems = pendingReorderItems;
       }
-    }, REORDER_HOVER_DELAY_MS);
+    }, DRAG_HOVER_DELAY_MS);
   }
 
   function clearDragState() {
     cancelReorder();
+    combineHover.reset();
     pendingReorderItems = undefined;
     pendingReorderSignature = "";
-    combineTargetId = releasedTargetId = undefined;
     draggedGridItemId = undefined;
     isdarging = false;
   }
 
   async function handleFinalize(e: CustomEvent<DndEvent<PinnedGridItem>>) {
     const draggedItem = dragStartItems.find((item) => item.id === draggedGridItemId);
-    const targetItem = dragStartItems.find((item) => item.id === (releasedTargetId ?? combineTargetId));
+    const targetItem = dragStartItems.find((item) => item.id === combineHover.releasedId);
     clearDragState();
     if (readOnly) return;
     pinnedGridItems = e.detail.items;
@@ -335,27 +337,29 @@
     await onUpdate();
   }
 
-  function trackFolderDrop(event: PointerEvent) {
-    if (!isdarging || currentFolder || !pageEl ||
-        dragStartItems.find((item) => item.id === draggedGridItemId)?.kind !== "website") return;
-    let targetId: string | undefined;
+  function findCombineTarget(point: { clientX: number; clientY: number }) {
+    if (!pageEl) return;
     for (const zone of pageEl.querySelectorAll<HTMLElement>("[data-combine-id]")) {
       const rect = zone.getBoundingClientRect();
-      if (event.clientX >= rect.left && event.clientX <= rect.right &&
-          event.clientY >= rect.top && event.clientY <= rect.bottom) {
-        targetId = zone.dataset.combineId;
-        break;
+      if (point.clientX >= rect.left && point.clientX <= rect.right &&
+          point.clientY >= rect.top && point.clientY <= rect.bottom) {
+        return zone.dataset.combineId;
       }
     }
-    const previous = combineTargetId;
-    combineTargetId = targetId;
-    if (targetId) cancelReorder();
-    else if (previous) scheduleReorder();
   }
 
-  function captureDropTarget(event: PointerEvent) {
-    trackFolderDrop(event);
-    releasedTargetId = combineTargetId;
+  function trackFolderDrop(event: PointerEvent) {
+    if (!isdarging || combineHover.released || currentFolder ||
+        dragStartItems.find((item) => item.id === draggedGridItemId)?.kind !== "website") return;
+    if (!combineHover.update(findCombineTarget(event))) return;
+    if (combineHover.hoveredId) cancelReorder();
+    else scheduleReorder();
+  }
+
+  function captureDropTarget(event: MouseEvent | TouchEvent) {
+    if (!isdarging || combineHover.released) return;
+    const point = "changedTouches" in event ? event.changedTouches[0] : event;
+    combineHover.capture(point && findCombineTarget(point));
     cancelReorder();
   }
 
@@ -418,15 +422,17 @@
 
   onMount(() => {
     window.addEventListener("pointermove", trackFolderDrop, { passive: true });
-    window.addEventListener("pointerup", captureDropTarget, true);
+    window.addEventListener("mouseup", captureDropTarget, true);
+    window.addEventListener("touchend", captureDropTarget, true);
     window.addEventListener("pointercancel", clearDragState);
   });
 
   onDestroy(() => {
     window.removeEventListener("pointermove", trackFolderDrop);
-    window.removeEventListener("pointerup", captureDropTarget, true);
+    window.removeEventListener("mouseup", captureDropTarget, true);
+    window.removeEventListener("touchend", captureDropTarget, true);
     window.removeEventListener("pointercancel", clearDragState);
-    cancelReorder();
+    clearDragState();
   });
 
   function resizeScreenshot(source: string) {
@@ -537,43 +543,27 @@
   }
 
   function trackStickyFrequentTitle(node: HTMLElement) {
-    const scrollContainer = node.closest(".tabs_contents");
-    const root =
-      scrollContainer instanceof HTMLElement ? scrollContainer : window;
+    const root = scrollRoot ?? window;
     let frame = 0;
-
     const updateStuckState = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const sentinel = node.previousElementSibling;
-        if (!(sentinel instanceof HTMLElement)) {
-          frequentTitleStuck = false;
-          return;
-        }
-        const stickyTop = Number.parseFloat(getComputedStyle(node).top) || 0;
-        const rootTop =
-          scrollContainer instanceof HTMLElement
-            ? scrollContainer.getBoundingClientRect().top
-            : 0;
-        const scrollTop =
-          scrollContainer instanceof HTMLElement
-            ? scrollContainer.scrollTop
-            : window.scrollY;
-        const titleNormalTop =
-          sentinel.getBoundingClientRect().bottom - rootTop + scrollTop;
-        frequentTitleStuck = scrollTop > titleNormalTop - stickyTop + 0.5;
+        const normalTop = node.previousElementSibling?.getBoundingClientRect().bottom;
+        frequentTitleStuck =
+          normalTop !== undefined && node.getBoundingClientRect().top > normalTop + 0.5;
       });
     };
 
     root.addEventListener("scroll", updateStuckState, { passive: true });
-    window.addEventListener("resize", updateStuckState);
+    const observer = new ResizeObserver(updateStuckState);
+    if (scrollRoot) observer.observe(scrollRoot);
+    if (pageEl) observer.observe(pageEl);
     updateStuckState();
-
     return {
       destroy() {
         cancelAnimationFrame(frame);
         root.removeEventListener("scroll", updateStuckState);
-        window.removeEventListener("resize", updateStuckState);
+        observer.disconnect();
         frequentTitleStuck = false;
       },
     };
@@ -582,12 +572,13 @@
 
 <div class="page" bind:this={pageEl}>
   {#if loading}
-    <section class="section" role="status" aria-label="Loading websites">
-      <div class="content grid skeleton_grid" aria-hidden="true">
+    <section class="section padding_section" role="status" aria-label="Loading websites">
+      <div class="content grid pinned_grid" aria-hidden="true">
         {#each skeletonItems as _}
-          <div class="skeleton_item">
-            <div class="skeleton_icon skeleton_shimmer"></div>
-            <div class="skeleton_text skeleton_shimmer"></div>
+          <div class="item">
+            <div class="tile_link">
+              <WebsiteTile />
+            </div>
           </div>
         {/each}
       </div>
@@ -900,51 +891,6 @@
     padding: calc(var(--gap) * 3);
     box-sizing: border-box;
   }
-  .skeleton_item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0;
-  }
-  .skeleton_icon,
-  .skeleton_text {
-    background: var(--c-mask);
-    overflow: hidden;
-    position: relative;
-  }
-  .skeleton_icon {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 10;
-    border-radius: var(--r1);
-  }
-  .skeleton_text {
-    display: none;
-    border-radius: 999px;
-  }
-  .skeleton_shimmer::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    transform: translateX(-100%);
-    background: linear-gradient(
-      90deg,
-      transparent,
-      var(--c-mask1),
-      transparent
-    );
-    animation: skeleton-shimmer 1.25s ease-in-out infinite;
-  }
-  @keyframes skeleton-shimmer {
-    to {
-      transform: translateX(100%);
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .skeleton_shimmer::after {
-      animation: none;
-    }
-  }
   .item {
     display: flex;
     flex-direction: column;
@@ -995,7 +941,7 @@
   }
   .frequent_section_title {
     position: sticky;
-    top: calc(var(--gap) * -1);
+    top: var(--newtab-header-height, 0px);
     z-index: 1;
     display: flex;
     align-items: center;
@@ -1013,8 +959,7 @@
     flex: 1;
   }
   .frequent_section_title_stuck {
-    background-color: var(--c-background-surface, var(--c-bg1));
-    background-image: linear-gradient(var(--c-surface), var(--c-surface));
+    background: var(--floating-background);
   }
   .drag {
     outline: var(--c-mask) 2px dashed;
@@ -1023,8 +968,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
-  .pinned_grid,
-  .skeleton_grid {
+  .pinned_grid {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, max(160px, calc(100% / 6))), 1fr));
   }
 
@@ -1032,6 +976,7 @@
   .tile_link {
     display: flex;
     width: 100%;
+    box-sizing: border-box;
     margin: 0;
     padding: var(--gap);
     border: 0;

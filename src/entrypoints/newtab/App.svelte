@@ -18,6 +18,7 @@
   import type { WebSite, WebSiteFolder } from "@/lib/DB/DB";
   import { fly, slide } from "svelte/transition";
   import { onMount, tick, untrack } from "svelte";
+  import type { Snippet } from "svelte";
   import Icon from "@/lib/components/Icon.svelte";
   import type { IconName } from "@/lib/components/Icon.svelte";
   import {
@@ -88,9 +89,10 @@
   let selTab: TabItem | undefined = $state(tabs[openTabToIndex(initialOpen)]);
   let showNext = $state(false);
   let firstMount = $state(true);
-  let autoFocusSearch = $state(
-    new URLSearchParams(window.location.search).get("focus") === "search",
-  );
+  let scrollRoot: HTMLDivElement | undefined = $state();
+  let headerHeight = $state(0);
+  const autoFocusSearch =
+    new URLSearchParams(window.location.search).get("focus") === "search";
   let initializationFailed = $state(false);
   let configurationState: "loading" | "ready" | "fallback" = $state("loading");
   let websitesState: "loading" | "ready" | "fallback" = $state("loading");
@@ -800,6 +802,9 @@
   }
 
   function updateSelTab(tab: TabItem) {
+    if (scrollRoot && selTab?.key !== tab.key) {
+      scrollRoot.scrollTop = 0;
+    }
     tabs.forEach((item) => {
       item.sel = item.key === tab.key;
     });
@@ -884,25 +889,46 @@
       onchangeBackground={handleBackgroundConfigurationChange}
       onclickAbout={() => (showAbout = true)}
       onclickSupport={() => (showSupport = true)}
+      onClose={closeSettings}
       onResetAllData={() => openFullResetDialog("manual")}
       onOpenTab={handleSettingsOpenTab}
     >
-      <div class="top">
-        {@render headBar()}
-      </div>
-        <Search
-          {autoFocusSearch}
-          onAutoFocusHandled={() => (autoFocusSearch = false)}
-          newTabOpen={effectiveNewTabOpen}
-          searchBookmarks={userSettings.searchBookmarks}
-          searchHistory={userSettings.searchHistory}
-          recordSearchKeywords={userSettings.recordSearchKeywords}
-          rememberSearchEngineCategory={userSettings.rememberSearchEngineCategory}
-          settingsReady={configurationState === "ready"}
-          configReady={configurationState === "ready"}
-          loading={configurationState === "loading"}
-          readOnly={configurationState !== "ready"}
-        />
+      <Search
+        layout={pageLayout}
+        {autoFocusSearch}
+        newTabOpen={effectiveNewTabOpen}
+        searchBookmarks={userSettings.searchBookmarks}
+        searchHistory={userSettings.searchHistory}
+        recordSearchKeywords={userSettings.recordSearchKeywords}
+        rememberSearchEngineCategory={userSettings.rememberSearchEngineCategory}
+        settingsReady={configurationState === "ready"}
+        configReady={configurationState === "ready"}
+        loading={configurationState === "loading"}
+        readOnly={configurationState !== "ready"}
+      />
+    </Settings>
+</main>
+
+{#snippet pageLayout(compactSearch: Snippet, mainSearch: Snippet)}
+  {@render headBar(compactSearch)}
+  <G full vertical grow flushTop>
+    <div
+      class="page_scroll"
+      bind:this={scrollRoot}
+      style:--newtab-header-height={`${headerHeight}px`}
+    >
+      <button
+        class="scroll_to_top"
+        type="button"
+        aria-label={t("nt_scroll_to_top")}
+        onclick={() => scrollRoot?.scrollTo({
+          top: 0,
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+            ? "auto"
+            : "smooth",
+        })}
+      ></button>
+      {@render mainSearch()}
       <div class="content">
         <div class="tabs">
           <div class="side side-left">
@@ -1007,32 +1033,28 @@
             {/if}
           </div>
         </div>
-        <div class="tabs_contents">
-          {#each tabs as tab (tab.key)}
-            {#if tab.sel}
-              <div
-                class="tab_content"
-                in:fly={firstMount
-                  ? undefined
-                  : { x: showNext ? 180 : -180, duration: 250 }}
-                out:fly={firstMount
-                  ? undefined
-                  : { x: showNext ? -180 : 180, duration: 200 }}
-              >
-                {#if tab.key === "0"}
-                  {@render pinneds()}
-                {:else if tab.key === "1"}
-                  {@render bookmarks()}
-                {:else if tab.key === "2"}
-                  {@render history()}
-                {/if}
-              </div>
-            {/if}
-          {/each}
-        </div>
+        {#each tabs as tab (tab.key)}
+          {#if tab.sel}
+            <div
+              class="tab_content"
+              in:fly={firstMount
+                ? undefined
+                : { x: showNext ? 180 : -180, duration: 250 }}
+            >
+              {#if tab.key === "0"}
+                {@render pinneds()}
+              {:else if tab.key === "1"}
+                {@render bookmarks()}
+              {:else if tab.key === "2"}
+                {@render history()}
+              {/if}
+            </div>
+          {/if}
+        {/each}
       </div>
-    </Settings>
-</main>
+    </div>
+  </G>
+{/snippet}
 
 {#if showAbout}
   {#await import("@/lib/About.svelte") then { default: About }}
@@ -1088,19 +1110,22 @@
   />
 {/if}
 
-{#snippet headBar()}
-  <G full align="c">
-    <G full>
+{#snippet headBar(compactSearch: Snippet)}
+  <header class="top" bind:clientHeight={headerHeight}>
+    <G>
       <Button align="c" onclick={() => (showAbout = true)}>
         <G align="c">
           <G>
             <img class="logo" src="/Mooogor.svg" alt="Mooogor Start" />
           </G>
-          <T>Mooogor Start</T>
+          <span class="brand_name"><T nowrap>Mooogor Start</T></span>
         </G>
       </Button>
     </G>
-    <G gap>
+    <G full>
+      {@render compactSearch()}
+    </G>
+    <G align="r" gap>
       {#if localStorageHealth.phase === "error"}
         <Button
           onclick={() => (showLocalStorageIssue = true)}
@@ -1171,11 +1196,12 @@
         </Button>
       {/if}
     </G>
-  </G>
+  </header>
 {/snippet}
 
 {#snippet pinneds()}
   <Pinneds
+    {scrollRoot}
     {allPinneds}
     {webSiteFolders}
     newTabOpen={effectiveNewTabOpen}
@@ -1205,6 +1231,8 @@
   {:else if currentNode}
     {#key currentNode.id}
       <Bookmarks
+        {scrollRoot}
+        {headerHeight}
         list={gridView}
         bookmarkNode={currentNode}
         bind:showAddBookmark
@@ -1229,6 +1257,7 @@
   {:else}
     {#await import("@/lib/History.svelte") then { default: History }}
       <History
+        {scrollRoot}
         newTabOpen={effectiveNewTabOpen}
         settingsOpen={showSetting}
         clearRequestKey={clearHistoryRequestKey}
@@ -1280,13 +1309,52 @@
     padding: var(--gap);
     box-sizing: border-box;
   }
-  .top {
-    width: 100%;
-    box-sizing: border-box;
+  .page_scroll {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-padding-block-start: var(--newtab-header-height);
+  }
+  .scroll_to_top {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 29;
+    flex: none;
+    width: 100%;
+    height: var(--newtab-header-height);
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: url("/scroll-to-top-cursor.svg") 12 8, n-resize;
+    outline-offset: -2px;
+  }
+  .top {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 30;
+    width: 100%;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(max-content, 1fr) minmax(0, 420px) minmax(max-content, 1fr);
+    align-items: center;
     padding: var(--gap);
+    background: linear-gradient(to bottom, var(--c-page-background), transparent);
+    pointer-events: none;
+  }
+  .top :global(button),
+  .top :global(form) {
+    pointer-events: auto;
+  }
+  @media (max-width: 640px) {
+    .brand_name {
+      display: none;
+    }
   }
 
   main {
@@ -1308,7 +1376,7 @@
     width: 100%;
     max-width: 1280px;
     box-sizing: border-box;
-    height: 100%;
+    flex: 1 0 auto;
     background: linear-gradient(180deg, var(--c-card), rgba(0, 0, 0, 0));
     border-radius: var(--r3);
     position: relative;
@@ -1327,22 +1395,7 @@
     }
   }
 
-  .tabs_contents {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    box-sizing: border-box;
-    position: relative;
-    height: 100%;
-    border-radius: var(--r1);
-    padding: var(--gap);
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
   .tab_content {
-    position: absolute;
-    top: 0;
-    left: 0;
     display: flex;
     flex-direction: column;
     align-items: center;

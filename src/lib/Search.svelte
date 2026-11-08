@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
+    import type { Snippet } from "svelte";
     import { subscribeEngineConfigChanges } from "@/lib/search/engineConfigChanges";
     import { getEngineConfigSnapshot } from "@/lib/DB/configStorage";
     import { slide } from "svelte/transition";
@@ -57,6 +58,7 @@
     import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
 
     interface Props {
+        layout: Snippet<[compactSearch: Snippet, mainSearch: Snippet]>;
         newTabOpen?: boolean;
         searchBookmarks?: boolean;
         searchHistory?: boolean;
@@ -67,10 +69,10 @@
         loading?: boolean;
         readOnly?: boolean;
         autoFocusSearch?: boolean;
-        onAutoFocusHandled?: () => void;
     }
 
     let {
+        layout,
         newTabOpen = false,
         searchBookmarks: searchBookmarksEnabled = true,
         searchHistory: searchHistoryEnabled = true,
@@ -81,7 +83,6 @@
         loading = false,
         readOnly = false,
         autoFocusSearch = false,
-        onAutoFocusHandled,
     }: Props = $props();
 
     let engineCategories: EngineCategoryItem[] = $state([]);
@@ -98,6 +99,8 @@
     let searchKeys: string[] = $state([]);
 
     let searchEl: HTMLInputElement | undefined = $state();
+    let compactInput: HTMLInputElement | undefined = $state();
+    let showCompactSearch = $state(false);
     let engineEls: HTMLDivElement | undefined = $state();
     let listEls: HTMLDivElement | undefined = $state();
     let searchPanelEl: HTMLDivElement | undefined = $state();
@@ -123,31 +126,41 @@
     let engineConfigRequestId = 0;
     let searchStorageReady = $state(false);
     let engineListDragging = $state(false);
-    let autoFocusScheduled = false;
     let searchConfigLoading = $derived(loading || !engineConfigReady);
+    let categoryTabs = $derived(searchConfigLoading && !enginesGroup.length
+        ? buildDefaultEngineCategories().map(({ id, name }) => ({ key: id, name, sel: false }))
+        : enginesGroup);
+    let showCategoryTabs = $derived(categoryTabs.length > 1);
 
     let effectiveReadOnly = $derived(readOnly || !databaseConfigLoaded);
 
-    $effect(() => {
-        if (
-            !autoFocusSearch ||
-            autoFocusScheduled ||
-            !searchEl
-        ) {
-            return;
-        }
-        autoFocusScheduled = true;
-        void tick().then(() => {
-            requestAnimationFrame(() => {
-                window.focus();
-                searchEl?.focus({ preventScroll: true });
-                const url = new URL(window.location.href);
-                url.searchParams.delete("focus");
-                window.history.replaceState(window.history.state, "", url);
-                onAutoFocusHandled?.();
-            });
-        });
-    });
+    function observeMainSearch(target: HTMLElement) {
+        // The layout renders mainSearch directly inside the scroll viewport.
+        const root = target.parentElement;
+        const observer = new IntersectionObserver(([entry]) => {
+            const hiddenAboveHeader =
+                !entry.isIntersecting &&
+                !!entry.rootBounds &&
+                entry.boundingClientRect.bottom <= entry.rootBounds.top;
+            if (hiddenAboveHeader === showCompactSearch) return;
+
+            const active = document.activeElement;
+            const moveFocus = hiddenAboveHeader
+                ? target.contains(active)
+                : !!active?.closest(".compact_search");
+            showCompactSearch = hiddenAboveHeader;
+            if (moveFocus) {
+                void tick().then(() => {
+                    (showCompactSearch ? compactInput : searchEl)?.focus({
+                        preventScroll: true,
+                    });
+                });
+            }
+        }, { root });
+        observer.observe(target);
+        return { destroy: () => observer.disconnect() };
+    }
+
     let showSearchResults = $derived(
         inputValue.length > 0 &&
             ((searchBookmarksEnabled &&
@@ -179,12 +192,21 @@
     let displayEnabledEngines = $derived(
         categoryEngines.filter((engine) => engine.enabled !== false),
     );
+    let enginePlaceholderCount = $derived(
+        searchConfigLoading && !engineCategories.length
+            ? buildDefaultEngines().filter((engine) =>
+                engine.category === selectedCategoryId && engine.enabled !== false).length
+            : displayEnabledEngines.length,
+    );
     let selectedCategory = $derived(
         engineCategories.find((category) => category.id === selectedCategoryId),
     );
     let displayPlaceholderEngineTitle = $derived(
         getSelectedEngine()?.title ?? displayEnabledEngines[0]?.title,
     );
+    let searchPlaceholder = $derived(displayPlaceholderEngineTitle
+        ? t("nt_search_placeholder", displayPlaceholderEngineTitle)
+        : t("nt_search_placeholder_fallback"));
 
     function syncSelectedEngine() {
         const categoryId = selectedCategoryId || "all";
@@ -340,6 +362,13 @@
     }
 
     onMount(() => {
+        const focusFrame = autoFocusSearch ? requestAnimationFrame(() => {
+            window.focus();
+            (showCompactSearch ? compactInput : searchEl)?.focus({ preventScroll: true });
+            const url = new URL(window.location.href);
+            url.searchParams.delete("focus");
+            window.history.replaceState(window.history.state, "", url);
+        }) : undefined;
         const unsubscribe = subscribeEngineConfigChanges(() => {
             if (!configReady) return;
             void refreshEngineConfig();
@@ -360,6 +389,7 @@
             });
 
         return () => {
+            if (focusFrame !== undefined) cancelAnimationFrame(focusFrame);
             unsubscribe();
         };
     });
@@ -684,7 +714,7 @@
     function openEngineSearch(engine: Engine) {
         const keyword = normalizeSearchKey(inputValue);
         if (!keyword) {
-            searchEl?.focus();
+            (showCompactSearch ? compactInput : searchEl)?.focus();
             return;
         }
         selectEngine(engine);
@@ -861,70 +891,113 @@
     }
 </script>
 
-<div
-    class="search"
-    class:hided_tab={!searchConfigLoading && enginesGroup.length <= 1}
->
-    {#if engineConfigReady && enginesGroup.length > 1}
-        <Tab
-            tabs={enginesGroup}
-            onclick={clickEngineGroup}
-            selectedBg={false}
-        />
+{@render layout(compactSearch, mainSearch)}
+
+{#snippet compactSearch()}
+    {#if showCompactSearch}
+        {@const engine = getSelectedEngine()}
+        <form
+            class="compact_search"
+            role="search"
+            aria-label={selectedCategory?.name ?? searchPlaceholder}
+            onsubmit={(event) => {
+                event.preventDefault();
+                if (engine && !isComposing) openEngineSearch(engine);
+            }}
+        >
+            <G full>
+                <G full align="c" gap>
+                    <input
+                        class="input"
+                        name="Search"
+                        type="search"
+                        bind:this={compactInput}
+                        bind:value={inputValue}
+                        placeholder={searchPlaceholder}
+                        aria-label={searchPlaceholder}
+                        oninput={(event) => searchInput(event.currentTarget.value)}
+                        oncompositionstart={() => (isComposing = true)}
+                        oncompositionend={(event) => {
+                            isComposing = false;
+                            searchInput(event.currentTarget.value);
+                        }}
+                    />
+                    <button type="submit" aria-label={searchPlaceholder} disabled={!engine}>
+                        <Icon name="Search" size={16} color="currentColor" />
+                    </button>
+                </G>
+            </G>
+        </form>
     {/if}
+{/snippet}
+
+{#snippet mainSearch()}
     <div
-        class="search_g"
-        bind:this={searchPanelEl}
-        class:bg={showSearchResults ||
-            (searchAreaFocused &&
-                (showSearchKeys || showSwitchShortcutTip))}
-        class:top0={enginesGroup.length <= 1}
+        class="search"
+        use:observeMainSearch
+        class:offscreen={showCompactSearch}
     >
-        {@render temInputGroup()}
-        {#if showSearchResults}
-            {@render temShortcutTip(t("nt_related_search_shortcut_search"))}
+        {#if showCategoryTabs}
+            <Tab
+                tabs={categoryTabs}
+                onclick={clickEngineGroup}
+                selectedBg={false}
+                loading={searchConfigLoading}
+            />
         {/if}
-        {#if showSwitchShortcutTip}
-            {@render temShortcutTip(t("nt_related_search_shortcut_switch"))}
-        {/if}
-        {#if showSearchKeys}
-            {@render temSearchKeys()}
-        {/if}
-        {#if showSearchResults}
-            <div
-                class="list"
-                bind:this={listEls}
-                onfocusout={handleListFocusOut}
-                transition:slide={{ duration: 200 }}
-            >
-                {#if searchBookmarksEnabled && bookmarksResults.length}
-                    <G>
-                        <T type="s">{t("nt_label_bookmarks")}</T>
-                    </G>
-                    {#each bookmarksResults as bookmark}
-                        {@render temBkmk(bookmark)}
-                    {/each}
-                {/if}
+        <div
+            class="search_g"
+            bind:this={searchPanelEl}
+            class:bg={showSearchResults ||
+                (searchAreaFocused &&
+                    (showSearchKeys || showSwitchShortcutTip))}
+            class:top0={!showCategoryTabs}
+        >
+            {@render temInputGroup()}
+            {#if showSearchResults}
+                {@render temShortcutTip(t("nt_related_search_shortcut_search"))}
+            {/if}
+            {#if showSwitchShortcutTip}
+                {@render temShortcutTip(t("nt_related_search_shortcut_switch"))}
+            {/if}
+            {#if showSearchKeys}
+                {@render temSearchKeys()}
+            {/if}
+            {#if showSearchResults}
+                <div
+                    class="list"
+                    bind:this={listEls}
+                    onfocusout={handleListFocusOut}
+                    transition:slide={{ duration: 200 }}
+                >
+                    {#if searchBookmarksEnabled && bookmarksResults.length}
+                        <G>
+                            <T type="s">{t("nt_label_bookmarks")}</T>
+                        </G>
+                        {#each bookmarksResults as bookmark}
+                            {@render temBkmk(bookmark)}
+                        {/each}
+                    {/if}
 
-                {#if searchHistoryEnabled && historyResults.length}
-                    <G>
-                        <T type="s">{t("nt_label_history")}</T>
-                    </G>
-                    {#each historyResults as history}
-                        {@render temBkmk(history)}
-                    {/each}
-                {/if}
+                    {#if searchHistoryEnabled && historyResults.length}
+                        <G>
+                            <T type="s">{t("nt_label_history")}</T>
+                        </G>
+                        {#each historyResults as history}
+                            {@render temBkmk(history)}
+                        {/each}
+                    {/if}
 
-                {#if (searchHistoryEnabled && historyLoading) || (searchBookmarksEnabled && bookmarksLoading)}
-                    <div class="more_trigger">
-                        <Icon name="Loading" color="var(--c-text)" />
-                    </div>
-                {/if}
-            </div>
-        {/if}
+                    {#if (searchHistoryEnabled && historyLoading) || (searchBookmarksEnabled && bookmarksLoading)}
+                        <div class="more_trigger">
+                            <Icon name="Loading" color="var(--c-text)" />
+                        </div>
+                    {/if}
+                </div>
+            {/if}
+        </div>
     </div>
-
-</div>
+{/snippet}
 
 {#if showEngineDialog && selectedCategory && !showCustomEngineEditor}
     <Popup
@@ -964,12 +1037,7 @@
                     bind:this={searchEl}
                     bind:value={inputValue}
                     type="search"
-                    placeholder={displayPlaceholderEngineTitle
-                        ? t(
-                              "nt_search_placeholder",
-                              displayPlaceholderEngineTitle,
-                          )
-                        : t("nt_search_placeholder_fallback")}
+                    placeholder={searchPlaceholder}
                     oncompositionstart={() => (isComposing = true)}
                     oncompositionend={(e) => {
                         isComposing = false;
@@ -1001,15 +1069,7 @@
                     </Button>
                 {/if}
             </div>
-            {#if searchConfigLoading}
-                <div class="skeleton_engines" aria-busy="true" aria-label="Loading search configuration">
-                    {#each Array.from({ length: 4 }) as _}
-                        <div class="skeleton_engine skeleton_shimmer"></div>
-                    {/each}
-                </div>
-            {:else}
-                {@render temEngines()}
-            {/if}
+            {@render temEngines()}
         </div>
     </div>
 {/snippet}
@@ -1049,37 +1109,47 @@
 {/snippet}
 
 {#snippet temEngines()}
-    <div class="engines_M">
+    <div class="engines_M" aria-busy={searchConfigLoading}>
         <div bind:this={engineEls} class="engines">
-            {#each displayEnabledEngines as engine (engine.id)}
-                <div class="engine_item" animate:flip={{ duration: 200 }}>
-                    <a
-                        class="engine"
-                        class:selected={engine.id === selectedEngineId}
-                        data-engine-id={engine.id}
-                        href={getEngineSearchUrl(engine)}
-                        draggable="false"
-                        target={newTabOpen ? "_blank" : "_self"}
-                        rel={newTabOpen ? "noreferrer" : undefined}
-                        onclick={(event) => handleEngineClick(event, engine)}
-                        onfocus={() => {
-                            searchEngineFocused = true;
-                            selectEngine(engine);
-                        }}
-                        onblur={() => (searchEngineFocused = false)}
-                        onkeydown={(event) =>
-                            handleEngineKeydown(event, engine)}
-                    >
-                        <EngineIcon
-                            alt={engine.title ?? ""}
-                            engineUrl={engine.engineUrl}
-                            src={engine.faviconUrl}
-                        />
-                    </a>
-                </div>
-            {/each}
+            {#if searchConfigLoading}
+                {#each Array.from({ length: enginePlaceholderCount }) as _}
+                    <div class="engine_item">
+                        <div class="skeleton_engine"></div>
+                    </div>
+                {/each}
+            {:else}
+                {#each displayEnabledEngines as engine (engine.id)}
+                    <div class="engine_item" animate:flip={{ duration: 200 }}>
+                        <a
+                            class="engine"
+                            class:selected={engine.id === selectedEngineId}
+                            data-engine-id={engine.id}
+                            href={getEngineSearchUrl(engine)}
+                            draggable="false"
+                            target={newTabOpen ? "_blank" : "_self"}
+                            rel={newTabOpen ? "noreferrer" : undefined}
+                            onclick={(event) => handleEngineClick(event, engine)}
+                            onfocus={() => {
+                                searchEngineFocused = true;
+                                selectEngine(engine);
+                            }}
+                            onblur={() => (searchEngineFocused = false)}
+                            onkeydown={(event) =>
+                                handleEngineKeydown(event, engine)}
+                        >
+                            <EngineIcon
+                                alt={engine.title ?? ""}
+                                engineUrl={engine.engineUrl}
+                                src={engine.faviconUrl}
+                            />
+                        </a>
+                    </div>
+                {/each}
+            {/if}
         </div>
-        {#if !effectiveReadOnly}
+        {#if searchConfigLoading}
+            <G><div class="skeleton_engine skeleton_engine_add"></div></G>
+        {:else if !effectiveReadOnly}
             <Button onclick={openEngineDialog}>
                 <G>
                     <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
@@ -1201,43 +1271,25 @@
 {/snippet}
 
 <style>
-    .skeleton_engines,
     .skeleton_engine {
-        position: relative;
-        overflow: hidden;
-        background: var(--c-mask);
-    }
-    .skeleton_engines {
-        display: flex;
-        gap: var(--gap);
-        flex: 0 0 auto;
-        padding: var(--gap);
-    }
-    .skeleton_engine {
-        width: 28px;
-        height: 28px;
-        border-radius: 10px;
-    }
-    .skeleton_shimmer::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        transform: translateX(-100%);
-        background: linear-gradient(
-            90deg,
-            transparent,
-            var(--c-mask1),
-            transparent
-        );
+        width: 30px;
+        height: 30px;
+        border-radius: var(--r);
+        background: linear-gradient(90deg, transparent, var(--c-mask1), transparent)
+            200% 0 / 50% 100% no-repeat var(--c-mask);
         animation: skeleton-shimmer 1.25s ease-in-out infinite;
+    }
+    .skeleton_engine_add {
+        width: calc(20px + var(--gap));
+        height: calc(20px + var(--gap));
     }
     @keyframes skeleton-shimmer {
         to {
-            transform: translateX(100%);
+            background-position-x: -100%;
         }
     }
     @media (prefers-reduced-motion: reduce) {
-        .skeleton_shimmer::after {
+        .skeleton_engine {
             animation: none;
         }
     }
@@ -1309,16 +1361,42 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-width: 600px;
-        max-width: 100%;
+        width: min(100%, 610px);
+        box-sizing: border-box;
+        margin-block-start: var(--gap);
         padding: var(--gap);
         position: relative;
         min-height: 120px;
     }
-    .hided_tab {
-        height: 60px;
+    .offscreen {
+        visibility: hidden;
     }
-
+    .offscreen .search_g {
+        display: none;
+    }
+    .compact_search {
+        width: 100%;
+        border-radius: var(--r1);
+        background: var(--floating-background);
+    }
+    .compact_search:focus-within {
+        outline: 2px solid var(--c-main);
+    }
+    .compact_search .input {
+        box-sizing: border-box;
+        height: 24px;
+        padding: 0;
+    }
+    .compact_search button {
+        display: grid;
+        place-items: center;
+        flex: 0 0 26px;
+        height: 24px;
+        border: 0;
+        border-radius: inherit;
+        background: transparent;
+        color: var(--c-text);
+    }
     .engines_M {
         display: flex;
         align-items: center;
@@ -1381,31 +1459,13 @@
         z-index: 10;
         padding: var(--gap);
         border-radius: var(--r2);
-        isolation: isolate;
-    }
-    .search_g::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: -1;
-        border-radius: inherit;
-        background-color: var(--c-bg1);
-        opacity: 0;
-        transform: scaleY(0);
-        transform-origin: top;
-        transition:
-            opacity 180ms ease,
-            transform 180ms ease;
+        transition: background-color 180ms ease;
     }
     .top0 {
         top: 0;
     }
     .bg {
-        background-color: transparent;
-    }
-    .bg::before {
-        opacity: 1;
-        transform: scaleY(1);
+        background-color: var(--c-bg1);
     }
 
     .list {

@@ -17,6 +17,7 @@
   type HistoryGroup = HistoryRange & { items: HistoryItem[] };
 
   interface Props {
+    scrollRoot?: HTMLElement;
     newTabOpen?: boolean;
     settingsOpen?: boolean;
     clearRequestKey?: number;
@@ -24,6 +25,7 @@
   }
 
   let {
+    scrollRoot,
     newTabOpen = false,
     settingsOpen = false,
     clearRequestKey = 0,
@@ -131,7 +133,7 @@
         if (!entries[0]?.isIntersecting) return;
         queueLoadMore();
       },
-      { rootMargin: "200px" },
+      { root: scrollRoot, rootMargin: "200px" },
     );
     observer.observe(node);
     return {
@@ -263,10 +265,8 @@
   }
 
   function isFirstScreenFilled() {
-    if (!pageEl) return true;
-    const scrollContainer = pageEl.closest(".tabs_contents");
-    if (!(scrollContainer instanceof HTMLElement)) return true;
-    return pageEl.scrollHeight > scrollContainer.clientHeight;
+    if (!pageEl || !scrollRoot) return true;
+    return pageEl.getBoundingClientRect().bottom > scrollRoot.getBoundingClientRect().bottom;
   }
 
   function setHistoryGroupStuck(key: string, stuck: boolean) {
@@ -280,8 +280,7 @@
   }
 
   function trackStickyTitle(node: HTMLElement, key: string) {
-    const scrollContainer = pageEl?.closest(".tabs_contents");
-    const root = scrollContainer instanceof HTMLElement ? scrollContainer : window;
+    const root = scrollRoot ?? window;
     let groupKey = key;
     let frame = 0;
 
@@ -641,7 +640,7 @@
   }
   .history_group_title {
     position: sticky;
-    top: calc(var(--gap) * -1);
+    top: calc(var(--newtab-header-height, 0px) + var(--gap));
     z-index: 1;
     display: flex;
     align-items: center;
@@ -653,8 +652,7 @@
     transition: background-color 0.16s ease;
   }
   .history_group_title_stuck {
-    background-color: var(--c-background-surface, var(--c-bg1));
-    background-image: linear-gradient(var(--c-surface), var(--c-surface));
+    background: var(--floating-background);
   }
   .item {
     display: flex;

@@ -93,6 +93,7 @@
         onchangeBackground: (background: BackgroundConfig) => void;
         onclickAbout: () => void;
         onclickSupport: () => void;
+        onClose: () => void;
         onResetAllData: () => void;
         onOpenTab: (tab: OpenTab) => void | Promise<void>;
         currentTabPinned?: boolean;
@@ -107,6 +108,7 @@
         onchangeBackground,
         onclickAbout,
         onclickSupport,
+        onClose,
         onResetAllData,
         onOpenTab,
         currentTabPinned = false,
@@ -1694,14 +1696,14 @@
 
 {#snippet temHeader()}
     <Button
-        onclick={settingPage === "root" ? undefined : goBackSettingPage}
-        skipTabFocus={settingPage === "root"}
+        onclick={settingPage === "root" ? onClose : goBackSettingPage}
+        title={settingPage === "root" ? t("nt_settings_close") : undefined}
     >
         <G>
             <Icon
-                name="ChevronLeft"
+                name={settingPage === "root" ? "X" : "ChevronLeft"}
                 color="var(--c-text)"
-                opacity={settingPage === "root" ? 0 : 0.6}
+                opacity={0.6}
             />
         </G>
     </Button>
@@ -2075,6 +2077,8 @@
     }
     .app_box {
         --c-background-surface: var(--c-background-surface-light);
+        --c-page-background: var(--c-bg);
+        --floating-background: linear-gradient(var(--c-surface), var(--c-surface)) var(--c-background-surface);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -2086,7 +2090,7 @@
         background: radial-gradient(
             circle at bottom,
             var(--c-main-3) 0%,
-            var(--c-bg) 50%
+            var(--c-page-background) 50%
         );
         isolation: isolate;
     }
@@ -2096,6 +2100,7 @@
         }
     }
     .app_box.background_active {
+        --c-page-background: var(--c-background-surface);
         background: none;
     }
     .radius {
@@ -2108,6 +2113,7 @@
         display: flex;
         flex-direction: column;
         width: 100%;
+        min-width: 0;
         height: 100%;
         box-sizing: border-box;
         align-items: center;

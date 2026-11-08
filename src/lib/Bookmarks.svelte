@@ -31,6 +31,7 @@
     updateBookmark,
   } from "@/lib/browser/bookmarks";
   import { addToPinneds } from "@/lib/utils/pinneds";
+  import { createDragCombineHover, DRAG_HOVER_DELAY_MS } from "@/lib/utils/dragCombineHover";
   import LinkContextMenu from "./LinkContextMenu.svelte";
   import Button from "./components/Button.svelte";
   import NoData from "./NoData.svelte";
@@ -42,6 +43,8 @@
 
   interface Props {
     bookmarkNode: BookmarkNode;
+    scrollRoot?: HTMLElement;
+    headerHeight: number;
     showAddBookmark?: boolean;
     list?: boolean;
     newTabOpen?: boolean;
@@ -53,6 +56,8 @@
 
   let {
     bookmarkNode,
+    scrollRoot,
+    headerHeight,
     showAddBookmark = $bindable(false),
     list,
     newTabOpen = false,
@@ -101,18 +106,17 @@
   let folderPreviewUrls = $state<Record<string, string[]>>({});
   let folderPreviewRequestId = 0;
   let draggedBookmarkId = $state<string | null>(null);
-  let combineTargetId = $state<string | null>(null);
-  let releasedCombineTargetId: string | null = null;
+  let combineTargetId = $state<string | undefined>();
+  const combineHover = createDragCombineHover((id) => (combineTargetId = id));
   let dragStartItems = $state<BookmarkNode[]>([]);
   let batchDragIds = $state<string[]>([]);
   let batchDragIconSnapshots: HTMLElement[] = [];
   let pendingReorderItems: BookmarkNode[] | null = null;
   let pendingReorderSignature = "";
   let reorderDelayId: ReturnType<typeof setTimeout> | null = null;
-  const REORDER_HOVER_DELAY_MS = 280;
 
   let scrollEl: HTMLDivElement | undefined = $state();
-  let scrollTop = $state(untrack(() => folderScrollPositions.get(folderId) ?? 0));
+  let scrollTop = $state(0);
   let viewportWidth = $state(1000);
   let viewportHeight = $state(600);
   const virtualized = $derived(items.length > 200);
@@ -125,6 +129,44 @@
     if (draggedIndex >= 0 && (draggedIndex < windowRange.start || draggedIndex >= windowRange.end)) visible.push({ item: items[draggedIndex], index: draggedIndex });
     return visible;
   });
+
+  function updateViewport(root: HTMLElement, region: HTMLElement) {
+    const rootRect = root.getBoundingClientRect();
+    const regionRect = region.getBoundingClientRect();
+    const viewportTop = rootRect.top + headerHeight;
+    viewportWidth = region.clientWidth;
+    viewportHeight = Math.max(0, rootRect.bottom - Math.max(viewportTop, regionRect.top));
+    scrollTop = Math.max(0, viewportTop - regionRect.top);
+  }
+
+  function trackViewport(region: HTMLElement, initialRoot?: HTMLElement) {
+    let stopTracking: (() => void) | undefined;
+    const update = (root?: HTMLElement) => {
+      stopTracking?.();
+      stopTracking = undefined;
+      if (!root) return;
+
+      const measure = () => updateViewport(root, region);
+      const handleScroll = () => {
+        folderScrollPositions.set(folderId, root.scrollTop);
+        measure();
+      };
+      const observer = new ResizeObserver(measure);
+      observer.observe(root);
+      observer.observe(region);
+      root.scrollTop = folderScrollPositions.get(folderId) ?? 0;
+      root.addEventListener("scroll", handleScroll, { passive: true });
+      measure();
+
+      stopTracking = () => {
+        observer.disconnect();
+        root.removeEventListener("scroll", handleScroll);
+      };
+    };
+
+    update(initialRoot);
+    return { update, destroy: () => stopTracking?.() };
+  }
 
   function virtualItemStyle(index: number) {
     if (!virtualized) return undefined;
@@ -146,6 +188,7 @@
   function nativeDragStart(event: DragEvent, item: BookmarkNode) {
     if (!virtualized) return;
     if (!canSortItems || batchActionLoading || isProtectedRootFolder(item)) { event.preventDefault(); return; }
+    combineHover.reset();
     draggedBookmarkId = item.id;
     dragStartItems = [...items];
     if (multiSelectMode && !selectedIds.has(item.id)) selectedIds = new Set([item.id]);
@@ -159,11 +202,11 @@
     if (!virtualized || !draggedBookmarkId) return;
     event.preventDefault();
     if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-    combineTargetId = findCombineTarget(event.clientX, event.clientY)?.id ?? null;
-    if (scrollEl) {
-      const rect = scrollEl.getBoundingClientRect();
-      if (event.clientY < rect.top + 45) scrollEl.scrollTop -= 35;
-      else if (event.clientY > rect.bottom - 45) scrollEl.scrollTop += 35;
+    combineHover.update(findCombineTarget(event.clientX, event.clientY));
+    if (scrollRoot) {
+      const rect = scrollRoot.getBoundingClientRect();
+      if (event.clientY < rect.top + headerHeight + 45) scrollRoot.scrollTop -= 35;
+      else if (event.clientY > rect.bottom - 45) scrollRoot.scrollTop += 35;
     }
   }
 
@@ -171,7 +214,7 @@
     if (!virtualized) return;
     sorting = false;
     draggedBookmarkId = null;
-    combineTargetId = null;
+    combineHover.reset();
     batchDragIds = [];
   }
 
@@ -184,9 +227,10 @@
     const targetElement = (event.target as HTMLElement).closest<HTMLElement>("[data-bookmark-id]");
     const target = items.find(node => node.id === targetElement?.dataset.bookmarkId);
     if (!target || selectedSet.has(target.id)) { nativeDragEnd(); return; }
+    combineHover.capture(findCombineTarget(event.clientX, event.clientY));
     batchActionLoading = true;
     try {
-      if (combineTargetId) {
+      if (combineHover.releasedId) {
         await handleFinalize(new CustomEvent("finalize", { detail: { items: [...items], info: { id: sourceId, trigger: "droppedIntoZone" } } }) as CustomEvent<DndEvent<BookmarkNode>>);
       } else {
         const remaining = items.filter(node => !selectedSet.has(node.id));
@@ -222,9 +266,13 @@
     if (next < 0 || next >= items.length) return;
     event.preventDefault();
     const top = 5 + Math.floor(next / windowRange.columns) * windowRange.pitch;
-    if (scrollEl && (top < scrollTop || top + windowRange.cellHeight > scrollTop + viewportHeight)) {
-      scrollEl.scrollTop = Math.max(0, top - viewportHeight / 2);
-      scrollTop = scrollEl.scrollTop;
+    if (scrollRoot && scrollEl &&
+        (top < scrollTop || top + windowRange.cellHeight > scrollTop + viewportHeight)) {
+      const regionTop = scrollEl.getBoundingClientRect().top;
+      const viewportTop = scrollRoot.getBoundingClientRect().top + headerHeight;
+      const availableHeight = scrollRoot.clientHeight - headerHeight;
+      scrollRoot.scrollTop += regionTop + top - viewportTop - availableHeight / 2;
+      updateViewport(scrollRoot, scrollEl);
     }
     await tick();
     const row = pageEl?.querySelector<HTMLElement>(`[data-bookmark-id="${items[next].id}"]`);
@@ -313,7 +361,7 @@
   }
 
   function clickFolder(bkmk: BookmarkNode) {
-    folderScrollPositions.set(folderId, scrollEl?.scrollTop ?? scrollTop);
+    if (scrollRoot) folderScrollPositions.set(folderId, scrollRoot.scrollTop);
     onclickFolder(bkmk);
   }
 
@@ -441,28 +489,24 @@
   }
 
   function handleDragPointerMove(event: PointerEvent) {
-    if (!sorting || !draggedBookmarkId || !pageEl) return;
-    const nextTarget = findCombineTarget(event.clientX, event.clientY);
-    const wasCombining = combineTargetId !== null;
-    combineTargetId = nextTarget?.id ?? null;
-    if (nextTarget) {
+    if (virtualized || !sorting || !draggedBookmarkId || combineHover.released) return;
+    if (!combineHover.update(findCombineTarget(event.clientX, event.clientY))) return;
+    if (combineHover.hoveredId) {
       cancelReorderDelay();
-    } else if (wasCombining) {
+    } else {
       schedulePendingReorder();
     }
   }
 
-  function handleDragPointerUp() {
-    if (!sorting || !draggedBookmarkId || !pageEl) return;
-    const activeZone = pageEl.querySelector<HTMLElement>(
-      ".combine_drop_zone.combine_target[data-bookmark-combine-active-id]",
-    );
-    releasedCombineTargetId =
-      activeZone?.dataset.bookmarkCombineActiveId ?? combineTargetId;
+  function captureDropTarget(event: MouseEvent | TouchEvent) {
+    if (virtualized || !sorting || !draggedBookmarkId || combineHover.released) return;
+    const point = "changedTouches" in event ? event.changedTouches[0] : event;
+    combineHover.capture(point && findCombineTarget(point.clientX, point.clientY));
+    cancelReorderDelay();
   }
 
   function findCombineTarget(clientX: number, clientY: number) {
-    if (!pageEl) return null;
+    if (!pageEl) return;
     const zones = pageEl.querySelectorAll<HTMLElement>(
       "[data-bookmark-combine-hit-id]",
     );
@@ -480,10 +524,9 @@
         clientY >= rect.top &&
         clientY <= rect.bottom
       ) {
-        return { id: targetId };
+        return targetId;
       }
     }
-    return null;
   }
 
   function cancelReorderDelay() {
@@ -494,18 +537,18 @@
 
   function schedulePendingReorder() {
     cancelReorderDelay();
-    if (!pendingReorderItems || combineTargetId) return;
+    if (!pendingReorderItems || combineHover.released || combineHover.hoveredId) return;
     reorderDelayId = setTimeout(() => {
       reorderDelayId = null;
       if (
         sorting &&
         draggedBookmarkId &&
-        !combineTargetId &&
+        !combineHover.hoveredId &&
         pendingReorderItems
       ) {
         items = pendingReorderItems;
       }
-    }, REORDER_HOVER_DELAY_MS);
+    }, DRAG_HOVER_DELAY_MS);
   }
 
   function handleConsider(e: CustomEvent<DndEvent<BookmarkNode>>) {
@@ -515,8 +558,7 @@
       cancelReorderDelay();
       pendingReorderItems = null;
       pendingReorderSignature = "";
-      combineTargetId = null;
-      releasedCombineTargetId = null;
+      combineHover.reset();
       draggedBookmarkId = e.detail.info.id;
       dragStartItems = [...items];
       if (multiSelectMode && !selectedIds.has(e.detail.info.id)) {
@@ -565,14 +607,13 @@
     pendingReorderItems = null;
     pendingReorderSignature = "";
     const sourceId = draggedBookmarkId ?? e.detail.info.id;
-    const targetId = releasedCombineTargetId ?? combineTargetId;
+    const targetId = combineHover.releasedId;
     const activeBatchDragIds = [...batchDragIds];
     const batchDrag = multiSelectMode && activeBatchDragIds.length > 0;
     sorting = false;
     items = e.detail.items;
     draggedBookmarkId = null;
-    combineTargetId = null;
-    releasedCombineTargetId = null;
+    combineHover.reset();
     batchDragIds = [];
     batchDragIconSnapshots = [];
     if (!canSortItems) return;
@@ -942,27 +983,18 @@
   onMount(() => {
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("pointermove", handleDragPointerMove);
-    window.addEventListener("pointerup", handleDragPointerUp);
-    window.addEventListener("mouseup", handleDragPointerUp, true);
-    if (!scrollEl) return;
-    const measure = () => { viewportWidth = scrollEl!.clientWidth; viewportHeight = scrollEl!.clientHeight; };
-    const observer = new ResizeObserver(measure);
-    observer.observe(scrollEl);
-    measure();
-    void tick().then(() => {
-      if (scrollEl) scrollEl.scrollTop = scrollTop;
-    });
-    return () => observer.disconnect();
+    window.addEventListener("mouseup", captureDropTarget, true);
+    window.addEventListener("touchend", captureDropTarget, true);
   });
 
   onDestroy(() => {
-    if (!folderScrollPositions.has(folderId)) folderScrollPositions.set(folderId, scrollTop);
     if (folderScrollPositions.size > 100) folderScrollPositions.delete(folderScrollPositions.keys().next().value!);
     folderPreviewRequestId += 1;
     window.removeEventListener("keydown", handleKeyDown);
     window.removeEventListener("pointermove", handleDragPointerMove);
-    window.removeEventListener("pointerup", handleDragPointerUp);
-    window.removeEventListener("mouseup", handleDragPointerUp, true);
+    window.removeEventListener("mouseup", captureDropTarget, true);
+    window.removeEventListener("touchend", captureDropTarget, true);
+    combineHover.reset();
     cancelReorderDelay();
   });
 
@@ -1122,7 +1154,7 @@
     aria-label={t("nt_tab_bookmarks")}
     tabindex="-1"
     bind:this={scrollEl}
-    onscroll={() => { scrollTop = scrollEl?.scrollTop ?? 0; folderScrollPositions.set(folderId, scrollTop); }}
+    use:trackViewport={scrollRoot}
     use:virtualKeyboardEvents
     class:multi_select_frame={multiSelectMode}
   >
@@ -1187,7 +1219,6 @@
               <div
                 class="combine_drop_zone"
                 class:combine_target={combineTargetId === bkmk.id}
-                data-bookmark-combine-active-id={bkmk.id}
                 aria-hidden="true"
               ></div>
             {/if}
@@ -1483,19 +1514,14 @@
     flex-direction: column;
     width: 100%;
     align-items: center;
-    height: 100%;
     position: relative;
-    overflow: hidden;
   }
 
   .bookmark_scroll {
     width: 100%;
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
     box-sizing: border-box;
     border-radius: var(--r1);
+    padding-bottom: 90px;
   }
 
   .bookmark_scroll.multi_select_frame {
@@ -1521,23 +1547,14 @@
     user-select: none;
   }
 
-  .bookmark_scroll::after {
-    content: "";
-    display: block;
-    grid-column: 1 / -1;
-    height:90px;
-    flex: 0 0 90px;
-    pointer-events: none;
-  }
-
   .batch_bar_container {
-    position: absolute;
+    position: sticky;
     bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    margin-inline: auto;
+    height: 0;
     display: flex;
     justify-content: center;
-    padding: var(--gap);
+    align-items: flex-end;
     width: min(400px, calc(100% - var(--gap) * 4));
     box-sizing: border-box;
     pointer-events: none;

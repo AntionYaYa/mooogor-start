@@ -28,6 +28,7 @@ try {
  await context.addInitScript(()=>{window.__treeReads=0;const original=chrome.bookmarks.getTree.bind(chrome.bookmarks);chrome.bookmarks.getTree=(...args)=>{window.__treeReads++;return original(...args)}});
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
  await page.goto('chrome://newtab/');await page.locator('[data-bookmark-id]').first().waitFor();
+ const scroll=page.locator('.page_scroll');
  const row=id=>page.locator(`[data-bookmark-id="${id}"]`);
  const bounded=async()=>assert(await page.locator('[data-bookmark-id]').count()<150);
  await bounded();assert.equal(await page.evaluate(()=>window.__treeReads),0);
@@ -43,7 +44,7 @@ try {
  await page.waitForFunction(async first=>(await chrome.bookmarks.getChildren('1'))[0].id!==first,seeded.first,{timeout:5000});
  assert.equal(await page.evaluate(async()=> (await chrome.bookmarks.getChildren('1'))[0].title),'Item 1');
  // Scroll to the last folder, open it and return via Escape.
- await page.locator('.bookmark_scroll').evaluate(el=>{el.scrollTop=el.scrollHeight});await row(seeded.folder).waitFor();
+ await scroll.evaluate(el=>{el.scrollTop=el.scrollHeight});await row(seeded.folder).waitFor();
  await row(seeded.folder).getByRole('button').click();await page.getByText('Inside',{exact:true}).waitFor();
  await page.keyboard.press('Escape');await row(seeded.folder).waitFor();await bounded();
  await row(seeded.folder).getByRole('button').focus();await page.keyboard.press('Home');await row(seeded.second).waitFor();
@@ -55,38 +56,73 @@ try {
  await page.keyboard.press('Home');await row(seeded.second).locator('a').click({button:'right'});
  await page.getByRole('button',{name:'Multi-select',exact:true}).click();
  await page.locator('.batch_bar').waitFor({state:'visible'});
- await page.locator('.bookmark_scroll').evaluate(el=>{el.scrollTop=el.scrollHeight});await row(seeded.last).waitFor();
+ await scroll.evaluate(el=>{el.scrollTop=el.scrollHeight});await row(seeded.last).waitFor();
  await row(seeded.last).locator('.bkmk_h').click({modifiers:['Shift']});
  const countText=await page.locator('.batch_bar').innerText();assert(countText.includes('500'),countText);
  await page.keyboard.press('Escape');
  // A drag source remains mounted while a virtual window scrolls to the end.
- await page.locator('.bookmark_scroll').evaluate(el=>{el.scrollTop=0});await row(seeded.second).waitFor();
+ await scroll.evaluate(el=>{el.scrollTop=0});await row(seeded.second).waitFor();
  const from=await row(seeded.second).boundingBox();
  await page.mouse.move(from.x+from.width/2,from.y+from.height/2);await page.mouse.down();
  await page.mouse.move(from.x+from.width/2+15,from.y+from.height/2,{steps:5});
- await page.locator('.bookmark_scroll').evaluate(el=>{el.scrollTop=el.scrollHeight});await row(seeded.last).waitFor();
+ await scroll.evaluate(el=>{el.scrollTop=el.scrollHeight});await row(seeded.last).waitFor();
  assert.equal(await row(seeded.second).count(),1,'source stays mounted across virtual windows');
  const to=await row(seeded.last).boundingBox();
  await page.mouse.move(to.x+to.width-5,to.y+to.height-5,{steps:15});await page.mouse.up();
  await page.waitForFunction(async moved=>{const order=await chrome.bookmarks.getChildren('1');return order[order.length-2].id===moved},seeded.second);
- // Dropping on another bookmark's icon still combines them into a folder.
- await page.locator('.bookmark_scroll').evaluate(el=>{el.scrollTop=0});await row(seeded.third).waitFor();
- const a=await row(seeded.third).boundingBox();const b=await row(seeded.first).boundingBox();
+ // A quick drop over a bookmark icon reorders it without creating a folder.
+ await scroll.evaluate(el=>{el.scrollTop=0});await row(seeded.third).waitFor();
+ let a=await row(seeded.third).boundingBox();let b=await row(seeded.first).boundingBox();
  await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
  await page.mouse.move(a.x+a.width/2+15,a.y+a.height/2,{steps:5});
- await page.mouse.move(b.x+20,b.y+b.height/2,{steps:15});await page.mouse.up();
+ await page.mouse.move(b.x+20,b.y+b.height/2+3);await page.mouse.up();
+ await page.waitForFunction(async ({first,third})=>{
+  const order=await chrome.bookmarks.getChildren('1');
+  return order[0].id===first && order[1].id===third;
+ },seeded);
+ await page.waitForFunction(({first,third})=>{
+  const rows=document.querySelectorAll('[data-bookmark-id]');
+  return rows[0]?.dataset.bookmarkId===first && rows[1]?.dataset.bookmarkId===third && rows[1].draggable;
+ },seeded);
+
+ // Waiting for the target highlight still allows deliberate grouping.
+ a=await row(seeded.third).boundingBox();b=await row(seeded.first).boundingBox();
+ await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
+ await page.mouse.move(a.x+a.width/2+15,a.y+a.height/2,{steps:5});
+ await page.mouse.move(b.x+20,b.y+b.height/2,{steps:15});
+ // Chromium can coalesce the last native dragover while moving between rows.
+ await page.waitForTimeout(50);
+ await page.mouse.move(b.x+21,b.y+b.height/2);
+ await row(seeded.first).locator('.combine_target').waitFor();
+ await page.mouse.up();
  await page.waitForFunction(async ids=>{const [a,b]=await chrome.bookmarks.get(ids);return a.parentId===b.parentId&&a.parentId!=='1'},[seeded.third,seeded.first]);
  // Multi-drag across windows into an existing folder moves the entire selection.
- await page.locator('.bookmark_scroll').evaluate(el=>{el.scrollTop=0});
+ await scroll.evaluate(el=>{el.scrollTop=0});
  const selected=await page.evaluate(async()=>{const rows=await chrome.bookmarks.getChildren('1');return rows.filter(row=>row.title==='Item 3'||row.title==='Item 4').map(row=>row.id)});
  await row(selected[0]).locator('a').click({button:'right'});await page.getByRole('button',{name:'Multi-select',exact:true}).click();await page.locator('.batch_bar').waitFor({state:'visible'});
  await row(selected[1]).locator('.bkmk_h').click({modifiers:['Shift']});
  assert((await page.locator('.batch_bar').innerText()).includes('2'));
  const start=await row(selected[0]).boundingBox();
  await page.mouse.move(start.x+start.width/2,start.y+start.height/2);await page.mouse.down();await page.mouse.move(start.x+start.width/2+15,start.y+start.height/2,{steps:5});
- await page.locator('.bookmark_scroll').evaluate(el=>{el.scrollTop=el.scrollHeight});await row(seeded.folder).waitFor();
- const finish=await row(seeded.folder).boundingBox();await page.mouse.move(finish.x+20,finish.y+finish.height/2,{steps:15});await page.mouse.up();
+ await scroll.evaluate(el=>{el.scrollTop=el.scrollHeight});await row(seeded.folder).waitFor();
+ const finish=await row(seeded.folder).boundingBox();await page.mouse.move(finish.x+20,finish.y+finish.height/2,{steps:15});
+ await page.waitForTimeout(50);
+ await page.mouse.move(finish.x+21,finish.y+finish.height/2);
+ await row(seeded.folder).locator('.combine_target').waitFor();
+ await page.mouse.up();
  await page.waitForFunction(async ({selected,folder})=>(await chrome.bookmarks.get(selected)).every(node=>node.parentId===folder),{selected,folder:seeded.folder});
+ // Settings must fit beside the page even when the search area has to shrink.
+ await page.setViewportSize({width:550,height:800});
+ await page.locator('header.top button').last().click();
+ await page.waitForFunction(()=>{
+  const panel=document.querySelector('.setting')?.getBoundingClientRect();
+  const layout=document.querySelector('.layout').getBoundingClientRect();
+  const search=document.querySelector('.search').getBoundingClientRect();
+  const viewport=document.querySelector('.page_scroll').getBoundingClientRect();
+  return panel && panel.width>=300 && panel.right<=layout.right && search.width<=viewport.width;
+ });
+ await page.getByRole('button',{name:'Close settings'}).click();
+ await page.locator('.setting').waitFor({state:'detached'});
  assert.deepEqual(errors,[]);
- console.log(JSON.stringify({passed:true,checks:['bounded grid/list','no full tree read','keyboard end/home','native drag persistence','drag across virtual windows','combine bookmarks','folder/back scroll restoration','cross-window shift selection','multi-drag into folder'],errors}));
+ console.log(JSON.stringify({passed:true,checks:['bounded grid/list','no full tree read','keyboard end/home','native drag persistence','drag across virtual windows','combine bookmarks','folder/back scroll restoration','cross-window shift selection','multi-drag into folder','narrow settings layout'],errors}));
 } finally {await context.close();await fs.rm(root,{recursive:true,force:true})}

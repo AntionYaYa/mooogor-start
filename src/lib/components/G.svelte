@@ -7,15 +7,17 @@
 		children: any;
 		vertical?: boolean;
 		full?: boolean;
+		grow?: boolean;
+		flushTop?: boolean;
 		fill?: boolean
 		r?: R;
 		gap?: boolean;
 		align?: Align
 	}
-	let { children, vertical,full,align,gap, r,fill }: Props = $props();
+	let { children, vertical,full,grow,flushTop,align,gap, r,fill }: Props = $props();
 </script>
 
-<div class="{vertical?'vertical':''} {align} {r}" class:full={full}  class:gap={gap} class:fill={fill}>
+<div class="{vertical?'vertical':''} {align} {r}" class:full={full} class:grow={grow} class:flush-top={flushTop} class:gap={gap} class:fill={fill}>
 	{@render children()}
 </div>
 
@@ -62,6 +64,13 @@
 		width: 100%;
 		box-sizing: border-box;
 		overflow: hidden;
+	}
+	.grow {
+		flex: 1;
+		min-height: 0;
+	}
+	.flush-top {
+		padding-block-start: 0;
 	}
 	.fill{
 		background-color: var(--c-mask);
