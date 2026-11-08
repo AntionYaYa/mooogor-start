@@ -54,6 +54,7 @@
     } from "@/lib/DB/DB";
     import { buildDefaultEngines } from "@/lib/DB/defaultEnginesFactory";
     import { t } from "@/lib/utils/i18n";
+    import { menuTransition } from "@/lib/utils/menuTransition";
     import Icon from "./components/Icon.svelte";
     import type { IconName } from "@/lib/components/Icon.svelte";
     import Button from "./components/Button.svelte";
@@ -1643,7 +1644,7 @@
                 </G>
             </Button>
             {#if searchEngineMoveMenuOpen}
-                <div class="move_menu" transition:slide={{ duration: 160 }}>
+                <div class="move_menu" transition:menuTransition>
                     <div class="scrool">
                         {#each getGroupedSearchEngines() as group (group.id)}
                             <button
@@ -2000,7 +2001,7 @@
                 <T type="s" color="var(--c-text-1)">{title}</T>
             </G>
         {/if}
-        <Button onclick={() => onChange(!turnOn)} full fill align="c" r="r1">
+        <Button onclick={() => onChange(!turnOn)} full fill align="c" r="r1" role="switch" aria-checked={turnOn} disabled={switchDisabled}>
             <G full align="c">
                 <G vertical full>
                     <T>{swcText}</T>

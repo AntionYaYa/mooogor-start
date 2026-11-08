@@ -23,11 +23,6 @@
   let busy = $state(false);
   let failed = $state(false);
 
-  function portal(node: HTMLElement) {
-    document.body.appendChild(node);
-    return { destroy() { node.remove(); } };
-  }
-
   function close() { if (!busy) onClose(); }
   function rename() {
     name = group.title;
@@ -55,14 +50,12 @@
 </script>
 
 {#if mode === "menu"}
-  <div use:portal>
   <Popover {x} {y} onClose={close}>
     <Button full disabled={busy} onclick={rename}><G><T>{t("nt_group_rename")}</T></G></Button>
     <Button full disabled={busy} onclick={() => void run("ungroup")}><G><T>{t("nt_group_ungroup")}</T></G></Button>
     <Button full disabled={busy} onclick={() => { failed = false; mode = "delete"; }}><G><T color="var(--c-red)">{t("nt_delete")}</T></G></Button>
     {#if failed}<div role="alert"><T color="var(--c-red)">{t("nt_common_action_failed")}</T></div>{/if}
   </Popover>
-  </div>
 {:else if mode === "rename"}
   <Popup type="s" title={t("nt_group_rename")} onclickClose={close}>
     <G full><Input name="group-name" type="text" bind:value={name} disabled={busy}

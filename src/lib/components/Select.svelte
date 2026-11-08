@@ -6,6 +6,7 @@
 	import { t } from "@/lib/utils/i18n";
 	import G from "./G.svelte";
 	import Button from "./Button.svelte";
+	import { menuTransition } from "@/lib/utils/menuTransition";
 
 	export type SelectOption = {
 		label: string;
@@ -33,7 +34,7 @@
 	let selected = $derived(options.find((o) => o.sel));
 
 	function setOpen(next: boolean) {
-		positioned = false;
+		if (next && !menuEl) positioned = false;
 		if (next && rootEl) {
 			menuWidth = rootEl.getBoundingClientRect().width;
 		}
@@ -47,8 +48,6 @@
 		document.body.appendChild(node);
 		return {
 			destroy() {
-				// The disabled branch removes the menu; reset its state here too.
-				open = false;
 				node.remove();
 			},
 		};
@@ -138,6 +137,8 @@
 			class:positioned
 			bind:this={menuEl}
 			use:portal
+			transition:menuTransition|global
+			onoutrostart={() => { if (disabled) open = false; }}
 			style:left="{menuLeft}px"
 			style:top="{menuTop}px"
 			style:width="{menuWidth}px"
@@ -209,14 +210,6 @@
 	}
 	.menu.positioned {
 		visibility: visible;
-		animation: menu-fade-in 100ms ease-out;
-	}
-	@keyframes menu-fade-in {
-		from { opacity: 0; }
-		to { opacity: 1; }
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.menu.positioned { animation: none; }
 	}
 	.menu_items {
 		flex-shrink: 0;

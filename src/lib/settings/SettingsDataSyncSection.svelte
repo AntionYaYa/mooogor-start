@@ -164,7 +164,7 @@
   <Divider />
 
   <G vertical full>
-    <Button full fill r="r1" disabled={loading || saving} onclick={toggleSync}>
+    <Button full fill r="r1" role="switch" aria-checked={syncState.enabled} disabled={loading || saving} onclick={toggleSync}>
       <G full>
         <G full align="c">
           <T>{t("nt_settings_data_sync_switch")}</T>

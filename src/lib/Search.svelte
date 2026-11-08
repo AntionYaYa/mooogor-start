@@ -137,6 +137,22 @@
     function observeMainSearch(target: HTMLElement) {
         // The layout renders mainSearch directly inside the scroll viewport.
         const root = target.parentElement;
+        const viewport = window.visualViewport;
+        function updateAvailableHeight() {
+            const bottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
+            const available = bottom - target.getBoundingClientRect().top;
+            target.style.setProperty("--search-available-height", `${available}px`);
+        }
+
+        const resizeObserver = new ResizeObserver(updateAvailableHeight);
+        if (root) resizeObserver.observe(root);
+        // The preceding toolbar spacer can change the search position.
+        if (target.previousElementSibling) resizeObserver.observe(target.previousElementSibling);
+        root?.addEventListener("scroll", updateAvailableHeight, { passive: true });
+        viewport?.addEventListener("resize", updateAvailableHeight);
+        viewport?.addEventListener("scroll", updateAvailableHeight);
+        updateAvailableHeight();
+
         const observer = new IntersectionObserver(([entry]) => {
             const hiddenAboveHeader =
                 !entry.isIntersecting &&
@@ -158,7 +174,15 @@
             }
         }, { root });
         observer.observe(target);
-        return { destroy: () => observer.disconnect() };
+        return {
+            destroy() {
+                observer.disconnect();
+                resizeObserver.disconnect();
+                root?.removeEventListener("scroll", updateAvailableHeight);
+                viewport?.removeEventListener("resize", updateAvailableHeight);
+                viewport?.removeEventListener("scroll", updateAvailableHeight);
+            },
+        };
     }
 
     let showSearchResults = $derived(
@@ -1448,21 +1472,26 @@
         overflow: hidden;
     }
     .search_g {
+        --search-panel-offset: 45px;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
         width: 100%;
         box-sizing: border-box;
         position: absolute;
-        top: 45px;
+        top: var(--search-panel-offset);
         left: 0;
         z-index: 10;
         padding: var(--gap);
         border-radius: var(--r2);
         transition: background-color 180ms ease;
     }
+    .search_g:has(> .list) {
+        max-height: max(0px, calc(var(--search-available-height, 100dvh) - var(--search-panel-offset) - var(--gap) * 2));
+        overflow: clip;
+    }
     .top0 {
-        top: 0;
+        --search-panel-offset: 0px;
     }
     .bg {
         background-color: var(--c-bg1);
@@ -1475,7 +1504,7 @@
         width: 100%;
         box-sizing: border-box;
         padding: var(--gap);
-        max-height: calc(100vh - 110px);
+        min-height: 0;
         overflow-y: auto;
     }
     .more_trigger {

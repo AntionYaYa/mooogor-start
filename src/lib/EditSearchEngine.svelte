@@ -152,14 +152,16 @@
   </G>
 
   <G full>
-    <G full fill r="r1">
-      <Button full onclick={() => !saving && (enabled = !enabled)}>
-        <G full align="c">
+    <Button full fill align="c" r="r1" role="switch" aria-checked={enabled} disabled={saving} onclick={() => (enabled = !enabled)}>
+      <G full align="c">
+        <G vertical full>
           <T>{t("nt_settings_search_engine_enabled")}</T>
+        </G>
+        <G>
           <Switch turnOn={enabled} disabled={saving} />
         </G>
-      </Button>
-    </G>
+      </G>
+    </Button>
   </G>
 
   <div class:has_delete={isEdit && !!onDelete} class="actions">

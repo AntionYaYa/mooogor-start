@@ -9,22 +9,33 @@
 	let { turnOn, disabled = false, onclick, label = t("nt_switch") }: Props = $props();
 </script>
 
-<button
-	type="button"
-	title={t("nt_switch")}
-	class="outside"
-	{disabled}
-	{onclick}
-	role="switch"
-	aria-checked={turnOn}
-	aria-label={label}
-	tabindex={onclick ? 0 : -1}
->
-	<div class="ball {turnOn ? 'ball_on' : 'ball_off'}"></div>
-</button>
+{#snippet thumb()}
+	<span class="ball {turnOn ? 'ball_on' : 'ball_off'}"></span>
+{/snippet}
+
+{#if onclick}
+	<button
+		type="button"
+		title={t("nt_switch")}
+		class="outside"
+		{disabled}
+		{onclick}
+		role="switch"
+		aria-checked={turnOn}
+		aria-label={label}
+	>
+		{@render thumb()}
+	</button>
+{:else}
+	<span class="outside" class:disabled aria-hidden="true">
+		{@render thumb()}
+	</span>
+{/if}
 
 <style>
 	.outside {
+		display: inline-block;
+		box-sizing: border-box;
 		width: 40px;
 		min-width: 40px;
 		height: 24px;
@@ -37,11 +48,12 @@
 		margin: 0;
 		background-color: unset;
 	}
-	.outside:disabled {
+	.outside:disabled,
+	.outside.disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
 	}
-	.outside:active {
+	button.outside:active {
 		background-color: var(--c-mask);
 	}
 	.outside:focus-visible {

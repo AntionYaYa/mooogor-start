@@ -1,6 +1,7 @@
 <script lang="ts">
 	import G from "./G.svelte";
 	import { onMount, onDestroy } from "svelte";
+	import { menuTransition } from "@/lib/utils/menuTransition";
 
 	interface Props {
 		children: any;
@@ -23,29 +24,39 @@
 		return { destroy() { node.remove(); } };
 	}
 
-	function positionMenu() {
-		if (!menuEl) return;
-		const rect = menuEl.getBoundingClientRect();
-		const gap = 8;
-		menuEl.style.left = `${Math.max(gap, Math.min(x, window.innerWidth - rect.width - gap))}px`;
-		menuEl.style.top = `${Math.max(gap, Math.min(y, window.innerHeight - rect.height - gap))}px`;
-		positioned = true;
+	function placeMenu(node: HTMLElement, point: { x: number; y: number }) {
+		function positionMenu() {
+			const { width, height } = node.getBoundingClientRect();
+			const gap = 8;
+			node.style.left = `${Math.max(gap, Math.min(point.x, window.innerWidth - width - gap))}px`;
+			node.style.top = `${Math.max(gap, Math.min(point.y, window.innerHeight - height - gap))}px`;
+			positioned = true;
+		}
+
+		positionMenu();
+		window.addEventListener("resize", positionMenu);
+		return {
+			update(next: { x: number; y: number }) {
+				point = next;
+				positionMenu();
+			},
+			destroy() {
+				window.removeEventListener("resize", positionMenu);
+			},
+		};
 	}
 
 	function handleMouseDown(e: MouseEvent) {
-		if (menuEl && menuEl.contains(e.target as Node)) return;
+		if (!menuEl || menuEl.inert || menuEl.contains(e.target as Node)) return;
 		onClose();
 	}
 
 	onMount(() => {
 		window.addEventListener("mousedown", handleMouseDown, true);
-		window.addEventListener("resize", positionMenu);
-		positionMenu();
 	});
 
 	onDestroy(() => {
 		window.removeEventListener("mousedown", handleMouseDown, true);
-		window.removeEventListener("resize", positionMenu);
 	});
 </script>
 
@@ -53,7 +64,8 @@
 	class:positioned
 	bind:this={menuEl}
 	use:portal
-	style="top: {y}px; left:{x}px;"
+	use:placeMenu={{ x, y }}
+	transition:menuTransition|global
 >
 	<G vertical full>
 		{@render children()}
@@ -83,8 +95,5 @@
 	}
 	div.positioned {
 		visibility: visible;
-		animation: menu-appear 100ms ease-out;
 	}
-	@keyframes menu-appear { from { opacity: 0; } to { opacity: 1; } }
-	@media (prefers-reduced-motion: reduce) { div.positioned { animation: none; } }
 </style>

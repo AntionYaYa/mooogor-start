@@ -1330,7 +1330,7 @@
     padding: 0;
     border: 0;
     background: none;
-    cursor: url("/scroll-to-top-cursor.svg") 12 8, n-resize;
+    cursor: n-resize;
     outline-offset: -2px;
   }
   .top {

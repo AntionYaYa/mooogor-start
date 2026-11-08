@@ -1,6 +1,9 @@
 <script lang="ts">
+	import { onDestroy } from "svelte";
+
 	type Align = "c" | "r";
 	type R = "r_o" | "r1" | "r2" | "r3";
+	type ButtonPointerEvent = PointerEvent & { currentTarget: HTMLButtonElement };
 
 	interface Props {
 		children: any;
@@ -14,6 +17,8 @@
 		skipTabFocus?: boolean;
 		disabled?: boolean;
 		title?: string;
+		role?: "switch";
+		"aria-checked"?: boolean;
 		onclick?: (event: MouseEvent) => void;
 	}
 
@@ -30,19 +35,74 @@
 		disabled = false,
 		bg,
 		title,
+		role,
+		"aria-checked": checked,
 	}: Props = $props();
+
+	let pressed = $state(false);
+	let activePress: AbortController | undefined;
+
+	function startPress(event: ButtonPointerEvent) {
+		if (disabled || !event.isPrimary || event.button !== 0) return;
+
+		const { currentTarget: button, pointerId, clientX, clientY } = event;
+		activePress?.abort();
+		const press = new AbortController();
+		activePress = press;
+		pressed = true;
+
+		function clearOffset() {
+			button.style.removeProperty("--press-x");
+			button.style.removeProperty("--press-y");
+		}
+
+		function reset() {
+			press.abort();
+			activePress = undefined;
+			pressed = false;
+			clearOffset();
+		}
+
+		function endPress(release: PointerEvent) {
+			if (release.pointerId === pointerId) reset();
+		}
+
+		clearOffset();
+		const { signal } = press;
+		window.addEventListener("pointermove", (move) => {
+			if (move.pointerId !== pointerId) return;
+			if (disabled || !(move.buttons & 1)) {
+				reset();
+				return;
+			}
+			const x = (move.clientX - clientX) * 0.2;
+			const y = (move.clientY - clientY) * 0.2;
+			const limit = Math.max(1, Math.hypot(x, y) / 3);
+			button.style.setProperty("--press-x", `${x / limit}px`);
+			button.style.setProperty("--press-y", `${y / limit}px`);
+		}, { passive: true, signal });
+		window.addEventListener("pointerup", endPress, { signal });
+		window.addEventListener("pointercancel", endPress, { signal });
+		window.addEventListener("blur", reset, { signal });
+	}
+
+	onDestroy(() => activePress?.abort());
 </script>
 
 <button
 	class="btn {align} {r}"
-	style="background-color: {bg};"
+	style:background-color={bg}
 	class:fill
 	class:full
 	class:sel
 	class:outlined
+	class:pressed
 	{onclick}
+	onpointerdown={startPress}
 	{disabled}
 	{title}
+	{role}
+	aria-checked={checked}
 	tabindex={skipTabFocus ? -1 : undefined}
 >
 	{@render children()}
@@ -56,11 +116,22 @@
 		border-radius: var(--r);
 		background: none;
 		padding: 0;
+		transition: transform 160ms ease-out, background-color 100ms ease-out;
 	}
 
-	.btn:active {
-		transition: all 0.1s ease-out;
+	.btn:enabled:is(:active, .pressed) {
+		transform: translate(var(--press-x, 0px), var(--press-y, 0px)) scale(1.035);
+		transition-duration: 60ms, 100ms;
 		background-color: var(--c-mask);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.btn {
+			transition: none;
+		}
+		.btn:enabled:is(:active, .pressed) {
+			transform: none;
+		}
 	}
 
 	.btn:focus-visible {
@@ -70,7 +141,7 @@
 	.fill {
 		background-color: var(--c-mask);
 	}
-	.fill:active{
+	.btn.fill:enabled:is(:active, .pressed) {
 		background-color: var(--c-mask1);
 	}
 	.full {
