@@ -4,6 +4,7 @@
   import G from "./components/G.svelte";
   import Popup from "./components/Popup.svelte";
   import { t } from "@/lib/utils/i18n";
+  import { getFeedbackUrl } from "@/lib/config/feedback";
   import T from "./components/T.svelte";
 
 const repositoryUrl = 'https://gitee.com/antion666/mooogor_new_tab';
@@ -79,7 +80,7 @@ const openSourceProjects = [
       <div class="source_links">
         <a href={repositoryUrl} target="_blank" rel="noopener noreferrer">{t("nt_about_source_code")}</a>
         <a href={`${repositoryUrl}/blob/main/README.md#隐私与权限`} target="_blank" rel="noopener noreferrer">{t("nt_about_privacy")}</a>
-        <a href={`${repositoryUrl}/issues`} target="_blank" rel="noopener noreferrer">{t("nt_about_feedback")}</a>
+        <a href={getFeedbackUrl()} target="_blank" rel="noopener noreferrer">{t("nt_about_feedback")}</a>
       </div>
       <a href="/third-party-notices.txt" target="_blank" rel="noopener noreferrer">
         <T type="s">{t("nt_about_project_license")}</T>

@@ -728,5 +728,8 @@
   },
   "nt_settings_data_sync_delete_failed": {
     "message": "未能完全删除，请重试。"
+  },
+  "nt_rating_action": {
+    "message": "给好评"
   }
 }

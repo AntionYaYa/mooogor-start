@@ -728,5 +728,8 @@
   },
   "nt_settings_data_sync_delete_failed": {
     "message": "Could not complete deletion. Please retry."
+  },
+  "nt_rating_action": {
+    "message": "Leave a review"
   }
 }

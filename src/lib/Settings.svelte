@@ -60,6 +60,7 @@
     import Button from "./components/Button.svelte";
     import Checkbox from "./components/Checkbox.svelte";
     import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
+    import { getFeedbackUrl } from "@/lib/config/feedback";
     import {
         deleteSearchKeysForCategory,
         retainSearchKeysForCategories,
@@ -797,6 +798,13 @@
 
     function openFeatureTab(tab: OpenTab) {
         void onOpenTab(tab);
+    }
+
+    function openStoreReview() {
+        const url = /\bEdg(?:A|iOS)?\//.test(navigator.userAgent)
+            ? "https://microsoftedge.microsoft.com/addons/detail/fkccffpepgicdhnnneghopmmmdedoiel"
+            : "https://chromewebstore.google.com/detail/bnmcpafaakmkemekghlbfedgmkbegogf/reviews";
+        void browser.tabs.create({ url });
     }
 
     function openHistoryManager() {
@@ -1711,7 +1719,14 @@
     <div class="title_center">
         <T type="m" align="c" nowrap>{getSettingPageTitle()}</T>
     </div>
-    {#if settingPage === "common" && currentCommonFolderId != null}
+    {#if settingPage === "root"}
+        <Button
+            title={t("nt_about_feedback")}
+            onclick={() => window.open(getFeedbackUrl(), "_blank", "noopener,noreferrer")}
+        >
+            <G><Icon name="MessageSquareShare" color="var(--c-text)" opacity={0.6} /></G>
+        </Button>
+    {:else if settingPage === "common" && currentCommonFolderId != null}
         <Button title={t("nt_edit")} disabled={commonSitesLoading} onclick={openHeaderGroupMenu}>
             <G><Icon name="SquarePen" color="var(--c-text)" opacity={0.6} /></G>
         </Button>
@@ -1891,6 +1906,9 @@
         t("nt_settings_other_title"),
     )}
     {@render tembuttonItem(t("nt_about_support_button"), onclickSupport)}
+    {#if !import.meta.env.FIREFOX}
+        {@render tembuttonItem(t("nt_rating_action"), openStoreReview, undefined, true)}
+    {/if}
 {/snippet}
 
 {#snippet temCollapsibleSection(
