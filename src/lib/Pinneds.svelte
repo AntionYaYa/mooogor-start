@@ -108,6 +108,11 @@
   let pendingReorderSignature = "";
   let reorderTimer: ReturnType<typeof setTimeout> | undefined;
   let draggedGridItemId: string | undefined = $state();
+  const CARD_PRESS_DURATION_MS = 85;
+  const CARD_RELEASE_DURATION_MS = 120;
+  let cardPress: { card: HTMLElement; until: number } | undefined;
+  let cardReleaseTimer: ReturnType<typeof setTimeout> | undefined;
+  let cardActivationTimer: ReturnType<typeof setTimeout> | undefined;
   let capturingWebsiteId: number | undefined = $state();
   let currentPinnedHasScreenshot = $state<boolean | undefined>();
   let screenshotMenuRequest = 0;
@@ -257,6 +262,7 @@
   function handleConsider(e: CustomEvent<DndEvent<PinnedGridItem>>) {
     if (readOnly) return;
     if (e.detail.info.trigger === "dragStarted") {
+      resetCardTilt();
       clearDragState();
       dragStartItems = [...pinnedGridItems];
       isdarging = true;
@@ -299,6 +305,60 @@
     pendingReorderSignature = "";
     draggedGridItemId = undefined;
     isdarging = false;
+  }
+
+  function tiltCard(event: PointerEvent & { currentTarget: HTMLElement }) {
+    if (!event.isPrimary || event.button !== 0 ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    clearTimeout(cardActivationTimer);
+    resetCardTilt();
+    const card = event.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+    const angle = 6 / Math.max(1, Math.hypot(x, y));
+    card.style.setProperty("--card-tilt-x", `${-y * angle}deg`);
+    card.style.setProperty("--card-tilt-y", `${x * angle}deg`);
+    card.classList.add("card_pressed");
+    cardPress = { card, until: performance.now() + CARD_PRESS_DURATION_MS };
+  }
+
+  function resetCardTilt() {
+    clearTimeout(cardReleaseTimer);
+    if (!cardPress) return;
+    const { card } = cardPress;
+    card.classList.remove("card_pressed");
+    card.style.removeProperty("--card-tilt-x");
+    card.style.removeProperty("--card-tilt-y");
+    cardPress = undefined;
+  }
+
+  function releaseCardTilt(event: PointerEvent) {
+    if (!cardPress || event.currentTarget !== cardPress.card) return;
+    clearTimeout(cardReleaseTimer);
+    cardReleaseTimer = setTimeout(resetCardTilt, Math.max(0, cardPress.until - performance.now()));
+  }
+
+  function leaveCard(event: PointerEvent) {
+    if (event.buttons & 1) resetCardTilt();
+  }
+
+  function deferCardActivation(event: MouseEvent) {
+    if (!cardPress || event.currentTarget !== cardPress.card || event.detail === 0 ||
+        event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return false;
+
+    const { card, until } = cardPress;
+    event.preventDefault();
+    clearTimeout(cardReleaseTimer);
+    clearTimeout(cardActivationTimer);
+    cardActivationTimer = setTimeout(() => {
+      resetCardTilt();
+      cardActivationTimer = setTimeout(() => {
+        if (card.isConnected) card.click();
+      }, CARD_RELEASE_DURATION_MS);
+    }, Math.max(0, until - performance.now()));
+    return true;
   }
 
   async function handleFinalize(e: CustomEvent<DndEvent<PinnedGridItem>>) {
@@ -432,6 +492,8 @@
     window.removeEventListener("mouseup", captureDropTarget, true);
     window.removeEventListener("touchend", captureDropTarget, true);
     window.removeEventListener("pointercancel", clearDragState);
+    resetCardTilt();
+    clearTimeout(cardActivationTimer);
     clearDragState();
   });
 
@@ -602,6 +664,8 @@
       {#if pinnedGridItems.length}
       <div
         class="content grid pinned_grid {isdarging ? 'drag' : ''}"
+        style:--card-press-duration={`${CARD_PRESS_DURATION_MS}ms`}
+        style:--card-release-duration={`${CARD_RELEASE_DURATION_MS}ms`}
         use:dndzone={{
           items: pinnedGridItems,
           flipDurationMs: 200,
@@ -616,7 +680,7 @@
         onfinalize={handleFinalize}
       >
         {#each pinnedGridItems as gridItem (gridItem.id)}
-          <div class="item" animate:flip={{ duration: 200 }}>
+          <div class="item" data-pinned-id={gridItem.id} animate:flip={{ duration: 200 }}>
           {#if canCombineWith(gridItem)}
             <div class="combine_hit_zone" data-combine-id={gridItem.id} aria-hidden="true"></div>
             <div class="combine_drop_zone" class:combine_target={combineTargetId === gridItem.id} aria-hidden="true"></div>
@@ -626,8 +690,14 @@
               class="folder_button"
               type="button"
               title={gridItem.folder.title}
+              onpointerdown={tiltCard}
+              onpointerup={releaseCardTilt}
+              onpointercancel={resetCardTilt}
+              onpointerleave={leaveCard}
               oncontextmenu={(event) => showGroupMenu(event, gridItem.folder)}
-              onclick={() => (currentFolder = gridItem.folder)}
+              onclick={(event) => {
+                if (!deferCardActivation(event)) currentFolder = gridItem.folder;
+              }}
             >
               <WebsiteFolderTile
                 folder={gridItem.folder}
@@ -641,6 +711,11 @@
                 href={pinned.url}
                 target={newTabOpen ? "_blank" : "_self"}
                 rel={newTabOpen ? "noreferrer" : undefined}
+                onpointerdown={tiltCard}
+                onpointerup={releaseCardTilt}
+                onpointercancel={resetCardTilt}
+                onpointerleave={leaveCard}
+                onclick={deferCardActivation}
                 oncontextmenu={(e) => showContextMenu(e, pinned)}
               >
                 <WebsiteTile site={pinned} loading={capturingWebsiteId === pinned.id} />
@@ -964,6 +1039,9 @@
   .drag {
     outline: var(--c-mask) 2px dashed;
   }
+  :global(#dnd-action-dragged-el[data-pinned-id]:focus) {
+    outline: none;
+  }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -985,6 +1063,24 @@
     text-decoration: none;
     cursor: default;
     border-radius: var(--r2);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .folder_button,
+    .tile_link {
+      perspective: 650px;
+    }
+    .folder_button > :global(.folder_tile),
+    .tile_link > :global(.website_tile) {
+      transition: transform var(--card-release-duration) ease-out;
+    }
+    .pinned_grid:not(.drag) .folder_button:global(.card_pressed) > :global(.folder_tile),
+    .pinned_grid:not(.drag) .tile_link:global(.card_pressed) > :global(.website_tile) {
+      transform: translateY(1px)
+        rotateX(var(--card-tilt-x, 0deg))
+        rotateY(var(--card-tilt-y, 0deg))
+        scale(0.98);
+      transition-duration: var(--card-press-duration);
+    }
   }
   .empty_folder {
     grid-column: 1 / -1;

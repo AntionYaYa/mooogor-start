@@ -921,6 +921,7 @@
         class="scroll_to_top"
         type="button"
         aria-label={t("nt_scroll_to_top")}
+        tabindex="-1"
         onclick={() => scrollRoot?.scrollTo({
           top: 0,
           behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
