@@ -44,6 +44,9 @@
   "nt_scroll_to_top": {
     "message": "回到頂部"
   },
+  "nt_settings_open": {
+    "message": "開啟設定"
+  },
   "nt_settings_close": {
     "message": "關閉設定"
   },
@@ -126,7 +129,7 @@
     "message": "隨機"
   },
   "nt_settings_default_open": {
-    "message": "預設開啟："
+    "message": "預設開啟"
   },
   "nt_settings_about": {
     "message": "關於"
@@ -148,12 +151,6 @@
   },
   "nt_support_alipay_scan_hint": {
     "message": "使用支付寶 App 掃碼"
-  },
-  "nt_settings_link_open_title": {
-    "message": "連結開啟方式"
-  },
-  "nt_settings_other_title": {
-    "message": "其他"
   },
   "nt_settings_other_section_title": {
     "message": "一般"
@@ -191,6 +188,9 @@
   "nt_data_sync_loading_title": {
     "message": "正在寫入同步資料"
   },
+  "nt_data_sync_success": {
+    "message": "已同步"
+  },
   "nt_data_sync_error_title": {
     "message": "資料同步異常"
   },
@@ -221,11 +221,8 @@
   "nt_settings_new_tab_tip": {
     "message": "如果固定到 Tab 列將自動開啟"
   },
-  "nt_settings_search_scope": {
-    "message": "搜尋範圍"
-  },
   "nt_settings_search_title": {
-    "message": "快捷搜尋"
+    "message": "搜尋"
   },
   "nt_settings_search_bookmarks": {
     "message": "搜尋書籤"
@@ -240,19 +237,34 @@
     "message": "開啟後依搜尋引擎分類記錄最近使用的搜尋關鍵字"
   },
   "nt_settings_search_remember_engine_category": {
-    "message": "記住所選分類"
+    "message": "記住搜尋分類"
   },
-  "nt_settings_search_remember_engine_category_tip": {
-    "message": "開啟後會保留上次選擇的分類"
+  "nt_settings_page_mode": {
+    "message": "頁面模式"
+  },
+  "nt_settings_standard_mode": {
+    "message": "普通模式"
+  },
+  "nt_settings_minimal_active": {
+    "message": "簡潔模式已開啟"
+  },
+  "nt_settings_active": {
+    "message": "已開啟"
+  },
+  "nt_settings_inactive": {
+    "message": "未啟用"
+  },
+  "nt_settings_manage_common": {
+    "message": "常用網站管理"
+  },
+  "nt_settings_search_only": {
+    "message": "簡潔模式"
   },
   "nt_settings_search_auto_focus": {
     "message": "自動聚焦搜尋框"
   },
-  "nt_settings_search_auto_focus_tip": {
-    "message": "新增分頁時自動聚焦搜尋框"
-  },
   "nt_settings_search_inject_related": {
-    "message": "注入到相關網頁"
+    "message": "搜尋分身"
   },
   "nt_settings_search_inject_related_tip": {
     "message": "在符合搜尋引擎的網站中顯示快捷搜尋浮窗"
@@ -280,9 +292,6 @@
   },
   "nt_settings_websites_title": {
     "message": "網站"
-  },
-  "nt_manage_common": {
-    "message": "常用網站"
   },
   "nt_manage_bookmarks": {
     "message": "书签管理"
@@ -355,18 +364,6 @@
   },
   "nt_engine_category_video": {
     "message": "影片"
-  },
-  "nt_engine_category_icon": {
-    "message": "圖示"
-  },
-  "nt_engine_category_font": {
-    "message": "字體"
-  },
-  "nt_engine_category_creative": {
-    "message": "創作素材"
-  },
-  "nt_engine_category_music": {
-    "message": "音樂"
   },
   "nt_settings_title": {
     "message": "設定"
@@ -493,7 +490,7 @@
     "message": "選擇搜尋關鍵字參數"
   },
   "nt_popup_search_no_parameters": {
-    "message": "目前網址沒有查詢參數，請手動在搜尋網址中填入 %s"
+    "message": "目前網址沒有查詢參數"
   },
   "nt_popup_add": {
     "message": "添加"
@@ -690,12 +687,6 @@
   "nt_config_reset_all_confirm": {
     "message": "確定要重設全部設定嗎？這會清除自訂常用網站、搜尋引擎、分類和偏好設定，且無法復原。書籤、瀏覽記錄和已快取圖示不會被刪除。"
   },
-  "nt_about_open_source_title": {
-    "message": "原始碼與透明說明"
-  },
-  "nt_about_open_source_desc": {
-    "message": "Mooogor Start 公開原始碼，是希望你能了解它如何運作、存取哪些資料，以及為什麼需要這些權限。歡迎查看，也歡迎回饋使用中不順手的地方。"
-  },
   "nt_about_source_code": {
     "message": "查看原始碼"
   },
@@ -708,11 +699,8 @@
   "nt_about_third_party_title": {
     "message": "使用的開源專案"
   },
-  "nt_about_third_party_notices": {
-    "message": "查看第三方授權條款與版權聲明"
-  },
   "nt_about_privacy": {
-    "message": "隱私與權限"
+    "message": "隱私政策"
   },
   "nt_settings_data_sync_delete": {
     "message": "刪除同步副本"

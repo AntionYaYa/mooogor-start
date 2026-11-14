@@ -96,6 +96,7 @@
 		flex-direction: column;
 		min-height: 0;
 		box-sizing: border-box;
+		overflow-x: hidden;
 		overflow-y: auto;
 		width: 100%;
 	}

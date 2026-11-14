@@ -18,7 +18,10 @@
 		disabled?: boolean;
 		title?: string;
 		role?: "switch";
+		"aria-label"?: string;
 		"aria-checked"?: boolean;
+		"aria-expanded"?: boolean;
+		"aria-pressed"?: boolean;
 		onclick?: (event: MouseEvent) => void;
 	}
 
@@ -36,7 +39,10 @@
 		bg,
 		title,
 		role,
+		"aria-label": label,
 		"aria-checked": checked,
+		"aria-expanded": expanded,
+		"aria-pressed": ariaPressed,
 	}: Props = $props();
 
 	let pressed = $state(false);
@@ -102,7 +108,10 @@
 	{disabled}
 	{title}
 	{role}
+	aria-label={label}
 	aria-checked={checked}
+	aria-expanded={expanded}
+	aria-pressed={ariaPressed}
 	tabindex={skipTabFocus ? -1 : undefined}
 >
 	{@render children()}

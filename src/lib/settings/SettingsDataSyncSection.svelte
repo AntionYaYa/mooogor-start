@@ -20,6 +20,7 @@
   let syncState = $state<DataSyncState>({
     enabled: false,
     lastSyncedAt: null,
+    lastAppliedSyncAt: null,
     phase: "idle",
     errorCode: null,
     usedBytes: 0,

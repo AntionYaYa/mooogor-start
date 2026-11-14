@@ -44,6 +44,9 @@
   "nt_scroll_to_top": {
     "message": "Back to top"
   },
+  "nt_settings_open": {
+    "message": "Open settings"
+  },
   "nt_settings_close": {
     "message": "Close settings"
   },
@@ -126,7 +129,7 @@
     "message": "Random"
   },
   "nt_settings_default_open": {
-    "message": "Open by default:"
+    "message": "Open by default"
   },
   "nt_settings_about": {
     "message": "About"
@@ -148,12 +151,6 @@
   },
   "nt_support_alipay_scan_hint": {
     "message": "Scan with Alipay app"
-  },
-  "nt_settings_link_open_title": {
-    "message": "Link opening"
-  },
-  "nt_settings_other_title": {
-    "message": "Other"
   },
   "nt_settings_other_section_title": {
     "message": "General"
@@ -191,6 +188,9 @@
   "nt_data_sync_loading_title": {
     "message": "Writing sync data"
   },
+  "nt_data_sync_success": {
+    "message": "Synced"
+  },
   "nt_data_sync_error_title": {
     "message": "Data sync issue"
   },
@@ -221,11 +221,8 @@
   "nt_settings_new_tab_tip": {
     "message": "Automatically enabled when pinned to the tab bar."
   },
-  "nt_settings_search_scope": {
-    "message": "Search Scope"
-  },
   "nt_settings_search_title": {
-    "message": "Quick Search"
+    "message": "Search"
   },
   "nt_settings_search_bookmarks": {
     "message": "Search Bookmarks"
@@ -240,19 +237,34 @@
     "message": "Remember recently used search keywords separately for each engine category"
   },
   "nt_settings_search_remember_engine_category": {
-    "message": "Remember selected category"
+    "message": "Remember search category"
   },
-  "nt_settings_search_remember_engine_category_tip": {
-    "message": "Keep the last selected category next time Quick Search opens"
+  "nt_settings_page_mode": {
+    "message": "Page mode"
+  },
+  "nt_settings_standard_mode": {
+    "message": "Standard mode"
+  },
+  "nt_settings_minimal_active": {
+    "message": "Minimal mode is on"
+  },
+  "nt_settings_active": {
+    "message": "On"
+  },
+  "nt_settings_inactive": {
+    "message": "Off"
+  },
+  "nt_settings_manage_common": {
+    "message": "Manage Common Sites"
+  },
+  "nt_settings_search_only": {
+    "message": "Minimal mode"
   },
   "nt_settings_search_auto_focus": {
     "message": "Auto-focus search box"
   },
-  "nt_settings_search_auto_focus_tip": {
-    "message": "Automatically focus the search box when opening a new tab"
-  },
   "nt_settings_search_inject_related": {
-    "message": "Inject into related pages"
+    "message": "Search Companion"
   },
   "nt_settings_search_inject_related_tip": {
     "message": "Show a Quick Search floating panel on matching search engine sites"
@@ -280,9 +292,6 @@
   },
   "nt_settings_websites_title": {
     "message": "Websites"
-  },
-  "nt_manage_common": {
-    "message": "Common Sites"
   },
   "nt_manage_bookmarks": {
     "message": "Manage Bookmarks"
@@ -355,18 +364,6 @@
   },
   "nt_engine_category_video": {
     "message": "Videos"
-  },
-  "nt_engine_category_icon": {
-    "message": "Icons"
-  },
-  "nt_engine_category_font": {
-    "message": "Fonts"
-  },
-  "nt_engine_category_creative": {
-    "message": "Creative assets"
-  },
-  "nt_engine_category_music": {
-    "message": "Music"
   },
   "nt_settings_title": {
     "message": "Settings"
@@ -493,7 +490,7 @@
     "message": "Select the search keyword parameter"
   },
   "nt_popup_search_no_parameters": {
-    "message": "This URL has no query parameters. Enter %s in the search URL manually."
+    "message": "This URL has no query parameters."
   },
   "nt_popup_add": {
     "message": "Add"
@@ -690,12 +687,6 @@
   "nt_config_reset_all_confirm": {
     "message": "Reset all configuration? This permanently removes custom common sites, search engines, categories, and preferences. Bookmarks, history, and cached icons won't be deleted."
   },
-  "nt_about_open_source_title": {
-    "message": "Source & transparency"
-  },
-  "nt_about_open_source_desc": {
-    "message": "Mooogor Start publishes its source so you can understand how it works, what data it accesses, and why it needs its permissions. You are welcome to inspect it and share anything that feels awkward to use."
-  },
   "nt_about_source_code": {
     "message": "Source code"
   },
@@ -708,11 +699,8 @@
   "nt_about_third_party_title": {
     "message": "Open-source projects used"
   },
-  "nt_about_third_party_notices": {
-    "message": "Third-party licenses & copyright notices"
-  },
   "nt_about_privacy": {
-    "message": "Privacy & permissions"
+    "message": "Privacy Policy"
   },
   "nt_settings_data_sync_delete": {
     "message": "Delete sync copy"

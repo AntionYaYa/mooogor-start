@@ -19,12 +19,6 @@
       "backgroundColorAlt": "#e22e6e"
     },
     {
-      "title": "LinkedIn",
-      "url": "https://www.linkedin.com/feed/",
-      "backgroundColor": "#bbe2f3",
-      "backgroundColorAlt": "#bbdff3"
-    },
-    {
       "title": "GitHub",
       "url": "https://github.com/",
       "backgroundColor": "#1a1d1f",
@@ -37,52 +31,10 @@
       "backgroundColorAlt": "#070705"
     },
     {
-      "title": "X",
-      "url": "https://x.com/home",
-      "backgroundColor": "#040402",
-      "backgroundColorAlt": "#040402"
-    },
-    {
-      "title": "Discord",
-      "url": "https://discord.com/channels/@me",
-      "backgroundColor": "#dfecfb",
-      "backgroundColorAlt": "#dfebfb"
-    },
-    {
       "title": "Reddit",
       "url": "https://www.reddit.com/",
       "backgroundColor": "#fbefdf",
       "backgroundColorAlt": "#fbe9df"
-    },
-    {
-      "title": "Netflix",
-      "url": "https://www.netflix.com/browse",
-      "backgroundColor": "#f8f6eb",
-      "backgroundColorAlt": "#f8f3eb"
-    },
-    {
-      "title": "Instagram",
-      "url": "https://www.instagram.com/",
-      "backgroundColor": "#e32bc6",
-      "backgroundColorAlt": "#e32bd7"
-    },
-    {
-      "title": "Spotify",
-      "url": "https://open.spotify.com/",
-      "backgroundColor": "#e7fef2",
-      "backgroundColorAlt": "#e7fef5"
-    },
-    {
-      "title": "TikTok",
-      "url": "https://www.tiktok.com/foryou",
-      "backgroundColor": "#d46775",
-      "backgroundColorAlt": "#d46785"
-    },
-    {
-      "title": "Temu",
-      "url": "https://www.temu.com/",
-      "backgroundColor": "#ffedd0",
-      "backgroundColorAlt": "#ffe3d0"
     }
   ],
   "zh_CN": [
@@ -111,55 +63,19 @@
       "backgroundColorAlt": "#dbf5fa"
     },
     {
-      "title": "小红书",
-      "url": "https://www.xiaohongshu.com/",
-      "backgroundColor": "#f34664",
-      "backgroundColorAlt": "#f3467d"
-    },
-    {
-      "title": "微博",
-      "url": "https://weibo.com/",
-      "backgroundColor": "#e5222e",
-      "backgroundColorAlt": "#e5224c"
-    },
-    {
-      "title": "抖音",
-      "url": "https://www.douyin.com/",
-      "backgroundColor": "#d46775",
-      "backgroundColorAlt": "#d46785"
-    },
-    {
       "title": "淘宝",
       "url": "https://www.taobao.com/",
       "backgroundColor": "#feebd2",
       "backgroundColorAlt": "#fee2d2"
     },
     {
-      "title": "京东",
-      "url": "https://www.jd.com/",
-      "backgroundColor": "#fce4d1",
-      "backgroundColorAlt": "#fcdcd1"
-    },
-    {
       "title": "百度网盘",
       "url": "https://pan.baidu.com/",
       "backgroundColor": "#47c9f5",
       "backgroundColorAlt": "#47bff5"
-    },
-    {
-      "title": "豆瓣",
-      "url": "https://www.douban.com/",
-      "backgroundColor": "#d8f7d8",
-      "backgroundColorAlt": "#d8f7dd"
     }
   ],
   "zh_TW": [
-    {
-      "title": "Yahoo 奇摩",
-      "url": "https://tw.yahoo.com/",
-      "backgroundColor": "#f9efff",
-      "backgroundColorAlt": "#f8efff"
-    },
     {
       "title": "LINE",
       "url": "https://line.me/",
@@ -173,22 +89,10 @@
       "backgroundColorAlt": "#e2f5fa"
     },
     {
-      "title": "巴哈姆特",
-      "url": "https://www.gamer.com.tw/",
-      "backgroundColor": "#c9eef4",
-      "backgroundColorAlt": "#c9ebf4"
-    },
-    {
       "title": "蝦皮購物",
       "url": "https://shopee.tw/",
       "backgroundColor": "#e95649",
       "backgroundColorAlt": "#e94957"
-    },
-    {
-      "title": "momo 購物",
-      "url": "https://www.momoshop.com.tw/",
-      "backgroundColor": "#db3bc9",
-      "backgroundColorAlt": "#db3bd7"
     },
     {
       "title": "YouTube",
@@ -203,28 +107,10 @@
       "backgroundColorAlt": "#db3944"
     },
     {
-      "title": "PTT",
-      "url": "https://term.ptt.cc/",
-      "backgroundColor": "#d8fafc",
-      "backgroundColorAlt": "#d8f7fc"
-    },
-    {
-      "title": "Mobile01",
-      "url": "https://www.mobile01.com/",
-      "backgroundColor": "#dafae8",
-      "backgroundColorAlt": "#dafaec"
-    },
-    {
-      "title": "Instagram",
-      "url": "https://www.instagram.com/",
-      "backgroundColor": "#e32bc6",
-      "backgroundColorAlt": "#e32bd7"
-    },
-    {
-      "title": "TikTok",
-      "url": "https://www.tiktok.com/foryou",
-      "backgroundColor": "#d46775",
-      "backgroundColorAlt": "#d46785"
+      "title": "Yahoo 奇摩",
+      "url": "https://tw.yahoo.com/",
+      "backgroundColor": "#f9efff",
+      "backgroundColorAlt": "#f8efff"
     }
   ]
 }

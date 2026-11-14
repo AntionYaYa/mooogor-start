@@ -35,6 +35,7 @@ export type UserSettings = {
   recordSearchKeywords: boolean;
   rememberSearchEngineCategory: boolean;
   autoFocusSearch: boolean;
+  searchOnly: boolean;
   injectRelatedSearch: boolean;
   language: AppLanguage;
   theme: AppTheme;
@@ -52,6 +53,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   recordSearchKeywords: true,
   rememberSearchEngineCategory: false,
   autoFocusSearch: false,
+  searchOnly: false,
   injectRelatedSearch: true,
   language: "auto",
   theme: "default",
@@ -151,6 +153,7 @@ export async function loadSettings(): Promise<UserSettings> {
       DEFAULT_SETTINGS.rememberSearchEngineCategory,
     autoFocusSearch:
       stored?.autoFocusSearch ?? DEFAULT_SETTINGS.autoFocusSearch,
+    searchOnly: stored?.searchOnly === true,
     injectRelatedSearch:
       stored?.injectRelatedSearch ?? DEFAULT_SETTINGS.injectRelatedSearch,
     language: isLanguage(stored?.language)

@@ -44,6 +44,9 @@
   "nt_scroll_to_top": {
     "message": "回到顶部"
   },
+  "nt_settings_open": {
+    "message": "打开设置"
+  },
   "nt_settings_close": {
     "message": "关闭设置"
   },
@@ -126,7 +129,7 @@
     "message": "随机"
   },
   "nt_settings_default_open": {
-    "message": "默认打开："
+    "message": "默认打开"
   },
   "nt_settings_about": {
     "message": "关于"
@@ -148,12 +151,6 @@
   },
   "nt_support_alipay_scan_hint": {
     "message": "支付宝app扫码"
-  },
-  "nt_settings_link_open_title": {
-    "message": "链接打开方式"
-  },
-  "nt_settings_other_title": {
-    "message": "其他"
   },
   "nt_settings_other_section_title": {
     "message": "通用"
@@ -191,6 +188,9 @@
   "nt_data_sync_loading_title": {
     "message": "正在写入同步数据"
   },
+  "nt_data_sync_success": {
+    "message": "已同步"
+  },
   "nt_data_sync_error_title": {
     "message": "数据同步异常"
   },
@@ -216,16 +216,13 @@
     "message": "最新修改未能保存。请重新加载扩展后再次操作；如果问题持续出现，请检查扩展存储或重置配置。"
   },
   "nt_settings_new_tab_open": {
-    "message": "新标签页打开链接"
+    "message": "在新标签页打开链接"
   },
   "nt_settings_new_tab_tip": {
     "message": "如果固定到Tab栏将自动开启"
   },
-  "nt_settings_search_scope": {
-    "message": "搜索范围"
-  },
   "nt_settings_search_title": {
-    "message": "快捷搜索"
+    "message": "搜索"
   },
   "nt_settings_search_bookmarks": {
     "message": "搜索书签"
@@ -240,19 +237,34 @@
     "message": "开启后按搜索引擎分类记录最近使用的搜索关键词"
   },
   "nt_settings_search_remember_engine_category": {
-    "message": "记住所选分类"
+    "message": "记住搜索分类"
   },
-  "nt_settings_search_remember_engine_category_tip": {
-    "message": "开启后会保留上次选择的分类"
+  "nt_settings_page_mode": {
+    "message": "页面模式"
+  },
+  "nt_settings_standard_mode": {
+    "message": "普通模式"
+  },
+  "nt_settings_minimal_active": {
+    "message": "简洁模式已开启"
+  },
+  "nt_settings_active": {
+    "message": "已开启"
+  },
+  "nt_settings_inactive": {
+    "message": "未启用"
+  },
+  "nt_settings_manage_common": {
+    "message": "常用网站管理"
+  },
+  "nt_settings_search_only": {
+    "message": "简洁模式"
   },
   "nt_settings_search_auto_focus": {
     "message": "自动聚焦搜索框"
   },
-  "nt_settings_search_auto_focus_tip": {
-    "message": "新建标签页时自动聚焦搜索框"
-  },
   "nt_settings_search_inject_related": {
-    "message": "注入到相关网页"
+    "message": "搜索分身"
   },
   "nt_settings_search_inject_related_tip": {
     "message": "在匹配搜索引擎的网站中显示快捷搜索浮窗"
@@ -280,9 +292,6 @@
   },
   "nt_settings_websites_title": {
     "message": "网站"
-  },
-  "nt_manage_common": {
-    "message": "常用网站"
   },
   "nt_manage_bookmarks": {
     "message": "书签管理"
@@ -355,18 +364,6 @@
   },
   "nt_engine_category_video": {
     "message": "视频"
-  },
-  "nt_engine_category_icon": {
-    "message": "图标"
-  },
-  "nt_engine_category_font": {
-    "message": "字体"
-  },
-  "nt_engine_category_creative": {
-    "message": "创作素材"
-  },
-  "nt_engine_category_music": {
-    "message": "音乐"
   },
   "nt_settings_title": {
     "message": "设置"
@@ -493,7 +490,7 @@
     "message": "选择搜索关键词参数"
   },
   "nt_popup_search_no_parameters": {
-    "message": "当前地址没有查询参数，请手动在搜索地址中填写 %s"
+    "message": "当前地址没有查询参数"
   },
   "nt_popup_add": {
     "message": "添加"
@@ -690,12 +687,6 @@
   "nt_config_reset_all_confirm": {
     "message": "确定要重置全部配置吗？这会清除自定义常用网站、搜索引擎、分类和偏好设置，且无法撤销。收藏夹、历史记录和已缓存图标不会被删除。"
   },
-  "nt_about_open_source_title": {
-    "message": "源码与透明说明"
-  },
-  "nt_about_open_source_desc": {
-    "message": "Mooogor Start 公开源码，是希望你能了解它如何工作、访问哪些数据，以及为什么需要这些权限。欢迎查看，也欢迎反馈使用中不顺手的地方。"
-  },
   "nt_about_source_code": {
     "message": "查看源码"
   },
@@ -708,11 +699,8 @@
   "nt_about_third_party_title": {
     "message": "使用的开源项目"
   },
-  "nt_about_third_party_notices": {
-    "message": "查看第三方许可证与版权声明"
-  },
   "nt_about_privacy": {
-    "message": "隐私与权限"
+    "message": "隐私政策"
   },
   "nt_settings_data_sync_delete": {
     "message": "删除同步副本"

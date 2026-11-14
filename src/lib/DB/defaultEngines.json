@@ -5,102 +5,52 @@
       {
         "title": "Google",
         "engineUrl": "https://www.google.com/search?q=%s",
-        "faviconKey": "Google",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": false,
-          "zh_TW": true
-        }
+        "faviconKey": "Google"
       },
       {
         "title": "Bing",
         "engineUrl": "https://www.bing.com/search?q=%s",
-        "faviconKey": "Bing",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
+        "faviconKey": "Bing"
       },
       {
         "title": "Perplexity",
         "engineUrl": "https://www.perplexity.ai/search?q=%s",
-        "faviconKey": "Perplexity",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "Perplexity"
       },
       {
         "title": "Yahoo",
         "engineUrl": "https://search.yahoo.com/search?p=%s",
-        "faviconKey": "Yahoo",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": true
-        }
+        "faviconKey": "Yahoo"
       },
       {
         "title": "360",
         "engineUrl": "https://www.so.com/s?q=%s",
-        "faviconKey": "Qihu360",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": true,
-          "zh_TW": false
-        }
+        "faviconKey": "Qihu360"
       },
       {
         "title": "百度",
         "engineUrl": "https://www.baidu.com/s?wd=%s",
-        "faviconKey": "Baidu",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": true,
-          "zh_TW": false
-        }
+        "faviconKey": "Baidu"
       },
       {
         "title": "Yandex",
         "engineUrl": "https://yandex.com/search/?text=%s",
-        "faviconKey": "Yandex",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "Yandex"
       },
       {
         "title": "DuckDuckGo",
         "engineUrl": "https://duckduckgo.com/?q=%s",
-        "faviconKey": "DuckDuckGo",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "DuckDuckGo"
       },
       {
         "title": "搜狗",
         "engineUrl": "https://www.sogou.com/web?query=%s",
-        "faviconKey": "Sougou",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "Sougou"
       },
       {
         "title": "Naver",
         "engineUrl": "https://search.naver.com/search.naver?query=%s",
-        "faviconKey": "Naver",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "Naver"
       }
     ]
   },
@@ -110,42 +60,22 @@
       {
         "title": "Unsplash",
         "engineUrl": "https://unsplash.com/s/photos/%s",
-        "faviconKey": "Unsplash",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
+        "faviconKey": "Unsplash"
       },
       {
         "title": "Pexels",
         "engineUrl": "https://www.pexels.com/search/%s/",
-        "faviconKey": "Pexels",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
+        "faviconKey": "Pexels"
       },
       {
         "title": "花瓣",
         "engineUrl": "https://huaban.com/search?q=%s",
-        "faviconKey": "Huaban",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": true,
-          "zh_TW": false
-        }
+        "faviconKey": "Huaban"
       },
       {
         "title": "Pinterest",
         "engineUrl": "https://www.pinterest.com/search/pins/?q=%s",
-        "faviconKey": "Pinterest",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": false,
-          "zh_TW": true
-        }
+        "faviconKey": "Pinterest"
       }
     ]
   },
@@ -155,42 +85,22 @@
       {
         "title": "YouTube",
         "engineUrl": "https://www.youtube.com/results?search_query=%s",
-        "faviconKey": "YouTube",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": false,
-          "zh_TW": true
-        }
+        "faviconKey": "YouTube"
       },
       {
         "title": "Bilibili",
         "engineUrl": "https://search.bilibili.com/all?keyword=%s",
-        "faviconKey": "Bilibili",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
+        "faviconKey": "Bilibili"
       },
       {
         "title": "抖音",
         "engineUrl": "https://www.douyin.com/search/%s",
-        "faviconKey": "Douyin",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": true,
-          "zh_TW": false
-        }
+        "faviconKey": "Douyin"
       },
       {
         "title": "Vimeo",
         "engineUrl": "https://vimeo.com/search?q=%s",
-        "faviconKey": "Vimeo",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "Vimeo"
       }
     ]
   },
@@ -200,62 +110,32 @@
       {
         "title": "Spotify",
         "engineUrl": "https://open.spotify.com/search/%s",
-        "faviconKey": "Spotify",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": false,
-          "zh_TW": true
-        }
+        "faviconKey": "Spotify"
       },
       {
         "title": "Apple Music",
         "engineUrl": "https://music.apple.com/search?term=%s",
-        "faviconKey": "AppleMusic",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
+        "faviconKey": "AppleMusic"
       },
       {
         "title": "YouTube Music",
         "engineUrl": "https://music.youtube.com/search?q=%s",
-        "faviconKey": "YouTubeMusic",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": false,
-          "zh_TW": true
-        }
+        "faviconKey": "YouTubeMusic"
       },
       {
         "title": "QQ 音乐",
         "engineUrl": "https://y.qq.com/portal/search.html#page=1&searchid=1&remoteplace=txt.yqq.song&s=%s",
-        "faviconKey": "QQMusic",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": true,
-          "zh_TW": false
-        }
+        "faviconKey": "QQMusic"
       },
       {
         "title": "网易云音乐",
         "engineUrl": "https://music.163.com/#/search/m/?s=%s&type=1",
-        "faviconKey": "NeteaseMusic",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": true,
-          "zh_TW": false
-        }
+        "faviconKey": "NeteaseMusic"
       },
       {
         "title": "酷狗音乐",
         "engineUrl": "https://www.kugou.com/yy/html/search.html#searchType=song&searchKey=%s",
-        "faviconKey": "KugouMusic",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "KugouMusic"
       }
     ]
   },
@@ -265,52 +145,27 @@
       {
         "title": "Iconfont",
         "engineUrl": "https://www.iconfont.cn/search/index?q=%s",
-        "faviconKey": "Iconfont",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
+        "faviconKey": "Iconfont"
       },
       {
         "title": "Font Awesome",
         "engineUrl": "https://fontawesome.com/search?q=%s",
-        "faviconKey": "FontAwesome",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "FontAwesome"
       },
       {
         "title": "Lucide",
         "engineUrl": "https://lucide.dev/?search=%s",
-        "faviconKey": "Lucide",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "Lucide"
       },
       {
         "title": "Phosphor Icons",
         "engineUrl": "https://phosphoricons.com/?q=%s",
-        "faviconKey": "PhosphorIcons",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "PhosphorIcons"
       },
       {
         "title": "Flaticon",
         "engineUrl": "https://www.flaticon.com/search?word=%s",
-        "faviconKey": "Flaticon",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "Flaticon"
       }
     ]
   },
@@ -320,42 +175,22 @@
       {
         "title": "Google Fonts",
         "engineUrl": "https://fonts.google.com/?query=%s",
-        "faviconKey": "GoogleFonts",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
+        "faviconKey": "GoogleFonts"
       },
       {
         "title": "Fontshare",
         "engineUrl": "https://www.fontshare.com/?q=%s",
-        "faviconKey": "Fontshare",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "Fontshare"
       },
       {
         "title": "Adobe Fonts",
         "engineUrl": "https://fonts.adobe.com/search?query=%s",
-        "faviconKey": "AdobeFonts",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "AdobeFonts"
       },
       {
         "title": "Font Squirrel",
         "engineUrl": "https://www.fontsquirrel.com/fonts/list/search?q=%s",
-        "faviconKey": "FontSquirrel",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "FontSquirrel"
       }
     ]
   },
@@ -365,42 +200,22 @@
       {
         "title": "Freepik",
         "engineUrl": "https://www.magnific.com/search?format=search&query=%s",
-        "faviconKey": "Freepik",
-        "enabledByLanguage": {
-          "default": true,
-          "zh_CN": true,
-          "zh_TW": true
-        }
+        "faviconKey": "Freepik"
       },
       {
         "title": "Mixkit Video",
         "engineUrl": "https://mixkit.co/free-stock-video/%s/",
-        "faviconKey": "Mixkit",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "Mixkit"
       },
       {
         "title": "Bensound",
         "engineUrl": "https://www.bensound.com/royalty-free-music?search=%s",
-        "faviconKey": "Bensound",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "Bensound"
       },
       {
         "title": "Uppbeat",
         "engineUrl": "https://uppbeat.io/browse/search/%s",
-        "faviconKey": "Uppbeat",
-        "enabledByLanguage": {
-          "default": false,
-          "zh_CN": false,
-          "zh_TW": false
-        }
+        "faviconKey": "Uppbeat"
       }
     ]
   }

@@ -50,6 +50,7 @@
   let folderOptions = $state<SelectOption[]>([]);
   let categoryOptions = $state<SelectOption[]>([]);
   let parameterOptions = $state<SelectOption[]>([]);
+  const addDisabled = $derived(saving || (mode === "engine" && parameter === ""));
 
   onMount(() => {
     void initialize();
@@ -95,13 +96,10 @@
         active: true,
         currentWindow: true,
       });
-      if (!tab?.url) throw new Error("Active tab URL is unavailable");
+      if (!tab?.url || !URL.canParse(tab.url)) return;
       const url = new URL(tab.url);
-      if (url.protocol !== "https:" && url.protocol !== "http:") {
-        error = t("nt_settings_search_engine_url_invalid");
-        return;
-      }
-      sourceUrl = engineUrl = tab.url;
+      if (url.protocol !== "https:" && url.protocol !== "http:") return;
+      sourceUrl = tab.url;
       siteTitle = tab.title ?? "";
       titles = { website: siteTitle, engine: siteTitle };
       siteIcon = tab.favIconUrl;
@@ -145,10 +143,9 @@
   }
 
   async function save() {
-    if (!ready || saving) return;
+    if (!ready || addDisabled) return;
     error = "";
     if (mode === "engine") {
-      if (parameter === "") return;
       if (!titles.engine.trim()) {
         error = t("nt_settings_search_engine_name_required");
         return;
@@ -286,13 +283,15 @@
               full
               r="r_o"
               fill={mode === "website"}
+              aria-pressed={mode === "website"}
               title={t("nt_popup_add_to_common")}
               disabled={saving}
               onclick={() => switchMode("website")}
             >
               <G full vertical align="c"
-                ><Icon name="Globe" color="var(--c-text)" /><T
+                ><Icon name="Globe" color="var(--c-text)" opacity={mode === "website" ? 1 : 0.6} /><T
                   type="s"
+                  color={mode === "website" ? "var(--c-text)" : "var(--c-text-1)"}
                   align="c"
                   fullWidth={false}>{t("nt_tab_common")}</T
                 ></G
@@ -302,13 +301,15 @@
               full
               r="r_o"
               fill={mode === "engine"}
+              aria-pressed={mode === "engine"}
               title={t("nt_popup_add_to_search")}
               disabled={saving}
               onclick={() => switchMode("engine")}
             >
               <G full vertical align="c"
-                ><Icon name="Search" color="var(--c-text)" /><T
+                ><Icon name="Search" color="var(--c-text)" opacity={mode === "engine" ? 1 : 0.6} /><T
                   type="s"
+                  color={mode === "engine" ? "var(--c-text)" : "var(--c-text-1)"}
                   align="c"
                   fullWidth={false}>{t("nt_popup_search_engines")}</T
                 ></G
@@ -329,7 +330,7 @@
                 disabled={saving}
               />
             </G>
-          {:else}
+          {:else if parameterOptions.length}
             <G vertical full gap>
               <T type="s" color="var(--c-text-1)"
                 >{t("nt_settings_search_engine_category")}</T
@@ -347,25 +348,23 @@
               <T type="s" color="var(--c-text-1)"
                 >{t("nt_popup_search_parameter")}</T
               >
-              {#if parameterOptions.length}
-                <Select
-                  options={parameterOptions.map((item) => ({
-                    ...item,
-                    sel: item.value === parameter,
-                  }))}
-                  onChange={selectParameter}
-                  disabled={saving}
-                />
-              {:else}
-                <T type="s" color="var(--c-text-1)"
-                  >{t("nt_popup_search_no_parameters")}</T
-                >
-              {/if}
+              <Select
+                options={parameterOptions.map((item) => ({
+                  ...item,
+                  sel: item.value === parameter,
+                }))}
+                onChange={selectParameter}
+                disabled={saving}
+              />
               <T type="m" color="var(--c-text-1)"
                 >{#each engineUrl.split("%s") as part, index}{#if index > 0}<strong
                       style="color: var(--c-text);">%s</strong
                     >{/if}{part}{/each}</T
               >
+            </G>
+          {:else}
+            <G full>
+              <T type="s" color="var(--c-text-1)">{t("nt_popup_search_no_parameters")}</T>
             </G>
           {/if}
           {#if error}<T color="var(--c-red)">{error}</T>{/if}
@@ -373,13 +372,13 @@
             <Button
               full
               r="r1"
-              bg="var(--c-text)"
-              disabled={saving || (mode === "engine" && parameter === "")}
+              bg={addDisabled ? "var(--c-mask)" : "var(--c-text)"}
+              disabled={addDisabled}
               onclick={() => void save()}
             >
               <G full
                 ><G full
-                  ><T align="c" color="var(--c-bg)"
+                  ><T align="c" color={addDisabled ? "var(--c-text-2)" : "var(--c-bg)"}
                     >{t(
                       mode === "website"
                         ? "nt_add_pinned_title"
@@ -395,7 +394,9 @@
     {:else if error}
       <T color="var(--c-red)">{error}</T>
     {/if}
-    <Divider />
+    {#if ready || error}
+      <Divider />
+    {/if}
     <G full>
       <Button full onclick={() => void openNewTabPage()}>
         <G full align="c">

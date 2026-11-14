@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte";
+    import { onDestroy, onMount, type Snippet } from "svelte";
     import type { DndEvent } from "svelte-dnd-action";
     import { SOURCES, TRIGGERS } from "svelte-dnd-action";
     import { subscribeEngineConfigChanges } from "@/lib/search/engineConfigChanges";
@@ -8,7 +8,6 @@
     import T from "./components/T.svelte";
     import Switch from "./components/Switch.svelte";
     import Select, { type SelectOption } from "./components/Select.svelte";
-    import Divider from "./components/Divider.svelte";
     import EditSearchEngine from "./EditSearchEngine.svelte";
     import ManageEngineCategories from "./ManageEngineCategories.svelte";
     import AddPinned from "./AddPinned.svelte";
@@ -18,6 +17,7 @@
     import Popup from "./components/Popup.svelte";
     import BatchToolbar from "./components/BatchToolbar.svelte";
     import SettingsThemePicker from "@/lib/settings/SettingsThemePicker.svelte";
+    import ThemeSwatch from "@/lib/settings/ThemeSwatch.svelte";
     import BackgroundUrlDialog from "@/lib/settings/BackgroundUrlDialog.svelte";
     import BackgroundLayer from "@/lib/background/BackgroundLayer.svelte";
     import {
@@ -60,7 +60,7 @@
     import Button from "./components/Button.svelte";
     import Checkbox from "./components/Checkbox.svelte";
     import { buildDefaultEngineCategories } from "@/lib/config/engineCategories";
-    import { getFeedbackUrl } from "@/lib/config/feedback";
+    import { getFeedbackUrl, getRepositoryUrl } from "@/lib/config/feedback";
     import {
         deleteSearchKeysForCategory,
         retainSearchKeysForCategories,
@@ -91,6 +91,7 @@
         userSettings: UserSettings;
         backgroundItems: BackgroundItem[];
         activeBackground: BackgroundItem | null;
+        dataSyncEnabled: boolean;
         onchangeUserSettings: (userSettings: UserSettings) => void;
         onchangeBackground: (background: BackgroundConfig) => void;
         onclickAbout: () => void;
@@ -106,6 +107,7 @@
         userSettings,
         backgroundItems,
         activeBackground,
+        dataSyncEnabled,
         onchangeUserSettings,
         onchangeBackground,
         onclickAbout,
@@ -159,12 +161,14 @@
         | "searchEngines"
         | "common"
         | "background"
+        | "theme"
         | "dataSync"
         | "history";
     let settingPage = $state<SettingsPage>("root");
-    let searchSettingsExpanded = $state(true);
-    let websiteSettingsExpanded = $state(true);
+    let searchSettingsExpanded = $state(false);
+    let websiteSettingsExpanded = $state(false);
     let otherSettingsExpanded = $state(true);
+    let aboutSettingsExpanded = $state(false);
     let backgroundPreview = $state<BackgroundConfig | null>(null);
     let backgroundDraft = $derived(
         backgroundPreview ?? {
@@ -475,6 +479,7 @@
         if (settingPage === "background") {
             return t("nt_settings_background_title");
         }
+        if (settingPage === "theme") return t("nt_settings_theme");
         if (settingPage === "dataSync") {
             return t("nt_settings_data_sync_title");
         }
@@ -1525,6 +1530,8 @@
                                       void removeBackgroundUrl(url)}
                               />
                             {/await}
+                        {:else if settingPage === "theme"}
+                            <SettingsThemePicker value={userSettings.theme} onChange={setTheme} />
                         {:else if settingPage === "dataSync"}
                             {#await import("@/lib/settings/SettingsDataSyncSection.svelte") then { default: SettingsDataSyncSection }}
                               <SettingsDataSyncSection />
@@ -1720,12 +1727,7 @@
         <T type="m" align="c" nowrap>{getSettingPageTitle()}</T>
     </div>
     {#if settingPage === "root"}
-        <Button
-            title={t("nt_about_feedback")}
-            onclick={() => window.open(getFeedbackUrl(), "_blank", "noopener,noreferrer")}
-        >
-            <G><Icon name="MessageSquareShare" color="var(--c-text)" opacity={0.6} /></G>
-        </Button>
+        <span class="header_spacer" aria-hidden="true"></span>
     {:else if settingPage === "common" && currentCommonFolderId != null}
         <Button title={t("nt_edit")} disabled={commonSitesLoading} onclick={openHeaderGroupMenu}>
             <G><Icon name="SquarePen" color="var(--c-text)" opacity={0.6} /></G>
@@ -1766,148 +1768,94 @@
 {#snippet temSettingRoot()}
     <div class="setting_con">
         {@render temCollapsibleSection(
-            t("nt_settings_search_title"),
-            'Search',
-            searchSettingsExpanded,
-            () => (searchSettingsExpanded = !searchSettingsExpanded),
-            temSearchSettingsGroup,
+            t("nt_settings_other_section_title"), "Bolt", otherSettingsExpanded,
+            () => (otherSettingsExpanded = !otherSettingsExpanded), temGeneralSettingsGroup,
         )}
-        <G full>
-            <Divider />
-        </G>
-
         {@render temCollapsibleSection(
-            t("nt_settings_websites_title"),
-            'Globe',
-            websiteSettingsExpanded,
-            () => (websiteSettingsExpanded = !websiteSettingsExpanded),
-            temWebsiteSettingsGroup,
+            t("nt_settings_search_title"), "Search", searchSettingsExpanded,
+            () => (searchSettingsExpanded = !searchSettingsExpanded), temSearchSettingsGroup,
         )}
-
-       <G full>
-            <Divider />
-        </G>
-
-
         {@render temCollapsibleSection(
-            t("nt_settings_other_section_title"),
-            'Bolt',
-            otherSettingsExpanded,
-            () => (otherSettingsExpanded = !otherSettingsExpanded),
-            temOtherSettingsGroup,
+            t("nt_settings_websites_title"), "Globe",
+            websiteSettingsExpanded && !userSettings.searchOnly,
+            () => (websiteSettingsExpanded = !websiteSettingsExpanded), temWebsiteSettingsGroup,
+            userSettings.searchOnly ? t("nt_settings_minimal_active") : undefined,
+        )}
+        {@render temCollapsibleSection(
+            t("nt_settings_about"), "Info", aboutSettingsExpanded,
+            () => (aboutSettingsExpanded = !aboutSettingsExpanded), temAboutSettingsGroup,
         )}
     </div>
+{/snippet}
+
+{#snippet temGeneralSettingsGroup()}
+    <div class="mode_segments" role="group" aria-label={t("nt_settings_page_mode")}>
+        <Button fill={!userSettings.searchOnly} r="r_o" align="c" aria-pressed={!userSettings.searchOnly}
+            onclick={() => onchangeUserSettings({ ...userSettings, searchOnly: false })}>
+            <G align="c"><T nowrap color={userSettings.searchOnly ? "var(--c-text-1)" : "var(--c-text)"}>{t("nt_settings_standard_mode")}</T></G>
+        </Button>
+        <Button fill={userSettings.searchOnly} r="r_o" align="c" aria-pressed={userSettings.searchOnly}
+            onclick={() => onchangeUserSettings({ ...userSettings, searchOnly: true })}>
+            <G align="c"><T nowrap color={userSettings.searchOnly ? "var(--c-text)" : "var(--c-text-1)"}>{t("nt_settings_search_only")}</T></G>
+        </Button>
+    </div>
+    {#snippet thumbnail()}
+        <span class="background_thumbnail" aria-hidden="true">
+            {#if backgroundDraft.enabled}
+                <img src={backgroundDraft.current.url} alt="" loading="lazy" referrerpolicy="no-referrer" />
+            {/if}
+        </span>
+    {/snippet}
+    {@render temEntranceItem(t("nt_settings_background_title"), () => openSettingPage("background"),
+        t(backgroundDraft.enabled ? "nt_settings_active" : "nt_settings_inactive"), false, thumbnail)}
+    {#snippet themeValue()}
+        <ThemeSwatch value={userSettings.theme} active />
+    {/snippet}
+    {@render temEntranceItem(t("nt_settings_theme"), () => openSettingPage("theme"),
+        themeValue, false, undefined, undefined, t("nt_theme_" + userSettings.theme))}
+    {@render temSwitchItem(t("nt_settings_new_tab_open"), effectiveNewTabOpenSwitch,
+        onswitchNewTabOpen, lockNewTabOpenSwitch ? t("nt_settings_new_tab_tip") : undefined, lockNewTabOpenSwitch)}
+    {@render temSelectItem(t("nt_settings_language"), languageOptions, setLanguage)}
+    {@render temEntranceItem(t("nt_settings_data_sync_switch"), () => openSettingPage("dataSync"),
+        t(dataSyncEnabled ? "nt_settings_active" : "nt_settings_inactive"),
+        false, undefined, t("nt_settings_data_sync_syncs"))}
 {/snippet}
 
 {#snippet temSearchSettingsGroup()}
-    {@render temEntranceItem(t("nt_settings_search_engines_title"), () =>
-        openSettingPage("searchEngines"),
-    )}
-    {@render temswithcItem(
-        undefined,
-        t("nt_settings_search_remember_engine_category"),
-        t("nt_settings_search_remember_engine_category_tip"),
-        userSettings.rememberSearchEngineCategory,
-        setRememberSearchEngineCategory,
-    )}
-    {@render temswithcItem(
-        undefined,
-        t("nt_settings_search_auto_focus"),
-        t("nt_settings_search_auto_focus_tip"),
-        userSettings.autoFocusSearch,
-        setAutoFocusSearch,
-    )}
-    {@render temswithcItem(
-        undefined,
-        t("nt_settings_search_inject_related"),
-        t("nt_settings_search_inject_related_tip"),
-        userSettings.injectRelatedSearch,
-        setInjectRelatedSearch,
-    )}
-    {@render temswithcItem(
-        undefined,
-        t("nt_settings_record_search_keywords"),
-        t("nt_settings_record_search_keywords_tip"),
-        userSettings.recordSearchKeywords,
-        setRecordSearchKeywords,
-    )}
-    {@render temswithcItem(
-        t("nt_settings_search_scope"),
-        t("nt_settings_search_bookmarks"),
-        undefined,
-        userSettings.searchBookmarks,
-        setSearchBookmarks,
-    )}
-    {@render temswithcItem(
-        undefined,
-        t("nt_settings_search_history"),
-        undefined,
-        userSettings.searchHistory,
-        setSearchHistory,
-    )}
-
+    {@render temEntranceItem(t("nt_settings_search_engines_title"), () => openSettingPage("searchEngines"))}
+    {@render temSwitchItem(t("nt_settings_search_auto_focus"), userSettings.autoFocusSearch, setAutoFocusSearch)}
+    {@render temSwitchItem(t("nt_settings_search_bookmarks"), userSettings.searchBookmarks, setSearchBookmarks)}
+    {@render temSwitchItem(t("nt_settings_search_history"), userSettings.searchHistory, setSearchHistory)}
+    {@render temSwitchItem(t("nt_settings_search_remember_engine_category"),
+        userSettings.rememberSearchEngineCategory, setRememberSearchEngineCategory)}
+    {@render temSwitchItem(t("nt_settings_record_search_keywords"), userSettings.recordSearchKeywords,
+        setRecordSearchKeywords, t("nt_settings_record_search_keywords_tip"))}
+    {@render temSwitchItem(t("nt_settings_search_inject_related"), userSettings.injectRelatedSearch,
+        setInjectRelatedSearch, t("nt_settings_search_inject_related_tip"))}
 {/snippet}
 
 {#snippet temWebsiteSettingsGroup()}
-    {@render temEntranceItem(t("nt_manage_common"), () =>
-        openSettingPage("common"),
-    )}
-    {@render tembuttonItem(
-        t("nt_manage_bookmarks"),
-        openBookmarksManager,
-        "",
-        true,
-    )}
-    {@render tembuttonItem(
-        t("nt_manage_history"),
-        openHistoryManager,
-        "",
-        true,
-    )}
-    <div class="select_item default_open_selects">
-        <G vertical full>
-            <T type="s" color="var(--c-text-1)">{t("nt_settings_default_open")}</T>
-        </G>
-        <Select options={openPosOptions} onChange={setOpenPos} />
-        {#if userSettings.defaultOpen === "bookmark"}
-            <Select
-                options={bookmarkFolderOptions}
-                onChange={setDefaultBookmarkFolder}
-                disabled={!bookmarkFolderChoices.length}
-            />
-        {/if}
-    </div>
-    {@render temswithcItem(
-        t("nt_settings_link_open_title"),
-        t("nt_settings_new_tab_open"),
-        t("nt_settings_new_tab_tip"),
-        effectiveNewTabOpenSwitch,
-        onswitchNewTabOpen,
-        lockNewTabOpenSwitch,
-    )}
+    {@render temSelectItem(t("nt_settings_default_open"), openPosOptions, setOpenPos)}
+    {#if userSettings.defaultOpen === "bookmark"}
+        {@render temSelectItem(t("nt_bookmark_folder"), bookmarkFolderOptions,
+            setDefaultBookmarkFolder, !bookmarkFolderChoices.length)}
+    {/if}
+    {@render temEntranceItem(t("nt_settings_manage_common"), () => openSettingPage("common"))}
+    {@render temEntranceItem(t("nt_manage_bookmarks"), openBookmarksManager, undefined, true)}
+    {@render temEntranceItem(t("nt_manage_history"), openHistoryManager, undefined, true)}
 {/snippet}
 
-{#snippet temOtherSettingsGroup()}
-    {@render temEntranceItem(t("nt_settings_data_sync_title"), () =>
-        openSettingPage("dataSync"),
-    )}
-    <SettingsThemePicker value={userSettings.theme} onChange={setTheme} />
-    {@render temEntranceItem(t("nt_settings_background_title"), () =>
-        openSettingPage("background"),
-    )}
-    {@render temselectItem(
-        t("nt_settings_language"),
-        languageOptions,
-        setLanguage,
-    )}
-    {@render tembuttonItem(
-        t("nt_settings_about"),
-        onclickAbout,
-        t("nt_settings_other_title"),
-    )}
-    {@render tembuttonItem(t("nt_about_support_button"), onclickSupport)}
+{#snippet temAboutSettingsGroup()}
+    {@render temEntranceItem(t("nt_about_support_button"), onclickSupport, undefined, null)}
+    {@render temEntranceItem(t("nt_settings_about"), onclickAbout, undefined, null)}
+    {@render temEntranceItem(t("nt_about_source_code"),
+        () => window.open(getRepositoryUrl(), "_blank", "noopener,noreferrer"), undefined, true)}
+    {@render temEntranceItem(t("nt_about_privacy"),
+        () => window.open("https://mooogor.antion.site/docs/start-privacy/", "_blank", "noopener,noreferrer"), undefined, true)}
+    {@render temEntranceItem(t("nt_about_feedback"),
+        () => window.open(getFeedbackUrl(), "_blank", "noopener,noreferrer"), undefined, true)}
     {#if !import.meta.env.FIREFOX}
-        {@render tembuttonItem(t("nt_rating_action"), openStoreReview, undefined, true)}
+        {@render temEntranceItem(t("nt_rating_action"), openStoreReview, undefined, true)}
     {/if}
 {/snippet}
 
@@ -1916,170 +1864,171 @@
     iconName: IconName,
     expanded: boolean,
     onToggle: () => void,
-    content: any,
+    content: Snippet,
+    disabledReason?: string,
 )}
-    <div class="collapsible_section">
-     <G full >
-        <Button full onclick={onToggle}>
-                <G full align="c">
-                    <Icon
-                        name={iconName}
-                        color="var(--c-text)"
-                        size={16}
-                        opacity={0.6}
-                    />
-                    <T type="m" color="var(--c-text-1)">{title}</T>
-                </G>
-                <G>
-                    <Icon
-                        name={expanded ? "ChevronUp" : "ChevronDown"}
-                        color="var(--c-text)"
-                        opacity={0.4}
-                    />
-                </G>
-        </Button>
-     </G>
+    <section class="collapsible_section">
+        <G full>
+            <Button full onclick={onToggle} disabled={!!disabledReason} aria-expanded={expanded}>
+                <div class="settings_row" class:section_disabled={!!disabledReason}>
+                    <G align="c"><Icon name={iconName} color="var(--c-text)" opacity={0.6} size={16} /></G>
+                    <G full align="c"><T>{title}</T></G>
+                    {#if disabledReason}
+                        <G align="c"><T type="s" nowrap fullWidth={false}>{disabledReason}</T></G>
+                    {/if}
+                    <G align="c">
+                        <Icon name={expanded ? "ChevronUp" : "ChevronDown"}
+                            color="var(--c-text)" opacity={0.4} size={16} />
+                    </G>
+                </div>
+            </Button>
+        </G>
         {#if expanded}
-            <div
-                class="collapsible_content"
-                transition:slide={{ duration: 200 }}
-            >
+            <div class="collapsible_content" transition:slide={{ duration: 200 }}>
                 {@render content()}
             </div>
         {/if}
-    </div>
+    </section>
 {/snippet}
 
-
-{#snippet temEntranceItem(text: string, onChange: () => void, title?: string)}
-    <div class="select_item">
-        {#if title}
-            <G>
-                <T type="s" color="var(--c-text-1)">{title}</T>
-            </G>
-        {/if}
-        <Button full align="c" onclick={onChange} fill r="r1">
-            <G full align="c">
-                <G vertical full>
-                    <T>{text}</T>
-                </G>
-                <G>
-                    <Icon
-                        name="ChevronRight"
-                        color="var(--c-text)"
-                        opacity={0.6}
-                    />
-                </G>
-            </G>
-        </Button>
-    </div>
-{/snippet}
-
-
-{#snippet tembuttonItem(
-    text: string,
-    onChange: () => void,
-    title?: string,
-    externalLink?: boolean,
+{#snippet temEntranceItem(
+    label: string,
+    onclick: () => void,
+    value?: string | Snippet,
+    external: boolean | null = false,
+    preview?: Snippet,
+    description?: string,
+    valueLabel?: string,
 )}
     <div class="select_item">
-        {#if title}
-            <G>
-                <T type="s" color="var(--c-text-1)">{title}</T>
-            </G>
-        {/if}
-        <Button onclick={onChange} full align="c" fill r="r1">
-            <G full align="c">
-                <G vertical full>
-                    <T>{text}</T>
-                </G>
-                <G>
-                    <Icon
-                        name="ArrowUpRight"
-                        color="var(--c-text)"
-                        opacity={externalLink ? 0.6 : 0}
-                    />
-                </G>
-            </G>
+        <Button full fill r="r1" {onclick} aria-label={valueLabel ? `${label}, ${valueLabel}` : undefined}>
+            <div class="settings_row">
+                {#if preview}<div class="settings_preview">{@render preview()}</div>{/if}
+                <G full align="c"><T>{label}</T></G>
+                {#if value}
+                    <div class="settings_value">
+                        {#if typeof value === "string"}
+                            <T type="s" nowrap fullWidth={false}>{value}</T>
+                        {:else}
+                            {@render value()}
+                        {/if}
+                    </div>
+                {/if}
+                {#if external !== null}
+                    <G align="c">
+                        <Icon name={external ? "ArrowUpRight" : "ChevronRight"}
+                            color="var(--c-text)" opacity={0.6} size={16} />
+                    </G>
+                {/if}
+            </div>
         </Button>
+        {#if description}
+            <G full><T type="s">{description}</T></G>
+        {/if}
     </div>
 {/snippet}
 
-{#snippet temswithcItem(
-    title: string | undefined,
-    swcText: string,
-    des: string | undefined,
-    turnOn: boolean,
+{#snippet temSwitchItem(
+    label: string,
+    checked: boolean,
     onChange: (value: boolean) => void,
-    switchDisabled: boolean = false,
+    description?: string,
+    disabled = false,
 )}
     <div class="select_item">
-        {#if title}
-            <G>
-                <T type="s" color="var(--c-text-1)">{title}</T>
-            </G>
-        {/if}
-        <Button onclick={() => onChange(!turnOn)} full fill align="c" r="r1" role="switch" aria-checked={turnOn} disabled={switchDisabled}>
-            <G full align="c">
-                <G vertical full>
-                    <T>{swcText}</T>
-                </G>
-                <G>
-                    <Switch {turnOn} disabled={switchDisabled} />
-                </G>
-            </G>
+        <Button full fill r="r1" role="switch" aria-label={label} aria-checked={checked} {disabled}
+            onclick={() => onChange(!checked)}>
+            <div class="settings_row">
+                <G full align="c"><T>{label}</T></G>
+                <G align="c"><Switch turnOn={checked} {disabled} /></G>
+            </div>
         </Button>
-        {#if des}
-            <G>
-                <T type="s">{des}</T>
-            </G>
+        {#if description}
+            <G full><T type="s">{description}</T></G>
         {/if}
     </div>
 {/snippet}
 
-{#snippet temselectItem(
-    title: string,
+{#snippet temSelectItem(
+    label: string,
     options: SelectOption[],
     onChange: (value: string) => void,
+    disabled = false,
 )}
     <div class="select_item">
-        <G vertical full>
-            <T type="s" color="var(--c-text-1)">{title}</T>
-        </G>
-        <Select {options} {onChange} />
+        <Select {label} {options} {onChange} {disabled} />
     </div>
 {/snippet}
 
 <style>
+    .setting_con {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        box-sizing: border-box;
+        padding-bottom: var(--gap);
+    }
+    .collapsible_section {
+        width: 100%;
+        padding: var(--gap);
+        box-sizing: border-box;
+    }
+    .collapsible_section + .collapsible_section {
+        border-top: 1px solid var(--c-border);
+    }
+    .collapsible_content,
     .select_item {
         display: flex;
         flex-direction: column;
         width: 100%;
         box-sizing: border-box;
-        padding: var(--gap);
-        /* gap: var(--gap); */
     }
-    .default_open_selects {
-        gap: var(--gap);
-    }
-    .collapsible_section {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        box-sizing: border-box;
+    .select_item {
         padding: var(--gap);
     }
-    .collapsible_content {
+    .settings_row {
         display: flex;
-        flex-direction: column;
+        align-items: center;
         width: 100%;
+        min-height: 40px;
+        padding: var(--gap);
+        box-sizing: border-box;
+        text-align: start;
+    }
+    .section_disabled {
+        opacity: 0.55;
+    }
+    .settings_preview {
+        padding-inline-start: var(--gap);
+    }
+    .settings_value {
+        padding-inline-start: var(--gap);
+    }
+    .mode_segments {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px;
+        width: calc(100% - var(--gap) * 2);
+        margin: var(--gap);
+        padding: 2px;
+        border: 2px solid var(--c-mask);
+        border-radius: var(--r1);
         box-sizing: border-box;
     }
-    .setting_con {
-        width: 300px;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
+    .background_thumbnail {
+        display: block;
+        width: 36px;
+        height: 26px;
+        overflow: clip;
+        border-radius: var(--gap);
+        border: 1px solid var(--c-border);
+        background: var(--c-bg1);
+    }
+    .background_thumbnail img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
     }
     .setting_body {
         display: grid;
@@ -2226,6 +2175,9 @@
         padding: var(--gap);
         position: relative;
         width: 290px;
+    }
+    .header_spacer {
+        flex: 0 0 calc(20px + var(--gap) * 2);
     }
     .title_center {
         display: flex;

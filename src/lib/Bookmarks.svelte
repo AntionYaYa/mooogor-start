@@ -735,7 +735,7 @@
           String(failedCount),
         );
       } else {
-        clearSelection(true);
+        deselectAll();
       }
     } catch {
       failedCount = Math.max(failedCount, selected.length);
@@ -746,7 +746,6 @@
       );
     } finally {
       batchActionLoading = false;
-      if (!selectedIds.size) clearSelection(true);
     }
   }
 
@@ -941,13 +940,18 @@
     const selectedBtn = pageEl?.querySelector(
       ".item .sel",
     ) as HTMLElement | null;
-    selectedBtn?.focus();
+    selectedBtn?.focus({ preventScroll: true });
   }
 
-  function clearSelection(force = false) {
-    if (batchActionLoading && !force) return;
-    multiSelectMode = false;
+  function deselectAll() {
     selectedIds = new Set();
+    lastClickedIndex = -1;
+  }
+
+  function exitMultiSelect() {
+    if (batchActionLoading) return;
+    multiSelectMode = false;
+    deselectAll();
   }
 
   function handleKeyDown(e: KeyboardEvent) {
@@ -972,7 +976,7 @@
 
     if (multiSelectMode) {
       e.preventDefault();
-      clearSelection();
+      exitMultiSelect();
       return;
     }
 
@@ -1025,9 +1029,6 @@
     } else {
       next.add(bkmk.id);
     }
-    if (next.size === 0) {
-      multiSelectMode = false;
-    }
     selectedIds = next;
   }
 
@@ -1048,7 +1049,7 @@
   function toggleSelectAll() {
     if (batchActionLoading) return;
     if (allSelected) {
-      clearSelection(true);
+      deselectAll();
     } else {
       selectedIds = new Set(selectableItems.map((b) => b.id));
     }
@@ -1126,10 +1127,9 @@
         );
         return;
       }
-      clearSelection(true);
+      deselectAll();
     } finally {
       batchActionLoading = false;
-      if (!selectedIds.size) clearSelection(true);
     }
   }
 
@@ -1142,7 +1142,7 @@
     const nextIds = [...selectedIds].filter((id) => validIds.has(id));
     if (nextIds.length !== selectedIds.size) {
       selectedIds = new Set(nextIds);
-      if (!nextIds.length && !batchActionLoading) multiSelectMode = false;
+      if (!nextIds.length) lastClickedIndex = -1;
     }
   }
 </script>
@@ -1231,7 +1231,7 @@
         <NoData iconName="Bookmark" title={t("nt_no_bookmarks")} />
       </div>
     {/if}
-    {#if items.length}
+    {#if items.length || multiSelectMode}
       <div class="batch_bar_container">
         <BatchToolbar
           show={multiSelectMode}
@@ -1243,7 +1243,7 @@
           onselectall={toggleSelectAll}
           ondelete={deleteSelected}
           onmove={openBatchMove}
-          onclose={() => clearSelection()}
+          onclose={exitMultiSelect}
         />
       </div>
     {/if}
@@ -1512,20 +1512,24 @@
   .page {
     display: flex;
     flex-direction: column;
+    flex: 1 0 auto;
     width: 100%;
     align-items: center;
     position: relative;
   }
 
   .bookmark_scroll {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 auto;
     width: 100%;
     box-sizing: border-box;
     border-radius: var(--r1);
-    padding-bottom: 90px;
+    padding-bottom: calc(var(--gap) * 2);
   }
 
   .bookmark_scroll.multi_select_frame {
-    border: 2px solid var(--c-main-3);
+    box-shadow: inset 0 0 0 2px var(--c-main-3);
   }
 
   :global(#dnd-action-dragged-el[data-bookmark-id]),
@@ -1550,6 +1554,7 @@
   .batch_bar_container {
     position: sticky;
     bottom: 20px;
+    margin-top: auto;
     margin-inline: auto;
     height: 0;
     display: flex;
@@ -1601,7 +1606,9 @@
     justify-content: center;
   }
   .content {
+    flex: none;
     gap: var(--gap);
+    margin-bottom: calc(90px - var(--gap) * 2);
     padding: var(--gap);
     width: 100%;
     box-sizing: border-box;

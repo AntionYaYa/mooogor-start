@@ -134,24 +134,26 @@
     <div class="type_switch" role="group" aria-label={t("nt_add_pinned_title")}>
       <Button disabled={saving}
         fill={addType === "website"}
+        aria-pressed={addType === "website"}
         r="r_o"
         align="c"
         onclick={() => selectAddType("website")}
       >
         <G align="c">
-          <Icon name="Globe" color="var(--c-text)" size={18} />
-          <T nowrap>{t("nt_website")}</T>
+          <Icon name="Globe" color="var(--c-text)" opacity={addType === "website" ? 1 : 0.6} size={18} />
+          <T nowrap color={addType === "website" ? "var(--c-text)" : "var(--c-text-1)"}>{t("nt_website")}</T>
         </G>
       </Button>
       <Button disabled={saving}
         fill={addType === "folder"}
+        aria-pressed={addType === "folder"}
         r="r_o"
         align="c"
         onclick={() => selectAddType("folder")}
       >
         <G align="c">
-          <Icon name="PlayingCardsFan" color="var(--c-text)" size={18} />
-          <T nowrap>{t("nt_folder")}</T>
+          <Icon name="PlayingCardsFan" color="var(--c-text)" opacity={addType === "folder" ? 1 : 0.6} size={18} />
+          <T nowrap color={addType === "folder" ? "var(--c-text)" : "var(--c-text-1)"}>{t("nt_folder")}</T>
         </G>
       </Button>
     </div>

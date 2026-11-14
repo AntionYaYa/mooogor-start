@@ -40,6 +40,7 @@
   let loadMoreTask: Promise<void> | null = null;
   let handledClearRequestKey = $state(0);
   let pageEl: HTMLElement | undefined = $state();
+  let historyEl: HTMLDivElement | undefined = $state();
   let stuckHistoryGroupKeys = $state<Set<string>>(new Set());
   let multiSelectMode = $state(false);
   let selectedUrls = $state<Set<string>>(new Set());
@@ -265,8 +266,8 @@
   }
 
   function isFirstScreenFilled() {
-    if (!pageEl || !scrollRoot) return true;
-    return pageEl.getBoundingClientRect().bottom > scrollRoot.getBoundingClientRect().bottom;
+    if (!historyEl || !scrollRoot) return true;
+    return historyEl.getBoundingClientRect().bottom > scrollRoot.getBoundingClientRect().bottom;
   }
 
   function setHistoryGroupStuck(key: string, stuck: boolean) {
@@ -373,18 +374,22 @@
       ? visibleHistoryItems.findIndex((item) => item.url === url)
       : -1;
     await tick();
-    pageEl?.querySelector<HTMLElement>(".item.selected")?.focus();
+    pageEl?.querySelector<HTMLElement>(".item.selected")?.focus({ preventScroll: true });
   }
 
-  function clearSelection(force = false) {
-    if (batchActionLoading && !force) return;
-    multiSelectMode = false;
+  function deselectAll() {
     selectedUrls = new Set();
     lastClickedIndex = -1;
   }
 
+  function exitMultiSelect() {
+    if (batchActionLoading) return;
+    multiSelectMode = false;
+    deselectAll();
+  }
+
   function handleKeyDown(e: KeyboardEvent) {
-    if (e.key !== "Escape" || confirmDelete || batchActionLoading) return;
+    if (e.key !== "Escape" || settingsOpen || confirmDelete || batchActionLoading) return;
     if (showMenu) {
       e.preventDefault();
       showMenu = false;
@@ -392,7 +397,7 @@
     }
     if (multiSelectMode) {
       e.preventDefault();
-      clearSelection();
+      exitMultiSelect();
     }
   }
 
@@ -402,10 +407,6 @@
     const next = new Set(selectedUrls);
     if (next.has(url)) next.delete(url);
     else next.add(url);
-    if (next.size === 0) {
-      clearSelection();
-      return;
-    }
     selectedUrls = next;
   }
 
@@ -433,7 +434,7 @@
   function toggleSelectAll() {
     if (batchActionLoading) return;
     if (allSelected) {
-      clearSelection();
+      deselectAll();
     } else {
       selectedUrls = new Set(
         visibleHistoryItems
@@ -452,7 +453,6 @@
         type: "deleteHistoryUrls",
         payload: { urls: [...selectedUrls] },
       });
-      clearSelection(true);
       await reloadHistory();
     } finally {
       batchActionLoading = false;
@@ -460,6 +460,7 @@
   }
 
   async function reloadHistory() {
+    deselectAll();
     topGroups = [];
     dayGroups = [];
     nextDayOffset = 1;
@@ -499,11 +500,11 @@
   }
 </script>
 
-<div class="page" bind:this={pageEl}>
+<div class="page" bind:this={pageEl} class:multi_select_frame={multiSelectMode}>
   {#if showEmpty}
     <NoData iconName="History" title={t("nt_history_empty")} />
   {:else}
-    <div class="history">
+    <div class="history" bind:this={historyEl}>
       {#each allGroups as group}
         {@render temHistoryGroup(group)}
       {/each}
@@ -515,7 +516,9 @@
         </div>
       {/if}
     </div>
-    <div class="batch_bar_container" class:settings_open={settingsOpen}>
+  {/if}
+  {#if !showEmpty || multiSelectMode}
+    <div class="batch_bar_container">
       <BatchToolbar
         show={multiSelectMode}
         count={selectedCount}
@@ -524,7 +527,7 @@
         disabled={batchActionLoading}
         onselectall={toggleSelectAll}
         ondelete={() => (confirmDelete = true)}
-        onclose={() => clearSelection()}
+        onclose={exitMultiSelect}
       />
     </div>
   {/if}
@@ -620,14 +623,23 @@
   .page {
     display: flex;
     flex-direction: column;
+    flex: 1 0 auto;
     width: 100%;
     align-items: center;
     position: relative;
+    border-radius: var(--r1);
+    padding-bottom: calc(var(--gap) * 2);
+    box-sizing: border-box;
+  }
+  .page.multi_select_frame {
+    box-shadow: inset 0 0 0 2px var(--c-main-3);
   }
   .history {
     display: flex;
     flex-direction: column;
+    flex: none;
     gap: var(--gap);
+    margin-bottom: calc(90px - var(--gap) * 2);
     width: 100%;
     box-sizing: border-box;
   }
@@ -690,19 +702,16 @@
     justify-content: center;
   }
   .batch_bar_container {
-    position: fixed;
+    position: sticky;
     bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    margin-top: auto;
+    height: 0;
     display: flex;
     justify-content: center;
-    padding: var(--gap);
+    align-items: flex-end;
     width: min(400px, calc(100% - var(--gap) * 4));
     box-sizing: border-box;
     pointer-events: none;
     z-index: 20;
-  }
-  .batch_bar_container.settings_open {
-    left: calc((100vw - 300px - var(--gap)) / 2);
   }
 </style>

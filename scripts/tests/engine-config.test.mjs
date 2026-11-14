@@ -138,15 +138,23 @@ test('fresh install and reset use valid defaults in every language', async () =>
     await h.load('src/lib/DB/configMigration.ts').initializeFreshStoredConfig();
     const categories = h.load('src/lib/config/engineCategories.ts').buildDefaultEngineCategories();
     const engines = h.load('src/lib/DB/defaultEnginesFactory.ts').buildDefaultEngines(language);
+    assert.equal(categories.length, 3);
+    const assertStarterEngines = () => {
+      const storedEngines = h.snapshot()[keys.engines];
+      assert.equal(storedEngines.length, 9);
+      for (const category of categories) {
+        assert.equal(storedEngines.filter(e => e.category === category.id && e.enabled).length, 3);
+      }
+    };
     await h.load('src/lib/DB/defaultSearchConfig.ts').initializeDefaultSearchConfig(categories, engines);
-    for (const category of categories) assert.ok(h.snapshot()[keys.engines].some(e => e.category === category.id && e.enabled));
+    assertStarterEngines();
     await h.load('src/lib/DB/configStorage.ts').updateStoredConfig(c => { c.metadata.preference = 'keep'; });
     await h.load('src/lib/DB/resetSearchEngines.ts').resetSearchEnginesToDefault(categories, engines);
     assert.equal(h.snapshot()[keys.metadata].preference, 'keep');
-    assert.equal(h.snapshot()[keys.engines].length, 37);
+    assertStarterEngines();
     await h.load('src/lib/DB/configRecovery.ts').resetConfigurationToDefaults(language);
     assert.equal(h.snapshot()[keys.metadata].settings.language, language);
-    assert.equal(h.snapshot()[keys.engines].length, 37);
+    assertStarterEngines();
   }
 });
 

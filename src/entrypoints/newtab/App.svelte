@@ -124,6 +124,7 @@
   let dataSyncState = $state<DataSyncState>({
     enabled: false,
     lastSyncedAt: null,
+    lastAppliedSyncAt: null,
     phase: "idle",
     errorCode: null,
     usedBytes: 0,
@@ -132,6 +133,10 @@
     localQuotaBytes: 10_485_760,
   });
   let showDataSyncIssue = $state(false);
+  let showDataSyncSuccess = $state(false);
+  let dataSyncSuccessTimer: number | undefined;
+  let dataSyncStateLoaded = false;
+  let dataSyncRefreshId = 0;
   let dataSyncRetrying = $state(false);
   let localStorageHealth = $state<LocalStorageHealthState>({
     phase: "idle",
@@ -154,6 +159,7 @@
       a.recordSearchKeywords === b.recordSearchKeywords &&
       a.rememberSearchEngineCategory === b.rememberSearchEngineCategory &&
       a.autoFocusSearch === b.autoFocusSearch &&
+      a.searchOnly === b.searchOnly &&
       a.injectRelatedSearch === b.injectRelatedSearch &&
       a.language === b.language &&
       a.theme === b.theme &&
@@ -249,13 +255,36 @@
       }
     };
     browser.storage.onChanged.addListener(handleStorageChanged);
-    return () => browser.storage.onChanged.removeListener(handleStorageChanged);
+    return () => {
+      browser.storage.onChanged.removeListener(handleStorageChanged);
+      dataSyncRefreshId += 1;
+      clearTimeout(dataSyncSuccessTimer);
+    };
   });
 
   async function refreshDataSyncState() {
+    const refreshId = ++dataSyncRefreshId;
     try {
-      dataSyncState = await getDataSyncState();
-      if (!dataSyncState.enabled || dataSyncState.phase === "idle") {
+      const next = await getDataSyncState();
+      if (refreshId !== dataSyncRefreshId) return;
+      const synced = dataSyncStateLoaded &&
+        next.enabled &&
+        next.phase === "idle" &&
+        next.lastAppliedSyncAt !== null &&
+        (next.lastAppliedSyncAt !== dataSyncState.lastAppliedSyncAt || dataSyncState.phase !== "idle");
+      dataSyncState = next;
+      dataSyncStateLoaded = true;
+      if (!next.enabled || next.phase !== "idle") {
+        clearTimeout(dataSyncSuccessTimer);
+        showDataSyncSuccess = false;
+      } else if (synced) {
+        clearTimeout(dataSyncSuccessTimer);
+        showDataSyncSuccess = true;
+        dataSyncSuccessTimer = window.setTimeout(() => {
+          showDataSyncSuccess = false;
+        }, 2000);
+      }
+      if (!next.enabled || next.phase === "idle") {
         showDataSyncIssue = false;
       }
     } catch (error) {
@@ -274,8 +303,8 @@
     if (dataSyncRetrying) return;
     dataSyncRetrying = true;
     try {
-      dataSyncState = await retryDataSync();
-      if (dataSyncState.phase !== "error") showDataSyncIssue = false;
+      await retryDataSync();
+      await refreshDataSyncState();
     } catch (error) {
       console.error("[Mooogor Data Sync]", "indicator:retry-failed", error);
       await refreshDataSyncState();
@@ -884,6 +913,7 @@
       {userSettings}
       {backgroundItems}
       {activeBackground}
+      dataSyncEnabled={dataSyncState.enabled}
       {currentTabPinned}
       onchangeUserSettings={handleUserSettingsChange}
       onchangeBackground={handleBackgroundConfigurationChange}
@@ -896,6 +926,7 @@
       <Search
         layout={pageLayout}
         {autoFocusSearch}
+        searchOnly={userSettings.searchOnly}
         newTabOpen={effectiveNewTabOpen}
         searchBookmarks={userSettings.searchBookmarks}
         searchHistory={userSettings.searchHistory}
@@ -914,145 +945,151 @@
   <G full vertical grow flushTop>
     <div
       class="page_scroll"
+      class:search_only={userSettings.searchOnly}
       bind:this={scrollRoot}
       style:--newtab-header-height={`${headerHeight}px`}
     >
-      <button
-        class="scroll_to_top"
-        type="button"
-        aria-label={t("nt_scroll_to_top")}
-        tabindex="-1"
-        onclick={() => scrollRoot?.scrollTo({
-          top: 0,
-          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-            ? "auto"
-            : "smooth",
-        })}
-      ></button>
+      <div class="search_spacer">
+        <button
+          class="scroll_to_top"
+          type="button"
+          aria-label={t("nt_scroll_to_top")}
+          tabindex="-1"
+          onclick={() => scrollRoot?.scrollTo({
+            top: 0,
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+              ? "auto"
+              : "smooth",
+          })}
+        ></button>
+      </div>
       {@render mainSearch()}
-      <div class="content">
-        <div class="tabs">
-          <div class="side side-left">
-            {#if selTab?.key === "0" && currentCommonFolder}
-              <div in:fly={{ x: 50, duration: 300 }}>
-                <G align="c">
-                  <Button onclick={() => {
-                    currentCommonFolder = undefined;
-                    updateTabLabels();
-                  }}>
-                    <G align="c">
-                      <Icon
-                        name="ChevronLeft"
-                        color="var(--c-text)"
-                        opacity={0.6}
-                      />
-                    </G>
-                  </Button>
-                </G>
-              </div>
-            {:else if selTab?.key === "1" && historyStack.length > 1}
-              <div in:fly={{ x: 50, duration: 300 }}>
-                <G align="c">
-                  <Button onclick={goBack}>
-                    <G align="c">
-                      <Icon
-                        name="ChevronLeft"
-                        color="var(--c-text)"
-                        opacity={0.6}
-                      />
-                      <!-- <T nowrap>{t("nt_back")}</T> -->
-                    </G>
-                  </Button>
-                </G>
-              </div>
-            {/if}
-          </div>
-          <div class="center">
-            <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
-          </div>
-          <div class="side side-right">
-            {#if selTab?.key === "0" && websitesState === "ready"}
-              <div in:fly={{ x: -50, duration: 300 }}>
-                <G align="c">
-                  <Button onclick={() => (showAdd = true)}>
-                    <G>
-                      <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
-                    </G>
-                  </Button>
-                </G>
-              </div>
-            {:else if selTab?.key === "1" && historyStack.length > 0}
-              <div in:fly={{ x: -50, duration: 300 }}>
-                <G align="c">
-                  {#if currentNode?.id !== "0"}
-                    <Button onclick={() => (showAddBookmark = true)}>
-                      <G>
-                        <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
-                      </G>
-                    </Button>
-                  {/if}
-                  {#if gridView}
-                    <Button
-                      onclick={() => (gridView = false)}
-                      bg="var(--c-text)"
-                    >
-                      <G>
-                        <Icon name="Rows3" color="var(--c-bg)" />
-                      </G>
-                    </Button>
-                  {:else}
-                    <Button onclick={() => (gridView = true)}>
-                      <G>
+      {#if !userSettings.searchOnly}
+        <div class="content">
+          <div class="tabs">
+            <div class="side side-left">
+              {#if selTab?.key === "0" && currentCommonFolder}
+                <div in:fly={{ x: 50, duration: 300 }}>
+                  <G align="c">
+                    <Button onclick={() => {
+                      currentCommonFolder = undefined;
+                      updateTabLabels();
+                    }}>
+                      <G align="c">
                         <Icon
-                          name="Rows3"
+                          name="ChevronLeft"
                           color="var(--c-text)"
                           opacity={0.6}
                         />
                       </G>
                     </Button>
-                  {/if}
-                </G>
-              </div>
-            {:else if selTab?.key === "2" && historyPermission}
-              <div in:fly={{ x: -50, duration: 300 }}>
-                <G align="c">
-                  <Button
-                    disabled={!historyClearable}
-                    onclick={() => (clearHistoryRequestKey += 1)}
-                    title={t("nt_history_clear_title")}
-                  >
-                    <G>
-                      <Icon
-                        name="BrushCleaning"
-                        color="var(--c-text)"
-                        opacity={historyClearable ? 0.6 : 0.2}
-                      />
-                    </G>
-                  </Button>
-                </G>
-              </div>
-            {/if}
-          </div>
-        </div>
-        {#each tabs as tab (tab.key)}
-          {#if tab.sel}
-            <div
-              class="tab_content"
-              in:fly={firstMount
-                ? undefined
-                : { x: showNext ? 180 : -180, duration: 250 }}
-            >
-              {#if tab.key === "0"}
-                {@render pinneds()}
-              {:else if tab.key === "1"}
-                {@render bookmarks()}
-              {:else if tab.key === "2"}
-                {@render history()}
+                  </G>
+                </div>
+              {:else if selTab?.key === "1" && historyStack.length > 1}
+                <div in:fly={{ x: 50, duration: 300 }}>
+                  <G align="c">
+                    <Button onclick={goBack}>
+                      <G align="c">
+                        <Icon
+                          name="ChevronLeft"
+                          color="var(--c-text)"
+                          opacity={0.6}
+                        />
+                        <!-- <T nowrap>{t("nt_back")}</T> -->
+                      </G>
+                    </Button>
+                  </G>
+                </div>
               {/if}
             </div>
-          {/if}
-        {/each}
-      </div>
+            <div class="center">
+              <Tab {tabs} onclick={(tab, i) => clickTab(tab, i)} />
+            </div>
+            <div class="side side-right">
+              {#if selTab?.key === "0" && websitesState === "ready"}
+                <div in:fly={{ x: -50, duration: 300 }}>
+                  <G align="c">
+                    <Button onclick={() => (showAdd = true)}>
+                      <G>
+                        <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
+                      </G>
+                    </Button>
+                  </G>
+                </div>
+              {:else if selTab?.key === "1" && historyStack.length > 0}
+                <div in:fly={{ x: -50, duration: 300 }}>
+                  <G align="c">
+                    {#if currentNode?.id !== "0"}
+                      <Button onclick={() => (showAddBookmark = true)}>
+                        <G>
+                          <Icon name="Plus" color="var(--c-text)" opacity={0.6} />
+                        </G>
+                      </Button>
+                    {/if}
+                    {#if gridView}
+                      <Button
+                        onclick={() => (gridView = false)}
+                        bg="var(--c-text)"
+                      >
+                        <G>
+                          <Icon name="Rows3" color="var(--c-bg)" />
+                        </G>
+                      </Button>
+                    {:else}
+                      <Button onclick={() => (gridView = true)}>
+                        <G>
+                          <Icon
+                            name="Rows3"
+                            color="var(--c-text)"
+                            opacity={0.6}
+                          />
+                        </G>
+                      </Button>
+                    {/if}
+                  </G>
+                </div>
+              {:else if selTab?.key === "2" && historyPermission}
+                <div in:fly={{ x: -50, duration: 300 }}>
+                  <G align="c">
+                    <Button
+                      disabled={!historyClearable}
+                      onclick={() => (clearHistoryRequestKey += 1)}
+                      title={t("nt_history_clear_title")}
+                    >
+                      <G>
+                        <Icon
+                          name="BrushCleaning"
+                          color="var(--c-text)"
+                          opacity={historyClearable ? 0.6 : 0.2}
+                        />
+                      </G>
+                    </Button>
+                  </G>
+                </div>
+              {/if}
+            </div>
+          </div>
+          {#each tabs as tab (tab.key)}
+            {#if tab.sel}
+              <div
+                class="tab_content"
+                class:fill_height={tab.key === "1" || tab.key === "2"}
+                in:fly={firstMount
+                  ? undefined
+                  : { x: showNext ? 180 : -180, duration: 250 }}
+              >
+                {#if tab.key === "0"}
+                  {@render pinneds()}
+                {:else if tab.key === "1"}
+                  {@render bookmarks()}
+                {:else if tab.key === "2"}
+                  {@render history()}
+                {/if}
+              </div>
+            {/if}
+          {/each}
+        </div>
+      {/if}
     </div>
   </G>
 {/snippet}
@@ -1157,6 +1194,13 @@
           </G>
         </Button>
       {/if}
+      <span class="sync_status" role="status">
+        {#if showDataSyncSuccess}
+          <G align="c">
+            <T type="s" align="c" nowrap fullWidth={false} color="var(--c-text)">{t("nt_data_sync_success")}</T>
+          </G>
+        {/if}
+      </span>
       <Button
         onclick={() => (showSupport = true)}
         title={t("nt_about_support_button")}
@@ -1180,6 +1224,7 @@
         <Button
           disabled={configurationState !== "ready"}
           onclick={toggleSettings}
+          title={t("nt_settings_close")}
           bg="var(--c-text)"
         >
           <G>
@@ -1190,6 +1235,7 @@
         <Button
           disabled={configurationState !== "ready"}
           onclick={toggleSettings}
+          title={t("nt_settings_open")}
         >
           <G>
             <Icon name="Settings2" color="var(--c-text)" />
@@ -1298,6 +1344,12 @@
 {/snippet}
 
 <style>
+  .sync_status {
+    align-self: center;
+  }
+  .sync_status:empty {
+    position: absolute;
+  }
   .logo {
     width: 24px;
   }
@@ -1321,13 +1373,20 @@
     overflow-x: hidden;
     scroll-padding-block-start: var(--newtab-header-height);
   }
-  .scroll_to_top {
+  .search_spacer {
     position: sticky;
     inset-block-start: 0;
     z-index: 29;
     flex: none;
     width: 100%;
     height: var(--newtab-header-height);
+    pointer-events: none;
+  }
+  .scroll_to_top {
+    display: block;
+    width: 100%;
+    height: var(--newtab-header-height);
+    pointer-events: auto;
     padding: 0;
     border: 0;
     background: none;
@@ -1347,6 +1406,16 @@
     padding: var(--gap);
     background: linear-gradient(to bottom, var(--c-page-background), transparent);
     pointer-events: none;
+  }
+  .search_only {
+    --search-category-height: 45px;
+    --search-category-offset: 0px;
+  }
+  .search_only:has(:global(.search_g:not(.top0))) {
+    --search-category-offset: var(--search-category-height);
+  }
+  .search_only .search_spacer {
+    height: max(var(--newtab-header-height), calc(20dvh - 20px - var(--gap) * 2 - 2px - var(--search-category-offset)));
   }
   .top :global(button),
   .top :global(form) {
@@ -1381,6 +1450,7 @@
     background: linear-gradient(180deg, var(--c-card), rgba(0, 0, 0, 0));
     border-radius: var(--r3);
     position: relative;
+    overflow-x: clip;
   }
   @supports (corner-shape: squircle) {
     .content {
@@ -1404,6 +1474,10 @@
     height: 100%;
     box-sizing: border-box;
     padding: var(--gap);
+  }
+  .tab_content.fill_height {
+    flex: 1 0 auto;
+    height: auto;
   }
   .tabs {
     display: grid;

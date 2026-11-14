@@ -69,6 +69,7 @@
         loading?: boolean;
         readOnly?: boolean;
         autoFocusSearch?: boolean;
+        searchOnly?: boolean;
     }
 
     let {
@@ -83,6 +84,7 @@
         loading = false,
         readOnly = false,
         autoFocusSearch = false,
+        searchOnly = false,
     }: Props = $props();
 
     let engineCategories: EngineCategoryItem[] = $state([]);
@@ -289,26 +291,13 @@
     }
 
     function applyFallbackEngineConfig() {
-        const fallbackCategoryIds = ["1", "2", "3", "6"];
         engineCategories = buildDefaultEngineCategories()
-            .filter((item) => fallbackCategoryIds.includes(item.id))
             .map((item, index) => ({ ...item, order: index }));
-        const languageEngines = buildDefaultEngines().filter(
-            (engine) =>
-                engine.enabled !== false &&
-                fallbackCategoryIds.includes(engine.category ?? "1"),
-        );
-        engines = fallbackCategoryIds
-            .flatMap((categoryId) =>
-                languageEngines
-                    .filter((engine) => (engine.category ?? "1") === categoryId)
-                    .slice(0, 3),
-            )
-            .map((engine, index) => ({
-                ...engine,
-                id: -(index + 1),
-                order: index,
-            }));
+        engines = buildDefaultEngines().map((engine, index) => ({
+            ...engine,
+            id: -(index + 1),
+            order: index,
+        }));
         if (!engineCategories.some((item) => item.id === selectedCategoryId)) {
             selectedCategoryId = engineCategories[0]?.id ?? "1";
         }
@@ -958,6 +947,7 @@
 {#snippet mainSearch()}
     <div
         class="search"
+        class:search_only={searchOnly}
         use:observeMainSearch
         class:offscreen={showCompactSearch}
     >
@@ -1395,6 +1385,9 @@
     .offscreen {
         visibility: hidden;
     }
+    .search.search_only {
+        margin-block-start: 0;
+    }
     .offscreen .search_g {
         display: none;
     }
@@ -1472,7 +1465,7 @@
         overflow: hidden;
     }
     .search_g {
-        --search-panel-offset: 45px;
+        --search-panel-offset: var(--search-category-height, 45px);
         display: flex;
         flex-direction: column;
         align-items: flex-end;

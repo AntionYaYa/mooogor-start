@@ -19,9 +19,10 @@
 		options: SelectOption[];
 		onChange: (value: string) => void;
 		disabled?: boolean;
+		label?: string;
 	}
 
-	let { options, onChange, disabled = false }: Props = $props();
+	let { options, onChange, disabled = false, label }: Props = $props();
 	let open = $state(false);
 	let rootEl: HTMLDivElement | null = null;
 	let menuEl: HTMLDivElement | null = $state(null);
@@ -67,7 +68,8 @@
 		// Include the trigger's own area so the menu opens over the button.
 		const availableBelow = Math.max(0, window.innerHeight - anchor.top - viewportGap);
 		const availableAbove = Math.max(0, anchor.bottom - viewportGap);
-		const desiredHeight = Math.min(menuItemsEl.scrollHeight, defaultMaxHeight);
+		const menuPadding = currentMenu.offsetHeight - menuItemsEl.offsetHeight;
+		const desiredHeight = Math.min(menuItemsEl.scrollHeight + menuPadding, defaultMaxHeight);
 		const placeAbove = availableBelow < desiredHeight && availableAbove > availableBelow;
 		const availableHeight = placeAbove ? availableAbove : availableBelow;
 		const height = Math.min(desiredHeight, availableHeight);
@@ -117,11 +119,18 @@
 </script>
 
 <div class="select" class:disabled bind:this={rootEl}>
-	<Button {disabled} onclick={handleToggle} align="c" full fill r="r1">
+	<Button {disabled} onclick={handleToggle} align="c" full fill r="r1"
+		aria-label={label && `${label}, ${selected?.label ?? t("nt_select_placeholder")}`}
+		aria-expanded={open}>
 		<G full align="c">
 			<G full>
-				<T>{selected ? selected.label : t("nt_select_placeholder")}</T>
+				<T>{label ?? selected?.label ?? t("nt_select_placeholder")}</T>
 			</G>
+			{#if label}
+				<div class="trigger_value">
+					<T type="s" nowrap fullWidth={false}>{selected?.label ?? t("nt_select_placeholder")}</T>
+				</div>
+			{/if}
 			<G>
 				<Icon
 					name={open ? "ChevronUp" : "ChevronDown"}
@@ -174,6 +183,10 @@
 </div>
 
 <style>
+	.trigger_value {
+		padding-block: var(--gap);
+		padding-inline-start: var(--gap);
+	}
 	.option {
 		display: flex;
 		flex-direction: row;
@@ -205,20 +218,26 @@
 		box-shadow: var(--shadow);
 		border-radius: var(--r1);
 		z-index: 1100;
-		overflow-y: auto;
 		box-sizing: border-box;
+		background-color: var(--c-bg1);
+		padding: var(--gap);
 	}
 	.menu.positioned {
 		visibility: visible;
 	}
 	.menu_items {
-		flex-shrink: 0;
-		display: flex;
-		flex-direction: column;
-		width: 100%;
-		box-sizing: border-box;
-		background-color: var(--c-bg1);
-		border-radius: var(--r1);
-		padding: var(--gap);
+		min-height: 0;
+		overflow-x: hidden;
+		overflow-y: auto;
+	}
+	.menu_items::-webkit-scrollbar {
+		width: calc(5px + var(--gap));
+	}
+	.menu_items::-webkit-scrollbar-thumb {
+		border-inline-start: var(--gap) solid transparent;
+		border-radius: 2.5px;
+		border-start-start-radius: calc(var(--gap) + 2.5px) 2.5px;
+		border-end-start-radius: calc(var(--gap) + 2.5px) 2.5px;
+		background-clip: padding-box;
 	}
 </style>

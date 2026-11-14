@@ -121,7 +121,7 @@ try {
   const viewport=document.querySelector('.page_scroll').getBoundingClientRect();
   return panel && panel.width>=300 && panel.right<=layout.right && search.width<=viewport.width;
  });
- await page.getByRole('button',{name:'Close settings'}).click();
+ await page.locator('.setting .header').getByRole('button',{name:'Close settings'}).click();
  await page.locator('.setting').waitFor({state:'detached'});
  assert.deepEqual(errors,[]);
  console.log(JSON.stringify({passed:true,checks:['bounded grid/list','no full tree read','keyboard end/home','native drag persistence','drag across virtual windows','combine bookmarks','folder/back scroll restoration','cross-window shift selection','multi-drag into folder','narrow settings layout'],errors}));

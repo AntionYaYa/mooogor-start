@@ -51,19 +51,19 @@
 <Popup type="s" title={t("nt_add_bookmark_title")} {onclickClose}>
   <div class="type_switch" role="group" aria-label={t("nt_add_bookmark_type")}>
 
-    <Button fill={type === "bookmark"} r="r_o" align='c' onclick={() => selectType("bookmark")}>
+    <Button fill={type === "bookmark"} aria-pressed={type === "bookmark"} r="r_o" align="c" onclick={() => selectType("bookmark")}>
       <G align="c">
-        <Icon name="Bookmark" color="var(--c-text)" size={18} />
-        <T nowrap>{t("nt_bookmark")}</T>
+        <Icon name="Bookmark" color="var(--c-text)" opacity={type === "bookmark" ? 1 : 0.6} size={18} />
+        <T nowrap color={type === "bookmark" ? "var(--c-text)" : "var(--c-text-1)"}>{t("nt_bookmark")}</T>
       </G>
     </Button>
 
-     <Button fill={type === "folder"} r="r_o" align='c' onclick={() => selectType("folder")}>
-     <G align="c">
-      <Icon name="Folder" color="var(--c-text)" size={18} />
-      <T nowrap>{t("nt_bookmark_folder")}</T>
-     </G>
-      </Button>
+    <Button fill={type === "folder"} aria-pressed={type === "folder"} r="r_o" align="c" onclick={() => selectType("folder")}>
+      <G align="c">
+        <Icon name="Folder" color="var(--c-text)" opacity={type === "folder" ? 1 : 0.6} size={18} />
+        <T nowrap color={type === "folder" ? "var(--c-text)" : "var(--c-text-1)"}>{t("nt_bookmark_folder")}</T>
+      </G>
+    </Button>
   </div>
 
 

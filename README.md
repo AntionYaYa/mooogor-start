@@ -15,7 +15,7 @@ Mooogor Start focuses on everyday interaction and usability. Publishing the sour
 Public source provides a way to inspect the extension; it does not mean an independent security audit has been completed.
 
 - [Source code](https://gitee.com/antion666/mooogor_new_tab)
-- [Privacy & permissions](#privacy--permissions)
+- [Privacy Policy](#privacy-policy)
 - [Issues & suggestions](https://gitee.com/antion666/mooogor_new_tab/issues)
 - Author: Antion
 - Contact: [antion1212@gmail.com](mailto:antion1212@gmail.com)
@@ -31,9 +31,9 @@ Public source provides a way to inspect the extension; it does not mean an indep
 | Website screenshots and icon cache | Stored locally; screenshot images and cached icons are excluded from extension sync |
 | Searches, online backgrounds, and website icons | Contact the selected search service, image host, or icon host; built-in online backgrounds use Unsplash |
 
-The current code has no developer-operated data collection endpoint, advertising SDK, or usage analytics SDK. Disabling sync stops subsequent extension configuration sync processing but does not delete existing sync copies. Chrome manages its own bookmark and history sync separately. See [Privacy & permissions](#privacy--permissions) below for controls and access scope.
+The current code has no developer-operated data collection endpoint, advertising SDK, or usage analytics SDK. Disabling sync stops subsequent extension configuration sync processing but does not delete existing sync copies. Chrome manages its own bookmark and history sync separately. See [Privacy Policy](#privacy-policy) below for controls and access scope.
 
-### Privacy & permissions
+### Privacy Policy
 
 | Permission or access | Purpose |
 | --- | --- |
@@ -108,7 +108,7 @@ Mooogor Start 的重点是日常使用中的交互体验。公开源码，是希
 源码公开提供了检查依据，不代表已经通过独立安全审计。
 
 - [查看源码](https://gitee.com/antion666/mooogor_new_tab)
-- [隐私与权限](#隐私与权限)
+- [隐私政策](#隐私政策)
 - [问题与建议](https://gitee.com/antion666/mooogor_new_tab/issues)
 - 作者：Antion
 - 联系作者：[antion1212@gmail.com](mailto:antion1212@gmail.com)
@@ -124,9 +124,9 @@ Mooogor Start 的重点是日常使用中的交互体验。公开源码，是希
 | 网站截图与图标缓存 | 保存在本地；截图图片和图标缓存不包含在扩展的同步数据中 |
 | 搜索、在线背景和网站图标 | 会访问所选搜索服务、图片或图标地址；内置在线背景来自 Unsplash |
 
-当前代码未接入开发者自建的数据接收服务、广告或使用统计 SDK。关闭同步会停止扩展配置的后续同步处理，但不会删除已有同步副本。浏览器本身的书签、历史同步由 Chrome 管理。访问范围和控制方式见下方[隐私与权限](#隐私与权限)。
+当前代码未接入开发者自建的数据接收服务、广告或使用统计 SDK。关闭同步会停止扩展配置的后续同步处理，但不会删除已有同步副本。浏览器本身的书签、历史同步由 Chrome 管理。访问范围和控制方式见下方[隐私政策](#隐私政策)。
 
-### 隐私与权限
+### 隐私政策
 
 | 权限或访问范围 | 用途 |
 | --- | --- |

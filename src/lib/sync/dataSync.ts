@@ -46,6 +46,7 @@ type SyncedSettings = Pick<
   | "recordSearchKeywords"
   | "rememberSearchEngineCategory"
   | "autoFocusSearch"
+  | "searchOnly"
   | "injectRelatedSearch"
   | "language"
   | "theme"
@@ -85,6 +86,7 @@ type DataSyncRuntimeState = {
 export type DataSyncState = {
   enabled: boolean;
   lastSyncedAt: number | null;
+  lastAppliedSyncAt: number | null;
   phase: DataSyncRuntimeState["phase"];
   errorCode: DataSyncRuntimeState["errorCode"] | null;
   usedBytes: number;
@@ -207,6 +209,7 @@ function selectSyncedSettings(value: unknown): Partial<SyncedSettings> {
     | "recordSearchKeywords"
     | "rememberSearchEngineCategory"
     | "autoFocusSearch"
+    | "searchOnly"
     | "injectRelatedSearch"
   >)[] = [
     "newTabOpen",
@@ -215,6 +218,7 @@ function selectSyncedSettings(value: unknown): Partial<SyncedSettings> {
     "recordSearchKeywords",
     "rememberSearchEngineCategory",
     "autoFocusSearch",
+    "searchOnly",
     "injectRelatedSearch",
   ];
   for (const key of booleanKeys) {
@@ -437,6 +441,7 @@ export async function getDataSyncState(): Promise<DataSyncState> {
         ? manifest.updatedAt
         : null,
     phase: runtime.phase,
+    lastAppliedSyncAt: runtime.lastSuccessfulWriteAt ?? null,
     errorCode: runtime.errorCode ?? null,
     usedBytes,
     quotaBytes: storage.QUOTA_BYTES ?? 102_400,

@@ -4,10 +4,9 @@
   import G from "./components/G.svelte";
   import Popup from "./components/Popup.svelte";
   import { t } from "@/lib/utils/i18n";
-  import { getFeedbackUrl } from "@/lib/config/feedback";
+  import { slide } from "svelte/transition";
+  import Icon from "./components/Icon.svelte";
   import T from "./components/T.svelte";
-
-const repositoryUrl = 'https://gitee.com/antion666/mooogor_new_tab';
 
 // License identifiers verified against the installed packages. Full texts are
 // generated separately so copyright and NOTICE statements ship with the app.
@@ -30,6 +29,7 @@ const openSourceProjects = [
   }
 
   let { onclickClose, onclickSupport }: Props = $props();
+  let showOpenSourceProjects = $state(false);
   const appVersion = browser.runtime.getManifest().version ?? '0.0.0';
 </script>
 
@@ -53,6 +53,27 @@ const openSourceProjects = [
         >
       </div>
     </G>
+    <G vertical full>
+      <button class="project_toggle" type="button"
+        onclick={() => (showOpenSourceProjects = !showOpenSourceProjects)}
+        aria-expanded={showOpenSourceProjects}>
+        {t("nt_about_third_party_title")}
+        <Icon name={showOpenSourceProjects ? "ChevronDown" : "ChevronRight"}
+          color="var(--c-text)" opacity={0.6} size={12} />
+      </button>
+      {#if showOpenSourceProjects}
+        <div class="project_list" transition:slide={{ duration: 200 }}>
+          <ul>
+            {#each openSourceProjects as project}
+              <li>
+                <a href={project.url} target="_blank" rel="noopener noreferrer">{project.name}</a>
+                <span>{project.license}</span>
+              </li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
+    </G>
     <G  vertical>
       <T type="l" bold>{t("nt_about_design_goal_title")}</T>
       <div class="about_desc">
@@ -72,32 +93,6 @@ const openSourceProjects = [
         >
       </div>
     </G>
-    <G vertical full>
-      <T type="l" bold>{t("nt_about_open_source_title")}</T>
-      <div class="about_desc">
-        <T type="m" color="var(--c-text-1)">{t("nt_about_open_source_desc")}</T>
-      </div>
-      <div class="source_links">
-        <a href={repositoryUrl} target="_blank" rel="noopener noreferrer">{t("nt_about_source_code")}</a>
-        <a href={`${repositoryUrl}/blob/main/README.md#隐私与权限`} target="_blank" rel="noopener noreferrer">{t("nt_about_privacy")}</a>
-        <a href={getFeedbackUrl()} target="_blank" rel="noopener noreferrer">{t("nt_about_feedback")}</a>
-      </div>
-      <a href="/third-party-notices.txt" target="_blank" rel="noopener noreferrer">
-        <T type="s">{t("nt_about_project_license")}</T>
-      </a>
-      <details>
-        <summary>{t("nt_about_third_party_title")}</summary>
-        <ul>
-          {#each openSourceProjects as project}
-            <li>
-              <a href={project.url} target="_blank" rel="noopener noreferrer">{project.name}</a>
-              <span>{project.license}</span>
-            </li>
-          {/each}
-        </ul>
-        <a href="/third-party-notices.txt" target="_blank" rel="noopener noreferrer">{t("nt_about_third_party_notices")}</a>
-      </details>
-    </G>
     <G full>
       <Button bg='var(--c-text)' onclick={onclickSupport}>
       <G>
@@ -105,9 +100,12 @@ const openSourceProjects = [
       </G>
       </Button>
     </G>
-    <G full>
-      <T type="m" bold align='r'>Antion</T>
-    </G>
+    <footer>
+      <a class="license_link" href="/third-party-notices.txt" target="_blank" rel="noopener noreferrer">
+        <T type="s" color="var(--c-text-2)">{t("nt_about_project_license")}</T>
+      </a>
+      <T type="m" bold nowrap fullWidth={false}>Antion</T>
+    </footer>
   </G>
 </Popup>
 
@@ -121,26 +119,44 @@ const openSourceProjects = [
   .about_desc :global(p) {
     white-space: pre-line;
   }
-  .source_links {
+  footer {
     display: flex;
-    flex-wrap: wrap;
-    gap: calc(var(--gap) * 2);
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap);
+    width: 100%;
+    box-sizing: border-box;
     padding: var(--gap);
   }
-  details {
+  footer > :global(p) {
+    flex: none;
+  }
+  .license_link {
+    min-width: 0;
+  }
+  .project_toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
+    padding: var(--gap);
+    border: 0;
+    background: none;
+    color: var(--c-text-1);
+    font: inherit;
+    font-size: var(--f-size-m);
+    cursor: pointer;
+  }
+  .project_list {
     box-sizing: border-box;
     width: 100%;
-    padding: var(--gap);
+    padding: var(--gap) calc(var(--gap) * 5);
     color: var(--c-text-1);
     font-size: var(--f-size-m);
-  }
-  summary {
-    cursor: pointer;
-    color: var(--c-text);
   }
   ul {
     list-style: none;
     padding: 0;
+    margin: 0;
   }
   li {
     display: flex;
@@ -152,5 +168,8 @@ const openSourceProjects = [
   a {
     color: var(--c-text);
     overflow-wrap: anywhere;
+  }
+  .project_list a {
+    color: inherit;
   }
 </style>
